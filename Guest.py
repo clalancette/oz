@@ -14,7 +14,7 @@ import sys
 
 class Guest(object):
     def __init__(self, distro, update, arch, macaddr, nicmodel, clockoffset,
-                 mousetype):
+                 mousetype, diskbus):
         if arch != "i386" and arch != "x86_64":
             raise Exception, "Unsupported guest arch " + arch
         self.uuid = uuid.uuid4()
@@ -38,6 +38,14 @@ class Guest(object):
         self.mousetype = mousetype
         if self.mousetype is None:
             self.mousetype = "ps2"
+        if diskbus is None or diskbus == "ide":
+            self.disk_bus = "ide"
+            self.disk_dev = "hda"
+        elif diskbus == "virtio":
+            self.disk_bus = "virtio"
+            self.disk_dev = "vda"
+        else:
+            raise Exception, "Unknown diskbus type " + diskbus
 
     def cleanup_old_guest(self):
         def handler(ctxt, err):
@@ -190,7 +198,8 @@ class Guest(object):
         diskNode.setAttribute("type", "file")
         diskNode.setAttribute("device", "disk")
         targetNode = doc.createElement("target")
-        targetNode.setAttribute("dev", "hda")
+        targetNode.setAttribute("dev", self.disk_dev)
+        targetNode.setAttribute("bus", self.disk_bus)
         diskNode.appendChild(targetNode)
         sourceDiskNode = doc.createElement("source")
         sourceDiskNode.setAttribute("file", self.diskimage)
@@ -250,8 +259,8 @@ class Guest(object):
 
 class CDGuest(Guest):
     def __init__(self, distro, update, arch, macaddr, nicmodel, clockoffset,
-                 mousetype):
-        Guest.__init__(self, distro, update, arch, macaddr, nicmodel, clockoffset, mousetype)
+                 mousetype, diskbus):
+        Guest.__init__(self, distro, update, arch, macaddr, nicmodel, clockoffset, mousetype, diskbus)
         self.orig_iso = "/var/lib/kvminstaller/isos/" + self.name + ".iso"
         self.output_iso = "/var/lib/libvirt/images/" + self.name + "-oz.iso"
         self.iso_contents = "/var/lib/kvminstaller/isocontent/" + self.name

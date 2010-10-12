@@ -15,7 +15,7 @@ def generate_new_iso(output, inputdir):
 
 class Ubuntu904Guest(Guest.CDGuest):
     def __init__(self, update, arch, preseed, iso):
-        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, None, "rtl8139", None, None)
+        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, None, "rtl8139", None, None, None)
         self.ubuntuarch = arch
         if self.ubuntuarch == "x86_64":
             self.ubuntuarch = "amd64"
@@ -65,7 +65,7 @@ class Ubuntu904Guest(Guest.CDGuest):
 
 class Ubuntu810Guest(Guest.CDGuest):
     def __init__(self, update, arch, preseed, iso):
-        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, None, "rtl8139", None, None)
+        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, None, "rtl8139", None, None, None)
         self.ubuntuarch = arch
         if self.ubuntuarch == "x86_64":
             self.ubuntuarch = "amd64"
@@ -115,7 +115,7 @@ class Ubuntu810Guest(Guest.CDGuest):
 
 class Ubuntu8041Guest(Guest.CDGuest):
     def __init__(self, update, arch, preseed, iso):
-        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, None, "rtl8139", None, None)
+        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, None, "rtl8139", None, None, None)
         self.ubuntuarch = arch
         if self.ubuntuarch == "x86_64":
             self.ubuntuarch = "amd64"
@@ -156,7 +156,7 @@ class Ubuntu8041Guest(Guest.CDGuest):
 
 class Ubuntu710Guest(Guest.CDGuest):
     def __init__(self, update, arch, preseed, iso):
-        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, None, "rtl8139", None, None)
+        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, None, "rtl8139", None, None, None)
         self.ubuntuarch = arch
         if self.ubuntuarch == "x86_64":
             self.ubuntuarch = "amd64"
@@ -197,7 +197,7 @@ class Ubuntu710Guest(Guest.CDGuest):
 
 class Ubuntu704Guest(Guest.CDGuest):
     def __init__(self, update, arch, preseed, iso):
-        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, None, "rtl8139", None, None)
+        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, None, "rtl8139", None, None, None)
         self.ubuntuarch = arch
         if self.ubuntuarch == "x86_64":
             self.ubuntuarch = "amd64"
@@ -237,7 +237,7 @@ class Ubuntu704Guest(Guest.CDGuest):
 
 class Ubuntu610Guest(Guest.CDGuest):
     def __init__(self, update, arch, preseed, iso):
-        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, None, "rtl8139", None, None)
+        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, None, "rtl8139", None, None, None)
         self.ubuntuarch = arch
         if self.ubuntuarch == "x86_64":
             self.ubuntuarch = "amd64"

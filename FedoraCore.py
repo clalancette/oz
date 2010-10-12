@@ -5,7 +5,7 @@ import re
 
 class FedoraCoreGuest(Guest.CDGuest):
     def __init__(self, update, arch, url, ks):
-        Guest.CDGuest.__init__(self, "FedoraCore", update, arch, None, "rtl8139", None, None)
+        Guest.CDGuest.__init__(self, "FedoraCore", update, arch, None, "rtl8139", None, None, None)
         self.ks_file = ks
         # FIXME: check that the url is accessible
         self.url = url

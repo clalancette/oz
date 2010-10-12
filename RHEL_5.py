@@ -4,8 +4,8 @@ import subprocess
 import re
 
 class RHEL5Guest(Guest.CDGuest):
-    def __init__(self, update, arch, url, ks, nicmodel):
-        Guest.CDGuest.__init__(self, "RHEL-5", update, arch, None, nicmodel, None, None)
+    def __init__(self, update, arch, url, ks, nicmodel, diskbus):
+        Guest.CDGuest.__init__(self, "RHEL-5", update, arch, None, nicmodel, None, None, diskbus)
         self.ks_file = ks
         # FIXME: check that the url is accessible
         self.url = url
@@ -48,7 +48,7 @@ class RHEL5Guest(Guest.CDGuest):
 
 def get_class(update, arch, url):
     if update == "GOLD" or update == "U1" or update == "U2" or update == "U3":
-        return RHEL5Guest(update, arch, url, "./rhel-5-jeos.ks", "rtl8139")
+        return RHEL5Guest(update, arch, url, "./rhel-5-jeos.ks", "rtl8139", None)
     if update == "U4" or update == "U5":
-        return RHEL5Guest(update, arch, url, "./rhel-5-jeos.ks", "virtio")
+        return RHEL5Guest(update, arch, url, "./rhel-5-virtio-jeos.ks", "virtio", "virtio")
     raise Exception, "Unsupported RHEL-5 update " + update

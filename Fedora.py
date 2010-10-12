@@ -4,8 +4,8 @@ import subprocess
 import re
 
 class FedoraGuest(Guest.CDGuest):
-    def __init__(self, update, arch, url, ks, nicmodel, haverepo):
-        Guest.CDGuest.__init__(self, "Fedora", update, arch, None, nicmodel, None, None)
+    def __init__(self, update, arch, url, ks, nicmodel, haverepo, diskbus):
+        Guest.CDGuest.__init__(self, "Fedora", update, arch, None, nicmodel, None, None, diskbus)
         self.ks_file = ks
         # FIXME: check that the url is accessible
         self.url = url
@@ -52,8 +52,8 @@ class FedoraGuest(Guest.CDGuest):
 
 def get_class(update, arch, url):
     ks = "./fedora-" + update + "-jeos.ks"
-    if update == "10" or update == "11" or update == "12":
-        return FedoraGuest(update, arch, url, ks, "virtio", True)
+    if update == "10" or update == "11" or update == "12" or update == "13":
+        return FedoraGuest(update, arch, url, ks, "virtio", True, "virtio")
     if update == "9" or update == "8" or update == "7":
-        return FedoraGuest(update, arch, url, ks, "rtl8139", False)
+        return FedoraGuest(update, arch, url, ks, "rtl8139", False, None)
     raise Exception, "Unsupported Fedora update " + update
