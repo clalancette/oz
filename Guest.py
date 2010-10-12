@@ -153,11 +153,6 @@ class Guest(object):
 
         # create devices section
         devicesNode = doc.createElement("devices")
-        # emulator
-        emulatorNode = doc.createElement("emulator")
-        # FIXME: we should detect this from the capabilities
-        emulatorNode.appendChild(doc.createTextNode("/usr/bin/qemu-kvm"))
-        devicesNode.appendChild(emulatorNode)
         # console
         consoleNode = doc.createElement("console")
         consoleNode.setAttribute("device", "pty")
