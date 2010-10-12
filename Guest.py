@@ -308,3 +308,4 @@ class CDGuest(Guest):
 
         self.wait_for_install_finish(1000)
 
+        self.generate_define_xml("hd")
