@@ -49,6 +49,7 @@ class FedoraGuest(Guest.CDGuest):
         self.copy_iso()
         self.modify_iso()
         self.generate_new_iso()
+        self.cleanup_iso()
 
 def get_class(update, arch, url):
     ks = "./fedora-" + update + "-jeos.ks"

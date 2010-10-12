@@ -249,6 +249,7 @@ class Ubuntu610Guest(Guest.CDGuest):
         self.copy_iso()
         self.modify_iso()
         generate_new_iso(self.output_iso, self.iso_contents)
+        self.cleanup_iso()
 
     def modify_iso(self):
         print "Putting the preseed file in place"

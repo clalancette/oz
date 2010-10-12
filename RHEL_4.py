@@ -45,6 +45,7 @@ class RHEL4Guest(Guest.CDGuest):
         self.copy_iso()
         self.modify_iso()
         self.generate_new_iso()
+        self.cleanup_iso()
 
 def get_class(update, arch, url):
     if update == "GOLD" or update == "U1" or update == "U2" or update == "U3" or update == "U4" or update == "U5" or update == "U6" or update == "U7":

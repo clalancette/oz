@@ -45,6 +45,7 @@ class FedoraCoreGuest(Guest.CDGuest):
         self.copy_iso()
         self.modify_iso()
         self.generate_new_iso()
+        self.cleanup_iso()
 
 class FedoraCore4Guest(FedoraCoreGuest):
     def __init__(self, arch, url):
