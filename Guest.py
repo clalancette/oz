@@ -11,6 +11,9 @@ import time
 import xml.dom.minidom
 import pycurl
 import sys
+import urllib
+import re
+import stat
 
 class Guest(object):
     def __init__(self, distro, update, arch, macaddr, nicmodel, clockoffset,
@@ -266,7 +269,15 @@ class CDGuest(Guest):
         self.iso_contents = "/var/lib/kvminstaller/isocontent/" + self.name
 
     def get_original_iso(self, isourl):
+        original_available = False
         if os.access(self.orig_iso, os.F_OK):
+            for header in urllib.urlopen(isourl).headers.headers:
+                if re.match("Content-Length:", header):
+                    if int(header.split()[1]) == os.stat(self.orig_iso)[stat.ST_SIZE]:
+                        original_available = True
+                    break
+
+        if original_available:
             print "Original ISO available, using cached version"
         else:
             print "Fetching the original ISO from " + isourl
