@@ -48,5 +48,5 @@ class RHEL3Guest(Guest.CDGuest):
 
 def get_class(update, arch, url):
     if update == "GOLD" or update == "U1" or update == "U2" or update == "U3" or update == "U4" or update == "U5" or update == "U6" or update == "U7" or update == "U8" or update == "U9":
-        return RHEL3Guest(update, arch, url, "/home/clalance/upstream/oz/rhel-3-jeos.ks")
+        return RHEL3Guest(update, arch, url, "./rhel-3-jeos.ks")
     raise Exception, "Unsupported RHEL-3 update " + update

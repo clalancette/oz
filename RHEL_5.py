@@ -48,7 +48,7 @@ class RHEL5Guest(Guest.CDGuest):
 
 def get_class(update, arch, url):
     if update == "GOLD" or update == "U1" or update == "U2" or update == "U3":
-        return RHEL5Guest(update, arch, url, "/home/clalance/upstream/oz/rhel-5-jeos.ks", "rtl8139")
+        return RHEL5Guest(update, arch, url, "./rhel-5-jeos.ks", "rtl8139")
     if update == "U4" or update == "U5":
-        return RHEL5Guest(update, arch, url, "/home/clalance/upstream/oz/rhel-5-jeos.ks", "virtio")
+        return RHEL5Guest(update, arch, url, "./rhel-5-jeos.ks", "virtio")
     raise Exception, "Unsupported RHEL-5 update " + update

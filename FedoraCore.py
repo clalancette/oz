@@ -48,12 +48,12 @@ class FedoraCoreGuest(Guest.CDGuest):
 
 class FedoraCore4Guest(FedoraCoreGuest):
     def __init__(self, arch, url):
-        FedoraCoreGuest.__init__(self, "4", arch, url, "/home/clalance/upstream/oz/fedoracore-4-jeos.ks")
+        FedoraCoreGuest.__init__(self, "4", arch, url, "./fedoracore-4-jeos.ks")
     def generate_diskimage(self):
         self.generate_blank_diskimage()
 
 def get_class(update, arch, url):
-    ks = "/home/clalance/upstream/oz/fedoracore-" + update + "-jeos.ks"
+    ks = "./fedoracore-" + update + "-jeos.ks"
     if update == "6" or update == "5" or update == "3" or update == "2" or update == "1":
         return FedoraCoreGuest(update, arch, url, ks)
     if update == "4":

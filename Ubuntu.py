@@ -277,15 +277,15 @@ class Ubuntu610Guest(Guest.CDGuest):
 
 def get_class(update, arch, isourl):
     if update == "9.04":
-        return Ubuntu904Guest(update, arch, "/home/clalance/upstream/oz/ubuntu-904-jeos.preseed", isourl)
+        return Ubuntu904Guest(update, arch, "./ubuntu-904-jeos.preseed", isourl)
     if update == "8.10":
-        return Ubuntu810Guest(update, arch, "/home/clalance/upstream/oz/ubuntu-810-jeos.preseed", isourl)
+        return Ubuntu810Guest(update, arch, "./ubuntu-810-jeos.preseed", isourl)
     if update == "8.04.1":
-        return Ubuntu8041Guest(update, arch, "/home/clalance/upstream/oz/ubuntu-8041-jeos.preseed", isourl)
+        return Ubuntu8041Guest(update, arch, "./ubuntu-8041-jeos.preseed", isourl)
     if update == "7.10":
-        return Ubuntu710Guest(update, arch, "/home/clalance/upstream/oz/ubuntu-710-jeos.preseed", isourl)
+        return Ubuntu710Guest(update, arch, "./ubuntu-710-jeos.preseed", isourl)
     if update == "7.04":
-        return Ubuntu704Guest(update, arch, "/home/clalance/upstream/oz/ubuntu-704-jeos.preseed", isourl)
+        return Ubuntu704Guest(update, arch, "./ubuntu-704-jeos.preseed", isourl)
     if update == "6.10":
-        return Ubuntu610Guest(update, arch, "/home/clalance/upstream/oz/ubuntu-610-jeos.preseed", isourl)
+        return Ubuntu610Guest(update, arch, "./ubuntu-610-jeos.preseed", isourl)
     raise Exception, "Unsupported Ubuntu update " + update
