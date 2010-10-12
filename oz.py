@@ -13,7 +13,7 @@ def usage():
     print " Currently supported architectures are:"
     print "  i386, x86_64"
     print " Currently supported distros are:"
-    print "   Fedora: 7, 8, 9, 10, 11, 12"
+    print "   Fedora: 7, 8, 9, 10, 11, 12, 13"
     print "   Fedora Core: 1, 2, 3, 4, 5, 6"
     print "   RHEL 3: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9"
     print "   RHEL 4: GOLD, U1, U2, U3, U4, U5, U6, U7, U8"
