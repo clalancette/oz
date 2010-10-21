@@ -276,7 +276,7 @@ class Ubuntu610Guest(Guest.CDGuest):
         f.writelines(lines)
         f.close()
 
-def get_class(update, arch, isourl):
+def get_class(update, arch, isourl, key):
     if update == "9.04":
         return Ubuntu904Guest(update, arch, "./ubuntu-904-jeos.preseed", isourl)
     if update == "8.10":

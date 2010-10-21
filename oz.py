@@ -30,15 +30,15 @@ arch = sys.argv[3]
 url = sys.argv[4]
 
 if distro == "Fedora":
-    guest = Fedora.get_class(update, arch, url)
+    guest = Fedora.get_class(update, arch, url, key)
 elif distro == "FedoraCore":
-    guest = FedoraCore.get_class(update, arch, url)
+    guest = FedoraCore.get_class(update, arch, url, key)
 elif distro == "RHEL-3":
-    guest = RHEL_3.get_class(update, arch, url)
+    guest = RHEL_3.get_class(update, arch, url, key)
 elif distro == "RHEL-4":
-    guest = RHEL_4.get_class(update, arch, url)
+    guest = RHEL_4.get_class(update, arch, url, key)
 elif distro == "RHEL-5":
-    guest = RHEL_5.get_class(update, arch, url)
+    guest = RHEL_5.get_class(update, arch, url, key)
 elif distro == "Ubuntu":
     guest = Ubuntu.get_class(update, arch, url)
 else:

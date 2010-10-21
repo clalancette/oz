@@ -51,7 +51,7 @@ class FedoraGuest(Guest.CDGuest):
         self.generate_new_iso()
         self.cleanup_iso()
 
-def get_class(update, arch, url):
+def get_class(update, arch, url, key):
     ks = "./fedora-" + update + "-jeos.ks"
     if update == "10" or update == "11" or update == "12" or update == "13":
         return FedoraGuest(update, arch, url, ks, "virtio", True, "virtio")

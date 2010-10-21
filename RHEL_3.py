@@ -47,7 +47,7 @@ class RHEL3Guest(Guest.CDGuest):
         self.generate_new_iso()
         self.cleanup_iso()
 
-def get_class(update, arch, url):
+def get_class(update, arch, url, key):
     if update == "GOLD" or update == "U1" or update == "U2" or update == "U3" or update == "U4" or update == "U5" or update == "U6" or update == "U7" or update == "U8" or update == "U9":
         return RHEL3Guest(update, arch, url, "./rhel-3-jeos.ks")
     raise Exception, "Unsupported RHEL-3 update " + update

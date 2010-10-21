@@ -53,7 +53,7 @@ class FedoraCore4Guest(FedoraCoreGuest):
     def generate_diskimage(self):
         self.generate_blank_diskimage()
 
-def get_class(update, arch, url):
+def get_class(update, arch, url, key):
     ks = "./fedoracore-" + update + "-jeos.ks"
     if update == "6" or update == "5" or update == "3" or update == "2" or update == "1":
         return FedoraCoreGuest(update, arch, url, ks)

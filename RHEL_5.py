@@ -47,7 +47,7 @@ class RHEL5Guest(Guest.CDGuest):
         self.generate_new_iso()
         self.cleanup_iso()
 
-def get_class(update, arch, url):
+def get_class(update, arch, url, key):
     if update == "GOLD" or update == "U1" or update == "U2" or update == "U3":
         return RHEL5Guest(update, arch, url, "./rhel-5-jeos.ks", "rtl8139", None)
     if update == "U4" or update == "U5":
