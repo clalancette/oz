@@ -1,0 +1,48 @@
+;SetupMgrTag
+[Data]
+    AutoPartition=1
+    MsDosInitiated="0"
+    UnattendedInstall="Yes"
+
+[Unattended]
+    UnattendMode=FullUnattended
+    OemSkipEula=Yes
+    OemPreinstall=No
+    TargetPath=\WINDOWS
+    Repartition=Yes
+    WaitForReboot="No"
+    UnattendSwitch="Yes"
+
+[GuiUnattended]
+    AdminPassword="100yard-"
+    EncryptedAdminPassword=NO
+    AutoLogon=Yes
+    AutoLogonCount=1
+    OEMSkipRegional=1
+    TimeZone=35
+    OemSkipWelcome=1
+
+[UserData]
+    ProductKey=
+    FullName="OZ"
+    OrgName=""
+    ComputerName=
+
+[LicenseFilePrintData]
+    AutoMode=PerServer
+    AutoUsers=5
+
+[Identification]
+    JoinWorkgroup=WORKGROUP
+
+[Networking]
+    InstallDefaultComponents=Yes
+
+[SetupParams]
+    UserExecute = "sc config TlntSvr start= auto"
+
+[WindowsFirewall]
+    Profiles = WindowsFirewall.TurnOffFirewall
+
+[WindowsFirewall.TurnOffFirewall]
+    Mode = 0
