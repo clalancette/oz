@@ -5,7 +5,7 @@ import subprocess
 import re
 import os
 
-class Windows2003(Guest.CDGuest):
+class WindowsXPand2003(Guest.CDGuest):
     def __init__(self, update, arch, url, key, siffile):
         if key is None:
             raise Exception, "A key is required when installing Windows"
@@ -119,6 +119,7 @@ class Windows2003(Guest.CDGuest):
         self.wait_for_install_finish(3600)
 
 def get_class(update, arch, url, key):
-    if update == "2003":
-        return Windows2003(update, arch, url, key, "./windows-2003-jeos.sif")
+    sif = "./windows-" + update + "-jeos.sif"
+    if update == "XP" or update == "2003":
+        return WindowsXPand2003(update, arch, url, key, sif)
     raise Exception, "Unsupported Windows update " + update
