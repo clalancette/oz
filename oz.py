@@ -10,6 +10,7 @@ import RHEL_2_1
 import RHEL_3
 import RHEL_4
 import RHEL_5
+import RHL
 import Ubuntu
 import Windows
 
@@ -29,6 +30,7 @@ def usage():
     print "   RHEL 5: GOLD, U1, U2, U3, U4, U5"
     print "   Ubuntu: 6.10, 7.04, 7.10, 8.04.[1,2,3,4], 8.10, 9.04"
     print "   Windows: 2000, XP, 2003"
+    print "   RHL: 9"
     sys.exit(1)
 
 try:
@@ -74,6 +76,8 @@ elif distro == "Ubuntu":
     guest = Ubuntu.get_class(update, arch, url, key)
 elif distro == "Windows":
     guest = Windows.get_class(update, arch, url, key)
+elif distro == "RHL":
+    guest = RHL.get_class(update, arch, url, key)
 else:
     usage()
 

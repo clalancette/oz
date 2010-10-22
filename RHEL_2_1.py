@@ -17,7 +17,7 @@ class RHEL21Guest(Guest.FDGuest):
         print "Putting the kickstart in place"
 
         output_ks = self.floppy_contents + "/ks.cfg"
-        shutil.copyfile(self.ks_file, self.floppy_contents + "/ks.cfg")
+        shutil.copyfile(self.ks_file, output_ks)
         f = open(output_ks, "r")
         lines = f.readlines()
         f.close()
