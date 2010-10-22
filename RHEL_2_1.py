@@ -58,15 +58,6 @@ class RHEL21Guest(Guest.FDGuest):
         self.copy_floppy()
         self.modify_floppy()
 
-    def install(self):
-        print "Running install for " + self.name
-        self.generate_define_xml("fd")
-        self.libvirt_dom.create()
-
-        self.wait_for_install_finish(1200)
-
-        self.generate_define_xml("hd")
-
 def get_class(update, arch, url, key):
     if arch != "i386":
         raise Exception, "Invalid arch " + arch + "for RHEL-2.1 guest"

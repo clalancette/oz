@@ -351,3 +351,13 @@ class FDGuest(Guest):
     def copy_floppy(self):
         print "Copying floppy contents for modification"
         shutil.copyfile(self.orig_floppy, self.output_floppy)
+
+    def install(self):
+        print "Running install for " + self.name
+        self.generate_define_xml("fd")
+        self.libvirt_dom.create()
+
+        self.wait_for_install_finish(1200)
+
+        self.generate_define_xml("hd")
+
