@@ -1,0 +1,42 @@
+;SetupMgrTag
+[Data]
+    AutoPartition=1
+    MsDosInitiated="0"
+    UnattendedInstall="Yes"
+
+[Unattended]
+    UnattendMode=FullUnattended
+    OemSkipEula=Yes
+    OemPreinstall=No
+    TargetPath=\WINNT
+    Repartition=Yes
+    WaitForReboot="No"
+    UnattendSwitch="Yes"
+
+[GuiUnattended]
+    AdminPassword=100yard-
+    AutoLogon=Yes
+    AutoLogonCount=1
+    OEMSkipRegional=1
+    TimeZone=35
+    OemSkipWelcome=1
+
+[UserData]
+    ProductID=
+    FullName="OZ"
+    ComputerName=
+
+[Display]
+    BitsPerPel=16
+    Xresolution=640
+    YResolution=480
+    Vrefresh=60
+
+[RegionalSettings]
+    LanguageGroup=1
+
+[Identification]
+    JoinWorkgroup=WORKGROUP
+
+[Networking]
+    InstallDefaultComponents=Yes

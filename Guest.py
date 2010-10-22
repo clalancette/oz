@@ -279,14 +279,18 @@ class Guest(object):
             def data(buf):
                 self.outf.write(buf)
 
+            # FIXME: check up front that the url is accessible; if not, throw
+            # an error
             c = pycurl.Curl()
             c.setopt(c.URL, url)
             c.setopt(c.CONNECTTIMEOUT, 5)
             c.setopt(c.WRITEFUNCTION, data)
             c.setopt(c.NOPROGRESS, 0)
             c.setopt(c.PROGRESSFUNCTION, progress)
+            # FIXME: if the perform fails, throw an error
             c.perform()
             c.close()
+            print
             self.outf.close()
 
 class CDGuest(Guest):

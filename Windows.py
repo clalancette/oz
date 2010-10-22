@@ -5,11 +5,14 @@ import subprocess
 import re
 import os
 
-class WindowsXPand2003(Guest.CDGuest):
+class Windows2000andXPand2003(Guest.CDGuest):
     def __init__(self, update, arch, url, key, siffile):
         if key is None:
             raise Exception, "A key is required when installing Windows"
         Guest.CDGuest.__init__(self, "Windows", update, arch, None, None, "localtime", "usb", None)
+        if update == "2000" and arch != "i386":
+            raise Exception, "Windows 2000 only supports i386 architecture"
+
         self.key = key
         self.url = url
         self.siffile = siffile
@@ -95,6 +98,8 @@ class WindowsXPand2003(Guest.CDGuest):
         for line in lines:
             if re.match(" *ProductKey", line):
                 lines[lines.index(line)] = "    ProductKey=" + self.key + "\n"
+            elif re.match(" *ProductID", line):
+                lines[lines.index(line)] = "    ProductID=" + self.key + "\n"
             elif re.match(" *ComputerName", line):
                 lines[lines.index(line)] = "    ComputerName=" + computername + "\n"
 
@@ -120,6 +125,6 @@ class WindowsXPand2003(Guest.CDGuest):
 
 def get_class(update, arch, url, key):
     sif = "./windows-" + update + "-jeos.sif"
-    if update == "XP" or update == "2003":
-        return WindowsXPand2003(update, arch, url, key, sif)
+    if update == "2000" or update == "XP" or update == "2003":
+        return Windows2000andXPand2003(update, arch, url, key, sif)
     raise Exception, "Unsupported Windows update " + update
