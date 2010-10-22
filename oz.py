@@ -6,6 +6,7 @@ import os
 
 import Fedora
 import FedoraCore
+import RHEL_2_1
 import RHEL_3
 import RHEL_4
 import RHEL_5
@@ -22,6 +23,7 @@ def usage():
     print " Currently supported distros are:"
     print "   Fedora: 7, 8, 9, 10, 11, 12, 13"
     print "   Fedora Core: 1, 2, 3, 4, 5, 6"
+    print "   RHEL 2.1: GOLD, U1, U2, U3, U4, U5, U6"
     print "   RHEL 3: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9"
     print "   RHEL 4: GOLD, U1, U2, U3, U4, U5, U6, U7, U8"
     print "   RHEL 5: GOLD, U1, U2, U3, U4, U5"
@@ -60,6 +62,8 @@ if distro == "Fedora":
     guest = Fedora.get_class(update, arch, url, key)
 elif distro == "FedoraCore":
     guest = FedoraCore.get_class(update, arch, url, key)
+elif distro == "RHEL-2.1":
+    guest = RHEL_2_1.get_class(update, arch, url, key)
 elif distro == "RHEL-3":
     guest = RHEL_3.get_class(update, arch, url, key)
 elif distro == "RHEL-4":

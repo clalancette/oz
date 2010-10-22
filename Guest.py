@@ -206,8 +206,8 @@ class Guest(object):
         # install disk (cdrom or floppy)
         if hasattr(self, "output_iso"):
             devicesNode.appendChild(self.targetDev(doc, "cdrom", self.output_iso, "hdc"))
-        if hasattr(self, "floppy"):
-            devicesNode.appendChild(self.targetDev(doc, "floppy", self.floppy, "fda"))
+        if hasattr(self, "output_floppy"):
+            devicesNode.appendChild(self.targetDev(doc, "floppy", self.output_floppy, "fda"))
         domain.appendChild(devicesNode)
 
         self.libvirt_dom = self.libvirt_conn.defineXML(doc.toxml())
@@ -255,6 +255,39 @@ class Guest(object):
 
         print ""
 
+    def get_original_media(self, url, output):
+        original_available = False
+        if os.access(output, os.F_OK):
+            for header in urllib.urlopen(url).headers.headers:
+                if re.match("Content-Length:", header):
+                    if int(header.split()[1]) == os.stat(output)[stat.ST_SIZE]:
+                        original_available = True
+                    break
+
+        if original_available:
+            print "Original install media available, using cached version"
+        else:
+            print "Fetching the original install media from " + url
+            def progress(down_total, down_current, up_total, up_current):
+                print '%dkB of %dkB\r' % (down_current/1024, down_total/1024),
+                sys.stdout.flush()
+
+            if not os.access(os.path.dirname(output), os.F_OK):
+                os.makedirs(os.path.dirname(output))
+            self.outf = open(output, "w")
+            def data(buf):
+                self.outf.write(buf)
+
+            c = pycurl.Curl()
+            c.setopt(c.URL, url)
+            c.setopt(c.CONNECTTIMEOUT, 5)
+            c.setopt(c.WRITEFUNCTION, data)
+            c.setopt(c.NOPROGRESS, 0)
+            c.setopt(c.PROGRESSFUNCTION, progress)
+            c.perform()
+            c.close()
+            self.outf.close()
+
 class CDGuest(Guest):
     def __init__(self, distro, update, arch, macaddr, nicmodel, clockoffset,
                  mousetype, diskbus):
@@ -264,37 +297,7 @@ class CDGuest(Guest):
         self.iso_contents = "/var/lib/kvminstaller/isocontent/" + self.name
 
     def get_original_iso(self, isourl):
-        original_available = False
-        if os.access(self.orig_iso, os.F_OK):
-            for header in urllib.urlopen(isourl).headers.headers:
-                if re.match("Content-Length:", header):
-                    if int(header.split()[1]) == os.stat(self.orig_iso)[stat.ST_SIZE]:
-                        original_available = True
-                    break
-
-        if original_available:
-            print "Original ISO available, using cached version"
-        else:
-            print "Fetching the original ISO from " + isourl
-            def progress(down_total, down_current, up_total, up_current):
-                print '%dkB of %dkB\r' % (down_current/1024, down_total/1024),
-                sys.stdout.flush()
-
-            if not os.access(os.path.dirname(self.orig_iso), os.F_OK):
-                os.makedirs(os.path.dirname(self.orig_iso))
-            self.outf = open(self.orig_iso, "w")
-            def data(buf):
-                self.outf.write(buf)
-
-            c = pycurl.Curl()
-            c.setopt(c.URL, isourl)
-            c.setopt(c.CONNECTTIMEOUT, 5)
-            c.setopt(c.WRITEFUNCTION, data)
-            c.setopt(c.NOPROGRESS, 0)
-            c.setopt(c.PROGRESSFUNCTION, progress)
-            c.perform()
-            c.close()
-            self.outf.close()
+        return self.get_original_media(isourl, self.orig_iso)
 
     def copy_iso(self):
         print "Copying ISO contents for modification"
@@ -321,9 +324,25 @@ class CDGuest(Guest):
         self.generate_define_xml("cdrom")
         self.libvirt_dom.create()
 
-        self.wait_for_install_finish(1000)
+        self.wait_for_install_finish(1200)
 
         self.generate_define_xml("hd")
 
     def cleanup_iso(self):
+        print "Cleaning up old ISO data"
         shutil.rmtree(self.iso_contents)
+
+class FDGuest(Guest):
+    def __init__(self, distro, update, arch, macaddr, nicmodel, clockoffset,
+                 mousetype, diskbus):
+        Guest.__init__(self, distro, update, arch, macaddr, nicmodel, clockoffset, mousetype, diskbus)
+        self.orig_floppy = "/var/lib/kvminstaller/floppies/" + self.name + ".img"
+        self.output_floppy = "/var/lib/libvirt/images/" + self.name + "-oz.img"
+        self.floppy_contents = "/var/lib/kvminstaller/floppycontent/" + self.name
+
+    def get_original_floppy(self, floppyurl):
+        return self.get_original_media(floppyurl, self.orig_floppy)
+
+    def copy_floppy(self):
+        print "Copying floppy contents for modification"
+        shutil.copyfile(self.orig_floppy, self.output_floppy)
