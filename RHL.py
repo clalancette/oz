@@ -59,9 +59,9 @@ class RHL9Guest(Guest.CDGuest):
         self.generate_new_iso()
         self.cleanup_iso()
 
-class RHL8Guest(Guest.FDGuest):
-    def __init__(self, url, ks):
-        Guest.FDGuest.__init__(self, "RHL", "8", "i386", None, "rtl8139", None, None, None)
+class RHL61and62and70and71and72and73and8Guest(Guest.FDGuest):
+    def __init__(self, update, url, ks, nicmodel):
+        Guest.FDGuest.__init__(self, "RHL", update, "i386", None, nicmodel, None, None, None)
         self.url = url
         self.ks_file = ks
 
@@ -119,6 +119,9 @@ def get_class(update, arch, url, key):
         raise Exception, "Invalid arch " + arch + "for RHL guest"
     if update == "9":
         return RHL9Guest(url, ks)
-    if update == "8":
-        return RHL8Guest(url, ks)
+    if update == "7.2" or update == "7.3" or update == "8":
+        return RHL61and62and71and72and73and8Guest(update, url, ks, "rtl8139")
+    # FIXME: 6.1 and 6.2 don't seem to work; they seem to ignore the kickstart
+    if update == "6.1" or update == "6.2" or update == "7.0" or update == "7.1":
+        return RHL61and62and70and71and72and73and8Guest(update, url, ks, "ne2k_pci")
     raise Exception, "Unsupported RHL update " + update
