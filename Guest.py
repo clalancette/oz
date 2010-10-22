@@ -250,6 +250,7 @@ class Guest(object):
                 pass
             time.sleep(1)
 
+        print
         if count == 0:
             raise Exception, "Timed out waiting for install to finish"
 
