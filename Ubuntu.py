@@ -167,7 +167,7 @@ def get_class(update, arch, isourl, key):
     preseed = "./ubuntu-" + update + "-jeos.preseed"
     if update == "8.10" or update == "9.04":
         return Ubuntu810and904Guest(update, arch, preseed, isourl)
-    if update == "7.10" or update == "8.04.1":
+    if update == "7.10" or update == "8.04.1" or update == "8.04.2" or update =="8.04.3" or update == "8.04.4":
         return Ubuntu710and8041Guest(update, arch, preseed, isourl)
     if update == "6.10" or update == "7.04":
         return Ubuntu610and704Guest(update, arch, preseed, isourl)
