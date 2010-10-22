@@ -14,6 +14,8 @@ import sys
 import urllib
 import re
 import stat
+import urlparse
+import httplib
 
 class Guest(object):
     def __init__(self, distro, update, arch, macaddr, nicmodel, clockoffset,
@@ -279,8 +281,13 @@ class Guest(object):
             def data(buf):
                 self.outf.write(buf)
 
-            # FIXME: check up front that the url is accessible; if not, throw
-            # an error
+            p = urlparse.urlparse(url)
+            conn = httplib.HTTPConnection(p[1])
+            conn.request("GET", p[2])
+            response = conn.getresponse()
+            if response.status != 200:
+                raise Exception, "Could not access media url: " + response.reason
+
             c = pycurl.Curl()
             c.setopt(c.URL, url)
             c.setopt(c.CONNECTTIMEOUT, 5)
@@ -360,4 +367,3 @@ class FDGuest(Guest):
         self.wait_for_install_finish(1200)
 
         self.generate_define_xml("hd")
-

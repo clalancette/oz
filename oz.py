@@ -3,6 +3,8 @@
 import sys
 import getopt
 import os
+import urlparse
+import httplib
 
 import Fedora
 import FedoraCore
@@ -46,7 +48,7 @@ for o, a in opts:
     elif o in ("-k", "--key"):
         key = a
     else:
-        assert False, "unhandle option"
+        assert False, "unhandled option"
 
 if os.geteuid() != 0:
     print "%s must be run as root" % (sys.argv[0])
@@ -59,6 +61,14 @@ distro = args[0]
 update = args[1]
 arch = args[2]
 url = args[3]
+
+# a basic up-front check to make sure that the url exists
+p = urlparse.urlparse(url)
+conn = httplib.HTTPConnection(p[1])
+conn.request("GET", p[2])
+response = conn.getresponse()
+if response.status != 200:
+    raise Exception, "Could not access install url: " + response.reason
 
 if distro == "Fedora":
     guest = Fedora.get_class(update, arch, url, key)
