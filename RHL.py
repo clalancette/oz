@@ -46,11 +46,12 @@ class RHL9Guest(Guest.CDGuest):
 
     def generate_new_iso(self):
         print "Generating new ISO"
-        subprocess.call(["mkisofs", "-r", "-T", "-J", "-V", "Custom",
-                         "-b", "isolinux/isolinux.bin",
-                         "-c", "isolinux/boot.cat", "-no-emul-boot",
-                         "-boot-load-size", "4", "-boot-info-table", "-quiet",
-                         "-o", self.output_iso, self.iso_contents])
+        Guest.subprocess_check_output(["mkisofs", "-r", "-T", "-J", "-V",
+                                       "Custom", "-b", "isolinux/isolinux.bin",
+                                       "-c", "isolinux/boot.cat",
+                                       "-no-emul-boot", "-boot-load-size", "4",
+                                       "-boot-info-table", "-v", "-v",
+                                       "-o", self.output_iso, self.iso_contents])
 
     def generate_install_media(self):
         self.get_original_iso(self.url + "/images/boot.iso")
@@ -84,11 +85,14 @@ class RHL61and62and70and71and72and73and8Guest(Guest.FDGuest):
         f = open(output_ks, "w")
         f.writelines(lines)
         f.close()
-        subprocess.call(["mcopy", "-i", self.output_floppy, output_ks, "::KS.CFG"])
+        Guest.subprocess_check_output(["mcopy", "-i", self.output_floppy,
+                                       output_ks, "::KS.CFG"])
 
         print "Modifying the syslinux.cfg"
 
-        subprocess.call(["mcopy", "-n", "-o", "-i", self.output_floppy, "::SYSLINUX.CFG", self.floppy_contents])
+        Guest.subprocess_check_output(["mcopy", "-n", "-o", "-i",
+                                       self.output_floppy, "::SYSLINUX.CFG",
+                                       self.floppy_contents])
         f = open(self.floppy_contents + "/SYSLINUX.CFG", "r")
         lines = f.readlines()
         f.close()
@@ -106,7 +110,9 @@ class RHL61and62and70and71and72and73and8Guest(Guest.FDGuest):
         f.writelines(lines)
         f.close()
 
-        subprocess.call(["mcopy", "-n", "-o", "-i", self.output_floppy, self.floppy_contents + "/SYSLINUX.CFG", "::SYSLINUX.CFG"])
+        Guest.subprocess_check_output(["mcopy", "-n", "-o", "-i",
+                                       self.output_floppy,
+                                       self.floppy_contents + "/SYSLINUX.CFG", "::SYSLINUX.CFG"])
 
     def generate_install_media(self):
         self.get_original_floppy(self.url + "/images/bootnet.img")

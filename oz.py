@@ -62,6 +62,9 @@ update = args[1]
 arch = args[2]
 url = args[3]
 
+if url[-1] != '/':
+    url = url + '/'
+
 # a basic up-front check to make sure that the url exists
 p = urlparse.urlparse(url)
 conn = httplib.HTTPConnection(p[1])

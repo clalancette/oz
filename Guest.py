@@ -17,6 +17,31 @@ import stat
 import urlparse
 import httplib
 
+class ProcessError(Exception):
+    """This exception is raised when a process run by
+    Guest.subprocess_check_output returns a non-zero exit status.  The exit
+    status will be stored in the returncode attribute
+    """
+    def __init__(self, returncode, cmd, output=None):
+        self.returncode = returncode
+        self.cmd = cmd
+        self.output = output
+    def __str__(self):
+        return "'%s' failed(%d): %s" % (self.cmd, self.returncode, self.output)
+
+# NOTE: python 2.7 already defines subprocess.capture_output, but I can't
+# depend on that yet.  So write my own
+def subprocess_check_output(*popenargs, **kwargs):
+    if 'stdout' in kwargs:
+        raise ValueError('stdout argument not allowed, it will be overridden.')
+    process = subprocess.Popen(stdout=subprocess.PIPE, stderr=subprocess.STDOUT, *popenargs, **kwargs)
+    output, unused_err = process.communicate()
+    retcode = process.poll()
+    if retcode:
+        cmd = ' '.join(*popenargs)
+        raise ProcessError(retcode, cmd, output=output)
+    return output
+
 class Guest(object):
     def __init__(self, distro, update, arch, macaddr, nicmodel, clockoffset,
                  mousetype, diskbus):
@@ -323,11 +348,12 @@ class CDGuest(Guest):
 
         # mount and copy the ISO
         # this requires fuseiso to be installed
-        if subprocess.call(["fuseiso", self.orig_iso, isomount]) != 0:
-            raise Exception, "Could not mount " + self.orig_iso
+        subprocess_check_output(["fuseiso", self.orig_iso, isomount])
+
         try:
             shutil.copytree(isomount, self.iso_contents, symlinks=True)
         finally:
+            # FIXME: if fusermount fails, what do we want to do?
             subprocess.call(["fusermount", "-u", isomount])
             os.rmdir(isomount)
 

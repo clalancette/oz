@@ -29,11 +29,14 @@ class RHEL21Guest(Guest.FDGuest):
         f = open(output_ks, "w")
         f.writelines(lines)
         f.close()
-        subprocess.call(["mcopy", "-i", self.output_floppy, output_ks, "::KS.CFG"])
+        Guest.subprocess_check_output(["mcopy", "-i", self.output_floppy,
+                                       output_ks, "::KS.CFG"])
 
         print "Modifying the syslinux.cfg"
 
-        subprocess.call(["mcopy", "-n", "-o", "-i", self.output_floppy, "::SYSLINUX.CFG", self.floppy_contents])
+        Guest.subprocess_check_output(["mcopy", "-n", "-o", "-i",
+                                       self.output_floppy, "::SYSLINUX.CFG",
+                                       self.floppy_contents])
         f = open(self.floppy_contents + "/SYSLINUX.CFG", "r")
         lines = f.readlines()
         f.close()
@@ -51,7 +54,9 @@ class RHEL21Guest(Guest.FDGuest):
         f.writelines(lines)
         f.close()
 
-        subprocess.call(["mcopy", "-n", "-o", "-i", self.output_floppy, self.floppy_contents + "/SYSLINUX.CFG", "::SYSLINUX.CFG"])
+        Guest.subprocess_check_output(["mcopy", "-n", "-o", "-i",
+                                       self.output_floppy,
+                                       self.floppy_contents + "/SYSLINUX.CFG", "::SYSLINUX.CFG"])
 
     def generate_install_media(self):
         self.get_original_floppy(self.url + "/images/bootnet.img")

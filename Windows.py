@@ -72,12 +72,14 @@ class Windows2000andXPand2003(Guest.CDGuest):
 
     def generate_new_iso(self):
         print "Generating new ISO"
-        subprocess.call(["mkisofs", "-b", "cdboot/boot.bin", "-no-emul-boot",
-                         "-boot-load-seg", "1984", "-boot-load-size", "4",
-                         "-iso-level", "2", "-J", "-l", "-D", "-N",
-                         "-joliet-long", "-relaxed-filenames", "-quiet",
-                         "-V", "Custom",
-                         "-o", self.output_iso, self.iso_contents])
+        Guest.subprocess_check_output(["mkisofs", "-b", "cdboot/boot.bin",
+                                       "-no-emul-boot", "-boot-load-seg",
+                                       "1984", "-boot-load-size", "4",
+                                       "-iso-level", "2", "-J", "-l", "-D",
+                                       "-N", "-joliet-long",
+                                       "-relaxed-filenames", "-v", "-v",
+                                       "-V", "Custom",
+                                       "-o", self.output_iso, self.iso_contents])
 
     def modify_iso(self):
         os.mkdir(self.iso_contents + "/cdboot")
@@ -87,7 +89,8 @@ class Windows2000andXPand2003(Guest.CDGuest):
             winarch = self.arch
         elif self.arch == "x86_64":
             winarch = "amd64"
-        # FIXME: check if self.arch is bogus (this should never happen)
+        else:
+            raise Exception, "Unexpected architecture " + self.arch
 
         computername = "OZ" + str(random.randrange(1, 900000))
 

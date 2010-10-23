@@ -7,7 +7,6 @@ class FedoraGuest(Guest.CDGuest):
     def __init__(self, update, arch, url, ks, nicmodel, haverepo, diskbus):
         Guest.CDGuest.__init__(self, "Fedora", update, arch, None, nicmodel, None, None, diskbus)
         self.ks_file = ks
-        # FIXME: check that the url is accessible
         self.url = url
         self.haverepo = haverepo
 
@@ -38,11 +37,12 @@ class FedoraGuest(Guest.CDGuest):
 
     def generate_new_iso(self):
         print "Generating new ISO"
-        subprocess.call(["mkisofs", "-r", "-T", "-J", "-V", "Custom",
-                         "-b", "isolinux/isolinux.bin",
-                         "-c", "isolinux/boot.cat", "-no-emul-boot",
-                         "-boot-load-size", "4", "-boot-info-table", "-quiet",
-                         "-o", self.output_iso, self.iso_contents])
+        Guest.subprocess_check_output(["mkisofs", "-r", "-T", "-J", "-V",
+                                       "Custom", "-b", "isolinux/isolinux.bin",
+                                       "-c", "isolinux/boot.cat",
+                                       "-no-emul-boot", "-boot-load-size", "4",
+                                       "-boot-info-table", "-v", "-v",
+                                       "-o", self.output_iso, self.iso_contents])
 
     def generate_install_media(self):
         self.get_original_iso(self.url + "/images/boot.iso")

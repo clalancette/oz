@@ -5,6 +5,15 @@ import re
 import os
 import stat
 
+def ubuntu_generate_iso(output, inputdir):
+    print "Generating new ISO"
+    Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom",
+                                  "-cache-inodes", "-J", "-l", "-b",
+                                  "isolinux/isolinux.bin", "-c",
+                                  "isolinux/boot.cat", "-no-emul-boot",
+                                  "-boot-load-size", "4", "-boot-info-table",
+                                  "-v", "-v", "-o", output, inputdir])
+
 class Ubuntu810and904Guest(Guest.CDGuest):
     def __init__(self, update, arch, preseed, iso):
         Guest.CDGuest.__init__(self, "Ubuntu", update, arch, None, "virtio", None, None, "virtio")
@@ -15,12 +24,7 @@ class Ubuntu810and904Guest(Guest.CDGuest):
         self.preseed_file = preseed
 
     def generate_new_iso(self):
-        print "Generating new ISO"
-        subprocess.call(["mkisofs", "-r", "-V", "Custom", "-cache-inodes",
-                         "-J", "-l", "-b", "isolinux/isolinux.bin",
-                         "-c", "isolinux/boot.cat", "-no-emul-boot",
-                         "-boot-load-size", "4", "-boot-info-table", "-quiet",
-                         "-o", self.output_iso, self.iso_contents])
+        ubuntu_generate_iso(self.output_iso, self.iso_contents)
 
     def generate_install_media(self):
         self.get_original_iso(self.isourl)
@@ -74,12 +78,7 @@ class Ubuntu710and8041Guest(Guest.CDGuest):
         self.preseed_file = preseed
 
     def generate_new_iso(self):
-        print "Generating new ISO"
-        subprocess.call(["mkisofs", "-r", "-V", "Custom", "-cache-inodes",
-                         "-J", "-l", "-b", "isolinux/isolinux.bin",
-                         "-c", "isolinux/boot.cat", "-no-emul-boot",
-                         "-boot-load-size", "4", "-boot-info-table", "-quiet",
-                         "-o", self.output_iso, self.iso_contents])
+        ubuntu_generate_iso(self.output_iso, self.iso_contents)
 
     def generate_install_media(self):
         self.get_original_iso(self.isourl)
@@ -124,12 +123,7 @@ class Ubuntu610and704Guest(Guest.CDGuest):
         self.preseed_file = preseed
 
     def generate_new_iso(self):
-        print "Generating new ISO"
-        subprocess.call(["mkisofs", "-r", "-V", "Custom", "-cache-inodes",
-                         "-J", "-l", "-b", "isolinux/isolinux.bin",
-                         "-c", "isolinux/boot.cat", "-no-emul-boot",
-                         "-boot-load-size", "4", "-boot-info-table", "-quiet",
-                         "-o", self.output_iso, self.iso_contents])
+        ubuntu_generate_iso(self.output_iso, self.iso_contents)
 
     def generate_install_media(self):
         self.get_original_iso(self.isourl)
