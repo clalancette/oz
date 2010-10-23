@@ -22,7 +22,7 @@ def usage():
     print "  -h\t\tPrint this help message"
     print "  -k <key>\tUse <key> when installing the guest (this is OS-specific)"
     print " Currently supported architectures are:"
-    print "  i386, x86_64"
+    print "   i386, x86_64"
     print " Currently supported distros are:"
     print "   Fedora: 7, 8, 9, 10, 11, 12, 13"
     print "   Fedora Core: 1, 2, 3, 4, 5, 6"
@@ -62,11 +62,12 @@ update = args[1]
 arch = args[2]
 url = args[3]
 
-if url[-1] != '/':
-    url = url + '/'
-
 # a basic up-front check to make sure that the url exists
 p = urlparse.urlparse(url)
+if p[0] != "http":
+    raise Exception, "Must use http install URLs"
+if p[1] == "localhost" or p[1] == "localhost.localdomain" or p[1] == "127.0.0.1":
+    raise Exception, "Can not use localhost for an install URL"
 conn = httplib.HTTPConnection(p[1])
 conn.request("GET", p[2])
 response = conn.getresponse()

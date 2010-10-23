@@ -1,6 +1,5 @@
 install
 text
-url --url REPLACE_ME
 keyboard us
 lang en_US
 mouse generic3ps/2 --device psaux

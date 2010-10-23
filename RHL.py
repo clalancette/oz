@@ -60,7 +60,7 @@ class RHL9Guest(Guest.CDGuest):
         self.generate_new_iso()
         self.cleanup_iso()
 
-class RHL61and62and70and71and72and73and8Guest(Guest.FDGuest):
+class RHL70and71and72and73and8Guest(Guest.FDGuest):
     def __init__(self, update, url, ks, nicmodel):
         Guest.FDGuest.__init__(self, "RHL", update, "i386", None, nicmodel, None, None, None)
         self.url = url
@@ -126,8 +126,22 @@ def get_class(update, arch, url, key):
     if update == "9":
         return RHL9Guest(url, ks)
     if update == "7.2" or update == "7.3" or update == "8":
-        return RHL61and62and71and72and73and8Guest(update, url, ks, "rtl8139")
-    # FIXME: 6.1 and 6.2 don't seem to work; they seem to ignore the kickstart
-    if update == "6.1" or update == "6.2" or update == "7.0" or update == "7.1":
-        return RHL61and62and70and71and72and73and8Guest(update, url, ks, "ne2k_pci")
+        return RHL70and71and72and73and8Guest(update, url, ks, "rtl8139")
+    # FIXME: RHL 6.2 does not work via HTTP because of a bug in the installer;
+    # when parsing a URL passed in via "method", it fails to put a / at the
+    # beginning of the URL.  What this means is that when the installer goes
+    # to fetch the install images via "GET path/to/netstg2.img HTTP/0.9", the
+    # web server then returns an error.  To do a fully automated install, we
+    # need to use an ISO, NFS or FTP install method; I could not get FTP
+    # to work, but I did not try that hard
+    # FIXME: RHL 6.1 fails for a different reason, namely that there is no
+    # netstg2.img available in the distribution I have.  Unfortunately, I have
+    # not been able to find the netstg2.img, nor an ISO of 6.1 to do an
+    # alternate install.  NFS may still work here.
+    # FIXME: RHL 6.0 fails for yet a different reason, a kernel panic on boot
+    # The panic is:
+    # VFS: Cannot open root device 08:21
+    # Kernel panic: VFS: Unable to mount root fs on 08:21
+    if update == "7.0" or update == "7.1":
+        return RHL70and71and72and73and8Guest(update, url, ks, "ne2k_pci")
     raise Exception, "Unsupported RHL update " + update
