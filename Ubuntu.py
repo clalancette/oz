@@ -14,14 +14,15 @@ def ubuntu_generate_iso(output, inputdir):
                                   "-boot-load-size", "4", "-boot-info-table",
                                   "-v", "-v", "-o", output, inputdir])
 
-class Ubuntu810and904Guest(Guest.CDGuest):
-    def __init__(self, update, arch, preseed, iso):
+class Ubuntu810and904and910Guest(Guest.CDGuest):
+    def __init__(self, update, arch, preseed, iso, initrd):
         Guest.CDGuest.__init__(self, "Ubuntu", update, arch, None, "virtio", None, None, "virtio")
         self.ubuntuarch = arch
         if self.ubuntuarch == "x86_64":
             self.ubuntuarch = "amd64"
         self.isourl = iso
         self.preseed_file = preseed
+        self.initrd = initrd
 
     def generate_new_iso(self):
         ubuntu_generate_iso(self.output_iso, self.iso_contents)
@@ -48,7 +49,7 @@ class Ubuntu810and904Guest(Guest.CDGuest):
         lines.append("label customiso\n")
         lines.append("  menu label ^Customiso\n")
         lines.append("  kernel /casper/vmlinuz\n")
-        lines.append("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us boot=casper automatic-ubiquity noprompt initrd=/casper/initrd.gz ramdisk_size=14984 --\n")
+        lines.append("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us boot=casper automatic-ubiquity noprompt initrd=" + self.initrd + " ramdisk_size=14984 --\n")
         f = open(self.iso_contents + "/isolinux/text.cfg", "w")
         f.writelines(lines)
         f.close()
@@ -159,8 +160,10 @@ class Ubuntu610and704Guest(Guest.CDGuest):
 
 def get_class(update, arch, isourl, key):
     preseed = "./ubuntu-" + update + "-jeos.preseed"
+    if update == "9.10":
+        return Ubuntu810and904and910Guest(update, arch, preseed, isourl, "/casper/initrd.lz")
     if update == "8.10" or update == "9.04":
-        return Ubuntu810and904Guest(update, arch, preseed, isourl)
+        return Ubuntu810and904and910Guest(update, arch, preseed, isourl, "/casper/initrd.gz")
     if update == "7.10" or update == "8.04.1" or update == "8.04.2" or update =="8.04.3" or update == "8.04.4":
         return Ubuntu710and8041Guest(update, arch, preseed, isourl)
     if update == "6.10" or update == "7.04":
