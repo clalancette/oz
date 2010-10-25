@@ -278,7 +278,7 @@ class Guest(object):
         print
         if count == 0:
             # if we timed out, then let's make sure to take a screenshot.
-            screenshot = self.name + "-" + time.time() + ".png"
+            screenshot = self.name + "-" + str(time.time()) + ".png"
             ozutil.capture_screenshot(self.libvirt_dom.XMLDesc(0), screenshot)
             raise Exception, "Timed out waiting for install to finish"
 
@@ -307,12 +307,10 @@ class Guest(object):
             def data(buf):
                 self.outf.write(buf)
 
-            p = urlparse.urlparse(url)
-            conn = httplib.HTTPConnection(p[1])
-            conn.request("GET", p[2])
-            response = conn.getresponse()
-            if response.status != 200:
-                raise Exception, "Could not access media url: " + response.reason
+            # note that all redirects should already have been resolved by this point
+            # this is merely to check that the media that we are trying to fetch actually
+            # exists
+            ozutil.check_url(url)
 
             c = pycurl.Curl()
             c.setopt(c.URL, url)
@@ -325,6 +323,11 @@ class Guest(object):
             c.close()
             print
             self.outf.close()
+
+            if os.stat(output)[stat.ST_SIZE] == 0:
+                # if we see a zero-sized media after the download, we know something
+                # went wrong
+                raise Exception, "Media of 0 size downloaded"
 
 class CDGuest(Guest):
     def __init__(self, distro, update, arch, macaddr, nicmodel, clockoffset,

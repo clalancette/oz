@@ -123,14 +123,13 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
 def get_class(idl):
     update = idl.update()
     arch = idl.arch()
-    url = idl.url()
 
     ks = "./rhl-" + update + "-jeos.ks"
 
     if idl.installtype() != 'url':
         raise Exception, "RHEL-2.1 installs must be done via url"
 
-    ozutil.check_url_install(url)
+    url = ozutil.check_url_install(idl.url())
 
     if arch != "i386":
         raise Exception, "Invalid arch " + arch + "for RHL guest"

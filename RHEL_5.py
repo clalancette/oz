@@ -51,13 +51,12 @@ class RHEL5Guest(Guest.CDGuest):
 def get_class(idl):
     update = idl.update()
     arch = idl.arch()
-    url = idl.url()
     key = idl.key()
 
     if idl.installtype() != 'url':
         raise Exception, "RHEL-5 installs must be done via url"
 
-    ozutil.check_url_install(url)
+    url = ozutil.check_url_install(idl.url())
 
     if update == "GOLD" or update == "U1" or update == "U2" or update == "U3":
         return RHEL5Guest(update, arch, url, "./rhel-5-jeos.ks", "rtl8139", None)

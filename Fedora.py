@@ -55,13 +55,12 @@ class FedoraGuest(Guest.CDGuest):
 def get_class(idl):
     update = idl.update()
     arch = idl.arch()
-    url = idl.url()
     ks = "./fedora-" + update + "-jeos.ks"
 
     if idl.installtype() != 'url':
         raise Exception, "Fedora installs must be done via url"
 
-    ozutil.check_url_install(url)
+    url = ozutil.check_url_install(idl.url())
 
     if update == "10" or update == "11" or update == "12" or update == "13":
         return FedoraGuest(update, arch, url, ks, "virtio", True, "virtio")

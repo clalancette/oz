@@ -13,18 +13,26 @@ def check_url(url):
     conn = httplib.HTTPConnection(p[1])
     conn.request("GET", p[2])
     response = conn.getresponse()
-    if response.status != 200:
+    if response.status == 302:
+        redirecturl = response.getheader('location')
+        if redirecturl is None:
+            raise Exception, "Could not access install url: " + response.reason
+        return check_url(redirecturl)
+    elif response.status != 200:
         raise Exception, "Could not access install url: " + response.reason
+    return url
 
 def check_iso_install(iso):
     print "Checking ISO...",
-    check_url(iso)
+    ret = check_url(iso)
     print "OK"
+    return ret
 
 def check_url_install(url):
     print "Checking URL...",
-    check_url(url)
+    ret = check_url(url)
     print "OK"
+    return ret
 
 def capture_screenshot(xml, filename):
     doc = libxml2.parseMemory(xml, len(xml))

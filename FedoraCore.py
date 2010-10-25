@@ -57,13 +57,12 @@ class FedoraCore4Guest(FedoraCoreGuest):
 def get_class(idl):
     update = idl.update()
     arch = idl.arch()
-    url = idl.url()
     ks = "./fedoracore-" + update + "-jeos.ks"
 
     if idl.installtype() != 'url':
         raise Exception, "Fedora installs must be done via url"
 
-    ozutil.check_url_install(url)
+    url = ozutil.check_url_install(idl.url())
 
     if update == "6" or update == "5" or update == "3" or update == "2" or update == "1":
         return FedoraCoreGuest(update, arch, url, ks)

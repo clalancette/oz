@@ -162,13 +162,12 @@ class Ubuntu610and704Guest(Guest.CDGuest):
 def get_class(idl):
     update = idl.update()
     arch = idl.arch()
-    isourl = idl.iso()
     preseed = "./ubuntu-" + update + "-jeos.preseed"
 
     if idl.installtype() != 'iso':
         raise Exception, "Ubuntu installs must be done via iso"
 
-    ozutil.check_iso_install(isourl)
+    isourl = ozutil.check_iso_install(idl.iso())
 
     if update == "9.10":
         return Ubuntu810and904and910Guest(update, arch, preseed, isourl, "/casper/initrd.lz")

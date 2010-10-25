@@ -130,11 +130,10 @@ class Windows2000andXPand2003(Guest.CDGuest):
 def get_class(idl):
     update = idl.update()
     arch = idl.arch()
-    isourl = idl.iso()
     key = idl.key()
     sif = "./windows-" + update + "-jeos.sif"
 
-    ozutil.check_iso_install(isourl)
+    isourl = ozutil.check_iso_install(idl.iso())
 
     if idl.installtype() != 'iso':
         raise Exception, "Windows installs must be done via iso"

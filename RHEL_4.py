@@ -51,12 +51,11 @@ class RHEL4Guest(Guest.CDGuest):
 def get_class(idl):
     update = idl.update()
     arch = idl.arch()
-    url = idl.url()
 
     if idl.installtype() != 'url':
         raise Exception, "RHEL-4 installs must be done via url"
 
-    ozutil.check_url_install(url)
+    url = ozutil.check_url_install(idl.url())
 
     if update == "GOLD" or update == "U1" or update == "U2" or update == "U3" or update == "U4" or update == "U5" or update == "U6" or update == "U7":
         return RHEL4Guest(update, arch, url, "./rhel-4-jeos.ks", "rtl8139", None)
