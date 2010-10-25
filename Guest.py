@@ -55,8 +55,16 @@ class Guest(object):
         self.name = self.distro + self.update + self.arch
         self.diskimage = "/var/lib/libvirt/images/" + self.name + ".dsk"
         self.libvirt_conn = libvirt.open("qemu:///system")
-        # FIXME: check to make sure that virbr0 is available
-        self.bridge = "virbr0"
+
+        # we have to make sure that the private libvirt bridge is available
+        self.bridge = None
+        for netname in self.libvirt_conn.listNetworks():
+            network = self.libvirt_conn.networkLookupByName(netname)
+            if network.bridgeName() == 'virbr0':
+                self.bridge = 'virbr0'
+        if self.bridge is None:
+            raise Exception, "Default libvirt network (virbr0) does not exist, install cannot continue"
+
         self.nicmodel = nicmodel
         if self.nicmodel is None:
             self.nicmodel = "rtl8139"
