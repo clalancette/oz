@@ -1,0 +1,15 @@
+<image>
+  <name>win2kjeos</name>
+  <os>
+    <name>Windows</name>
+    <version>2000</version>
+    <arch>i386</arch>
+    <install type='iso'>
+      <iso>http://path/to/isos/win2k.iso</iso>
+    </install>
+    <key>MY_KEY_HERE</key>
+  </os>
+  <description>Windows 2000</description>
+  <packages>
+  </packages>
+</image>

@@ -1,0 +1,21 @@
+<image>
+  <name>f13jeos</name>
+  <os>
+    <name>Fedora</name>
+    <version>13</version>
+    <arch>i386</arch>
+    <install type='url'>
+      <url>http://download.fedoraproject.org/pub/fedora/linux/releases/13/Fedora/i386/os/</url>
+    </install>
+  </os>
+  <description>Fedora 13</description>
+  <packages action='add'>
+    <package name='bash' action='remove'/>
+    <package name='kernel'/>
+    <package name='grub'/>
+  </packages>
+  <packages action='remove'>
+    <package name='openoffice.org'/>
+    <package name='gnumeric' action='add'/>
+  </packages>
+</image>
