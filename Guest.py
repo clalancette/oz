@@ -1,10 +1,7 @@
 import uuid
 import virtinst.util
-import socket
 import libvirt
-import random
 import os
-import select
 import subprocess
 import shutil
 import time
@@ -16,6 +13,7 @@ import re
 import stat
 import urlparse
 import httplib
+import ozutil
 
 class ProcessError(Exception):
     """This exception is raised when a process run by
@@ -279,6 +277,9 @@ class Guest(object):
 
         print
         if count == 0:
+            # if we timed out, then let's make sure to take a screenshot.
+            screenshot = self.name + "-" + time.time() + ".png"
+            ozutil.capture_screenshot(self.libvirt_dom.XMLDesc(0), screenshot)
             raise Exception, "Timed out waiting for install to finish"
 
         print ""
