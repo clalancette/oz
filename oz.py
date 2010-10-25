@@ -3,9 +3,8 @@
 import sys
 import getopt
 import os
-import urlparse
-import httplib
 
+import IDL
 import Fedora
 import FedoraCore
 import RHEL_2_1
@@ -17,10 +16,9 @@ import Ubuntu
 import Windows
 
 def usage():
-    print "Usage: oz [OPTIONS] <distro> <update> <arch> <url>"
+    print "Usage: oz [OPTIONS] <idl>"
     print " OPTIONS:"
     print "  -h\t\tPrint this help message"
-    print "  -k <key>\tUse <key> when installing the guest (this is OS-specific)"
     print " Currently supported architectures are:"
     print "   i386, x86_64"
     print " Currently supported distros are:"
@@ -36,17 +34,14 @@ def usage():
     sys.exit(1)
 
 try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], 'hk:', ['help', 'key'])
+    opts, args = getopt.gnu_getopt(sys.argv[1:], 'h', ['help'])
 except getopt.GetoptError, err:
     print str(err)
     usage()
 
-key = None
 for o, a in opts:
     if o in ("-h", "--help"):
         usage()
-    elif o in ("-k", "--key"):
-        key = a
     else:
         assert False, "unhandled option"
 
@@ -54,44 +49,31 @@ if os.geteuid() != 0:
     print "%s must be run as root" % (sys.argv[0])
     sys.exit(2)
 
-if len(args) != 4:
-    usage()
+if len(args) != 1:
+    usage();
 
-distro = args[0]
-update = args[1]
-arch = args[2]
-url = args[3]
+idl = IDL.IDL(args[0])
 
-# a basic up-front check to make sure that the url exists
-p = urlparse.urlparse(url)
-if p[0] != "http":
-    raise Exception, "Must use http install URLs"
-if p[1] == "localhost" or p[1] == "localhost.localdomain" or p[1] == "127.0.0.1":
-    raise Exception, "Can not use localhost for an install URL"
-conn = httplib.HTTPConnection(p[1])
-conn.request("GET", p[2])
-response = conn.getresponse()
-if response.status != 200:
-    raise Exception, "Could not access install url: " + response.reason
+distro = idl.distro()
 
 if distro == "Fedora":
-    guest = Fedora.get_class(update, arch, url, key)
+    guest = Fedora.get_class(idl)
 elif distro == "FedoraCore":
-    guest = FedoraCore.get_class(update, arch, url, key)
+    guest = FedoraCore.get_class(idl)
 elif distro == "RHEL-2.1":
-    guest = RHEL_2_1.get_class(update, arch, url, key)
+    guest = RHEL_2_1.get_class(idl)
 elif distro == "RHEL-3":
-    guest = RHEL_3.get_class(update, arch, url, key)
+    guest = RHEL_3.get_class(idl)
 elif distro == "RHEL-4":
-    guest = RHEL_4.get_class(update, arch, url, key)
+    guest = RHEL_4.get_class(idl)
 elif distro == "RHEL-5":
-    guest = RHEL_5.get_class(update, arch, url, key)
+    guest = RHEL_5.get_class(idl)
 elif distro == "Ubuntu":
-    guest = Ubuntu.get_class(update, arch, url, key)
+    guest = Ubuntu.get_class(idl)
 elif distro == "Windows":
-    guest = Windows.get_class(update, arch, url, key)
+    guest = Windows.get_class(idl)
 elif distro == "RHL":
-    guest = RHL.get_class(update, arch, url, key)
+    guest = RHL.get_class(idl)
 else:
     usage()
 

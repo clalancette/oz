@@ -2,11 +2,12 @@ import Guest
 import shutil
 import subprocess
 import re
+import ozutil
 
 class RHEL3Guest(Guest.CDGuest):
-    def __init__(self, update, arch, url, ks):
+    def __init__(self, update, arch, url):
         Guest.CDGuest.__init__(self, "RHEL-3", update, arch, None, "rtl8139", None, None, None)
-        self.ks_file = ks
+        self.ks_file = "./rhel-3-jeos.ks"
         self.url = url
 
     def modify_iso(self):
@@ -47,7 +48,16 @@ class RHEL3Guest(Guest.CDGuest):
         self.generate_new_iso()
         self.cleanup_iso()
 
-def get_class(update, arch, url, key):
+def get_class(idl):
+    update = idl.update()
+    arch = idl.arch()
+    url = idl.url()
+
+    if idl.installtype() != 'url':
+        raise Exception, "RHEL-3 installs must be done via url"
+
+    ozutil.check_url_install(url)
+
     if update == "GOLD" or update == "U1" or update == "U2" or update == "U3" or update == "U4" or update == "U5" or update == "U6" or update == "U7" or update == "U8" or update == "U9":
-        return RHEL3Guest(update, arch, url, "./rhel-3-jeos.ks")
+        return RHEL3Guest(update, arch, url)
     raise Exception, "Unsupported RHEL-3 update " + update

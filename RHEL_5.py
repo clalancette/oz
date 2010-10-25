@@ -2,6 +2,7 @@ import Guest
 import shutil
 import subprocess
 import re
+import ozutil
 
 class RHEL5Guest(Guest.CDGuest):
     def __init__(self, update, arch, url, ks, nicmodel, diskbus):
@@ -47,7 +48,17 @@ class RHEL5Guest(Guest.CDGuest):
         self.generate_new_iso()
         self.cleanup_iso()
 
-def get_class(update, arch, url, key):
+def get_class(idl):
+    update = idl.update()
+    arch = idl.arch()
+    url = idl.url()
+    key = idl.key()
+
+    if idl.installtype() != 'url':
+        raise Exception, "RHEL-5 installs must be done via url"
+
+    ozutil.check_url_install(url)
+
     if update == "GOLD" or update == "U1" or update == "U2" or update == "U3":
         return RHEL5Guest(update, arch, url, "./rhel-5-jeos.ks", "rtl8139", None)
     if update == "U4" or update == "U5":

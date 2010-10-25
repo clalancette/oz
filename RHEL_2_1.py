@@ -3,6 +3,7 @@ import subprocess
 import os
 import re
 import shutil
+import ozutil
 
 class RHEL21Guest(Guest.FDGuest):
     def __init__(self, update, url):
@@ -63,7 +64,16 @@ class RHEL21Guest(Guest.FDGuest):
         self.copy_floppy()
         self.modify_floppy()
 
-def get_class(update, arch, url, key):
+def get_class(idl):
+    update = idl.update()
+    arch = idl.arch()
+    url = idl.url()
+
+    if idl.installtype() != 'url':
+        raise Exception, "RHEL-2.1 installs must be done via url"
+
+    ozutil.check_url_install(url)
+
     if arch != "i386":
         raise Exception, "Invalid arch " + arch + "for RHEL-2.1 guest"
     if update == "GOLD" or update == "U1" or update == "U2" or update == "U3" or update == "U4" or update == "U5" or update == "U6":

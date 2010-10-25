@@ -2,6 +2,7 @@ import Guest
 import shutil
 import subprocess
 import re
+import ozutil
 
 class FedoraGuest(Guest.CDGuest):
     def __init__(self, update, arch, url, ks, nicmodel, haverepo, diskbus):
@@ -51,8 +52,17 @@ class FedoraGuest(Guest.CDGuest):
         self.generate_new_iso()
         self.cleanup_iso()
 
-def get_class(update, arch, url, key):
+def get_class(idl):
+    update = idl.update()
+    arch = idl.arch()
+    url = idl.url()
     ks = "./fedora-" + update + "-jeos.ks"
+
+    if idl.installtype() != 'url':
+        raise Exception, "Fedora installs must be done via url"
+
+    ozutil.check_url_install(url)
+
     if update == "10" or update == "11" or update == "12" or update == "13":
         return FedoraGuest(update, arch, url, ks, "virtio", True, "virtio")
     if update == "9" or update == "8" or update == "7":

@@ -4,6 +4,7 @@ import subprocess
 import re
 import os
 import stat
+import ozutil
 
 def ubuntu_generate_iso(output, inputdir):
     print "Generating new ISO"
@@ -158,8 +159,17 @@ class Ubuntu610and704Guest(Guest.CDGuest):
         f.writelines(lines)
         f.close()
 
-def get_class(update, arch, isourl, key):
+def get_class(idl):
+    update = idl.update()
+    arch = idl.arch()
+    isourl = idl.iso()
     preseed = "./ubuntu-" + update + "-jeos.preseed"
+
+    if idl.installtype() != 'iso':
+        raise Exception, "Ubuntu installs must be done via iso"
+
+    ozutil.check_iso_install(isourl)
+
     if update == "9.10":
         return Ubuntu810and904and910Guest(update, arch, preseed, isourl, "/casper/initrd.lz")
     if update == "8.10" or update == "9.04":

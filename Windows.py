@@ -4,6 +4,7 @@ import struct
 import subprocess
 import re
 import os
+import ozutil
 
 class Windows2000andXPand2003(Guest.CDGuest):
     def __init__(self, update, arch, url, key, siffile):
@@ -126,8 +127,18 @@ class Windows2000andXPand2003(Guest.CDGuest):
         self.libvirt_dom.create()
         self.wait_for_install_finish(3600)
 
-def get_class(update, arch, url, key):
+def get_class(idl):
+    update = idl.update()
+    arch = idl.arch()
+    isourl = idl.iso()
+    key = idl.key()
     sif = "./windows-" + update + "-jeos.sif"
+
+    ozutil.check_iso_install(isourl)
+
+    if idl.installtype() != 'iso':
+        raise Exception, "Windows installs must be done via iso"
+
     if update == "2000" or update == "XP" or update == "2003":
-        return Windows2000andXPand2003(update, arch, url, key, sif)
+        return Windows2000andXPand2003(update, arch, isourl, key, sif)
     raise Exception, "Unsupported Windows update " + update

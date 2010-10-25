@@ -3,6 +3,7 @@ import subprocess
 import re
 import shutil
 import os
+import ozutil
 
 class RHL9Guest(Guest.CDGuest):
     def __init__(self, url):
@@ -119,8 +120,18 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
         self.copy_floppy()
         self.modify_floppy()
 
-def get_class(update, arch, url, key):
+def get_class(idl):
+    update = idl.update()
+    arch = idl.arch()
+    url = idl.url()
+
     ks = "./rhl-" + update + "-jeos.ks"
+
+    if idl.installtype() != 'url':
+        raise Exception, "RHEL-2.1 installs must be done via url"
+
+    ozutil.check_url_install(url)
+
     if arch != "i386":
         raise Exception, "Invalid arch " + arch + "for RHL guest"
     if update == "9":

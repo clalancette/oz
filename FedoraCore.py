@@ -2,6 +2,7 @@ import Guest
 import shutil
 import subprocess
 import re
+import ozutil
 
 class FedoraCoreGuest(Guest.CDGuest):
     def __init__(self, update, arch, url, ks):
@@ -53,8 +54,17 @@ class FedoraCore4Guest(FedoraCoreGuest):
     def generate_diskimage(self):
         self.generate_blank_diskimage()
 
-def get_class(update, arch, url, key):
+def get_class(idl):
+    update = idl.update()
+    arch = idl.arch()
+    url = idl.url()
     ks = "./fedoracore-" + update + "-jeos.ks"
+
+    if idl.installtype() != 'url':
+        raise Exception, "Fedora installs must be done via url"
+
+    ozutil.check_url_install(url)
+
     if update == "6" or update == "5" or update == "3" or update == "2" or update == "1":
         return FedoraCoreGuest(update, arch, url, ks)
     if update == "4":
