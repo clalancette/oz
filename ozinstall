@@ -33,7 +33,7 @@ import oz.Ubuntu
 import oz.Windows
 
 def usage():
-    print "Usage: oz [OPTIONS] <idl>"
+    print "Usage: ozinstall [OPTIONS] <idl>"
     print " OPTIONS:"
     print "  -d <level>\tTurn up logging level.  The levels are:"
     print "\t\t\t0 - errors only (this is the default)"
@@ -89,7 +89,7 @@ if os.geteuid() != 0:
     sys.exit(2)
 
 if len(args) != 1:
-    usage();
+    usage()
 
 logging.basicConfig(level=loglevel, format=logformat)
 

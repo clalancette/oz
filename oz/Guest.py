@@ -135,10 +135,10 @@ class Guest(object):
         if os.access(self.diskimage, os.F_OK):
             os.unlink(self.diskimage)
 
-    def targetDev(self, doc, type, path, bus):
+    def targetDev(self, doc, devicetype, path, bus):
         installNode = doc.createElement("disk")
         installNode.setAttribute("type", "file")
-        installNode.setAttribute("device", type)
+        installNode.setAttribute("device", devicetype)
         sourceInstallNode = doc.createElement("source")
         sourceInstallNode.setAttribute("file", path)
         installNode.appendChild(sourceInstallNode)
