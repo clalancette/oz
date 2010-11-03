@@ -1,4 +1,4 @@
-from distutils.core import setup
+from distutils.core import setup, Extension
 from distutils.command.sdist import sdist as _sdist
 import os
 
@@ -22,8 +22,8 @@ setup(name='oz',
       license='LGPLv2',
       url='http://deltacloud.org',
       package_dir={'oz': 'oz'},
-      package_data={'oz': ['auto/*']},
+      package_data={'oz': ['auto/*', 'guesttools/*']},
       packages=['oz'],
-      scripts=['ozinstall'],
+      scripts=['ozinstall', 'oz-generate-cdl'],
       cmdclass={'sdist': sdist},
       )

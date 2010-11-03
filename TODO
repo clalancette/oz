@@ -24,3 +24,6 @@ so this needs further research.
 6.  Better error handling all around.  In particular, make sure that we
 raise proper exceptions, that we catch errors properly, and that we check
 that the binaries we need are available before using them.
+7.  If two of the same OSes are being installed at the same time on the same
+machine, they will trample all over each other.  We need to handle this
+situation.

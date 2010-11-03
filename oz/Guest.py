@@ -32,6 +32,9 @@ import ozutil
 import libxml2
 import logging
 import random
+import guestfs
+import socket
+import select
 
 class ProcessError(Exception):
     """This exception is raised when a process run by
@@ -77,6 +80,8 @@ class Guest(object):
         self.arch = arch
         self.name = self.distro + self.update + self.arch
         self.diskimage = "/var/lib/libvirt/images/" + self.name + ".dsk"
+        self.cdl_tmp = "/var/lib/oz/cdltmp/" + self.name
+        self.listen_port = random.randrange(1024, 65535)
         self.libvirt_conn = libvirt.open("qemu:///system")
 
         # we have to make sure that the private libvirt bridge is available
@@ -116,6 +121,7 @@ class Guest(object):
         self.log.debug("update: %s, arch: %s, diskimage: %s" % (self.update, self.arch, self.diskimage))
         self.log.debug("host IP: %s, nicmodel: %s, clockoffset: %s" % (self.host_bridge_ip, self.nicmodel, self.clockoffset))
         self.log.debug("mousetype: %s, disk_bus: %s, disk_dev: %s" % (self.mousetype, self.disk_bus, self.disk_dev))
+        self.log.debug("cdltmp: %s, listen_port: %d" % (self.cdl_tmp, self.listen_port))
 
     def cleanup_old_guest(self):
         def handler(ctxt, err):
@@ -132,6 +138,8 @@ class Guest(object):
         except:
             pass
         libvirt.registerErrorHandler(None, None)
+
+        # FIXME: do we really want to remove this here?
         if os.access(self.diskimage, os.F_OK):
             os.unlink(self.diskimage)
 
@@ -382,12 +390,110 @@ class Guest(object):
             self.log.error("Port is not specified, not taking screenshot")
             return
 
-        vncport = int(port) - 5900
+        vnc = "localhost:%s" % (int(port) - 5900)
 
-        vnc = "localhost:" + str(vncport)
+        # FIXME: we should probably use subprocess_check_output here
         ret = subprocess.call(['gvnccapture', vnc, filename], stdout=open('/dev/null', 'w'), stderr=subprocess.STDOUT)
         if ret != 0:
             self.log.error("Failed to take screenshot")
+
+    def guestfs_handle_setup(self, disk):
+        for domid in self.libvirt_conn.listDomainsID():
+            self.log.debug("DomID: %d" % (domid))
+            dom = self.libvirt_conn.lookupByID(domid)
+            xml = dom.XMLDesc(0)
+            doc = libxml2.parseMemory(xml, len(xml))
+            disks = doc.xpathEval('/domain/devices/disk')
+            if len(disks) < 1:
+                # odd, a domain without a disk, but don't worry about it
+                continue
+            for guestdisk in disks:
+                for source in guestdisk.xpathEval("source"):
+                    filename = str(source.prop('file'))
+                    if filename == disk:
+                        raise Exception, "Cannot setup CDL generation on a running disk"
+
+        self.log.info("Setting up guestfs handle for %s" % (self.name))
+        self.g = guestfs.GuestFS()
+
+        self.log.debug("Adding disk image %s" % (disk))
+        self.g.add_drive(disk)
+
+        self.log.debug("Launching guestfs")
+        self.g.launch()
+
+        self.log.debug("Inspecting guest OS")
+        os = self.g.inspect_os()
+
+        self.log.debug("Getting mountpoints")
+        mountpoints = self.g.inspect_get_mountpoints(os[0])
+
+        self.log.debug("Mounting /")
+        for point in mountpoints:
+            if point[0] == '/':
+                self.g.mount(point[1], '/')
+                break
+
+        self.log.debug("Mount other filesystems")
+        for point in mountpoints:
+            if point[0] != '/':
+                self.g.mount(point[1], point[0])
+
+    def guestfs_handle_cleanup(self):
+        self.log.info("Cleaning up guestfs handle for %s" % (self.name))
+        self.log.debug("Syncing")
+        self.g.sync()
+
+        self.log.debug("Unmounting all")
+        self.g.umount_all()
+
+        self.log.debug("Killing guestfs subprocess")
+        self.g.kill_subprocess()
+
+    def wait_for_guest_boot(self):
+        self.log.info("Listening on %d for %s to boot" % (self.listen_port, self.name))
+
+        listen = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        listen.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        listen.bind((self.host_bridge_ip, self.listen_port))
+        listen.listen(1)
+        # FIXME: we should make this iptables rule only open the port on the
+        # virbr0 interface
+        # FIXME: we should use the subprocess_check_output wrapper
+        subprocess.call(["iptables", "-I", "INPUT", "1", "-p", "tcp", "-m",
+                         "tcp", "--dport", str(self.listen_port), "-j",
+                         "ACCEPT"])
+
+        try:
+            rlist, wlist, xlist = select.select([listen], [], [], 300)
+        finally:
+            subprocess.call(["iptables", "-D", "INPUT", "1"])
+        if len(rlist) == 0:
+            raise Exception, "Timed out waiting for domain to boot"
+        new_sock, addr = listen.accept()
+        new_sock.close()
+        listen.close()
+
+        self.log.debug("IP address of guest is %s" % (addr[0]))
+
+        return addr[0]
+
+    def output_cdl_xml(self, lines):
+        doc = xml.dom.minidom.Document()
+        cdl = doc.createElement("cdl")
+        doc.appendChild(cdl)
+
+        packagesNode = doc.createElement("packages")
+        cdl.appendChild(packagesNode)
+
+        for line in lines:
+            if line == "":
+                continue
+            packageNode = doc.createElement("package")
+            packageNode.setAttribute("name", line)
+            packagesNode.appendChild(packageNode)
+
+        return doc.toxml()
 
 class CDGuest(Guest):
     def __init__(self, distro, update, arch, nicmodel, clockoffset, mousetype,

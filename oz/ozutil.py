@@ -27,6 +27,10 @@ def generate_full_auto_path(relative):
     pkg_path = os.path.dirname(__file__)
     return os.path.abspath(os.path.join(pkg_path, "auto", relative))
 
+def generate_full_guesttools_path(relative):
+    pkg_path = os.path.dirname(__file__)
+    return os.path.abspath(os.path.join(pkg_path, "guesttools", relative))
+
 # FIXME: we should probably have a maximum number of redirects, to avoid
 # possible infinite loops
 def check_url(url):

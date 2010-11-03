@@ -9,6 +9,7 @@ Group: Development
 URL: http://deltacloud.org
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
+BuildRequires: glibc-static
 Requires: fuseiso
 Requires: gvnc-tools
 Requires: python-libguestfs
@@ -25,22 +26,26 @@ installations, with minimal input from the user.
 
 %build
 python setup.py build
+gcc -g -Wall -static oz/guesttools/cdl-nc.c -o oz/guesttools/cdl-nc
 
 %install
-rm -rf $RPM_BUILD_ROOT
+%{__rm} -rf $RPM_BUILD_ROOT
 python setup.py install -O1 --root=$RPM_BUILD_ROOT
 
+%{__cp} oz/guesttools/cdl-nc $RPM_BUILD_ROOT%{python_sitelib}/oz/guesttools/cdl-nc
+%{__rm} -f $RPM_BUILD_ROOT%{python_sitelib}/oz/guesttools/cdl-nc.c
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/isocontent/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/isos/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/mnt/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/floppycontent/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/floppies/
+mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/cdltmp/
 
 
 
 %clean
-rm -rf $RPM_BUILD_ROOT
+%{__rm} -rf $RPM_BUILD_ROOT
 
 
 %files
@@ -52,8 +57,10 @@ rm -rf $RPM_BUILD_ROOT
 %dir %attr(0755, root, root) %{_localstatedir}/lib/oz/mnt/
 %dir %attr(0755, root, root) %{_localstatedir}/lib/oz/floppycontent/
 %dir %attr(0755, root, root) %{_localstatedir}/lib/oz/floppies/
+%dir %attr(0755, root, root) %{_localstatedir}/lib/oz/cdltmp/
 %{python_sitelib}/oz/*
 %{_bindir}/ozinstall
+%{_bindir}/oz-generate-cdl
 %{python_sitelib}/oz-*.egg-info
 
 
