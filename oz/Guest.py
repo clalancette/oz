@@ -14,6 +14,7 @@ import stat
 import urlparse
 import httplib
 import ozutil
+import libxml2
 
 class ProcessError(Exception):
     """This exception is raised when a process run by
@@ -57,12 +58,18 @@ class Guest(object):
         self.libvirt_conn = libvirt.open("qemu:///system")
 
         # we have to make sure that the private libvirt bridge is available
-        self.bridge = None
+        self.host_bridge_ip = None
         for netname in self.libvirt_conn.listNetworks():
             network = self.libvirt_conn.networkLookupByName(netname)
             if network.bridgeName() == 'virbr0':
-                self.bridge = 'virbr0'
-        if self.bridge is None:
+                xml = network.XMLDesc(0)
+                doc = libxml2.parseMemory(xml, len(xml))
+                ip = doc.xpathEval('/network/ip')
+                if len(ip) != 1:
+                    raise Exception, "Failed to find host IP address"
+                self.host_bridge_ip = ip[0].prop('address')
+                break
+        if self.host_bridge_ip is None:
             raise Exception, "Default libvirt network (virbr0) does not exist, install cannot continue"
 
         self.nicmodel = nicmodel
@@ -199,7 +206,7 @@ class Guest(object):
         interfaceNode = doc.createElement("interface")
         interfaceNode.setAttribute("type", "bridge")
         sourceNode = doc.createElement("source")
-        sourceNode.setAttribute("bridge", self.bridge)
+        sourceNode.setAttribute("bridge", "virbr0")
         interfaceNode.appendChild(sourceNode)
         macNode = doc.createElement("mac")
         macNode.setAttribute("address", self.macaddr)
