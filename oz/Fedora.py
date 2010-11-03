@@ -12,11 +12,11 @@ class FedoraGuest(Guest.CDGuest):
         self.haverepo = haverepo
 
     def modify_iso(self):
-        print "Putting the kickstart in place"
+        self.log.debug("Putting the kickstart in place")
 
         shutil.copy(self.ks_file, self.iso_contents + "/ks.cfg")
 
-        print "Modifying the boot options"
+        self.log.debug("Modifying the boot options")
         f = open(self.iso_contents + "/isolinux/isolinux.cfg", "r")
         lines = f.readlines()
         f.close()
@@ -37,7 +37,7 @@ class FedoraGuest(Guest.CDGuest):
         f.close()
 
     def generate_new_iso(self):
-        print "Generating new ISO"
+        self.log.debug("Generating new ISO")
         Guest.subprocess_check_output(["mkisofs", "-r", "-T", "-J", "-V",
                                        "Custom", "-b", "isolinux/isolinux.bin",
                                        "-c", "isolinux/boot.cat",
@@ -46,6 +46,7 @@ class FedoraGuest(Guest.CDGuest):
                                        "-o", self.output_iso, self.iso_contents])
 
     def generate_install_media(self):
+        self.log.info("Generating install media")
         self.get_original_iso(self.url + "/images/boot.iso")
         self.copy_iso()
         self.modify_iso()
@@ -60,7 +61,7 @@ def get_class(idl):
     if idl.installtype() != 'url':
         raise Exception, "Fedora installs must be done via url"
 
-    url = ozutil.check_url_install(idl.url())
+    url = ozutil.check_url(idl.url())
 
     if update == "10" or update == "11" or update == "12" or update == "13":
         return FedoraGuest(update, arch, url, ks, "virtio", True, "virtio")

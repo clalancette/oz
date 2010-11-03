@@ -15,7 +15,7 @@ class RHEL21Guest(Guest.FDGuest):
         if not os.access(self.floppy_contents, os.F_OK):
             os.makedirs(self.floppy_contents)
 
-        print "Putting the kickstart in place"
+        self.log.debug("Putting the kickstart in place")
 
         output_ks = self.floppy_contents + "/ks.cfg"
         shutil.copyfile(self.ks_file, output_ks)
@@ -33,7 +33,7 @@ class RHEL21Guest(Guest.FDGuest):
         Guest.subprocess_check_output(["mcopy", "-i", self.output_floppy,
                                        output_ks, "::KS.CFG"])
 
-        print "Modifying the syslinux.cfg"
+        self.log.debug("Modifying the syslinux.cfg")
 
         Guest.subprocess_check_output(["mcopy", "-n", "-o", "-i",
                                        self.output_floppy, "::SYSLINUX.CFG",
@@ -72,7 +72,7 @@ def get_class(idl):
     if idl.installtype() != 'url':
         raise Exception, "RHEL-2.1 installs must be done via url"
 
-    url = ozutil.check_url_install(idl.url())
+    url = ozutil.check_url(idl.url())
 
     if arch != "i386":
         raise Exception, "Invalid arch " + arch + "for RHEL-2.1 guest"

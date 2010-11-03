@@ -3,6 +3,7 @@
 import sys
 import getopt
 import os
+import logging
 
 import oz.IDL
 import oz.Fedora
@@ -18,6 +19,12 @@ import oz.Windows
 def usage():
     print "Usage: oz [OPTIONS] <idl>"
     print " OPTIONS:"
+    print "  -d <level>\tTurn up logging level.  The levels are:"
+    print "\t\t\t0 - errors only (this is the default)"
+    print "\t\t\t1 - errors and warnings"
+    print "\t\t\t2 - errors, warnings, and information"
+    print "\t\t\t3 - all messages"
+    print "\t\t\t4 - all messages, prepended with the level and classname"
     print "  -h\t\tPrint this help message"
     print " Currently supported architectures are:"
     print "   i386, x86_64"
@@ -34,14 +41,30 @@ def usage():
     sys.exit(1)
 
 try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], 'h', ['help'])
+    opts, args = getopt.gnu_getopt(sys.argv[1:], 'd:h', ['debug', 'help'])
 except getopt.GetoptError, err:
     print str(err)
     usage()
 
+loglevel = logging.ERROR
+logformat = "%(message)s"
 for o, a in opts:
     if o in ("-h", "--help"):
         usage()
+    elif o in ("-d", "--debug"):
+        if int(a) == 0:
+            loglevel = logging.ERROR
+        elif int(a) == 1:
+            loglevel = logging.WARNING
+        elif int(a) == 2:
+            loglevel = logging.INFO
+        elif int(a) == 3:
+            loglevel = logging.DEBUG
+        elif int(a) >= 4:
+            loglevel = logging.DEBUG
+            logformat = logging.BASIC_FORMAT
+        else:
+            usage()
     else:
         assert False, "unhandled option"
 
@@ -51,6 +74,8 @@ if os.geteuid() != 0:
 
 if len(args) != 1:
     usage();
+
+logging.basicConfig(level=loglevel, format=logformat)
 
 idl = oz.IDL.IDL(args[0])
 

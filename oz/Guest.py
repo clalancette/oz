@@ -15,6 +15,7 @@ import urlparse
 import httplib
 import ozutil
 import libxml2
+import logging
 
 class ProcessError(Exception):
     """This exception is raised when a process run by
@@ -41,11 +42,16 @@ def subprocess_check_output(*popenargs, **kwargs):
         raise ProcessError(retcode, cmd, output=output)
     return output
 
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+
 class Guest(object):
     def __init__(self, distro, update, arch, macaddr, nicmodel, clockoffset,
                  mousetype, diskbus):
         if arch != "i386" and arch != "x86_64":
             raise Exception, "Unsupported guest arch " + arch
+        self.log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
         self.uuid = uuid.uuid4()
         self.macaddr = macaddr
         if self.macaddr is None:
@@ -90,11 +96,16 @@ class Guest(object):
         else:
             raise Exception, "Unknown diskbus type " + diskbus
 
+        self.log.debug("Name: %s, UUID: %s, MAC: %s, distro: %s" % (self.name, self.uuid, self.macaddr, self.distro))
+        self.log.debug("update: %s, arch: %s, diskimage: %s" % (self.update, self.arch, self.diskimage))
+        self.log.debug("host IP: %s, nicmodel: %s, clockoffset: %s" % (self.host_bridge_ip, self.nicmodel, self.clockoffset))
+        self.log.debug("mousetype: %s, disk_bus: %s, disk_dev: %s" % (self.mousetype, self.disk_bus, self.disk_dev))
+
     def cleanup_old_guest(self):
         def handler(ctxt, err):
             pass
         libvirt.registerErrorHandler(handler, 'context')
-        print "Cleaning up old guest for " + self.name
+        self.log.info("Cleaning up old guest named %s" % (self.name))
         try:
             dom = self.libvirt_conn.lookupByName(self.name)
             try:
@@ -121,7 +132,8 @@ class Guest(object):
         return installNode
 
     def generate_define_xml(self, bootdev):
-        print "Generate/define XML for %s with bootdev %s" % (self.name, bootdev)
+        self.log.info("Generate/define XML for guest %s with bootdev %s" % (self.name, bootdev))
+
         # create top-level domain element
         doc = xml.dom.minidom.Document()
         domain = doc.createElement("domain")
@@ -250,17 +262,19 @@ class Guest(object):
             devicesNode.appendChild(self.targetDev(doc, "floppy", self.output_floppy, "fda"))
         domain.appendChild(devicesNode)
 
+        self.log.debug("Generated XML:\n%s" % (doc.toxml()))
+
         self.libvirt_dom = self.libvirt_conn.defineXML(doc.toxml())
 
     def generate_blank_diskimage(self, size=10):
-        print "Generating disk image for " + self.name
+        self.log.info("Generating %dGB blank diskimage for %s" % (size, self.name))
         f = open(self.diskimage, "w")
         # 10 GB disk image by default
         f.truncate(size * 1024 * 1024 * 1024)
         f.close()
 
     def generate_diskimage(self, size=10):
-        print "Generating disk image with fake partition for " + self.name
+        self.log.info("Generating %dGB diskimage with fake partition for %s" % (size, self.name))
         f = open(self.diskimage, "w")
         f.seek(0x1bf)
         f.write("\x01\x01\x00\x82\xfe\x3f\x7c\x3f\x00\x00\x00\xfe\xa3\x1e")
@@ -272,17 +286,12 @@ class Guest(object):
 
     def wait_for_install_finish(self, count):
         lastlen = 0
+        origcount = count
         while count > 0:
             try:
+                if count % 10 == 0:
+                    self.log.info("Waiting for %s to finish installing, %d/%d" % (self.name, count, origcount))
                 info = self.libvirt_dom.info()
-                outstr = "Wait for %s install finish, state is %d, count is %d" % (self.name, info[0], count)
-                if lastlen > len(outstr):
-                    for i in range(len(outstr), lastlen):
-                        outstr += ' '
-                lastlen = len(outstr)
-                outstr += '\r'
-                print outstr,
-                sys.stdout.flush()
                 if info[0] != libvirt.VIR_DOMAIN_RUNNING and info[0] != libvirt.VIR_DOMAIN_BLOCKED:
                     break
                 count -= 1
@@ -290,14 +299,11 @@ class Guest(object):
                 pass
             time.sleep(1)
 
-        print
         if count == 0:
             # if we timed out, then let's make sure to take a screenshot.
             screenshot = self.name + "-" + str(time.time()) + ".png"
-            ozutil.capture_screenshot(self.libvirt_dom.XMLDesc(0), screenshot)
+            self.capture_screenshot(self.libvirt_dom.XMLDesc(0), screenshot)
             raise Exception, "Timed out waiting for install to finish"
-
-        print ""
 
     def get_original_media(self, url, output):
         original_available = False
@@ -309,12 +315,11 @@ class Guest(object):
                     break
 
         if original_available:
-            print "Original install media available, using cached version"
+            self.log.info("Original install media available, using cached version")
         else:
-            print "Fetching the original install media from " + url
+            self.log.info("Fetching the original install media from %s" % (url))
             def progress(down_total, down_current, up_total, up_current):
-                print '%dkB of %dkB\r' % (down_current/1024, down_total/1024),
-                sys.stdout.flush()
+                self.log.info("%dkB of %dkB" % (down_current/1024, down_total/1024))
 
             if not os.access(os.path.dirname(output), os.F_OK):
                 os.makedirs(os.path.dirname(output))
@@ -322,9 +327,9 @@ class Guest(object):
             def data(buf):
                 self.outf.write(buf)
 
-            # note that all redirects should already have been resolved by this point
-            # this is merely to check that the media that we are trying to fetch actually
-            # exists
+            # note that all redirects should already have been resolved by
+            # this point; this is merely to check that the media that we are
+            # trying to fetch actually exists
             ozutil.check_url(url)
 
             c = pycurl.Curl()
@@ -336,13 +341,37 @@ class Guest(object):
             # FIXME: if the perform fails, throw an error
             c.perform()
             c.close()
-            print
             self.outf.close()
 
             if os.stat(output)[stat.ST_SIZE] == 0:
-                # if we see a zero-sized media after the download, we know something
-                # went wrong
+                # if we see a zero-sized media after the download, we know
+                # something went wrong
                 raise Exception, "Media of 0 size downloaded"
+
+    def capture_screenshot(self, xml, filename):
+        doc = libxml2.parseMemory(xml, len(xml))
+        graphics = doc.xpathEval('/domain/devices/graphics')
+        if len(graphics) != 1:
+            self.log.error("Could not find the VNC port")
+            return
+
+        graphics_type = graphics[0].prop('type')
+        port = graphics[0].prop('port')
+
+        if graphics_type != 'vnc':
+            self.log.error("Graphics type is not VNC, not taking screenshot")
+            return
+
+        if port is None:
+            self.log.error("Port is not specified, not taking screenshot")
+            return
+
+        vncport = int(port) - 5900
+
+        vnc = "localhost:" + str(vncport)
+        ret = subprocess.call(['gvnccapture', vnc, filename], stdout=open('/dev/null', 'w'), stderr=subprocess.STDOUT)
+        if ret != 0:
+            self.log.error("Failed to take screenshot")
 
 class CDGuest(Guest):
     def __init__(self, distro, update, arch, macaddr, nicmodel, clockoffset,
@@ -356,7 +385,7 @@ class CDGuest(Guest):
         return self.get_original_media(isourl, self.orig_iso)
 
     def copy_iso(self):
-        print "Copying ISO contents for modification"
+        self.log.info("Copying ISO contents for modification")
         isomount = "/var/lib/oz/mnt/" + self.name
         if os.access(isomount, os.F_OK):
             os.rmdir(isomount)
@@ -377,7 +406,7 @@ class CDGuest(Guest):
             os.rmdir(isomount)
 
     def install(self):
-        print "Running install for " + self.name
+        self.log.info("Running install for %s" % (self.name))
         self.generate_define_xml("cdrom")
         self.libvirt_dom.create()
 
@@ -386,7 +415,7 @@ class CDGuest(Guest):
         self.generate_define_xml("hd")
 
     def cleanup_iso(self):
-        print "Cleaning up old ISO data"
+        self.log.info("Cleaning up old ISO data")
         shutil.rmtree(self.iso_contents)
 
 class FDGuest(Guest):
@@ -401,11 +430,11 @@ class FDGuest(Guest):
         return self.get_original_media(floppyurl, self.orig_floppy)
 
     def copy_floppy(self):
-        print "Copying floppy contents for modification"
+        self.log.info("Copying floppy contents for modification")
         shutil.copyfile(self.orig_floppy, self.output_floppy)
 
     def install(self):
-        print "Running install for " + self.name
+        self.log.info("Running install for %s" % (self.name))
         self.generate_define_xml("fd")
         self.libvirt_dom.create()
 

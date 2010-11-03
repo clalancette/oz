@@ -72,7 +72,7 @@ class Windows2000andXPand2003(Guest.CDGuest):
         out.close()
 
     def generate_new_iso(self):
-        print "Generating new ISO"
+        self.log.debug("Generating new ISO")
         Guest.subprocess_check_output(["mkisofs", "-b", "cdboot/boot.bin",
                                        "-no-emul-boot", "-boot-load-seg",
                                        "1984", "-boot-load-size", "4",
@@ -119,7 +119,7 @@ class Windows2000andXPand2003(Guest.CDGuest):
         self.cleanup_iso()
 
     def install(self):
-        print "Running install for " + self.name
+        self.log.info("Running install for %s" % (self.name))
         self.generate_define_xml("cdrom")
         self.libvirt_dom.create()
         self.wait_for_install_finish(1000)
@@ -133,7 +133,7 @@ def get_class(idl):
     key = idl.key()
     sif = ozutil.generate_full_auto_path("windows-" + update + "-jeos.sif")
 
-    isourl = ozutil.check_iso_install(idl.iso())
+    isourl = ozutil.check_url(idl.iso())
 
     if idl.installtype() != 'iso':
         raise Exception, "Windows installs must be done via iso"

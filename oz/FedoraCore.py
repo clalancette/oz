@@ -11,11 +11,11 @@ class FedoraCoreGuest(Guest.CDGuest):
         self.url = url
 
     def modify_iso(self):
-        print "Putting the kickstart in place"
+        self.log.debug("Putting the kickstart in place")
 
         shutil.copy(self.ks_file, self.iso_contents + "/ks.cfg")
 
-        print "Modifying the boot options"
+        self.log.debug("Modifying the boot options")
         f = open(self.iso_contents + "/isolinux/isolinux.cfg", "r")
         lines = f.readlines()
         f.close()
@@ -33,7 +33,7 @@ class FedoraCoreGuest(Guest.CDGuest):
         f.close()
 
     def generate_new_iso(self):
-        print "Generating new ISO"
+        self.log.debug("Generating new ISO")
         Guest.subprocess_check_output(["mkisofs", "-r", "-T", "-J", "-V",
                                        "Custom", "-b", "isolinux/isolinux.bin",
                                        "-c", "isolinux/boot.cat",
@@ -62,7 +62,7 @@ def get_class(idl):
     if idl.installtype() != 'url':
         raise Exception, "Fedora installs must be done via url"
 
-    url = ozutil.check_url_install(idl.url())
+    url = ozutil.check_url(idl.url())
 
     if update == "6" or update == "5" or update == "3" or update == "2" or update == "1":
         return FedoraCoreGuest(update, arch, url, ks)

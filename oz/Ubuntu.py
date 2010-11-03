@@ -6,15 +6,6 @@ import os
 import stat
 import ozutil
 
-def ubuntu_generate_iso(output, inputdir):
-    print "Generating new ISO"
-    Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom",
-                                  "-cache-inodes", "-J", "-l", "-b",
-                                  "isolinux/isolinux.bin", "-c",
-                                  "isolinux/boot.cat", "-no-emul-boot",
-                                  "-boot-load-size", "4", "-boot-info-table",
-                                  "-v", "-v", "-o", output, inputdir])
-
 class Ubuntu810and904and910Guest(Guest.CDGuest):
     def __init__(self, update, arch, preseed, iso, initrd):
         Guest.CDGuest.__init__(self, "Ubuntu", update, arch, None, "virtio", None, None, "virtio")
@@ -26,7 +17,14 @@ class Ubuntu810and904and910Guest(Guest.CDGuest):
         self.initrd = initrd
 
     def generate_new_iso(self):
-        ubuntu_generate_iso(self.output_iso, self.iso_contents)
+        self.log.info("Generating new ISO")
+        Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom",
+                                       "-cache-inodes", "-J", "-l", "-b",
+                                       "isolinux/isolinux.bin", "-c",
+                                       "isolinux/boot.cat", "-no-emul-boot",
+                                       "-boot-load-size", "4",
+                                       "-boot-info-table", "-v", "-v",
+                                       "-o", output, inputdir])
 
     def generate_install_media(self):
         self.get_original_iso(self.isourl)
@@ -36,11 +34,11 @@ class Ubuntu810and904and910Guest(Guest.CDGuest):
         self.cleanup_iso()
 
     def modify_iso(self):
-        print "Putting the preseed file in place"
+        self.log.debug("Putting the preseed file in place")
 
         shutil.copy(self.preseed_file, self.iso_contents + "/preseed/customiso.seed")
 
-        print "Modifying text.cfg"
+        self.log.debug("Modifying text.cfg")
         f = open(self.iso_contents + "/isolinux/text.cfg", "r")
         lines = f.readlines()
         f.close()
@@ -55,7 +53,7 @@ class Ubuntu810and904and910Guest(Guest.CDGuest):
         f.writelines(lines)
         f.close()
 
-        print "Modifying isolinux.cfg"
+        self.log.debug("Modifying isolinux.cfg")
         f = open(self.iso_contents + "/isolinux/isolinux.cfg", "r")
         lines = f.readlines()
         f.close()
@@ -80,7 +78,14 @@ class Ubuntu710and8041Guest(Guest.CDGuest):
         self.preseed_file = preseed
 
     def generate_new_iso(self):
-        ubuntu_generate_iso(self.output_iso, self.iso_contents)
+        self.log.info("Generating new ISO")
+        Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom",
+                                       "-cache-inodes", "-J", "-l", "-b",
+                                       "isolinux/isolinux.bin", "-c",
+                                       "isolinux/boot.cat", "-no-emul-boot",
+                                       "-boot-load-size", "4",
+                                       "-boot-info-table", "-v", "-v",
+                                       "-o", output, inputdir])
 
     def generate_install_media(self):
         self.get_original_iso(self.isourl)
@@ -90,11 +95,11 @@ class Ubuntu710and8041Guest(Guest.CDGuest):
         self.cleanup_iso()
 
     def modify_iso(self):
-        print "Putting the preseed file in place"
+        self.log.debug("Putting the preseed file in place")
 
         shutil.copy(self.preseed_file, self.iso_contents + "/preseed/customiso.seed")
 
-        print "Modifying isolinux.cfg"
+        self.log.debug("Modifying isolinux.cfg")
         f = open(self.iso_contents + "/isolinux/isolinux.cfg", "r")
         lines = f.readlines()
         f.close()
@@ -125,7 +130,14 @@ class Ubuntu610and704Guest(Guest.CDGuest):
         self.preseed_file = preseed
 
     def generate_new_iso(self):
-        ubuntu_generate_iso(self.output_iso, self.iso_contents)
+        self.log.info("Generating new ISO")
+        Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom",
+                                       "-cache-inodes", "-J", "-l", "-b",
+                                       "isolinux/isolinux.bin", "-c",
+                                       "isolinux/boot.cat", "-no-emul-boot",
+                                       "-boot-load-size", "4",
+                                       "-boot-info-table", "-v", "-v",
+                                       "-o", output, inputdir])
 
     def generate_install_media(self):
         self.get_original_iso(self.isourl)
@@ -135,10 +147,10 @@ class Ubuntu610and704Guest(Guest.CDGuest):
         self.cleanup_iso()
 
     def modify_iso(self):
-        print "Putting the preseed file in place"
+        self.log.debug("Putting the preseed file in place")
         shutil.copy(self.preseed_file, self.iso_contents + "/preseed/customiso.seed")
 
-        print "Modifying isolinux.cfg"
+        self.log.debug("Modifying isolinux.cfg")
         f = open(self.iso_contents + "/isolinux/isolinux.cfg", "r")
         lines = f.readlines()
         f.close()
@@ -163,11 +175,10 @@ def get_class(idl):
     update = idl.update()
     arch = idl.arch()
     preseed = ozutil.generate_full_auto_path("ubuntu-" + update + "-jeos.preseed")
-
     if idl.installtype() != 'iso':
         raise Exception, "Ubuntu installs must be done via iso"
 
-    isourl = ozutil.check_iso_install(idl.iso())
+    isourl = ozutil.check_url(idl.iso())
 
     if update == "9.10":
         return Ubuntu810and904and910Guest(update, arch, preseed, isourl, "/casper/initrd.lz")
