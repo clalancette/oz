@@ -22,7 +22,7 @@ import ozutil
 
 class RHEL4Guest(Guest.CDGuest):
     def __init__(self, update, arch, url, ks, nicmodel, diskbus):
-        Guest.CDGuest.__init__(self, "RHEL-4", update, arch, None, nicmodel, None, None, diskbus)
+        Guest.CDGuest.__init__(self, "RHEL-4", update, arch, nicmodel, None, None, diskbus)
         self.ks_file = ks
         self.url = url
 

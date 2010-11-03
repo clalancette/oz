@@ -22,7 +22,7 @@ import ozutil
 
 class FedoraGuest(Guest.CDGuest):
     def __init__(self, update, arch, url, ks, nicmodel, haverepo, diskbus):
-        Guest.CDGuest.__init__(self, "Fedora", update, arch, None, nicmodel, None, None, diskbus)
+        Guest.CDGuest.__init__(self, "Fedora", update, arch, nicmodel, None, None, diskbus)
         self.ks_file = ks
         self.url = url
         self.haverepo = haverepo

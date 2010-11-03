@@ -23,7 +23,7 @@ import ozutil
 
 class RHL9Guest(Guest.CDGuest):
     def __init__(self, url):
-        Guest.CDGuest.__init__(self, "RHL", "9", "i386", None, "rtl8139", None, None, None)
+        Guest.CDGuest.__init__(self, "RHL", "9", "i386", "rtl8139", None, None, None)
         self.url = url
         self.ks_file = ks
 
@@ -79,7 +79,7 @@ class RHL9Guest(Guest.CDGuest):
 
 class RHL70and71and72and73and8Guest(Guest.FDGuest):
     def __init__(self, update, url, ks, nicmodel):
-        Guest.FDGuest.__init__(self, "RHL", update, "i386", None, nicmodel, None, None, None)
+        Guest.FDGuest.__init__(self, "RHL", update, "i386", nicmodel, None, None, None)
         self.url = url
         self.ks_file = ks
 

@@ -23,7 +23,7 @@ import ozutil
 
 class RHEL21Guest(Guest.FDGuest):
     def __init__(self, update, url, ks):
-        Guest.FDGuest.__init__(self, "RHEL-2.1", update, "i386", None, "pcnet", None, None, None)
+        Guest.FDGuest.__init__(self, "RHEL-2.1", update, "i386", "pcnet", None, None, None)
         self.url = url
         self.ks_file = ks
 

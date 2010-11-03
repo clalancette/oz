@@ -436,7 +436,7 @@ class CDGuest(Guest):
 
 class FDGuest(Guest):
     def __init__(self, distro, update, arch, nicmodel, clockoffset, mousetype,
-                 mousetype, diskbus):
+                 diskbus):
         Guest.__init__(self, distro, update, arch, nicmodel, clockoffset, mousetype, diskbus)
         self.orig_floppy = "/var/lib/oz/floppies/" + self.name + ".img"
         self.output_floppy = "/var/lib/libvirt/images/" + self.name + "-oz.img"

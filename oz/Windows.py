@@ -26,7 +26,7 @@ class Windows2000andXPand2003(Guest.CDGuest):
     def __init__(self, update, arch, url, key, siffile):
         if key is None:
             raise Exception, "A key is required when installing Windows"
-        Guest.CDGuest.__init__(self, "Windows", update, arch, None, None, "localtime", "usb", None)
+        Guest.CDGuest.__init__(self, "Windows", update, arch, None, "localtime", "usb", None)
         if update == "2000" and arch != "i386":
             raise Exception, "Windows 2000 only supports i386 architecture"
 
