@@ -1,5 +1,4 @@
 import uuid
-import virtinst.util
 import libvirt
 import os
 import subprocess
@@ -16,6 +15,7 @@ import httplib
 import ozutil
 import libxml2
 import logging
+import random
 
 class ProcessError(Exception):
     """This exception is raised when a process run by
@@ -47,15 +47,15 @@ class NullHandler(logging.Handler):
         pass
 
 class Guest(object):
-    def __init__(self, distro, update, arch, macaddr, nicmodel, clockoffset,
-                 mousetype, diskbus):
+    def __init__(self, distro, update, arch, nicmodel, clockoffset, mousetype,
+                 diskbus):
         if arch != "i386" and arch != "x86_64":
             raise Exception, "Unsupported guest arch " + arch
         self.log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
         self.uuid = uuid.uuid4()
-        self.macaddr = macaddr
-        if self.macaddr is None:
-            self.macaddr = virtinst.util.randomMAC()
+        mac = [0x52, 0x54, 0x00, random.randint(0x00, 0xff),
+               random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
+        self.macaddr = ':'.join(map(lambda x:"%02x" % x, mac))
         self.distro = distro
         self.update = update
         self.arch = arch
@@ -374,9 +374,9 @@ class Guest(object):
             self.log.error("Failed to take screenshot")
 
 class CDGuest(Guest):
-    def __init__(self, distro, update, arch, macaddr, nicmodel, clockoffset,
-                 mousetype, diskbus):
-        Guest.__init__(self, distro, update, arch, macaddr, nicmodel, clockoffset, mousetype, diskbus)
+    def __init__(self, distro, update, arch, nicmodel, clockoffset, mousetype,
+                 diskbus):
+        Guest.__init__(self, distro, update, arch, nicmodel, clockoffset, mousetype, diskbus)
         self.orig_iso = "/var/lib/oz/isos/" + self.name + ".iso"
         self.output_iso = "/var/lib/libvirt/images/" + self.name + "-oz.iso"
         self.iso_contents = "/var/lib/oz/isocontent/" + self.name
@@ -419,9 +419,9 @@ class CDGuest(Guest):
         shutil.rmtree(self.iso_contents)
 
 class FDGuest(Guest):
-    def __init__(self, distro, update, arch, macaddr, nicmodel, clockoffset,
+    def __init__(self, distro, update, arch, nicmodel, clockoffset, mousetype,
                  mousetype, diskbus):
-        Guest.__init__(self, distro, update, arch, macaddr, nicmodel, clockoffset, mousetype, diskbus)
+        Guest.__init__(self, distro, update, arch, nicmodel, clockoffset, mousetype, diskbus)
         self.orig_floppy = "/var/lib/oz/floppies/" + self.name + ".img"
         self.output_floppy = "/var/lib/libvirt/images/" + self.name + "-oz.img"
         self.floppy_contents = "/var/lib/oz/floppycontent/" + self.name
