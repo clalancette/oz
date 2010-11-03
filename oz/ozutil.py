@@ -2,6 +2,14 @@ import urlparse
 import httplib
 import subprocess
 import libxml2
+import os
+
+def generate_full_auto_path(relative):
+    # all of the automated installation paths are installed to $pkg_path/auto,
+    # so we just need to find it and generate the right path here
+    pkg_path = os.path.dirname(__file__)
+    print os.path.abspath(os.path.join(pkg_path, "auto", relative))
+    return os.path.abspath(os.path.join(pkg_path, "auto", relative))
 
 def check_url(url):
     # a basic check to make sure that the url exists

@@ -4,12 +4,11 @@ import subprocess
 import re
 import ozutil
 
-class FedoraGuest(Guest.CDGuest):
-    def __init__(self, update, arch, url, ks, nicmodel, haverepo, diskbus):
-        Guest.CDGuest.__init__(self, "Fedora", update, arch, None, nicmodel, None, None, diskbus)
+class RHEL3Guest(Guest.CDGuest):
+    def __init__(self, update, arch, url, ks):
+        Guest.CDGuest.__init__(self, "RHEL-3", update, arch, None, "rtl8139", None, None, None)
         self.ks_file = ks
         self.url = url
-        self.haverepo = haverepo
 
     def modify_iso(self):
         print "Putting the kickstart in place"
@@ -27,10 +26,7 @@ class FedoraGuest(Guest.CDGuest):
                 lines[lines.index(line)] = "default customiso\n"
         lines.append("label customiso\n")
         lines.append("  kernel vmlinuz\n")
-        if self.haverepo:
-            lines.append("  append initrd=initrd.img ks=cdrom:/ks.cfg repo=" + self.url + "\n")
-        else:
-            lines.append("  append initrd=initrd.img ks=cdrom:/ks.cfg method=" + self.url + "\n")
+        lines.append("  append initrd=initrd.img ks=cdrom:/ks.cfg method=" + self.url + "\n")
 
         f = open(self.iso_contents + "/isolinux/isolinux.cfg", "w")
         f.writelines(lines)
@@ -55,15 +51,13 @@ class FedoraGuest(Guest.CDGuest):
 def get_class(idl):
     update = idl.update()
     arch = idl.arch()
-    ks = "./fedora-" + update + "-jeos.ks"
+    ks = ozutil.generate_full_auto_path("rhel-3-jeos.ks")
 
     if idl.installtype() != 'url':
-        raise Exception, "Fedora installs must be done via url"
+        raise Exception, "RHEL-3 installs must be done via url"
 
     url = ozutil.check_url_install(idl.url())
 
-    if update == "10" or update == "11" or update == "12" or update == "13":
-        return FedoraGuest(update, arch, url, ks, "virtio", True, "virtio")
-    if update == "9" or update == "8" or update == "7":
-        return FedoraGuest(update, arch, url, ks, "rtl8139", False, None)
-    raise Exception, "Unsupported Fedora update " + update
+    if update == "GOLD" or update == "U1" or update == "U2" or update == "U3" or update == "U4" or update == "U5" or update == "U6" or update == "U7" or update == "U8" or update == "U9":
+        return RHEL3Guest(update, arch, url, ks)
+    raise Exception, "Unsupported RHEL-3 update " + update

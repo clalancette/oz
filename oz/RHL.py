@@ -124,7 +124,7 @@ def get_class(idl):
     update = idl.update()
     arch = idl.arch()
 
-    ks = "./rhl-" + update + "-jeos.ks"
+    ks = ozutil.generate_full_auto_path("rhl-" + update + "-jeos.ks")
 
     if idl.installtype() != 'url':
         raise Exception, "RHEL-2.1 installs must be done via url"

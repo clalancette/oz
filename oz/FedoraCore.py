@@ -4,10 +4,10 @@ import subprocess
 import re
 import ozutil
 
-class RHEL3Guest(Guest.CDGuest):
-    def __init__(self, update, arch, url):
-        Guest.CDGuest.__init__(self, "RHEL-3", update, arch, None, "rtl8139", None, None, None)
-        self.ks_file = "./rhel-3-jeos.ks"
+class FedoraCoreGuest(Guest.CDGuest):
+    def __init__(self, update, arch, url, ks):
+        Guest.CDGuest.__init__(self, "FedoraCore", update, arch, None, "rtl8139", None, None, None)
+        self.ks_file = ks
         self.url = url
 
     def modify_iso(self):
@@ -48,15 +48,24 @@ class RHEL3Guest(Guest.CDGuest):
         self.generate_new_iso()
         self.cleanup_iso()
 
+class FedoraCore4Guest(FedoraCoreGuest):
+    def __init__(self, arch, url):
+        FedoraCoreGuest.__init__(self, "4", arch, url, "./fedoracore-4-jeos.ks")
+    def generate_diskimage(self):
+        self.generate_blank_diskimage()
+
 def get_class(idl):
     update = idl.update()
     arch = idl.arch()
+    ks = ozutil.generate_full_auto_path("fedoracore-" + update + "-jeos.ks")
 
     if idl.installtype() != 'url':
-        raise Exception, "RHEL-3 installs must be done via url"
+        raise Exception, "Fedora installs must be done via url"
 
     url = ozutil.check_url_install(idl.url())
 
-    if update == "GOLD" or update == "U1" or update == "U2" or update == "U3" or update == "U4" or update == "U5" or update == "U6" or update == "U7" or update == "U8" or update == "U9":
-        return RHEL3Guest(update, arch, url)
-    raise Exception, "Unsupported RHEL-3 update " + update
+    if update == "6" or update == "5" or update == "3" or update == "2" or update == "1":
+        return FedoraCoreGuest(update, arch, url, ks)
+    if update == "4":
+        return FedoraCore4Guest(arch, url)
+    raise Exception, "Unsupported FedoraCore update " + update

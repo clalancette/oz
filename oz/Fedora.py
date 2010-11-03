@@ -4,11 +4,12 @@ import subprocess
 import re
 import ozutil
 
-class RHEL5Guest(Guest.CDGuest):
-    def __init__(self, update, arch, url, ks, nicmodel, diskbus):
-        Guest.CDGuest.__init__(self, "RHEL-5", update, arch, None, nicmodel, None, None, diskbus)
+class FedoraGuest(Guest.CDGuest):
+    def __init__(self, update, arch, url, ks, nicmodel, haverepo, diskbus):
+        Guest.CDGuest.__init__(self, "Fedora", update, arch, None, nicmodel, None, None, diskbus)
         self.ks_file = ks
         self.url = url
+        self.haverepo = haverepo
 
     def modify_iso(self):
         print "Putting the kickstart in place"
@@ -26,7 +27,10 @@ class RHEL5Guest(Guest.CDGuest):
                 lines[lines.index(line)] = "default customiso\n"
         lines.append("label customiso\n")
         lines.append("  kernel vmlinuz\n")
-        lines.append("  append initrd=initrd.img ks=cdrom:/ks.cfg method=" + self.url + "\n")
+        if self.haverepo:
+            lines.append("  append initrd=initrd.img ks=cdrom:/ks.cfg repo=" + self.url + "\n")
+        else:
+            lines.append("  append initrd=initrd.img ks=cdrom:/ks.cfg method=" + self.url + "\n")
 
         f = open(self.iso_contents + "/isolinux/isolinux.cfg", "w")
         f.writelines(lines)
@@ -51,15 +55,15 @@ class RHEL5Guest(Guest.CDGuest):
 def get_class(idl):
     update = idl.update()
     arch = idl.arch()
-    key = idl.key()
+    ks = ozutil.generate_full_auto_path("fedora-" + update + "-jeos.ks")
 
     if idl.installtype() != 'url':
-        raise Exception, "RHEL-5 installs must be done via url"
+        raise Exception, "Fedora installs must be done via url"
 
     url = ozutil.check_url_install(idl.url())
 
-    if update == "GOLD" or update == "U1" or update == "U2" or update == "U3":
-        return RHEL5Guest(update, arch, url, "./rhel-5-jeos.ks", "rtl8139", None)
-    if update == "U4" or update == "U5":
-        return RHEL5Guest(update, arch, url, "./rhel-5-virtio-jeos.ks", "virtio", "virtio")
-    raise Exception, "Unsupported RHEL-5 update " + update
+    if update == "10" or update == "11" or update == "12" or update == "13":
+        return FedoraGuest(update, arch, url, ks, "virtio", True, "virtio")
+    if update == "9" or update == "8" or update == "7":
+        return FedoraGuest(update, arch, url, ks, "rtl8139", False, None)
+    raise Exception, "Unsupported Fedora update " + update

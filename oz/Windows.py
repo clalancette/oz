@@ -131,7 +131,7 @@ def get_class(idl):
     update = idl.update()
     arch = idl.arch()
     key = idl.key()
-    sif = "./windows-" + update + "-jeos.sif"
+    sif = ozutil.generate_full_auto_path("windows-" + update + "-jeos.sif")
 
     isourl = ozutil.check_iso_install(idl.iso())
 

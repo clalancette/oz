@@ -4,16 +4,16 @@ import sys
 import getopt
 import os
 
-import IDL
-import Fedora
-import FedoraCore
-import RHEL_2_1
-import RHEL_3
-import RHEL_4
-import RHEL_5
-import RHL
-import Ubuntu
-import Windows
+import oz.IDL
+import oz.Fedora
+import oz.FedoraCore
+import oz.RHEL_2_1
+import oz.RHEL_3
+import oz.RHEL_4
+import oz.RHEL_5
+import oz.RHL
+import oz.Ubuntu
+import oz.Windows
 
 def usage():
     print "Usage: oz [OPTIONS] <idl>"
@@ -52,28 +52,28 @@ if os.geteuid() != 0:
 if len(args) != 1:
     usage();
 
-idl = IDL.IDL(args[0])
+idl = oz.IDL.IDL(args[0])
 
 distro = idl.distro()
 
 if distro == "Fedora":
-    guest = Fedora.get_class(idl)
+    guest = oz.Fedora.get_class(idl)
 elif distro == "FedoraCore":
-    guest = FedoraCore.get_class(idl)
+    guest = oz.FedoraCore.get_class(idl)
 elif distro == "RHEL-2.1":
-    guest = RHEL_2_1.get_class(idl)
+    guest = oz.RHEL_2_1.get_class(idl)
 elif distro == "RHEL-3":
-    guest = RHEL_3.get_class(idl)
+    guest = oz.RHEL_3.get_class(idl)
 elif distro == "RHEL-4":
-    guest = RHEL_4.get_class(idl)
+    guest = oz.RHEL_4.get_class(idl)
 elif distro == "RHEL-5":
-    guest = RHEL_5.get_class(idl)
+    guest = oz.RHEL_5.get_class(idl)
 elif distro == "Ubuntu":
-    guest = Ubuntu.get_class(idl)
+    guest = oz.Ubuntu.get_class(idl)
 elif distro == "Windows":
-    guest = Windows.get_class(idl)
+    guest = oz.Windows.get_class(idl)
 elif distro == "RHL":
-    guest = RHL.get_class(idl)
+    guest = oz.RHL.get_class(idl)
 else:
     usage()
 

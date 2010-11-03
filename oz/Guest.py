@@ -341,16 +341,16 @@ class CDGuest(Guest):
     def __init__(self, distro, update, arch, macaddr, nicmodel, clockoffset,
                  mousetype, diskbus):
         Guest.__init__(self, distro, update, arch, macaddr, nicmodel, clockoffset, mousetype, diskbus)
-        self.orig_iso = "/var/lib/kvminstaller/isos/" + self.name + ".iso"
+        self.orig_iso = "/var/lib/oz/isos/" + self.name + ".iso"
         self.output_iso = "/var/lib/libvirt/images/" + self.name + "-oz.iso"
-        self.iso_contents = "/var/lib/kvminstaller/isocontent/" + self.name
+        self.iso_contents = "/var/lib/oz/isocontent/" + self.name
 
     def get_original_iso(self, isourl):
         return self.get_original_media(isourl, self.orig_iso)
 
     def copy_iso(self):
         print "Copying ISO contents for modification"
-        isomount = "/var/lib/kvminstaller/mnt/" + self.name
+        isomount = "/var/lib/oz/mnt/" + self.name
         if os.access(isomount, os.F_OK):
             os.rmdir(isomount)
         os.makedirs(isomount)
@@ -386,9 +386,9 @@ class FDGuest(Guest):
     def __init__(self, distro, update, arch, macaddr, nicmodel, clockoffset,
                  mousetype, diskbus):
         Guest.__init__(self, distro, update, arch, macaddr, nicmodel, clockoffset, mousetype, diskbus)
-        self.orig_floppy = "/var/lib/kvminstaller/floppies/" + self.name + ".img"
+        self.orig_floppy = "/var/lib/oz/floppies/" + self.name + ".img"
         self.output_floppy = "/var/lib/libvirt/images/" + self.name + "-oz.img"
-        self.floppy_contents = "/var/lib/kvminstaller/floppycontent/" + self.name
+        self.floppy_contents = "/var/lib/oz/floppycontent/" + self.name
 
     def get_original_floppy(self, floppyurl):
         return self.get_original_media(floppyurl, self.orig_floppy)

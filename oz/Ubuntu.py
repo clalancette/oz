@@ -162,7 +162,7 @@ class Ubuntu610and704Guest(Guest.CDGuest):
 def get_class(idl):
     update = idl.update()
     arch = idl.arch()
-    preseed = "./ubuntu-" + update + "-jeos.preseed"
+    preseed = ozutil.generate_full_auto_path("ubuntu-" + update + "-jeos.preseed")
 
     if idl.installtype() != 'iso':
         raise Exception, "Ubuntu installs must be done via iso"

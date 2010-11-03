@@ -4,9 +4,9 @@ import subprocess
 import re
 import ozutil
 
-class FedoraCoreGuest(Guest.CDGuest):
-    def __init__(self, update, arch, url, ks):
-        Guest.CDGuest.__init__(self, "FedoraCore", update, arch, None, "rtl8139", None, None, None)
+class RHEL5Guest(Guest.CDGuest):
+    def __init__(self, update, arch, url, ks, nicmodel, diskbus):
+        Guest.CDGuest.__init__(self, "RHEL-5", update, arch, None, nicmodel, None, None, diskbus)
         self.ks_file = ks
         self.url = url
 
@@ -48,24 +48,20 @@ class FedoraCoreGuest(Guest.CDGuest):
         self.generate_new_iso()
         self.cleanup_iso()
 
-class FedoraCore4Guest(FedoraCoreGuest):
-    def __init__(self, arch, url):
-        FedoraCoreGuest.__init__(self, "4", arch, url, "./fedoracore-4-jeos.ks")
-    def generate_diskimage(self):
-        self.generate_blank_diskimage()
-
 def get_class(idl):
     update = idl.update()
     arch = idl.arch()
-    ks = "./fedoracore-" + update + "-jeos.ks"
+    key = idl.key()
 
     if idl.installtype() != 'url':
-        raise Exception, "Fedora installs must be done via url"
+        raise Exception, "RHEL-5 installs must be done via url"
 
     url = ozutil.check_url_install(idl.url())
 
-    if update == "6" or update == "5" or update == "3" or update == "2" or update == "1":
-        return FedoraCoreGuest(update, arch, url, ks)
-    if update == "4":
-        return FedoraCore4Guest(arch, url)
-    raise Exception, "Unsupported FedoraCore update " + update
+    if update == "GOLD" or update == "U1" or update == "U2" or update == "U3":
+        ks = ozutil.generate_full_auto_path("rhel-5-jeos.ks")
+        return RHEL5Guest(update, arch, url, ks, "rtl8139", None)
+    if update == "U4" or update == "U5":
+        ks = ozutil.generate_full_auto_path("rhel-5-virtio-jeos.ks")
+        return RHEL5Guest(update, arch, url, ks, "virtio", "virtio")
+    raise Exception, "Unsupported RHEL-5 update " + update
