@@ -1,0 +1,14 @@
+1.  Get error logs from the individual OS installers (if possible)
+2.  More OS support:
+     - Ubuntu 5.04, 5.10, 6.06, 10.04, and 10.10
+     - Debian Etch, Lenny, Squeeze
+     - Fedora 14
+     - RHEL-6
+     - openSUSE 11.0, 11.1, 11.2, 11.3 (autoyast)
+     - OpenBSD (http://people.cs.uchicago.edu/~brendan/howtos/openbsd_install/)
+     - NetBSD (anita)
+     - FreeBSD
+     - Dragonfly BSD
+     - Windows Vista, 2008, 7, 98, 95, ME
+     - RHL 5.2, 6.0, 6.1, 6.2 (only nfs installs work)
+3.  Add partition/disk size support to the IDL
