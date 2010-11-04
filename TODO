@@ -1,5 +1,4 @@
-1.  Get error logs from the individual OS installers (if possible)
-2.  More OS support:
+1.  More OS support:
      - Ubuntu 5.04, 5.10, 6.06, 10.04, and 10.10
      - Debian Etch, Lenny, Squeeze
      - RHEL-6
@@ -10,24 +9,24 @@
      - Dragonfly BSD
      - Windows Vista, 2008, 7, 98, 95, ME
      - RHL 5.2, 6.0, 6.1, 6.2 (only nfs installs work)
-3.  Add partition/disk size support to the IDL
-4.  Add improved error logging to guest installation.  That is, if the guest
+2.  Add partition/disk size support to the IDL.
+3.  Add improved error logging to guest installation.  That is, if the guest
 installation fails, we want to get detailed error information out of the
 installer to find out why.  Fedora/RHEL support doing remote syslog via
 network or virtio-serial, and I also believe anaconda will dump data to syslog
 during installation, so that is one avenue to pursue.
-5.  Instead of calling out to an external 'gvnccapture' command to collect
+4.  Instead of calling out to an external 'gvnccapture' command to collect
 a screenshot, we should instead write the thing in python using the gtk-vnc
 library.  Unfortunately I have not figured out how to do it in python yet,
 so this needs further research.
-6.  Better error handling all around.  In particular, make sure that we
-raise proper exceptions, that we catch errors properly, and that we check
-that the binaries we need are available before using them.
-7.  If two of the same OSes are being installed at the same time on the same
+5.  If two of the same OSes are being installed at the same time on the same
 machine, they will trample all over each other.  We need to handle this
 situation.
-8.  We should have our own exception class, rather than just raising "Exception"
-all of the time
-9.  It should be possible to replace the subprocess call to fuseiso by
+6.  We should have our own exception class, rather than just raising "Exception"
+all of the time.
+7.  It should be possible to replace the subprocess call to fuseiso by
 implementing our own fuse-python subclass.  Though this is probably a bit of
-work.
+work.  Or we could possibly use libguestfs; it is unclear.
+8.  Before attempting an install, check the data_dir and output_dir to make
+sure that they will approximately have enough space for the install media
+and the output disk image, respectively.
