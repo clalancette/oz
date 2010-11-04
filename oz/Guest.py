@@ -53,7 +53,11 @@ class ProcessError(Exception):
 def subprocess_check_output(*popenargs, **kwargs):
     if 'stdout' in kwargs:
         raise ValueError('stdout argument not allowed, it will be overridden.')
-    process = subprocess.Popen(stdout=subprocess.PIPE, stderr=subprocess.STDOUT, *popenargs, **kwargs)
+
+    ozutil.executable_exists(popenargs[0][0])
+
+    process = subprocess.Popen(stdout=subprocess.PIPE,
+                               stderr=subprocess.STDOUT, *popenargs, **kwargs)
     output, unused_err = process.communicate()
     retcode = process.poll()
     if retcode:
