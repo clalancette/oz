@@ -93,7 +93,7 @@ class Guest(object):
                 doc = libxml2.parseMemory(xml, len(xml))
                 ip = doc.xpathEval('/network/ip')
                 if len(ip) != 1:
-                    raise Exception, "Failed to find host IP address"
+                    raise Exception, "Failed to find host IP address for virbr0"
                 self.host_bridge_ip = ip[0].prop('address')
                 break
         if self.host_bridge_ip is None:
@@ -203,12 +203,8 @@ class Guest(object):
         domain.appendChild(featuresNode)
 
         # create os
-        arch = self.arch
-        if self.arch == "i386":
-            arch = "i686"
         osNode = doc.createElement("os")
         typeNode = doc.createElement("type")
-        typeNode.setAttribute("arch", arch)
         typeNode.appendChild(doc.createTextNode("hvm"))
         osNode.appendChild(typeNode)
         bootNode = doc.createElement("boot")
@@ -299,6 +295,9 @@ class Guest(object):
 
     def generate_diskimage(self, size=10):
         self.log.info("Generating %dGB diskimage with fake partition for %s" % (size, self.name))
+        # FIXME: I think that this partition table will only work with the 10GB
+        # image.  We'll need to do something more sophisticated when we handle
+        # variable sized disks
         f = open(self.diskimage, "w")
         f.seek(0x1bf)
         f.write("\x01\x01\x00\x82\xfe\x3f\x7c\x3f\x00\x00\x00\xfe\xa3\x1e")
@@ -325,6 +324,7 @@ class Guest(object):
 
         if count == 0:
             # if we timed out, then let's make sure to take a screenshot.
+            # FIXME: where should we put this screenshot?
             screenshot = self.name + "-" + str(time.time()) + ".png"
             self.capture_screenshot(self.libvirt_dom.XMLDesc(0), screenshot)
             raise Exception, "Timed out waiting for install to finish"
@@ -379,12 +379,11 @@ class Guest(object):
             self.log.error("Could not find the VNC port")
             return
 
-        graphics_type = graphics[0].prop('type')
-        port = graphics[0].prop('port')
-
-        if graphics_type != 'vnc':
+        if graphics[0].prop('type') != 'vnc':
             self.log.error("Graphics type is not VNC, not taking screenshot")
             return
+
+        port = graphics[0].prop('port')
 
         if port is None:
             self.log.error("Port is not specified, not taking screenshot")
@@ -392,7 +391,8 @@ class Guest(object):
 
         vnc = "localhost:%s" % (int(port) - 5900)
 
-        # FIXME: we should probably use subprocess_check_output here
+        # we don't use subprocess_check_output here because if this fails,
+        # we don't want to raise an exception, just print an error
         ret = subprocess.call(['gvnccapture', vnc, filename], stdout=open('/dev/null', 'w'), stderr=subprocess.STDOUT)
         if ret != 0:
             self.log.error("Failed to take screenshot")
@@ -517,14 +517,15 @@ class CDGuest(Guest):
             shutil.rmtree(self.iso_contents)
 
         # mount and copy the ISO
-        # this requires fuseiso to be installed
         subprocess_check_output(["fuseiso", self.orig_iso, isomount])
 
         try:
             shutil.copytree(isomount, self.iso_contents, symlinks=True)
         finally:
-            # FIXME: if fusermount fails, what do we want to do?
-            subprocess.call(["fusermount", "-u", isomount])
+            # if fusermount fails, there is not much we can do.  Print an
+            # error, but go on anyway
+            if subprocess.call(["fusermount", "-u", isomount]) != 0:
+                self.log.error("Failed to unmount ISO; continuing anyway")
             os.rmdir(isomount)
 
     def install(self):

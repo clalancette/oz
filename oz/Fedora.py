@@ -61,7 +61,8 @@ class FedoraGuest(Guest.CDGuest):
                                        "-c", "isolinux/boot.cat",
                                        "-no-emul-boot", "-boot-load-size", "4",
                                        "-boot-info-table", "-v", "-v",
-                                       "-o", self.output_iso, self.iso_contents])
+                                       "-o", self.output_iso,
+                                       self.iso_contents])
 
     def generate_install_media(self):
         self.log.info("Generating install media")
@@ -140,6 +141,9 @@ class FedoraGuest(Guest.CDGuest):
         if self.g.exists(startuplink):
             self.g.mv(startuplink, startuplink + ".cdl")
         self.g.ln_sf('/etc/init.d/sshd', startuplink)
+
+        # FIXME: we need to inject our own sshd_config, to make sure that
+        # the options we need are enabled
 
         # part 3; open up iptables
         self.log.debug("Step 3: Open up the firewall")
