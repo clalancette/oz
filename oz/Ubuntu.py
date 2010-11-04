@@ -42,8 +42,8 @@ class Ubuntu810and904and910Guest(Guest.CDGuest):
                                        "-boot-info-table", "-v", "-v",
                                        "-o", output, inputdir])
 
-    def generate_install_media(self):
-        self.get_original_iso(self.isourl)
+    def generate_install_media(self, force_download):
+        self.get_original_iso(self.isourl, force_download)
         self.copy_iso()
         self.modify_iso()
         self.generate_new_iso()
@@ -103,8 +103,8 @@ class Ubuntu710and8041Guest(Guest.CDGuest):
                                        "-boot-info-table", "-v", "-v",
                                        "-o", output, inputdir])
 
-    def generate_install_media(self):
-        self.get_original_iso(self.isourl)
+    def generate_install_media(self, force_download):
+        self.get_original_iso(self.isourl, force_download)
         self.copy_iso()
         self.modify_iso()
         self.generate_new_iso()
@@ -155,8 +155,8 @@ class Ubuntu610and704Guest(Guest.CDGuest):
                                        "-boot-info-table", "-v", "-v",
                                        "-o", output, inputdir])
 
-    def generate_install_media(self):
-        self.get_original_iso(self.isourl)
+    def generate_install_media(self, force_download):
+        self.get_original_iso(self.isourl, force_download)
         self.copy_iso()
         self.modify_iso()
         self.generate_new_iso()

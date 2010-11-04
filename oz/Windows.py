@@ -127,8 +127,8 @@ class Windows2000andXPand2003(Guest.CDGuest):
         f.writelines(lines)
         f.close()
 
-    def generate_install_media(self):
-        self.get_original_iso(self.url)
+    def generate_install_media(self, force_download):
+        self.get_original_iso(self.url, force_download)
         self.copy_iso()
         self.modify_iso()
         self.generate_new_iso()

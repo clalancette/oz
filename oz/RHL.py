@@ -70,8 +70,8 @@ class RHL9Guest(Guest.CDGuest):
                                        "-boot-info-table", "-v", "-v",
                                        "-o", self.output_iso, self.iso_contents])
 
-    def generate_install_media(self):
-        self.get_original_iso(self.url + "/images/boot.iso")
+    def generate_install_media(self, force_download):
+        self.get_original_iso(self.url + "/images/boot.iso", force_download)
         self.copy_iso()
         self.modify_iso()
         self.generate_new_iso()
@@ -131,8 +131,8 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
                                        self.output_floppy,
                                        self.floppy_contents + "/SYSLINUX.CFG", "::SYSLINUX.CFG"])
 
-    def generate_install_media(self):
-        self.get_original_floppy(self.url + "/images/bootnet.img")
+    def generate_install_media(self, force_download):
+        self.get_original_floppy(self.url + "/images/bootnet.img", force_download)
         self.copy_floppy()
         self.modify_floppy()
         self.cleanup_floppy()

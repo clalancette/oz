@@ -333,7 +333,7 @@ class Guest(object):
             self.capture_screenshot(self.libvirt_dom.XMLDesc(0), screenshot)
             raise Exception, "Timed out waiting for install to finish"
 
-    def get_original_media(self, url, output):
+    def get_original_media(self, url, output, force_download):
         original_available = False
 
         # note that all redirects should already have been resolved by
@@ -343,7 +343,7 @@ class Guest(object):
         if conn.getcode() != 200:
             raise Exception, "Could not access install url: " + conn.getcode()
 
-        if os.access(output, os.F_OK):
+        if not force_download and os.access(output, os.F_OK):
             try:
                 for header in conn.headers.headers:
                     if re.match("Content-Length:", header):
@@ -516,8 +516,8 @@ class CDGuest(Guest):
         self.output_iso = "/var/lib/libvirt/images/" + self.name + "-oz.iso"
         self.iso_contents = "/var/lib/oz/isocontent/" + self.name
 
-    def get_original_iso(self, isourl):
-        return self.get_original_media(isourl, self.orig_iso)
+    def get_original_iso(self, isourl, force_download):
+        return self.get_original_media(isourl, self.orig_iso, force_download)
 
     def copy_iso(self):
         self.log.info("Copying ISO contents for modification")
@@ -566,8 +566,8 @@ class FDGuest(Guest):
         self.output_floppy = "/var/lib/libvirt/images/" + self.name + "-oz.img"
         self.floppy_contents = "/var/lib/oz/floppycontent/" + self.name
 
-    def get_original_floppy(self, floppyurl):
-        return self.get_original_media(floppyurl, self.orig_floppy)
+    def get_original_floppy(self, floppyurl, force_download):
+        return self.get_original_media(floppyurl, self.orig_floppy, force_download)
 
     def copy_floppy(self):
         self.log.info("Copying floppy contents for modification")

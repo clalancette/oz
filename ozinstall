@@ -59,13 +59,14 @@ def usage():
     sys.exit(1)
 
 try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], 'd:h', ['debug', 'help'])
+    opts, args = getopt.gnu_getopt(sys.argv[1:], 'd:fh', ['debug', 'force-download', 'help'])
 except getopt.GetoptError, err:
     print str(err)
     usage()
 
 loglevel = logging.ERROR
 logformat = "%(message)s"
+force_download=False
 for o, a in opts:
     if o in ("-h", "--help"):
         usage()
@@ -83,6 +84,8 @@ for o, a in opts:
             logformat = logging.BASIC_FORMAT
         else:
             usage()
+    elif o in ("-f", "--force-download"):
+        force_download = True
     else:
         assert False, "unhandled option"
 
@@ -123,7 +126,7 @@ else:
     usage()
 
 guest.cleanup_old_guest()
-guest.generate_install_media()
+guest.generate_install_media(force_download)
 try:
     guest.generate_diskimage()
     try:

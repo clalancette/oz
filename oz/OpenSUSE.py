@@ -43,9 +43,9 @@ class OpenSUSEGuest(Guest.CDGuest):
                                        "-o", self.output_iso,
                                        self.iso_contents])
 
-    def generate_install_media(self):
+    def generate_install_media(self, force_download):
         self.log.info("Generating install media")
-        self.get_original_iso(self.isourl)
+        self.get_original_iso(self.isourl, force_download)
         self.copy_iso()
         self.modify_iso()
         self.generate_new_iso()

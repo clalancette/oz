@@ -75,8 +75,8 @@ class RHEL21Guest(Guest.FDGuest):
                                        self.output_floppy,
                                        self.floppy_contents + "/SYSLINUX.CFG", "::SYSLINUX.CFG"])
 
-    def generate_install_media(self):
-        self.get_original_floppy(self.url + "/images/bootnet.img")
+    def generate_install_media(self, force_download):
+        self.get_original_floppy(self.url + "/images/bootnet.img", force_download)
         self.copy_floppy()
         self.modify_floppy()
 
