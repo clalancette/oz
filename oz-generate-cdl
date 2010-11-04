@@ -1,0 +1,124 @@
+#!/usr/bin/python
+
+# Copyright (C) 2010  Chris Lalancette <clalance@redhat.com>
+
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation;
+# version 2.1 of the License.
+
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+import sys
+import getopt
+import os
+import logging
+
+import oz.IDL
+import oz.Fedora
+import oz.FedoraCore
+import oz.RHEL_2_1
+import oz.RHEL_3
+import oz.RHEL_4
+import oz.RHEL_5
+import oz.RHL
+import oz.Ubuntu
+import oz.Windows
+
+def usage():
+    print "Usage: oz-generate-cdl [OPTIONS] <idl> <diskimage>"
+    print " OPTIONS:"
+    print "  -d <level>\tTurn up logging level.  The levels are:"
+    print "\t\t\t0 - errors only (this is the default)"
+    print "\t\t\t1 - errors and warnings"
+    print "\t\t\t2 - errors, warnings, and information"
+    print "\t\t\t3 - all messages"
+    print "\t\t\t4 - all messages, prepended with the level and classname"
+    print "  -h\t\tPrint this help message"
+    print " Currently supported architectures are:"
+    print "   i386, x86_64"
+    print " Currently supported distros are:"
+    print "   Fedora: 7, 8, 9, 10, 11, 12, 13"
+    print "   Fedora Core: 1, 2, 3, 4, 5, 6"
+    print "   RHEL 2.1: GOLD, U1, U2, U3, U4, U5, U6"
+    print "   RHEL 3: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9"
+    print "   RHEL 4: GOLD, U1, U2, U3, U4, U5, U6, U7, U8"
+    print "   RHEL 5: GOLD, U1, U2, U3, U4, U5"
+    print "   Ubuntu: 6.10, 7.04, 7.10, 8.04.[1,2,3,4], 8.10, 9.04, 9.10"
+    print "   Windows: 2000, XP, 2003"
+    print "   RHL: 7.0, 7.1, 7.2, 7.3, 8, 9"
+    sys.exit(1)
+
+try:
+    opts, args = getopt.gnu_getopt(sys.argv[1:], 'd:h', ['debug', 'help'])
+except getopt.GetoptError, err:
+    print str(err)
+    usage()
+
+loglevel = logging.ERROR
+logformat = "%(message)s"
+for o, a in opts:
+    if o in ("-h", "--help"):
+        usage()
+    elif o in ("-d", "--debug"):
+        if int(a) == 0:
+            loglevel = logging.ERROR
+        elif int(a) == 1:
+            loglevel = logging.WARNING
+        elif int(a) == 2:
+            loglevel = logging.INFO
+        elif int(a) == 3:
+            loglevel = logging.DEBUG
+        elif int(a) >= 4:
+            loglevel = logging.DEBUG
+            logformat = logging.BASIC_FORMAT
+        else:
+            usage()
+    else:
+        assert False, "unhandled option"
+
+if os.geteuid() != 0:
+    print "%s must be run as root" % (sys.argv[0])
+    sys.exit(2)
+
+if len(args) != 2:
+    usage()
+
+idlfile = args[0]
+diskimage = args[1]
+
+logging.basicConfig(level=loglevel, format=logformat)
+
+idl = oz.IDL.IDL(idlfile)
+
+distro = idl.distro()
+
+if distro == "Fedora":
+    guest = oz.Fedora.get_class(idl)
+elif distro == "FedoraCore":
+    guest = oz.FedoraCore.get_class(idl)
+elif distro == "RHEL-2.1":
+    guest = oz.RHEL_2_1.get_class(idl)
+elif distro == "RHEL-3":
+    guest = oz.RHEL_3.get_class(idl)
+elif distro == "RHEL-4":
+    guest = oz.RHEL_4.get_class(idl)
+elif distro == "RHEL-5":
+    guest = oz.RHEL_5.get_class(idl)
+elif distro == "Ubuntu":
+    guest = oz.Ubuntu.get_class(idl)
+elif distro == "Windows":
+    guest = oz.Windows.get_class(idl)
+elif distro == "RHL":
+    guest = oz.RHL.get_class(idl)
+else:
+    usage()
+
+print guest.generate_cdl(diskimage)
