@@ -1,14 +1,14 @@
 <image>
-  <name>ubuntu9.10jeos</name>
+  <name>opensuse11.3jeos</name>
   <os>
-    <name>Ubuntu</name>
-    <version>9.10</version>
-    <arch>i386</arch>
+    <name>OpenSUSE</name>
+    <version>11.3</version>
+    <arch>x86_64</arch>
     <install type='iso'>
-      <iso>http://path/to/isos/ubuntu-9.10-desktop-i386.iso</iso>
+      <iso>http://download.opensuse.org/distribution/11.3/iso/openSUSE-11.3-DVD-x86_64.iso</iso>
     </install>
   </os>
-  <description>Ubuntu 9.10</description>
+  <description>OpenSUSE 11.3</description>
   <packages action='add'>
     <package name='bash' action='remove'/>
     <package name='kernel'/>

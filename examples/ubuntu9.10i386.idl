@@ -1,0 +1,21 @@
+<image>
+  <name>ubuntu9.10jeos</name>
+  <os>
+    <name>Ubuntu</name>
+    <version>9.10</version>
+    <arch>i386</arch>
+    <install type='iso'>
+      <iso>http://mirrors.us.kernel.org/ubuntu-releases/9.10/ubuntu-9.10-desktop-i386.iso</iso>
+    </install>
+  </os>
+  <description>Ubuntu 9.10</description>
+  <packages action='add'>
+    <package name='bash' action='remove'/>
+    <package name='kernel'/>
+    <package name='grub'/>
+  </packages>
+  <packages action='remove'>
+    <package name='openoffice.org'/>
+    <package name='gnumeric' action='add'/>
+  </packages>
+</image>

@@ -1,0 +1,21 @@
+<image>
+  <name>f12jeos</name>
+  <os>
+    <name>Fedora</name>
+    <version>12</version>
+    <arch>x86_64</arch>
+    <install type='url'>
+      <url>http://download.fedoraproject.org/pub/fedora/linux/releases/12/Fedora/x86_64/os/</url>
+    </install>
+  </os>
+  <description>Fedora 12</description>
+  <packages action='add'>
+    <package name='bash' action='remove'/>
+    <package name='kernel'/>
+    <package name='grub'/>
+  </packages>
+  <packages action='remove'>
+    <package name='openoffice.org'/>
+    <package name='gnumeric' action='add'/>
+  </packages>
+</image>

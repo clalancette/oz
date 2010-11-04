@@ -1,0 +1,21 @@
+<image>
+  <name>opensuse11.3jeos</name>
+  <os>
+    <name>OpenSUSE</name>
+    <version>11.3</version>
+    <arch>i386</arch>
+    <install type='iso'>
+      <iso>http://download.opensuse.org/distribution/11.3/iso/openSUSE-11.3-DVD-i586.iso</iso>
+    </install>
+  </os>
+  <description>OpenSUSE 11.3</description>
+  <packages action='add'>
+    <package name='bash' action='remove'/>
+    <package name='kernel'/>
+    <package name='grub'/>
+  </packages>
+  <packages action='remove'>
+    <package name='openoffice.org'/>
+    <package name='gnumeric' action='add'/>
+  </packages>
+</image>
