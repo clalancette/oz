@@ -335,12 +335,27 @@ class Guest(object):
 
     def get_original_media(self, url, output):
         original_available = False
+
+        # note that all redirects should already have been resolved by
+        # this point; this is merely to check that the media that we are
+        # trying to fetch actually exists
+        conn = urllib.urlopen(url)
+        if conn.getcode() != 200:
+            raise Exception, "Could not access install url: " + conn.getcode()
+
         if os.access(output, os.F_OK):
-            for header in urllib.urlopen(url).headers.headers:
-                if re.match("Content-Length:", header):
-                    if int(header.split()[1]) == os.stat(output)[stat.ST_SIZE]:
-                        original_available = True
-                    break
+            try:
+                for header in conn.headers.headers:
+                    if re.match("Content-Length:", header):
+                        if int(header.split()[1]) == os.stat(output)[stat.ST_SIZE]:
+                            original_available = True
+                        break
+            except:
+                # if any of the above failed, then the worst case is that we
+                # re-download something we didn't need to.  So just go on
+                pass
+
+        conn.close()
 
         if original_available:
             self.log.info("Original install media available, using cached version")
@@ -355,18 +370,12 @@ class Guest(object):
             def data(buf):
                 self.outf.write(buf)
 
-            # note that all redirects should already have been resolved by
-            # this point; this is merely to check that the media that we are
-            # trying to fetch actually exists
-            ozutil.check_url(url)
-
             c = pycurl.Curl()
             c.setopt(c.URL, url)
             c.setopt(c.CONNECTTIMEOUT, 5)
             c.setopt(c.WRITEFUNCTION, data)
             c.setopt(c.NOPROGRESS, 0)
             c.setopt(c.PROGRESSFUNCTION, progress)
-            # FIXME: if the perform fails, throw an error
             c.perform()
             c.close()
             self.outf.close()
