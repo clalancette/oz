@@ -159,7 +159,7 @@ class Guest(object):
         installNode.appendChild(targetInstallNode)
         return installNode
 
-    def generate_define_xml(self, bootdev):
+    def generate_define_xml(self, bootdev, want_install_disk=True):
         self.log.info("Generate/define XML for guest %s with bootdev %s" % (self.name, bootdev))
 
         # create top-level domain element
@@ -280,10 +280,11 @@ class Guest(object):
         diskNode.appendChild(sourceDiskNode)
         devicesNode.appendChild(diskNode)
         # install disk (cdrom or floppy)
-        if hasattr(self, "output_iso"):
-            devicesNode.appendChild(self.targetDev(doc, "cdrom", self.output_iso, "hdc"))
-        if hasattr(self, "output_floppy"):
-            devicesNode.appendChild(self.targetDev(doc, "floppy", self.output_floppy, "fda"))
+        if want_install_disk:
+            if hasattr(self, "output_iso"):
+                devicesNode.appendChild(self.targetDev(doc, "cdrom", self.output_iso, "hdc"))
+            if hasattr(self, "output_floppy"):
+                devicesNode.appendChild(self.targetDev(doc, "floppy", self.output_floppy, "fda"))
         domain.appendChild(devicesNode)
 
         self.log.debug("Generated XML:\n%s" % (doc.toxml()))
@@ -548,7 +549,7 @@ class CDGuest(Guest):
 
         self.wait_for_install_finish(1200)
 
-        self.generate_define_xml("hd")
+        self.generate_define_xml("hd", want_install_disk=False)
 
     def cleanup_iso(self):
         self.log.info("Cleaning up old ISO data")

@@ -142,6 +142,7 @@ class Windows2000andXPand2003(Guest.CDGuest):
         self.generate_define_xml("hd")
         self.libvirt_dom.create()
         self.wait_for_install_finish(3600)
+        self.generate_define_xml("hd", want_install_disk=False)
 
 def get_class(idl):
     update = idl.update()
