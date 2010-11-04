@@ -135,6 +135,7 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
         self.get_original_floppy(self.url + "/images/bootnet.img")
         self.copy_floppy()
         self.modify_floppy()
+        self.cleanup_floppy()
 
 def get_class(idl):
     update = idl.update()

@@ -120,5 +120,12 @@ else:
 
 guest.cleanup_old_guest()
 guest.generate_install_media()
-guest.generate_diskimage()
-guest.install()
+try:
+    guest.generate_diskimage()
+    try:
+        guest.install()
+    except Exception, e:
+        guest.cleanup_old_guest()
+        raise e
+finally:
+    guest.cleanup_install()

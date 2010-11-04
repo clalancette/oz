@@ -554,6 +554,10 @@ class CDGuest(Guest):
         self.log.info("Cleaning up old ISO data")
         shutil.rmtree(self.iso_contents)
 
+    def cleanup_install(self):
+        self.log.info("Cleaning up modified ISO")
+        os.unlink(self.output_iso)
+
 class FDGuest(Guest):
     def __init__(self, distro, update, arch, nicmodel, clockoffset, mousetype,
                  diskbus):
@@ -577,3 +581,11 @@ class FDGuest(Guest):
         self.wait_for_install_finish(1200)
 
         self.generate_define_xml("hd")
+
+    def cleanup_floppy(self):
+        self.log.info("Cleaning up floppy data")
+        shutil.rmtree(self.floppy_contents)
+
+    def cleanup_install(self):
+        self.log.info("Cleaning up modified floppy")
+        os.unlink(self.output_floppy)
