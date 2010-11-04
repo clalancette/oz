@@ -267,7 +267,7 @@ def get_class(idl):
 
     url = ozutil.check_url(idl.url())
 
-    if update == "10" or update == "11" or update == "12" or update == "13":
+    if update == "10" or update == "11" or update == "12" or update == "13" or update == "14":
         return FedoraGuest(update, arch, url, ks, "virtio", True, "virtio")
     if update == "9" or update == "8" or update == "7":
         return FedoraGuest(update, arch, url, ks, "rtl8139", False, None)

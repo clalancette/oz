@@ -2,7 +2,6 @@
 2.  More OS support:
      - Ubuntu 5.04, 5.10, 6.06, 10.04, and 10.10
      - Debian Etch, Lenny, Squeeze
-     - Fedora 14
      - RHEL-6
      - openSUSE 11.0, 11.1, 11.2, 11.3 (autoyast)
      - OpenBSD (http://people.cs.uchicago.edu/~brendan/howtos/openbsd_install/)
