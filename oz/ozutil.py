@@ -31,9 +31,7 @@ def generate_full_guesttools_path(relative):
     pkg_path = os.path.dirname(__file__)
     return os.path.abspath(os.path.join(pkg_path, "guesttools", relative))
 
-# FIXME: we should probably have a maximum number of redirects, to avoid
-# possible infinite loops
-def check_url(url):
+def check_url(url, max_redirects=10):
     # a basic check to make sure that the url exists
     p = urlparse.urlparse(url)
     if p[0] != "http":
@@ -45,11 +43,12 @@ def check_url(url):
     response = conn.getresponse()
     if response.status == 302:
         redirecturl = response.getheader('location')
-        if redirecturl is None:
-            raise Exception, "Could not access install url: " + response.reason
-        return check_url(redirecturl)
+        if redirecturl is None or max_redirects == 0:
+            raise Exception, "Could not access redirect install url %s: %d" % (url, response.reason)
+        redirects = max_redirects - 1
+        return check_url(redirecturl, redirects)
     elif response.status != 200:
-        raise Exception, "Could not access install url: " + response.reason
+        raise Exception, "Could not access install url %s: %d" % (url, response.reason)
     return url
 
 def executable_exists(program):
