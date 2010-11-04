@@ -23,8 +23,8 @@ import os
 import libvirt
 
 class FedoraGuest(Guest.CDGuest):
-    def __init__(self, update, arch, url, ks, nicmodel, haverepo, diskbus):
-        Guest.CDGuest.__init__(self, "Fedora", update, arch, nicmodel, None, None, diskbus)
+    def __init__(self, update, arch, url, ks, nicmodel, haverepo, diskbus, config):
+        Guest.CDGuest.__init__(self, "Fedora", update, arch, nicmodel, None, None, diskbus, config)
         self.ks_file = ks
         self.url = url
         self.haverepo = haverepo
@@ -257,7 +257,7 @@ class FedoraGuest(Guest.CDGuest):
 
         return output
 
-def get_class(idl):
+def get_class(idl, config):
     update = idl.update()
     arch = idl.arch()
     ks = ozutil.generate_full_auto_path("fedora-" + update + "-jeos.ks")
@@ -268,7 +268,7 @@ def get_class(idl):
     url = ozutil.check_url(idl.url())
 
     if update == "10" or update == "11" or update == "12" or update == "13" or update == "14":
-        return FedoraGuest(update, arch, url, ks, "virtio", True, "virtio")
+        return FedoraGuest(update, arch, url, ks, "virtio", True, "virtio", config)
     if update == "9" or update == "8" or update == "7":
-        return FedoraGuest(update, arch, url, ks, "rtl8139", False, None)
+        return FedoraGuest(update, arch, url, ks, "rtl8139", False, None, config)
     raise Exception, "Unsupported Fedora update " + update

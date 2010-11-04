@@ -71,7 +71,7 @@ class NullHandler(logging.Handler):
 
 class Guest(object):
     def __init__(self, distro, update, arch, nicmodel, clockoffset, mousetype,
-                 diskbus):
+                 diskbus, config):
         if arch != "i386" and arch != "x86_64":
             raise Exception, "Unsupported guest arch " + arch
         self.log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
@@ -83,8 +83,10 @@ class Guest(object):
         self.update = update
         self.arch = arch
         self.name = self.distro + self.update + self.arch
-        self.diskimage = "/var/lib/libvirt/images/" + self.name + ".dsk"
-        self.cdl_tmp = "/var/lib/oz/cdltmp/" + self.name
+        self.output_dir = config.get('paths', 'output_dir')
+        self.data_dir = config.get('paths', 'data_dir')
+        self.diskimage = self.output_dir + "/" + self.name + ".dsk"
+        self.cdl_tmp = self.data_dir + "/cdltmp/" + self.name
         self.listen_port = random.randrange(1024, 65535)
         self.libvirt_conn = libvirt.open("qemu:///system")
 
@@ -511,18 +513,18 @@ class Guest(object):
 
 class CDGuest(Guest):
     def __init__(self, distro, update, arch, nicmodel, clockoffset, mousetype,
-                 diskbus):
-        Guest.__init__(self, distro, update, arch, nicmodel, clockoffset, mousetype, diskbus)
-        self.orig_iso = "/var/lib/oz/isos/" + self.name + ".iso"
-        self.output_iso = "/var/lib/libvirt/images/" + self.name + "-oz.iso"
-        self.iso_contents = "/var/lib/oz/isocontent/" + self.name
+                 diskbus, config):
+        Guest.__init__(self, distro, update, arch, nicmodel, clockoffset, mousetype, diskbus, config)
+        self.orig_iso = self.data_dir + "/isos/" + self.name + ".iso"
+        self.output_iso = self.output_dir + "/" + self.name + "-oz.iso"
+        self.iso_contents = self.data_dir + "/isocontent/" + self.name
 
     def get_original_iso(self, isourl, force_download):
         return self.get_original_media(isourl, self.orig_iso, force_download)
 
     def copy_iso(self):
         self.log.info("Copying ISO contents for modification")
-        isomount = "/var/lib/oz/mnt/" + self.name
+        isomount = self.data_dir + "/mnt/" + self.name
         if os.access(isomount, os.F_OK):
             os.rmdir(isomount)
         os.makedirs(isomount)
@@ -561,11 +563,11 @@ class CDGuest(Guest):
 
 class FDGuest(Guest):
     def __init__(self, distro, update, arch, nicmodel, clockoffset, mousetype,
-                 diskbus):
-        Guest.__init__(self, distro, update, arch, nicmodel, clockoffset, mousetype, diskbus)
-        self.orig_floppy = "/var/lib/oz/floppies/" + self.name + ".img"
-        self.output_floppy = "/var/lib/libvirt/images/" + self.name + "-oz.img"
-        self.floppy_contents = "/var/lib/oz/floppycontent/" + self.name
+                 diskbus, config):
+        Guest.__init__(self, distro, update, arch, nicmodel, clockoffset, mousetype, diskbus, config)
+        self.orig_floppy = self.data_dir + "/floppies/" + self.name + ".img"
+        self.output_floppy = self.output_dir + "/" + self.name + "-oz.img"
+        self.floppy_contents = self.data_dir + "/floppycontent/" + self.name
 
     def get_original_floppy(self, floppyurl, force_download):
         return self.get_original_media(floppyurl, self.orig_floppy, force_download)

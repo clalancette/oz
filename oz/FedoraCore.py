@@ -21,8 +21,8 @@ import re
 import ozutil
 
 class FedoraCoreGuest(Guest.CDGuest):
-    def __init__(self, update, arch, url, ks):
-        Guest.CDGuest.__init__(self, "FedoraCore", update, arch, "rtl8139", None, None, None)
+    def __init__(self, update, arch, url, ks, config):
+        Guest.CDGuest.__init__(self, "FedoraCore", update, arch, "rtl8139", None, None, None, config)
         self.ks_file = ks
         self.url = url
 
@@ -65,12 +65,12 @@ class FedoraCoreGuest(Guest.CDGuest):
         self.cleanup_iso()
 
 class FedoraCore4Guest(FedoraCoreGuest):
-    def __init__(self, arch, url):
-        FedoraCoreGuest.__init__(self, "4", arch, url, "./fedoracore-4-jeos.ks")
+    def __init__(self, arch, url, config):
+        FedoraCoreGuest.__init__(self, "4", arch, url, "./fedoracore-4-jeos.ks", config)
     def generate_diskimage(self):
         self.generate_blank_diskimage()
 
-def get_class(idl):
+def get_class(idl, config):
     update = idl.update()
     arch = idl.arch()
     ks = ozutil.generate_full_auto_path("fedoracore-" + update + "-jeos.ks")
@@ -81,7 +81,7 @@ def get_class(idl):
     url = ozutil.check_url(idl.url())
 
     if update == "6" or update == "5" or update == "3" or update == "2" or update == "1":
-        return FedoraCoreGuest(update, arch, url, ks)
+        return FedoraCoreGuest(update, arch, url, ks, config)
     if update == "4":
-        return FedoraCore4Guest(arch, url)
+        return FedoraCore4Guest(arch, url, config)
     raise Exception, "Unsupported FedoraCore update " + update

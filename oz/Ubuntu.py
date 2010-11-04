@@ -23,8 +23,8 @@ import stat
 import ozutil
 
 class Ubuntu810and904and910Guest(Guest.CDGuest):
-    def __init__(self, update, arch, preseed, iso, initrd):
-        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, "virtio", None, None, "virtio")
+    def __init__(self, update, arch, preseed, iso, initrd, config):
+        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, "virtio", None, None, "virtio", config)
         self.ubuntuarch = arch
         if self.ubuntuarch == "x86_64":
             self.ubuntuarch = "amd64"
@@ -85,8 +85,8 @@ class Ubuntu810and904and910Guest(Guest.CDGuest):
         f.close()
 
 class Ubuntu710and8041Guest(Guest.CDGuest):
-    def __init__(self, update, arch, preseed, iso):
-        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, "rtl8139", None, None, None)
+    def __init__(self, update, arch, preseed, iso, config):
+        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, "rtl8139", None, None, None, config)
         self.ubuntuarch = arch
         if self.ubuntuarch == "x86_64":
             self.ubuntuarch = "amd64"
@@ -137,8 +137,8 @@ class Ubuntu710and8041Guest(Guest.CDGuest):
         f.close()
 
 class Ubuntu610and704Guest(Guest.CDGuest):
-    def __init__(self, update, arch, preseed, iso):
-        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, "rtl8139", None, None, None)
+    def __init__(self, update, arch, preseed, iso, config):
+        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, "rtl8139", None, None, None, config)
         self.ubuntuarch = arch
         if self.ubuntuarch == "x86_64":
             self.ubuntuarch = "amd64"
@@ -187,7 +187,7 @@ class Ubuntu610and704Guest(Guest.CDGuest):
         f.writelines(lines)
         f.close()
 
-def get_class(idl):
+def get_class(idl, config):
     update = idl.update()
     arch = idl.arch()
     preseed = ozutil.generate_full_auto_path("ubuntu-" + update + "-jeos.preseed")
@@ -196,12 +196,17 @@ def get_class(idl):
 
     isourl = ozutil.check_url(idl.iso())
 
+    # FIXME: there are certain types of Ubuntu ISOs that do, and do not work.
+    # For instance, for *some* Ubuntu releases, you must use the -alternate
+    # ISO, and for some you can use either -desktop or -alternate.  We should
+    # figure out which is which and give the user some feedback when we
+    # can't actually succeed
     if update == "9.10":
-        return Ubuntu810and904and910Guest(update, arch, preseed, isourl, "/casper/initrd.lz")
+        return Ubuntu810and904and910Guest(update, arch, preseed, isourl, "/casper/initrd.lz", config)
     if update == "8.10" or update == "9.04":
-        return Ubuntu810and904and910Guest(update, arch, preseed, isourl, "/casper/initrd.gz")
+        return Ubuntu810and904and910Guest(update, arch, preseed, isourl, "/casper/initrd.gz", config)
     if update == "7.10" or update == "8.04" or update == "8.04.1" or update == "8.04.2" or update =="8.04.3" or update == "8.04.4":
-        return Ubuntu710and8041Guest(update, arch, preseed, isourl)
+        return Ubuntu710and8041Guest(update, arch, preseed, isourl, config)
     if update == "6.10" or update == "7.04":
-        return Ubuntu610and704Guest(update, arch, preseed, isourl)
+        return Ubuntu610and704Guest(update, arch, preseed, isourl, config)
     raise Exception, "Unsupported Ubuntu update " + update

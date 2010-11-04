@@ -21,8 +21,8 @@ import re
 import ozutil
 
 class RHEL4Guest(Guest.CDGuest):
-    def __init__(self, update, arch, url, ks, nicmodel, diskbus):
-        Guest.CDGuest.__init__(self, "RHEL-4", update, arch, nicmodel, None, None, diskbus)
+    def __init__(self, update, arch, url, ks, nicmodel, diskbus, config):
+        Guest.CDGuest.__init__(self, "RHEL-4", update, arch, nicmodel, None, None, diskbus, config)
         self.ks_file = ks
         self.url = url
 
@@ -64,7 +64,7 @@ class RHEL4Guest(Guest.CDGuest):
         self.generate_new_iso()
         self.cleanup_iso()
 
-def get_class(idl):
+def get_class(idl, config):
     update = idl.update()
     arch = idl.arch()
 
@@ -75,8 +75,8 @@ def get_class(idl):
 
     if update == "GOLD" or update == "U1" or update == "U2" or update == "U3" or update == "U4" or update == "U5" or update == "U6" or update == "U7":
         ks = ozutil.generate_full_auto_path("rhel-4-jeos.ks")
-        return RHEL4Guest(update, arch, url, ks, "rtl8139", None)
+        return RHEL4Guest(update, arch, url, ks, "rtl8139", None, config)
     if update == "U8":
         ks = ozutil.generate_full_auto_path("rhel-4-virtio-jeos.ks")
-        return RHEL4Guest(update, arch, url, ks, "virtio", "virtio")
+        return RHEL4Guest(update, arch, url, ks, "virtio", "virtio", config)
     raise Exception, "Unsupported RHEL-4 update " + update

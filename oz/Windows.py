@@ -23,10 +23,10 @@ import os
 import ozutil
 
 class Windows2000andXPand2003(Guest.CDGuest):
-    def __init__(self, update, arch, url, key, siffile):
+    def __init__(self, update, arch, url, key, siffile, config):
         if key is None:
             raise Exception, "A key is required when installing Windows"
-        Guest.CDGuest.__init__(self, "Windows", update, arch, None, "localtime", "usb", None)
+        Guest.CDGuest.__init__(self, "Windows", update, arch, None, "localtime", "usb", None, config)
         if update == "2000" and arch != "i386":
             raise Exception, "Windows 2000 only supports i386 architecture"
 
@@ -144,7 +144,7 @@ class Windows2000andXPand2003(Guest.CDGuest):
         self.wait_for_install_finish(3600)
         self.generate_define_xml("hd", want_install_disk=False)
 
-def get_class(idl):
+def get_class(idl, config):
     update = idl.update()
     arch = idl.arch()
     key = idl.key()
@@ -156,5 +156,5 @@ def get_class(idl):
         raise Exception, "Windows installs must be done via iso"
 
     if update == "2000" or update == "XP" or update == "2003":
-        return Windows2000andXPand2003(update, arch, isourl, key, sif)
+        return Windows2000andXPand2003(update, arch, isourl, key, sif, config)
     raise Exception, "Unsupported Windows update " + update

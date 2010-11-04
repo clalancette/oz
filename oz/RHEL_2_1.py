@@ -22,8 +22,8 @@ import shutil
 import ozutil
 
 class RHEL21Guest(Guest.FDGuest):
-    def __init__(self, update, url, ks):
-        Guest.FDGuest.__init__(self, "RHEL-2.1", update, "i386", "pcnet", None, None, None)
+    def __init__(self, update, url, ks, config):
+        Guest.FDGuest.__init__(self, "RHEL-2.1", update, "i386", "pcnet", None, None, None, config)
         self.url = url
         self.ks_file = ks
 
@@ -80,7 +80,7 @@ class RHEL21Guest(Guest.FDGuest):
         self.copy_floppy()
         self.modify_floppy()
 
-def get_class(idl):
+def get_class(idl, config):
     update = idl.update()
     arch = idl.arch()
     ks = ozutil.generate_full_auto_path("rhel-2.1-jeos.ks")
@@ -93,5 +93,5 @@ def get_class(idl):
     if arch != "i386":
         raise Exception, "Invalid arch " + arch + "for RHEL-2.1 guest"
     if update == "GOLD" or update == "U1" or update == "U2" or update == "U3" or update == "U4" or update == "U5" or update == "U6":
-        return RHEL21Guest(update, url, ks)
+        return RHEL21Guest(update, url, ks, config)
     raise Exception, "Unsupported RHEL-2.1 update " + update

@@ -32,6 +32,7 @@ import oz.RHL
 import oz.Ubuntu
 import oz.Windows
 import oz.OpenSUSE
+import ConfigParser
 
 def usage():
     print "Usage: ozinstall [OPTIONS] <idl>"
@@ -102,26 +103,33 @@ idl = oz.IDL.IDL(args[0])
 
 distro = idl.distro()
 
+config = ConfigParser.SafeConfigParser()
+config.add_section('paths')
+config.set('paths', 'output_dir', '/var/lib/libvirt/images')
+config.set('paths', 'data_dir', '/var/lib/oz')
+if os.access('/etc/oz/oz.cfg', os.F_OK):
+    config.read('/etc/oz/oz.cfg')
+
 if distro == "Fedora":
-    guest = oz.Fedora.get_class(idl)
+    guest = oz.Fedora.get_class(idl, config)
 elif distro == "FedoraCore":
-    guest = oz.FedoraCore.get_class(idl)
+    guest = oz.FedoraCore.get_class(idl, config)
 elif distro == "RHEL-2.1":
-    guest = oz.RHEL_2_1.get_class(idl)
+    guest = oz.RHEL_2_1.get_class(idl, config)
 elif distro == "RHEL-3":
-    guest = oz.RHEL_3.get_class(idl)
+    guest = oz.RHEL_3.get_class(idl, config)
 elif distro == "RHEL-4":
-    guest = oz.RHEL_4.get_class(idl)
+    guest = oz.RHEL_4.get_class(idl, config)
 elif distro == "RHEL-5":
-    guest = oz.RHEL_5.get_class(idl)
+    guest = oz.RHEL_5.get_class(idl, config)
 elif distro == "Ubuntu":
-    guest = oz.Ubuntu.get_class(idl)
+    guest = oz.Ubuntu.get_class(idl, config)
 elif distro == "Windows":
-    guest = oz.Windows.get_class(idl)
+    guest = oz.Windows.get_class(idl, config)
 elif distro == "RHL":
-    guest = oz.RHL.get_class(idl)
+    guest = oz.RHL.get_class(idl, config)
 elif distro == "OpenSUSE":
-    guest = oz.OpenSUSE.get_class(idl)
+    guest = oz.OpenSUSE.get_class(idl, config)
 else:
     usage()
 

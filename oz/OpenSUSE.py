@@ -5,7 +5,7 @@ import ozutil
 
 class OpenSUSEGuest(Guest.CDGuest):
     def __init__(self, update, arch, url, autoyast):
-        Guest.CDGuest.__init__(self, "OpenSUSE", update, arch, "rtl8139", None, None, None)
+        Guest.CDGuest.__init__(self, "OpenSUSE", update, arch, "rtl8139", None, None, None, config)
         self.isourl = url
         self.autoyast = autoyast
 
@@ -51,7 +51,7 @@ class OpenSUSEGuest(Guest.CDGuest):
         self.generate_new_iso()
         self.cleanup_iso()
 
-def get_class(idl):
+def get_class(idl, config):
     update = idl.update()
     arch = idl.arch()
     autoyast = ozutil.generate_full_auto_path("opensuse-" + update + "-jeos.xml")
@@ -62,6 +62,6 @@ def get_class(idl):
     url = ozutil.check_url(idl.iso())
 
     if update == "11.3":
-        return OpenSUSEGuest(update, arch, url, autoyast)
+        return OpenSUSEGuest(update, arch, url, autoyast, config)
 
     raise Exception, "Unsupported OpenSUSE update " + update

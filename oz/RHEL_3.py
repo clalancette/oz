@@ -22,7 +22,7 @@ import ozutil
 
 class RHEL3Guest(Guest.CDGuest):
     def __init__(self, update, arch, url, ks):
-        Guest.CDGuest.__init__(self, "RHEL-3", update, arch, "rtl8139", None, None, None)
+        Guest.CDGuest.__init__(self, "RHEL-3", update, arch, "rtl8139", None, None, None, config)
         self.ks_file = ks
         self.url = url
 
@@ -64,7 +64,7 @@ class RHEL3Guest(Guest.CDGuest):
         self.generate_new_iso()
         self.cleanup_iso()
 
-def get_class(idl):
+def get_class(idl, config):
     update = idl.update()
     arch = idl.arch()
     ks = ozutil.generate_full_auto_path("rhel-3-jeos.ks")
@@ -75,5 +75,5 @@ def get_class(idl):
     url = ozutil.check_url(idl.url())
 
     if update == "GOLD" or update == "U1" or update == "U2" or update == "U3" or update == "U4" or update == "U5" or update == "U6" or update == "U7" or update == "U8" or update == "U9":
-        return RHEL3Guest(update, arch, url, ks)
+        return RHEL3Guest(update, arch, url, ks, config)
     raise Exception, "Unsupported RHEL-3 update " + update

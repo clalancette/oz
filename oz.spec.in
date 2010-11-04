@@ -43,6 +43,8 @@ mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/floppycontent/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/floppies/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/cdltmp/
 
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/oz
+%{__cp} oz.cfg $RPM_BUILD_ROOT%{_sysconfdir}/oz
 
 
 %clean
@@ -52,6 +54,8 @@ mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/cdltmp/
 %files
 %defattr(-,root,root,-)
 %doc README COPYING
+%dir %attr(0755, root, root) %{_sysconfdir}/oz/
+%config(noreplace) %{_sysconfdir}/oz/oz.cfg
 %dir %attr(0755, root, root) %{_localstatedir}/lib/oz/
 %dir %attr(0755, root, root) %{_localstatedir}/lib/oz/isocontent/
 %dir %attr(0755, root, root) %{_localstatedir}/lib/oz/isos/

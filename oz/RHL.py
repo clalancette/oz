@@ -137,7 +137,7 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
         self.modify_floppy()
         self.cleanup_floppy()
 
-def get_class(idl):
+def get_class(idl, config):
     update = idl.update()
     arch = idl.arch()
 
