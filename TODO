@@ -27,3 +27,8 @@ that the binaries we need are available before using them.
 7.  If two of the same OSes are being installed at the same time on the same
 machine, they will trample all over each other.  We need to handle this
 situation.
+8.  We should have our own exception class, rather than just raising "Exception"
+all of the time
+9.  It should be possible to replace the subprocess call to fuseiso by
+implementing our own fuse-python subclass.  Though this is probably a bit of
+work.
