@@ -83,8 +83,17 @@ class Guest(object):
         self.update = update
         self.arch = arch
         self.name = self.distro + self.update + self.arch
-        self.output_dir = config.get('paths', 'output_dir')
-        self.data_dir = config.get('paths', 'data_dir')
+
+        if config is not None and config.has_section('paths') and config.has_option('paths', 'output_dir'):
+            self.output_dir = config.get('paths', 'output_dir')
+        else:
+            self.output_dir = "/var/lib/libvirt/images"
+
+        if config is not None and config.has_section('paths') and config.has_option('paths', 'data_dir'):
+            self.data_dir = config.get('paths', 'data_dir')
+        else:
+            self.data_dir = "/var/lib/oz"
+
         self.diskimage = self.output_dir + "/" + self.name + ".dsk"
         self.cdl_tmp = self.data_dir + "/cdltmp/" + self.name
         self.listen_port = random.randrange(1024, 65535)

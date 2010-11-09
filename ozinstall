@@ -60,14 +60,15 @@ def usage():
     sys.exit(1)
 
 try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], 'd:fh', ['debug', 'force-download', 'help'])
+    opts, args = getopt.gnu_getopt(sys.argv[1:], 'c:d:fh', ['config', 'debug', 'force-download', 'help'])
 except getopt.GetoptError, err:
     print str(err)
     usage()
 
 loglevel = logging.ERROR
 logformat = "%(message)s"
-force_download=False
+force_download = False
+config_file = "/etc/oz/oz.cfg"
 for o, a in opts:
     if o in ("-h", "--help"):
         usage()
@@ -87,6 +88,8 @@ for o, a in opts:
             usage()
     elif o in ("-f", "--force-download"):
         force_download = True
+    elif o in ("-c", "--config"):
+        config_file = a
     else:
         assert False, "unhandled option"
 
@@ -107,8 +110,8 @@ config = ConfigParser.SafeConfigParser()
 config.add_section('paths')
 config.set('paths', 'output_dir', '/var/lib/libvirt/images')
 config.set('paths', 'data_dir', '/var/lib/oz')
-if os.access('/etc/oz/oz.cfg', os.F_OK):
-    config.read('/etc/oz/oz.cfg')
+if os.access(config_file, os.F_OK):
+    config.read(config_file)
 
 if distro == "Fedora":
     guest = oz.Fedora.get_class(idl, config)

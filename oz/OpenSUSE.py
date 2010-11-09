@@ -4,7 +4,7 @@ import shutil
 import ozutil
 
 class OpenSUSEGuest(Guest.CDGuest):
-    def __init__(self, update, arch, url, autoyast):
+    def __init__(self, update, arch, url, autoyast, config):
         Guest.CDGuest.__init__(self, "OpenSUSE", update, arch, "rtl8139", None, None, None, config)
         self.isourl = url
         self.autoyast = autoyast
