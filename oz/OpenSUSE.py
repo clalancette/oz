@@ -61,7 +61,7 @@ def get_class(idl, config):
 
     url = ozutil.check_url(idl.iso())
 
-    if update == "11.2" or update == "11.3":
+    if update == "11.1" or update == "11.2" or update == "11.3":
         return OpenSUSEGuest(update, arch, url, autoyast, config)
 
     raise Exception, "Unsupported OpenSUSE update " + update
