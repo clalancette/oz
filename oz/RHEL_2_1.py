@@ -90,6 +90,8 @@ def get_class(idl, config):
 
     url = ozutil.check_url(idl.url())
 
+    deny_localhost(url)
+
     if arch != "i386":
         raise Exception, "Invalid arch " + arch + "for RHEL-2.1 guest"
     if update == "GOLD" or update == "U1" or update == "U2" or update == "U3" or update == "U4" or update == "U5" or update == "U6":

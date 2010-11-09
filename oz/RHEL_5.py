@@ -74,6 +74,8 @@ def get_class(idl, config):
 
     url = ozutil.check_url(idl.url())
 
+    deny_localhost(url)
+
     if update == "GOLD" or update == "U1" or update == "U2" or update == "U3":
         ks = ozutil.generate_full_auto_path("rhel-5-jeos.ks")
         return RHEL5Guest(update, arch, url, ks, "rtl8139", None, config)

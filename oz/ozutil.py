@@ -36,8 +36,6 @@ def check_url(url, max_redirects=10):
     p = urlparse.urlparse(url)
     if p[0] != "http":
         raise Exception, "Must use http install URLs"
-    if p[1] == "localhost" or p[1] == "localhost.localdomain" or p[1] == "127.0.0.1":
-        raise Exception, "Can not use localhost for an install URL"
     conn = httplib.HTTPConnection(p[1])
     conn.request("GET", p[2])
     response = conn.getresponse()
@@ -50,6 +48,14 @@ def check_url(url, max_redirects=10):
     elif response.status != 200:
         raise Exception, "Could not access install url %s: %d" % (url, response.reason)
     return url
+
+# kind of a funny function.  When we are using URL based installs, we can't
+# allow localhost URLs (since the URL is embedded into the installer, the
+# install is guaranteed to fail with localhost URLs)
+def deny_localhost(url):
+    p = urlparse.urlparse(url)
+    if p[1] == "localhost" or p[1] == "localhost.localdomain" or p[1] == "127.0.0.1":
+        raise Exception, "Can not use localhost for an URL based install"
 
 def executable_exists(program):
     def is_exe(fpath):

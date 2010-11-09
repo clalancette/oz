@@ -80,6 +80,8 @@ def get_class(idl, config):
 
     url = ozutil.check_url(idl.url())
 
+    deny_localhost(url)
+
     if update == "6" or update == "5" or update == "3" or update == "2" or update == "1":
         return FedoraCoreGuest(update, arch, url, ks, config)
     if update == "4":

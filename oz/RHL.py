@@ -144,9 +144,11 @@ def get_class(idl, config):
     ks = ozutil.generate_full_auto_path("rhl-" + update + "-jeos.ks")
 
     if idl.installtype() != 'url':
-        raise Exception, "RHEL-2.1 installs must be done via url"
+        raise Exception, "RHL installs must be done via url"
 
     url = ozutil.check_url(idl.url())
+
+    deny_localhost(url)
 
     if arch != "i386":
         raise Exception, "Invalid arch " + arch + "for RHL guest"

@@ -52,9 +52,6 @@ class IDL(object):
             self._url = get_value(self.doc, '/image/os/install/url')
             if self._url is None:
                 raise Exception, "Failed to find OS install URL in IDL"
-            # httpd redirects don't work, so make sure we have a / at the end
-            if self._url[-1] != '/':
-                self._url = self._url + '/'
         elif self._installtype == "iso":
             self._iso = get_value(self.doc, '/image/os/install/iso')
             if self._iso is None:
