@@ -64,14 +64,16 @@ class FedoraGuest(Guest.CDGuest):
         lines.append("label customiso\n")
         lines.append("  kernel vmlinuz\n")
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
-        if self.haverepo:
-            initrdline += " repo="
-        else:
-            initrdline += " method="
         if self.installtype == "url":
+            if self.haverepo:
+                initrdline += " repo="
+            else:
+                initrdline += " method="
             initrdline += self.url + "\n"
         else:
-            initrdline += "cdrom:/dev/cdrom\n"
+            # if the installtype is iso, then due to a bug in anaconda we leave
+            # out the method completely
+            initrdline += "\n"
         lines.append(initrdline)
 
         f = open(self.iso_contents + "/isolinux/isolinux.cfg", "w")
