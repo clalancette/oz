@@ -21,10 +21,20 @@ import re
 import ozutil
 
 class RHEL3Guest(Guest.CDGuest):
-    def __init__(self, update, arch, url, ks):
-        Guest.CDGuest.__init__(self, "RHEL-3", update, arch, "rtl8139", None, None, None, config)
-        self.ks_file = ks
-        self.url = url
+    def __init__(self, idl, config):
+        update = idl.update()
+        arch = idl.arch()
+        self.ks_file = ozutil.generate_full_auto_path("rhel-3-jeos.ks")
+
+        if idl.installtype() != 'url':
+            raise Exception, "RHEL-3 installs must be done via url"
+
+        self.url = ozutil.check_url(self.url)
+
+        ozutil.deny_localhost(self.url)
+
+        Guest.CDGuest.__init__(self, "RHEL-3", update, arch, "rtl8139", None,
+                               None, None, config)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")
@@ -58,6 +68,7 @@ class RHEL3Guest(Guest.CDGuest):
                                        "-o", self.output_iso, self.iso_contents])
 
     def generate_install_media(self, force_download):
+        self.log.info("Generating install media")
         self.get_original_iso(self.url + "/images/boot.iso", force_download)
         self.copy_iso()
         self.modify_iso()
@@ -66,16 +77,6 @@ class RHEL3Guest(Guest.CDGuest):
 
 def get_class(idl, config):
     update = idl.update()
-    arch = idl.arch()
-    ks = ozutil.generate_full_auto_path("rhel-3-jeos.ks")
-
-    if idl.installtype() != 'url':
-        raise Exception, "RHEL-3 installs must be done via url"
-
-    url = ozutil.check_url(idl.url())
-
-    deny_localhost(url)
-
     if update == "GOLD" or update == "U1" or update == "U2" or update == "U3" or update == "U4" or update == "U5" or update == "U6" or update == "U7" or update == "U8" or update == "U9":
-        return RHEL3Guest(update, arch, url, ks, config)
+        return RHEL3Guest(idl, config)
     raise Exception, "Unsupported RHEL-3 update " + update

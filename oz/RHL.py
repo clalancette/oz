@@ -129,10 +129,12 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
 
         Guest.subprocess_check_output(["mcopy", "-n", "-o", "-i",
                                        self.output_floppy,
-                                       self.floppy_contents + "/SYSLINUX.CFG", "::SYSLINUX.CFG"])
+                                       self.floppy_contents + "/SYSLINUX.CFG",
+                                       "::SYSLINUX.CFG"])
 
     def generate_install_media(self, force_download):
-        self.get_original_floppy(self.url + "/images/bootnet.img", force_download)
+        self.get_original_floppy(self.url + "/images/bootnet.img",
+                                 force_download)
         self.copy_floppy()
         self.modify_floppy()
         self.cleanup_floppy()
@@ -148,7 +150,7 @@ def get_class(idl, config):
 
     url = ozutil.check_url(idl.url())
 
-    deny_localhost(url)
+    ozutil.deny_localhost(url)
 
     if arch != "i386":
         raise Exception, "Invalid arch " + arch + "for RHL guest"

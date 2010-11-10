@@ -23,11 +23,29 @@ import os
 import libvirt
 
 class FedoraGuest(Guest.CDGuest):
-    def __init__(self, update, arch, url, ks, nicmodel, haverepo, diskbus, config):
-        Guest.CDGuest.__init__(self, "Fedora", update, arch, nicmodel, None, None, diskbus, config)
-        self.ks_file = ks
-        self.url = url
+    def __init__(self, idl, config, nicmodel, haverepo, diskbus):
+        update = idl.update()
+        arch = idl.arch()
+        self.ks_file = ozutil.generate_full_auto_path("fedora-" + update + "-jeos.ks")
         self.haverepo = haverepo
+        self.installtype = idl.installtype()
+
+        if self.installtype == 'url':
+            self.url = idl.url()
+        elif self.installtype == 'iso':
+            self.url = idl.iso()
+        else:
+            raise Exception, "Fedora installs must be done via url or iso"
+
+        self.url = ozutil.check_url(self.url)
+
+        if self.installtype == 'url':
+            ozutil.deny_localhost(self.url)
+        # FIXME: if doing an ISO install, we have to check that the ISO passed
+        # in is the DVD, not the CD (since we can't change disks midway)
+
+        Guest.CDGuest.__init__(self, "Fedora", update, arch, nicmodel, None,
+                               None, diskbus, config)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")
@@ -45,10 +63,16 @@ class FedoraGuest(Guest.CDGuest):
                 lines[lines.index(line)] = "default customiso\n"
         lines.append("label customiso\n")
         lines.append("  kernel vmlinuz\n")
+        initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
         if self.haverepo:
-            lines.append("  append initrd=initrd.img ks=cdrom:/ks.cfg repo=" + self.url + "\n")
+            initrdline += " repo="
         else:
-            lines.append("  append initrd=initrd.img ks=cdrom:/ks.cfg method=" + self.url + "\n")
+            initrdline += " method="
+        if self.installtype == "url":
+            initrdline += self.url + "\n"
+        else:
+            initrdline += "cdrom:/dev/cdrom\n"
+        lines.append(initrdline)
 
         f = open(self.iso_contents + "/isolinux/isolinux.cfg", "w")
         f.writelines(lines)
@@ -66,7 +90,10 @@ class FedoraGuest(Guest.CDGuest):
 
     def generate_install_media(self, force_download):
         self.log.info("Generating install media")
-        self.get_original_iso(self.url + "/images/boot.iso", force_download)
+        fetchurl = self.url
+        if self.installtype == 'url':
+            fetchurl += "/images/boot.iso"
+        self.get_original_iso(fetchurl, force_download)
         self.copy_iso()
         self.modify_iso()
         self.generate_new_iso()
@@ -250,7 +277,8 @@ class FedoraGuest(Guest.CDGuest):
 
         output = self.output_cdl_xml(data[0].split("\n"))
 
-        # FIXME: should we try to do a graceful shutdown here?
+        # FIXME: should we try to do a graceful shutdown here?  At the very
+        # least we should do a sync
         self.libvirt_dom.destroy()
 
         self.collect_teardown(diskimage)
@@ -259,18 +287,8 @@ class FedoraGuest(Guest.CDGuest):
 
 def get_class(idl, config):
     update = idl.update()
-    arch = idl.arch()
-    ks = ozutil.generate_full_auto_path("fedora-" + update + "-jeos.ks")
-
-    if idl.installtype() != 'url':
-        raise Exception, "Fedora installs must be done via url"
-
-    url = ozutil.check_url(idl.url())
-
-    deny_localhost(url)
-
     if update == "10" or update == "11" or update == "12" or update == "13" or update == "14":
-        return FedoraGuest(update, arch, url, ks, "virtio", True, "virtio", config)
+        return FedoraGuest(idl, config, "virtio", True, "virtio")
     if update == "9" or update == "8" or update == "7":
-        return FedoraGuest(update, arch, url, ks, "rtl8139", False, None, config)
+        return FedoraGuest(idl, config, "rtl8139", False, None)
     raise Exception, "Unsupported Fedora update " + update

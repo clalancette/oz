@@ -22,10 +22,21 @@ import shutil
 import ozutil
 
 class RHEL21Guest(Guest.FDGuest):
-    def __init__(self, update, url, ks, config):
-        Guest.FDGuest.__init__(self, "RHEL-2.1", update, "i386", "pcnet", None, None, None, config)
-        self.url = url
-        self.ks_file = ks
+    def __init__(self, idl, config):
+        update = idl.update()
+        if idl.arch() != "i386":
+            raise Exception, "Invalid arch " + arch + "for RHEL-2.1 guest"
+        self.ks_file = ozutil.generate_full_auto_path("rhel-2.1-jeos.ks")
+
+        if idl.installtype() != 'url':
+            raise Exception, "RHEL-2.1 installs must be done via url or iso"
+
+        self.url = ozutil.check_url(self.url)
+
+        ozutil.deny_localhost(self.url)
+
+        Guest.FDGuest.__init__(self, "RHEL-2.1", update, "i386", "pcnet", None,
+                               None, None, config)
 
     def modify_floppy(self):
         if not os.access(self.floppy_contents, os.F_OK):
@@ -65,7 +76,7 @@ class RHEL21Guest(Guest.FDGuest):
                 lines[lines.index(line)] = "default customboot\n"
         lines.append("label customboot\n")
         lines.append("  kernel vmlinuz\n")
-        lines.append("  append initrd=initrd.img lang= devfs=nomount ramdisk_size=9216 ks=floppy method=" + self.url + "\n")
+        lines.append("  append initrd=initrd.img lang= devfs=nomount ramdisk_dize=9216 ks=floppy method=" + self.url + "\n")
 
         f = open(self.floppy_contents + "/SYSLINUX.CFG", "w")
         f.writelines(lines)
@@ -73,27 +84,17 @@ class RHEL21Guest(Guest.FDGuest):
 
         Guest.subprocess_check_output(["mcopy", "-n", "-o", "-i",
                                        self.output_floppy,
-                                       self.floppy_contents + "/SYSLINUX.CFG", "::SYSLINUX.CFG"])
+                                       self.floppy_contents + "/SYSLINUX.CFG",
+                                       "::SYSLINUX.CFG"])
 
     def generate_install_media(self, force_download):
+        self.log.info("Generating install media")
         self.get_original_floppy(self.url + "/images/bootnet.img", force_download)
         self.copy_floppy()
         self.modify_floppy()
 
 def get_class(idl, config):
     update = idl.update()
-    arch = idl.arch()
-    ks = ozutil.generate_full_auto_path("rhel-2.1-jeos.ks")
-
-    if idl.installtype() != 'url':
-        raise Exception, "RHEL-2.1 installs must be done via url"
-
-    url = ozutil.check_url(idl.url())
-
-    deny_localhost(url)
-
-    if arch != "i386":
-        raise Exception, "Invalid arch " + arch + "for RHEL-2.1 guest"
     if update == "GOLD" or update == "U1" or update == "U2" or update == "U3" or update == "U4" or update == "U5" or update == "U6":
-        return RHEL21Guest(update, url, ks, config)
+        return RHEL21Guest(idl, config)
     raise Exception, "Unsupported RHEL-2.1 update " + update

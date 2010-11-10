@@ -21,10 +21,29 @@ import re
 import ozutil
 
 class RHEL5Guest(Guest.CDGuest):
-    def __init__(self, update, arch, url, ks, nicmodel, diskbus, config):
-        Guest.CDGuest.__init__(self, "RHEL-5", update, arch, nicmodel, None, None, diskbus, config)
-        self.ks_file = ks
-        self.url = url
+    def __init__(self, idl, config, nicmodel, diskbus):
+        update = idl.update()
+        arch = idl.arch()
+        key = idl.key()
+        self.ks_file = ozutil.generate_full_auto_path("rhel-5-jeos.ks")
+        self.installtype = idl.installtype()
+
+        if self.installtype == 'url':
+            self.url = idl.url()
+        elif self.installtype == 'iso':
+            self.url = idl.iso()
+        else:
+            raise Exception, "RHEL-5 installs must be done via url or iso"
+
+        self.url = ozutil.check_url(self.url)
+
+        if self.installtype == 'url':
+            ozutil.deny_localhost(self.url)
+        # FIXME: if doing an ISO install, we have to check that the ISO passed
+        # in is the DVD, not the CD (since we can't change disks midway)
+
+        Guest.CDGuest.__init__(self, "RHEL-5", update, arch, nicmodel, None,
+                               None, diskbus, config)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")
@@ -42,7 +61,12 @@ class RHEL5Guest(Guest.CDGuest):
                 lines[lines.index(line)] = "default customiso\n"
         lines.append("label customiso\n")
         lines.append("  kernel vmlinuz\n")
-        lines.append("  append initrd=initrd.img ks=cdrom:/ks.cfg method=" + self.url + "\n")
+        initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method="
+        if self.installtype == "url":
+            initrdline += self.url + "\n"
+        else:
+            initrdline += "cdrom:/dev/cdrom\n"
+        lines.append(initrdline)
 
         f = open(self.iso_contents + "/isolinux/isolinux.cfg", "w")
         f.writelines(lines)
@@ -58,7 +82,11 @@ class RHEL5Guest(Guest.CDGuest):
                                        "-o", self.output_iso, self.iso_contents])
 
     def generate_install_media(self, force_download):
-        self.get_original_iso(self.url + "/images/boot.iso", force_download)
+        self.log.info("Generating install media")
+        fetchurl = self.url
+        if self.installtype == 'url':
+            fetchurl += "/images/boot.iso"
+        self.get_original_iso(fetchurl, force_download)
         self.copy_iso()
         self.modify_iso()
         self.generate_new_iso()
@@ -66,20 +94,8 @@ class RHEL5Guest(Guest.CDGuest):
 
 def get_class(idl, config):
     update = idl.update()
-    arch = idl.arch()
-    key = idl.key()
-
-    if idl.installtype() != 'url':
-        raise Exception, "RHEL-5 installs must be done via url"
-
-    url = ozutil.check_url(idl.url())
-
-    deny_localhost(url)
-
     if update == "GOLD" or update == "U1" or update == "U2" or update == "U3":
-        ks = ozutil.generate_full_auto_path("rhel-5-jeos.ks")
-        return RHEL5Guest(update, arch, url, ks, "rtl8139", None, config)
+        return RHEL5Guest(idl, config, "rtl8139", None)
     if update == "U4" or update == "U5":
-        ks = ozutil.generate_full_auto_path("rhel-5-virtio-jeos.ks")
-        return RHEL5Guest(update, arch, url, ks, "virtio", "virtio", config)
+        return RHEL5Guest(idl, config, "virtio", "virtio")
     raise Exception, "Unsupported RHEL-5 update " + update
