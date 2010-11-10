@@ -157,7 +157,8 @@ class FedoraGuest(Guest.CDGuest):
             os.remove(privname)
         if os.access(pubname, os.F_OK):
             os.remove(pubname)
-        subprocess.call(['ssh-keygen', '-q', '-t', 'rsa', '-b', '2048', '-N', '', '-f', privname])
+        subprocess.call(['ssh-keygen', '-q', '-t', 'rsa', '-b', '2048',
+                         '-N', '', '-f', privname])
 
         self.g.upload(pubname, '/root/.ssh/authorized_keys')
 
@@ -171,8 +172,30 @@ class FedoraGuest(Guest.CDGuest):
             self.g.mv(startuplink, startuplink + ".cdl")
         self.g.ln_sf('/etc/init.d/sshd', startuplink)
 
-        # FIXME: we need to inject our own sshd_config, to make sure that
-        # the options we need are enabled
+        sshd_config = \
+"""SyslogFacility AUTHPRIV
+PasswordAuthentication yes
+ChallengeResponseAuthentication no
+GSSAPIAuthentication yes
+GSSAPICleanupCredentials yes
+UsePAM yes
+AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES
+AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT
+AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE
+AcceptEnv XMODIFIERS
+X11Forwarding yes
+Subsystem	sftp	/usr/libexec/openssh/sftp-server
+"""
+
+        sshd_config_file = self.cdl_tmp + "/sshd_config"
+        f = open(sshd_config_file, 'w')
+        f.write(sshd_config)
+        f.close()
+
+        if self.g.exists('/etc/ssh/sshd_config'):
+            self.g.mv('/etc/ssh/sshd_config', '/etc/ssh/sshd_config.cdl')
+        self.g.upload(sshd_config_file, '/etc/ssh/sshd_config')
+        os.unlink(sshd_config_file)
 
         # part 3; open up iptables
         self.log.debug("Step 3: Open up the firewall")
@@ -230,6 +253,12 @@ class FedoraGuest(Guest.CDGuest):
         if self.g.exists('/root/cdl-nc'):
             self.g.rm('/root/cdl-nc')
 
+        # remove custom sshd_config
+        if self.g.exists('/etc/ssh/sshd_config'):
+            self.g.rm('/etc/ssh/sshd_config')
+        if self.g.exists('/etc/ssh/sshd_config.cdl'):
+            self.g.mv('/etc/ssh/sshd_config.cdl', '/etc/ssh/sshd_config')
+
         # reset the service links
         runlevel = self.get_default_runlevel()
 
@@ -265,7 +294,8 @@ class FedoraGuest(Guest.CDGuest):
 
         self.collect_setup(diskimage)
 
-        self.generate_define_xml("hd")
+        # FIXME: if we fail anytime after this, we need to to collect_teardown
+        self.generate_define_xml("hd", want_install_disk=False)
         self.libvirt_dom.create()
 
         guestaddr = self.wait_for_guest_boot()
