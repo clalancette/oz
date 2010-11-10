@@ -142,8 +142,8 @@ try:
     guest.generate_diskimage()
     try:
         guest.install()
-    except Exception, e:
+    except:
         guest.cleanup_old_guest()
-        raise e
+        raise
 finally:
     guest.cleanup_install()
