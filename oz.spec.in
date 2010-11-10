@@ -9,7 +9,8 @@ Group: Development
 URL: http://deltacloud.org
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-BuildRequires: glibc-static
+BuildRequires: glibc-static(x86-32)
+BuildRequires: glibc-devel(x86-32)
 Requires: fuseiso
 Requires: gvnc-tools
 Requires: python-libguestfs
@@ -27,7 +28,7 @@ installations, with minimal input from the user.
 
 %build
 python setup.py build
-gcc -g -Wall -static oz/guesttools/cdl-nc.c -o oz/guesttools/cdl-nc
+gcc -g -Wall -static -m32 oz/guesttools/cdl-nc.c -o oz/guesttools/cdl-nc
 
 %install
 %{__rm} -rf $RPM_BUILD_ROOT
