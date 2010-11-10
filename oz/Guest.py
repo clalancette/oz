@@ -331,6 +331,10 @@ class Guest(object):
                 if count % 10 == 0:
                     self.log.info("Waiting for %s to finish installing, %d/%d" % (self.name, count, origcount))
                 info = self.libvirt_dom.info()
+                # FIXME: this may not be the best logic in the world.  What we
+                # are actually looking for is if this domain "goes away"; if
+                # so, we are good.  Anything else besides RUNNING and BLOCKED
+                # means that we should probably raise an error
                 if info[0] != libvirt.VIR_DOMAIN_RUNNING and info[0] != libvirt.VIR_DOMAIN_BLOCKED:
                     break
                 count -= 1
@@ -344,6 +348,9 @@ class Guest(object):
             screenshot = self.name + "-" + str(time.time()) + ".png"
             self.capture_screenshot(self.libvirt_dom.XMLDesc(0), screenshot)
             raise Exception, "Timed out waiting for install to finish"
+
+        # FIXME: make sure to do one last print here so we know exactly how
+        # long it took
 
     def get_original_media(self, url, output, force_download):
         original_available = False
@@ -374,6 +381,8 @@ class Guest(object):
         else:
             self.log.info("Fetching the original install media from %s" % (url))
             def progress(down_total, down_current, up_total, up_current):
+                # FIXME: we should probably not print every single time this is
+                # called; maybe every 1MB or so?
                 self.log.info("%dkB of %dkB" % (down_current/1024, down_total/1024))
 
             if not os.access(os.path.dirname(output), os.F_OK):
