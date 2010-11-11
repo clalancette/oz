@@ -11,7 +11,6 @@ Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildRequires: glibc-static(x86-32)
 BuildRequires: glibc-devel(x86-32)
-Requires: fuseiso
 Requires: gvnc-tools
 Requires: python-libguestfs
 Requires: libxml2-python

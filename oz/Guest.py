@@ -35,6 +35,8 @@ import random
 import guestfs
 import socket
 import select
+import tarfile
+import struct
 
 class ProcessError(Exception):
     """This exception is raised when a process run by
@@ -542,25 +544,119 @@ class CDGuest(Guest):
 
     def copy_iso(self):
         self.log.info("Copying ISO contents for modification")
-        isomount = self.data_dir + "/mnt/" + self.name
-        if os.access(isomount, os.F_OK):
-            os.rmdir(isomount)
-        os.makedirs(isomount)
-
         if os.access(self.iso_contents, os.F_OK):
             shutil.rmtree(self.iso_contents)
+        os.makedirs(self.iso_contents)
 
-        # mount and copy the ISO
-        subprocess_check_output(["fuseiso", self.orig_iso, isomount])
+        tarout = self.iso_contents + "/data.tar"
 
-        try:
-            shutil.copytree(isomount, self.iso_contents, symlinks=True)
-        finally:
-            # if fusermount fails, there is not much we can do.  Print an
-            # error, but go on anyway
-            if subprocess.call(["fusermount", "-u", isomount]) != 0:
-                self.log.error("Failed to unmount ISO; continuing anyway")
-            os.rmdir(isomount)
+        self.log.info("Setting up guestfs handle for %s" % (self.name))
+        gfs = guestfs.GuestFS()
+        self.log.debug("Adding ISO image %s" % (self.orig_iso))
+        gfs.add_drive(self.orig_iso)
+        self.log.debug("Launching guestfs")
+        gfs.launch()
+        self.log.debug("Mounting ISO")
+        gfs.mount("/dev/sda", "/")
+        self.log.debug("Getting data from ISO onto %s" % (tarout))
+        gfs.tar_out("/", tarout)
+
+        self.log.debug("Cleaning up guestfs process")
+        gfs.sync()
+        gfs.umount_all()
+        gfs.kill_subprocess()
+
+        self.log.debug("Extracting tarball")
+        tar = tarfile.open(tarout)
+
+        # FIXME: the documentation for extractall says that this is potentially
+        # dangerous with random data.  In particular, files that start with /
+        # or contain .. may cause problems.  We'll need to do some validation
+        # here
+        tar.extractall(path=self.iso_contents)
+
+        self.log.debug("Removing tarball")
+        os.unlink(tarout)
+
+    def geteltorito(self, cdfile, outfile):
+        cdfile = open(cdfile, "r")
+
+        # the 17th sector contains the boot specification, and also contains the
+        # offset of the "boot" sector
+        cdfile.seek(17*2048)
+
+        # NOTE: With "native" alignment (the default for struct), there is
+        # some padding that happens that causes the unpacking to fail.  Instead
+        # we force "standard" alignment, which really has no constraints
+        fmt = "=B5sB23s41sI"
+        spec = cdfile.read(struct.calcsize(fmt))
+        (boot, isoIdent, version, toritoSpec, unused, bootP) = struct.unpack(fmt, spec)
+        if boot != 0x0:
+            raise Exception, "invalid boot"
+        if version != 0x1:
+            raise Exception, "invalid version"
+        if isoIdent != "CD001" or toritoSpec != "EL TORITO SPECIFICATION":
+            raise Exception, "isoIdentification not correct"
+
+        # OK, this looks like a CD.  Seek to the boot sector, and look for the
+        # header, 0x55, and 0xaa in the first 32 bytes
+        cdfile.seek(bootP*2048)
+        fmt = "=BBH24sHBB"
+        bootdata = cdfile.read(struct.calcsize(fmt))
+        (header, platform, unused, manu, unused2, five, aa) = struct.unpack(fmt, bootdata)
+        if header != 0x1:
+            raise Exception, "invalid header"
+        if platform != 0x0 and platform != 0x1 and platform != 0x2:
+            raise Exception, "invalid platform"
+        if unused != 0x0:
+            raise Exception, "invalid unused boot sector field"
+        if five != 0x55 or aa != 0xaa:
+            raise Exception, "invalid footer"
+
+        # FIXME: unused2 is actually the checksum, and according to eltorito
+        # should:
+        #
+        # Checksum Word. This sum of all the words in this record should be 0.
+        #
+        # presumably that means it should overflow to 0 for a single byte,
+        # though that is far from clear to me
+
+        # OK, everything so far has checked out.  Read the default/initial boot
+        # entry
+        cdfile.seek(bootP*2048+32)
+        fmt = "=BBHBBHIB"
+        defaultentry = cdfile.read(struct.calcsize(fmt))
+        (boot, media, loadsegment, systemtype, unused, scount, imgstart, unused2) = struct.unpack(fmt, defaultentry)
+
+        if boot != 0x88:
+            raise Exception, "invalid boot indicator"
+        if unused != 0x0 or unused2 != 0x0:
+            raise Exception, "invalid unused initial boot field"
+
+        if media == 0 or media == 4:
+            count = scount
+        elif media == 1:
+            # 1.2MB floppy in sectors
+            count = 1200*1024/512
+        elif media == 2:
+            # 1.44MB floppy in sectors
+            count = 1440*1024/512
+        elif media == 3:
+            # 2.88MB floppy in sectors
+            count = 2880*1024/512
+        else:
+            raise Exception, "invalid media type"
+
+        # finally, seek to "imgstart", and read "count" sectors, which contains
+        # the boot image
+        cdfile.seek(imgstart*2048)
+        #eltoritodata = cdfile.read(count*512)
+        eltoritodata = cdfile.read(count*2048)
+        cdfile.close()
+
+        out = open(outfile, "w")
+        out.write(eltoritodata)
+        out.close()
 
     def install(self):
         self.log.info("Running install for %s" % (self.name))
