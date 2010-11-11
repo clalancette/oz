@@ -650,7 +650,6 @@ class CDGuest(Guest):
         # finally, seek to "imgstart", and read "count" sectors, which contains
         # the boot image
         cdfile.seek(imgstart*2048)
-        #eltoritodata = cdfile.read(count*512)
         eltoritodata = cdfile.read(count*2048)
         cdfile.close()
 
