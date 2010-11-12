@@ -662,7 +662,20 @@ class CDGuest(Guest):
         # finally, seek to "imgstart", and read "count" sectors, which contains
         # the boot image
         cdfile.seek(imgstart*2048)
-        eltoritodata = cdfile.read(count*2048)
+
+        # The eltorito specification section 2.5 says:
+        #
+        # Sector Count. This is the number of virtual/emulated sectors the
+        # system will store at Load Segment during the initial boot procedure.
+        #
+        # and then Section 1.5 says:
+        #
+        # Virtual Disk - A series of sectors on the CD which INT 13 presents
+        # to the system as a drive with 200 byte virtual sectors. There are 4
+        # virtual sectors found in each “sector” on a CD.
+        #
+        # (note that the bytes above are in hex).  So we read count*512
+        eltoritodata = cdfile.read(count*512)
         cdfile.close()
 
         out = open(outfile, "w")
