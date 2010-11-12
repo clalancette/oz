@@ -535,6 +535,10 @@ class CDGuest(Guest):
     def __init__(self, distro, update, arch, nicmodel, clockoffset, mousetype,
                  diskbus, config):
         Guest.__init__(self, distro, update, arch, nicmodel, clockoffset, mousetype, diskbus, config)
+        # FIXME: now that we have both "iso" and "url" type installs, it
+        # might behoove us to encode this into orig_iso.  Otherwise, when you
+        # switch between them on the same OS, you continually download the
+        # "net" install one vs. the full ISO DVD.
         self.orig_iso = self.data_dir + "/isos/" + self.name + ".iso"
         self.output_iso = self.output_dir + "/" + self.name + "-oz.iso"
         self.iso_contents = self.data_dir + "/isocontent/" + self.name

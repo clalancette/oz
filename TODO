@@ -40,3 +40,22 @@ are doing ISO installs (but not URL installs).
 provide.
 14. Add the ability to do (optional) checksumming on the downloaded install
 media.
+15. With windows from MSDN (at least 2000, maybe other versions too), the
+top-level doesn't really contain the bits you care about.  What happens is
+that there are 3 boot options on the CD: installer for Professional, Server, and
+Advanced Server.  The directory structure on the CD is something like:
+
+    english
+        win2000
+            adv_server
+            pro
+            server
+
+and underneath each of (adv_server, pro, server) are the bits you care about.
+To automate this you really need to figure out which one the user cares about,
+then copy just that subdirectory.  You'll also need to extract the appropriate
+parts of eltorito so it boots automatically, and then you'll also need to set
+i386/txtsetup.sif [SetupData]: SetupSourcePath = "\".  See
+http://old.bink.nu/bootcd/
+16.  Should we cache the "modified" versions of the isos, instead of the
+pristine ones?  That will make things faster in most cases.

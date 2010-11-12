@@ -76,9 +76,6 @@ class Windows2000andXPand2003(Guest.CDGuest):
             elif re.match(" *ComputerName", line):
                 lines[lines.index(line)] = "    ComputerName=" + computername + "\n"
 
-        # FIXME: with windows 2000 Server, there doesn't seem to be an
-        # i386 directory that we can stuff winnt.sif into.  Either we should
-        # create that directory, or find another way to make that work
         f = open(self.iso_contents + "/" + winarch + "/winnt.sif", "w")
         f.writelines(lines)
         f.close()

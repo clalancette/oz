@@ -152,8 +152,6 @@ class FedoraGuest(Guest.CDGuest):
         if not os.access(self.cdl_tmp, os.F_OK):
             os.makedirs(self.cdl_tmp)
 
-        # FIXME: if we have two oz processes running at the same time, on
-        # the same named guest, they will collide here
         privname = self.cdl_tmp + '/id_rsa-cdl-gen'
         pubname = self.cdl_tmp + '/id_rsa-cdl-gen.pub'
         if os.access(privname, os.F_OK):
