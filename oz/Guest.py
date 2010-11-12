@@ -388,10 +388,14 @@ class Guest(object):
             self.log.info("Original install media available, using cached version")
         else:
             self.log.info("Fetching the original install media from %s" % (url))
+            self.last_mb = -1
             def progress(down_total, down_current, up_total, up_current):
-                # FIXME: we should probably not print every single time this is
-                # called; maybe every 1MB or so?
-                self.log.info("%dkB of %dkB" % (down_current/1024, down_total/1024))
+                if down_total == 0:
+                    return
+                current_mb = int(down_current) / 10485760
+                if current_mb > self.last_mb or down_current == down_total:
+                    self.last_mb = current_mb
+                    self.log.debug("%dkB of %dkB" % (down_current/1024, down_total/1024))
 
             if not os.access(os.path.dirname(output), os.F_OK):
                 os.makedirs(os.path.dirname(output))
