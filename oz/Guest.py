@@ -503,12 +503,10 @@ class Guest(object):
         listen.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         listen.bind((self.host_bridge_ip, self.listen_port))
         listen.listen(1)
-        # FIXME: we should make this iptables rule only open the port on the
-        # virbr0 interface
-        # FIXME: we should use the subprocess_check_output wrapper
-        subprocess.call(["iptables", "-I", "INPUT", "1", "-p", "tcp", "-m",
-                         "tcp", "--dport", str(self.listen_port), "-j",
-                         "ACCEPT"])
+        subprocess_check_output(["iptables", "-I", "INPUT", "1", "-p", "tcp",
+                                 "-m", "tcp", "-d", self.host_bridge_ip,
+                                 "--dport", str(self.listen_port),
+                                 "-j", "ACCEPT"])
 
         try:
             rlist, wlist, xlist = select.select([listen], [], [], 300)
