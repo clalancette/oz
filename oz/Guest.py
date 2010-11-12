@@ -141,11 +141,11 @@ class Guest(object):
         self.log.debug("mousetype: %s, disk_bus: %s, disk_dev: %s" % (self.mousetype, self.disk_bus, self.disk_dev))
         self.log.debug("cdltmp: %s, listen_port: %d" % (self.cdl_tmp, self.listen_port))
 
-    def cleanup_old_guest(self):
+    def cleanup_old_guest(self, delete_disk=True):
         def handler(ctxt, err):
             pass
         libvirt.registerErrorHandler(handler, 'context')
-        self.log.info("Cleaning up old guest named %s" % (self.name))
+        self.log.info("Cleaning up guest named %s" % (self.name))
         try:
             dom = self.libvirt_conn.lookupByName(self.name)
             try:
@@ -157,8 +157,7 @@ class Guest(object):
             pass
         libvirt.registerErrorHandler(None, None)
 
-        # FIXME: do we really want to remove this here?
-        if os.access(self.diskimage, os.F_OK):
+        if delete_disk and os.access(self.diskimage, os.F_OK):
             os.unlink(self.diskimage)
 
     def targetDev(self, doc, devicetype, path, bus):

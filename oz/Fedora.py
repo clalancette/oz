@@ -277,44 +277,32 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
         # we undefine up-front because we are going to generate our own
         # libvirt XML below.  It should be safe to undefine here
-        # FIXME: this is almost an exact copy of Guest.cleanup_old_guest
-        def handler(ctxt, err):
-            pass
-        libvirt.registerErrorHandler(handler, 'context')
-        self.log.info("Cleaning up old guest named %s" % (self.name))
-        try:
-            dom = self.libvirt_conn.lookupByName(self.name)
-            try:
-                dom.destroy()
-            except:
-                pass
-            dom.undefine()
-        except:
-            pass
-        libvirt.registerErrorHandler(None, None)
+        self.cleanup_old_guest(delete_disk=False)
 
         self.collect_setup(diskimage)
 
-        # FIXME: if we fail anytime after this, we need to to collect_teardown
-        self.generate_define_xml("hd", want_install_disk=False)
-        self.libvirt_dom.create()
+        output = ''
+        try:
+            self.generate_define_xml("hd", want_install_disk=False)
+            self.libvirt_dom.create()
 
-        guestaddr = self.wait_for_guest_boot()
+            guestaddr = self.wait_for_guest_boot()
 
-        data = subprocess.Popen(["ssh", "-i", self.cdl_tmp + '/id_rsa-cdl-gen',
-                                 "-o", "StrictHostKeyChecking=no",
-                                 "-o", "ConnectTimeout=5", guestaddr,
-                                 'rpm -qa'], stdout=subprocess.PIPE).communicate()
+            data = subprocess.Popen(["ssh", "-i",
+                                     self.cdl_tmp + '/id_rsa-cdl-gen',
+                                     "-o", "StrictHostKeyChecking=no",
+                                     "-o", "ConnectTimeout=5", guestaddr,
+                                     'rpm -qa'], stdout=subprocess.PIPE).communicate()
 
-        # FIXME: what if the output is blank?
+            # FIXME: what if the output is blank?
 
-        output = self.output_cdl_xml(data[0].split("\n"))
+            output = self.output_cdl_xml(data[0].split("\n"))
 
-        # FIXME: should we try to do a graceful shutdown here?  At the very
-        # least we should do a sync
-        self.libvirt_dom.destroy()
-
-        self.collect_teardown(diskimage)
+            # FIXME: should we try to do a graceful shutdown here?  At the very
+            # least we should do a sync
+            self.libvirt_dom.destroy()
+        finally:
+            self.collect_teardown(diskimage)
 
         return output
 
