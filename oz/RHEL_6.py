@@ -61,11 +61,11 @@ class RHEL6Guest(Guest.CDGuest):
                 lines[lines.index(line)] = "default customiso\n"
         lines.append("label customiso\n")
         lines.append("  kernel vmlinuz\n")
-        initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method="
+        initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
         if self.installtype == "url":
             initrdline += self.url + "\n"
         else:
-            initrdline += "cdrom:/dev/cdrom\n"
+            initrdline += "\n"
         lines.append(initrdline)
 
         f = open(self.iso_contents + "/isolinux/isolinux.cfg", "w")

@@ -3,8 +3,6 @@ text
 key --skip
 keyboard us
 lang en_US.UTF-8
-langsupport --default en_US.UTF-8 en_US.UTF-8
-mouse generic3ps/2 --device psaux
 skipx
 network --device eth0 --bootproto dhcp
 rootpw --iscrypted $1$ls9x0WTf$SW8tTB.nEc9mO6xdDpPfl.
@@ -24,11 +22,8 @@ logvol / --fstype ext4 --name=LogVol00 --vgname=VolGroup00 --size=1024 --grow
 reboot
 
 %packages
-@editors
-@text-internet
 @core
 @base
-@admin-tools
 kexec-tools
 device-mapper-multipath
 -sysreport
