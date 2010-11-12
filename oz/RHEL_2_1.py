@@ -31,7 +31,7 @@ class RHEL21Guest(Guest.FDGuest):
         if idl.installtype() != 'url':
             raise Exception, "RHEL-2.1 installs must be done via url or iso"
 
-        self.url = ozutil.check_url(self.url)
+        self.url = ozutil.check_url(idl.url())
 
         ozutil.deny_localhost(self.url)
 
@@ -95,6 +95,6 @@ class RHEL21Guest(Guest.FDGuest):
 
 def get_class(idl, config):
     update = idl.update()
-    if update == "GOLD" or update == "U1" or update == "U2" or update == "U3" or update == "U4" or update == "U5" or update == "U6":
+    if update == "GOLD" or update == "U2" or update == "U3" or update == "U4" or update == "U5" or update == "U6":
         return RHEL21Guest(idl, config)
     raise Exception, "Unsupported RHEL-2.1 update " + update
