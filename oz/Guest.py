@@ -362,7 +362,7 @@ class Guest(object):
         # trying to fetch actually exists
         conn = urllib.urlopen(url)
         if conn.getcode() != 200:
-            raise Exception, "Could not access install url: " + conn.getcode()
+            raise Exception, "Could not access install url %s: %d" % (url, conn.getcode())
 
         if not force_download and os.access(output, os.F_OK):
             try:
