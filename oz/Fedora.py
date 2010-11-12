@@ -23,11 +23,12 @@ import os
 import libvirt
 
 class FedoraGuest(Guest.CDGuest):
-    def __init__(self, idl, config, nicmodel, haverepo, diskbus):
+    def __init__(self, idl, config, nicmodel, haverepo, diskbus, brokenisomethod):
         update = idl.update()
         arch = idl.arch()
         self.ks_file = ozutil.generate_full_auto_path("fedora-" + update + "-jeos.ks")
         self.haverepo = haverepo
+        self.brokenisomethod = brokenisomethod
         self.installtype = idl.installtype()
 
         if self.installtype == 'url':
@@ -73,6 +74,8 @@ class FedoraGuest(Guest.CDGuest):
         else:
             # if the installtype is iso, then due to a bug in anaconda we leave
             # out the method completely
+            if not self.brokenisomethod:
+                initrdline += " method=cdrom:/dev/cdrom"
             initrdline += "\n"
         lines.append(initrdline)
 
@@ -320,7 +323,9 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 def get_class(idl, config):
     update = idl.update()
     if update == "10" or update == "11" or update == "12" or update == "13" or update == "14":
-        return FedoraGuest(idl, config, "virtio", True, "virtio")
-    if update == "9" or update == "8" or update == "7":
-        return FedoraGuest(idl, config, "rtl8139", False, None)
+        return FedoraGuest(idl, config, "virtio", True, "virtio", True)
+    if update == "9":
+        return FedoraGuest(idl, config, "rtl8139", False, None, False)
+    if update == "8" or update == "7":
+        return FedoraGuest(idl, config, "rtl8139", False, None, True)
     raise Exception, "Unsupported Fedora update " + update
