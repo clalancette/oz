@@ -329,31 +329,36 @@ class Guest(object):
     def wait_for_install_finish(self, count):
         lastlen = 0
         origcount = count
+        failed = False
         while count > 0:
             try:
                 if count % 10 == 0:
-                    self.log.info("Waiting for %s to finish installing, %d/%d" % (self.name, count, origcount))
+                    self.log.debug("Waiting for %s to finish installing, %d/%d" % (self.name, count, origcount))
                 info = self.libvirt_dom.info()
-                # FIXME: this may not be the best logic in the world.  What we
-                # are actually looking for is if this domain "goes away"; if
-                # so, we are good.  Anything else besides RUNNING and BLOCKED
-                # means that we should probably raise an error
-                if info[0] != libvirt.VIR_DOMAIN_RUNNING and info[0] != libvirt.VIR_DOMAIN_BLOCKED:
+                if info[0] == libvirt.VIR_DOMAIN_SHUTOFF:
+                    # the domain is now shutoff, so get out of here
+                    break
+                elif info[0] != libvirt.VIR_DOMAIN_RUNNING and info[0] != libvirt.VIR_DOMAIN_BLOCKED:
+                    # the domain isn't running or blocked; something bad
+                    # happened, so get out of here and report the error
+                    failed = True
                     break
                 count -= 1
             except:
                 pass
             time.sleep(1)
 
-        if count == 0:
+        if failed or count == 0:
             # if we timed out, then let's make sure to take a screenshot.
             # FIXME: where should we put this screenshot?
             screenshot = self.name + "-" + str(time.time()) + ".png"
             self.capture_screenshot(self.libvirt_dom.XMLDesc(0), screenshot)
-            raise Exception, "Timed out waiting for install to finish"
+            if failed:
+                raise Exception, "Failed installation, domain went to state %d" % (info[0])
+            else:
+                raise Exception, "Timed out waiting for install to finish"
 
-        # FIXME: make sure to do one last print here so we know exactly how
-        # long it took
+        self.log.info("Install of %s succeeded" % (self.name))
 
     def get_original_media(self, url, output, force_download):
         original_available = False
