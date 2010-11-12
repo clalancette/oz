@@ -37,6 +37,7 @@ import socket
 import select
 import tarfile
 import struct
+import numpy
 
 class ProcessError(Exception):
     """This exception is raised when a process run by
@@ -617,13 +618,15 @@ class CDGuest(Guest):
         if five != 0x55 or aa != 0xaa:
             raise Exception, "invalid footer"
 
-        # FIXME: unused2 is actually the checksum, and according to eltorito
-        # should:
-        #
-        # Checksum Word. This sum of all the words in this record should be 0.
-        #
-        # presumably that means it should overflow to 0 for a single byte,
-        # though that is far from clear to me
+        def checksum(data):
+            s = 0
+            for i in range(0, len(data), 2):
+                w = ord(data[i]) + (ord(data[i+1]) << 8)
+                s = numpy.uint16(numpy.uint16(s) + numpy.uint16(w))
+            return s
+
+        if checksum(bootdata) != 0:
+            raise Exception, "invalid checksum"
 
         # OK, everything so far has checked out.  Read the default/initial boot
         # entry

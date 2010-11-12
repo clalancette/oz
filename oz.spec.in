@@ -17,6 +17,7 @@ Requires: libxml2-python
 Requires: libvirt-python
 Requires: python-pycurl
 Requires: genisoimage
+Requires: numpy
 
 %description
 Oz is a set of libraries and utilities for doing automated guest OS
