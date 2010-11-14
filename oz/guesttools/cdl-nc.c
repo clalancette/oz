@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 
   ret = connect(s, (struct sockaddr *)&a, sizeof(struct sockaddr_in));
   if (ret < 0) {
-    fprintf(stderr, "Failed to connect to %s:%d\n", host, port);
+    fprintf(stderr, "Failed to connect to %s:%d: %s\n", host, port, strerror(errno));
     retval = 2;
     goto cleanup;
   }
