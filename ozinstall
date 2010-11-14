@@ -62,7 +62,7 @@ def usage():
     sys.exit(1)
 
 try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], 'c:d:fh', ['config', 'debug', 'force-download', 'help'])
+    opts, args = getopt.gnu_getopt(sys.argv[1:], 'c:d:fgh', ['config', 'debug', 'force-download', 'generate-cdl', 'help'])
 except getopt.GetoptError, err:
     print str(err)
     usage()
@@ -71,6 +71,7 @@ loglevel = logging.ERROR
 logformat = "%(message)s"
 force_download = False
 config_file = "/etc/oz/oz.cfg"
+generate_cdl = False
 for o, a in opts:
     if o in ("-h", "--help"):
         usage()
@@ -90,6 +91,8 @@ for o, a in opts:
             usage()
     elif o in ("-f", "--force-download"):
         force_download = True
+    elif o in ("-g", "--generate-cdl"):
+        generate_cdl = True
     elif o in ("-c", "--config"):
         config_file = a
     else:
@@ -142,7 +145,11 @@ guest.generate_install_media(force_download)
 try:
     guest.generate_diskimage()
     try:
-        guest.install()
+        libvirt_xml = guest.install()
+        if generate_cdl:
+            print guest.generate_cdl(libvirt_xml)
+        else:
+            print libvirt_xml
     except:
         guest.cleanup_old_guest()
         raise
