@@ -109,9 +109,6 @@ idl = oz.IDL.IDL(args[0])
 distro = idl.distro()
 
 config = ConfigParser.SafeConfigParser()
-config.add_section('paths')
-config.set('paths', 'output_dir', '/var/lib/libvirt/images')
-config.set('paths', 'data_dir', '/var/lib/oz')
 if os.access(config_file, os.F_OK):
     config.read(config_file)
 
