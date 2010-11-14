@@ -36,7 +36,7 @@ import oz.OpenSUSE
 import ConfigParser
 
 def usage():
-    print "Usage: oz-generate-cdl [OPTIONS] <idl> <diskimage>"
+    print "Usage: oz-generate-cdl [OPTIONS] <idl> <libvirt_xml>"
     print " OPTIONS:"
     print "  -d <level>\tTurn up logging level.  The levels are:"
     print "\t\t\t0 - errors only (this is the default)"
@@ -100,7 +100,7 @@ if len(args) != 2:
     usage()
 
 idlfile = args[0]
-diskimage = args[1]
+libvirt_xml_file = args[1]
 
 logging.basicConfig(level=loglevel, format=logformat)
 
@@ -138,4 +138,10 @@ elif distro == "RHL":
 else:
     usage()
 
-print guest.generate_cdl(diskimage)
+f = open(libvirt_xml_file, 'r')
+# FIXME: we should check the size of the file before we do this so
+# that we protect against monster files being read in
+libvirt_xml = f.read()
+f.close()
+
+print guest.generate_cdl(libvirt_xml)

@@ -304,6 +304,8 @@ class Guest(object):
 
         self.libvirt_dom = self.libvirt_conn.defineXML(doc.toxml())
 
+        return doc.toxml()
+
     def generate_blank_diskimage(self, size=10):
         self.log.info("Generating %dGB blank diskimage for %s" % (size, self.name))
         f = open(self.diskimage, "w")
@@ -442,12 +444,28 @@ class Guest(object):
         if ret != 0:
             self.log.error("Failed to take screenshot")
 
-    def guestfs_handle_setup(self, disk):
+    def guestfs_handle_setup(self, libvirt_xml):
+        input_doc = libxml2.parseMemory(libvirt_xml, len(libvirt_xml))
+        namenode = input_doc.xpathEval('/domain/name')
+        if len(namenode) != 1:
+            raise Exception, "invalid libvirt XML with no name"
+        input_name = namenode[0].getContent()
+        disks = input_doc.xpathEval('/domain/devices/disk/source')
+        if len(disks) != 1:
+            raise Exception, "oz cannot handle a libvirt domain with more than 1 disk"
+        input_disk = disks[0].prop('file')
+
         for domid in self.libvirt_conn.listDomainsID():
             self.log.debug("DomID: %d" % (domid))
             dom = self.libvirt_conn.lookupByID(domid)
             xml = dom.XMLDesc(0)
             doc = libxml2.parseMemory(xml, len(xml))
+            namenode = doc.xpathEval('/domain/name')
+            if len(namenode) != 1:
+                # hm, odd, a domain without a name?
+                raise Exception, "Saw a domain without a name, something weird is going on"
+            if input_name == namenode[0].getContent():
+                raise Exception, "Cannot setup CDL generation on a running guest"
             disks = doc.xpathEval('/domain/devices/disk')
             if len(disks) < 1:
                 # odd, a domain without a disk, but don't worry about it
@@ -455,14 +473,15 @@ class Guest(object):
             for guestdisk in disks:
                 for source in guestdisk.xpathEval("source"):
                     filename = str(source.prop('file'))
-                    if filename == disk:
+                    if filename == input_disk:
                         raise Exception, "Cannot setup CDL generation on a running disk"
+
 
         self.log.info("Setting up guestfs handle for %s" % (self.name))
         self.g = guestfs.GuestFS()
 
-        self.log.debug("Adding disk image %s" % (disk))
-        self.g.add_drive(disk)
+        self.log.debug("Adding disk image %s" % (input_disk))
+        self.g.add_drive(input_disk)
 
         self.log.debug("Launching guestfs")
         self.g.launch()
@@ -690,7 +709,7 @@ class CDGuest(Guest):
 
         self.wait_for_install_finish(1200)
 
-        self.generate_define_xml("hd", want_install_disk=False)
+        return self.generate_define_xml("hd", want_install_disk=False)
 
     def cleanup_iso(self):
         self.log.info("Cleaning up old ISO data")
@@ -722,7 +741,7 @@ class FDGuest(Guest):
 
         self.wait_for_install_finish(1200)
 
-        self.generate_define_xml("hd")
+        return self.generate_define_xml("hd", want_install_disk=False)
 
     def cleanup_floppy(self):
         self.log.info("Cleaning up floppy data")

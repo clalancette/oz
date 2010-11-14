@@ -95,7 +95,7 @@ class Windows2000andXPand2003(Guest.CDGuest):
         self.generate_define_xml("hd")
         self.libvirt_dom.create()
         self.wait_for_install_finish(3600)
-        self.generate_define_xml("hd", want_install_disk=False)
+        return self.generate_define_xml("hd", want_install_disk=False)
 
 class Windows2008(Guest.CDGuest):
     def __init__(self, idl, config):
@@ -149,7 +149,7 @@ class Windows2008(Guest.CDGuest):
         self.generate_define_xml("hd")
         self.libvirt_dom.create()
         self.wait_for_install_finish(3600)
-        self.generate_define_xml("hd", want_install_disk=False)
+        return self.generate_define_xml("hd", want_install_disk=False)
 
 def get_class(idl, config):
     update = idl.update()

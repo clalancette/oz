@@ -20,7 +20,6 @@ import subprocess
 import re
 import ozutil
 import os
-import libvirt
 
 class FedoraGuest(Guest.CDGuest):
     def __init__(self, idl, config, nicmodel, haverepo, diskbus, brokenisomethod):
@@ -127,10 +126,10 @@ class FedoraGuest(Guest.CDGuest):
 
         return "/etc/rc.d/rc" + runlevel + ".d/S" + startlevel + service
 
-    def collect_setup(self, diskimage):
+    def collect_setup(self, libvirt_xml):
         self.log.info("CDL Collection Setup")
 
-        self.guestfs_handle_setup(diskimage)
+        self.guestfs_handle_setup(libvirt_xml)
 
         # we have to do 3 things to make sure we can ssh into Fedora 13:
         # 1)  Upload our ssh key
@@ -228,10 +227,10 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         os.unlink(announcefile)
         self.guestfs_handle_cleanup()
 
-    def collect_teardown(self, diskimage):
+    def collect_teardown(self, libvirt_xml):
         self.log.info("CDL Collection Teardown")
 
-        self.guestfs_handle_setup(diskimage)
+        self.guestfs_handle_setup(libvirt_xml)
 
         # reset the authorized keys
         if self.g.exists('/root/.ssh/authorized_keys'):
@@ -272,18 +271,14 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
         self.guestfs_handle_cleanup()
 
-    def generate_cdl(self, diskimage):
+    def generate_cdl(self, libvirt_xml):
         self.log.info("Generating CDL")
 
-        # we undefine up-front because we are going to generate our own
-        # libvirt XML below.  It should be safe to undefine here
-        self.cleanup_old_guest(delete_disk=False)
-
-        self.collect_setup(diskimage)
+        self.collect_setup(libvirt_xml)
 
         output = ''
         try:
-            self.generate_define_xml("hd", want_install_disk=False)
+            self.libvirt_dom = self.libvirt_conn.defineXML(libvirt_xml)
             self.libvirt_dom.create()
 
             guestaddr = self.wait_for_guest_boot()
@@ -302,7 +297,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             # least we should do a sync
             self.libvirt_dom.destroy()
         finally:
-            self.collect_teardown(diskimage)
+            self.collect_teardown(libvirt_xml)
 
         return output
 
