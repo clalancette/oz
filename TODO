@@ -57,8 +57,14 @@ then copy just that subdirectory.  You'll also need to extract the appropriate
 parts of eltorito so it boots automatically, and then you'll also need to set
 i386/txtsetup.sif [SetupData]: SetupSourcePath = "\".  See
 http://old.bink.nu/bootcd/
-16. Should we cache the "modified" versions of the isos, instead of the
-pristine ones?  That will make things faster in most cases.
-17. The output from guest.install(), if successful, should really be three
+16. The output from guest.install(), if successful, should really be three
 things: the diskimage (and the location thereof), the libvirt XML for starting
 the guest, and the IDL (which is really a copy of the input IDL).
+17. Write a boxgrinder plugin.
+18. RHEL-3 U1 and U2 fail to install.  This is probably due to a bug in anaconda
+that prevents "method=" on the command-line to work, though I have not confirmed
+that.
+19. FedoraCore 1, 2, and 3 x86_64, fail to boot for some reason.
+20. FedoraCore 6 x86_64 takes *much* longer to install than we give it time for.
+21. RHEL-3 GOLD x86_64 fails to boot.
+22. RHEL-4 GOLD, U1, U2 x86_64 crashes during install.
