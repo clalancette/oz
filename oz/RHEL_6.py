@@ -64,7 +64,7 @@ class RHEL6Guest(Guest.CDGuest):
         lines.append("  kernel vmlinuz\n")
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
         if self.installtype == "url":
-            initrdline += self.url + "\n"
+            initrdline += " repo=" + self.url + "\n"
         else:
             initrdline += "\n"
         lines.append(initrdline)
