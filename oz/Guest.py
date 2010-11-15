@@ -300,8 +300,7 @@ class Guest(object):
                 devicesNode.appendChild(self.targetDev(doc, "floppy", self.output_floppy, "fda"))
         domain.appendChild(devicesNode)
 
-        self.log.debug("Generated XML:\n%s" % (doc.toxml()))
-
+        self.log.debug("Generated XML:\n%s" % (doc.toprettyxml()))
         self.libvirt_dom = self.libvirt_conn.defineXML(doc.toxml())
 
         return doc.toxml()
@@ -328,7 +327,6 @@ class Guest(object):
         f.close()
 
     def wait_for_install_finish(self, count):
-        lastlen = 0
         origcount = count
         failed = False
         while count > 0:
