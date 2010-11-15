@@ -285,8 +285,9 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
             # FIXME: should we try to do a graceful shutdown here?  At the very
             # least we should do a sync
-            self.libvirt_dom.destroy()
         finally:
+            if self.libvirt_dom is not None:
+                self.libvirt_dom.destroy()
             self.collect_teardown(libvirt_xml)
 
         return output
