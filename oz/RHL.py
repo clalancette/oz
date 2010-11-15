@@ -22,10 +22,24 @@ import os
 import ozutil
 
 class RHL9Guest(Guest.CDGuest):
-    def __init__(self, url):
-        Guest.CDGuest.__init__(self, "RHL", "9", "i386", "rtl8139", None, None, None)
-        self.url = url
-        self.ks_file = ks
+    def __init__(self, idl, config):
+        update = idl.update()
+        arch = idl.arch()
+
+        self.ks_file = ozutil.generate_full_auto_path("rhl-" + update + "-jeos.ks")
+
+        if idl.installtype() != 'url':
+            raise Exception, "RHL installs must be done via url"
+
+        self.url = ozutil.check_url(idl.url())
+
+        ozutil.deny_localhost(self.url)
+
+        if arch != "i386":
+            raise Exception, "Invalid arch " + arch + "for RHL guest"
+
+        Guest.CDGuest.__init__(self, "RHL", "9", "i386", "rtl8139", None,
+                               None, None, config)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")
@@ -78,10 +92,24 @@ class RHL9Guest(Guest.CDGuest):
         self.cleanup_iso()
 
 class RHL70and71and72and73and8Guest(Guest.FDGuest):
-    def __init__(self, update, url, ks, nicmodel):
-        Guest.FDGuest.__init__(self, "RHL", update, "i386", nicmodel, None, None, None)
-        self.url = url
-        self.ks_file = ks
+    def __init__(self, idl, config, nicmodel):
+        update = idl.update()
+        arch = idl.arch()
+
+        self.ks_file = ozutil.generate_full_auto_path("rhl-" + update + "-jeos.ks")
+
+        if idl.installtype() != 'url':
+            raise Exception, "RHL installs must be done via url"
+
+        self.url = ozutil.check_url(idl.url())
+
+        ozutil.deny_localhost(self.url)
+
+        if arch != "i386":
+            raise Exception, "Invalid arch " + arch + "for RHL guest"
+
+        Guest.FDGuest.__init__(self, "RHL", update, "i386", nicmodel, None,
+                               None, None, config)
 
     def modify_floppy(self):
         if not os.access(self.floppy_contents, os.F_OK):
@@ -127,6 +155,11 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
         f.writelines(lines)
         f.close()
 
+        # sometimes, syslinux.cfg on the floppy gets marked read-only.  Avoid
+        # problems with the subsequent mcopy by marking it read/write.
+        Guest.subprocess_check_output(["mattrib", "-r", "-i",
+                                       self.output_floppy, "::SYSLINUX.CFG"])
+
         Guest.subprocess_check_output(["mcopy", "-n", "-o", "-i",
                                        self.output_floppy,
                                        self.floppy_contents + "/SYSLINUX.CFG",
@@ -141,23 +174,10 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
 
 def get_class(idl, config):
     update = idl.update()
-    arch = idl.arch()
-
-    ks = ozutil.generate_full_auto_path("rhl-" + update + "-jeos.ks")
-
-    if idl.installtype() != 'url':
-        raise Exception, "RHL installs must be done via url"
-
-    url = ozutil.check_url(idl.url())
-
-    ozutil.deny_localhost(url)
-
-    if arch != "i386":
-        raise Exception, "Invalid arch " + arch + "for RHL guest"
     if update == "9":
-        return RHL9Guest(url, ks)
+        return RHL9Guest(idl, config)
     if update == "7.2" or update == "7.3" or update == "8":
-        return RHL70and71and72and73and8Guest(update, url, ks, "rtl8139")
+        return RHL70and71and72and73and8Guest(idl, config, "rtl8139")
     # FIXME: RHL 6.2 does not work via HTTP because of a bug in the installer;
     # when parsing a URL passed in via "method", it fails to put a / at the
     # beginning of the URL.  What this means is that when the installer goes
@@ -174,5 +194,5 @@ def get_class(idl, config):
     # VFS: Cannot open root device 08:21
     # Kernel panic: VFS: Unable to mount root fs on 08:21
     if update == "7.0" or update == "7.1":
-        return RHL70and71and72and73and8Guest(update, url, ks, "ne2k_pci")
+        return RHL70and71and72and73and8Guest(idl, config, "ne2k_pci")
     raise Exception, "Unsupported RHL update " + update
