@@ -135,10 +135,12 @@ elif distro == "RHL":
 else:
     usage()
 
-f = open(libvirt_xml_file, 'r')
-# FIXME: we should check on the size of the file before reading here so
-# that we don't cause an OOM on the machine
-libvirt_xml = f.read()
-f.close()
+# Arbitrarily limit the size of the XML file that we will support to 5MB.
+# this should be plenty for a normal libvirt XML, and this should prevent us
+# from causing OOMs on bogus files
+if os.stat(libvirt_xml_file)[stat.ST_SIZE] > (5 * 1024 * 1024):
+    raise Exception, "libvirt XML file is too big!"
+
+libvirt_xml = open(libvirt_xml_file, 'r').read()
 
 print guest.generate_cdl(libvirt_xml)
