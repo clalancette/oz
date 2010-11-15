@@ -305,8 +305,6 @@ def get_class(idl, config):
     update = idl.update()
     if update == "10" or update == "11" or update == "12" or update == "13" or update == "14":
         return FedoraGuest(idl, config, "virtio", True, "virtio", True)
-    if update == "9":
+    if update == "7" or update == "8" or update == "9":
         return FedoraGuest(idl, config, "rtl8139", False, None, False)
-    if update == "8" or update == "7":
-        return FedoraGuest(idl, config, "rtl8139", False, None, True)
     raise Exception, "Unsupported Fedora update " + update
