@@ -1,0 +1,56 @@
+<?xml version="1.0" ?><unattend xmlns="urn:schemas-microsoft-com:unattend">
+    <settings pass="windowsPE">
+        <component language="neutral" name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <SetupUILanguage>
+                <UILanguage>en-US</UILanguage>
+            </SetupUILanguage>
+            <UILanguage>en-US</UILanguage>
+            <InputLocale>en-US</InputLocale>
+            <SystemLocale>en-US</SystemLocale>
+            <UserLocale>en-US</UserLocale>
+        </component>
+        <component language="neutral" name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <DiskConfiguration>
+                <WillShowUI>Never</WillShowUI>
+            </DiskConfiguration>
+            <Display>
+                <ColorDepth>16</ColorDepth>
+                <HorizontalResolution>1024</HorizontalResolution>
+                <RefreshRate>60</RefreshRate>
+                <VerticalResolution>768</VerticalResolution>
+            </Display>
+            <ImageInstall>
+                <OSImage>
+                    <InstallToAvailablePartition>true</InstallToAvailablePartition>
+                    <WillShowUI>OnError</WillShowUI>
+                </OSImage>
+            </ImageInstall>
+            <UserData>
+                <ProductKey>
+		    <Key>F4372-Y7W94-6QKF8-J8KJW-6MPHB</Key>
+                    <WillShowUI>OnError</WillShowUI>
+                </ProductKey>
+                <AcceptEula>true</AcceptEula>
+            </UserData>
+            <WindowsDeploymentServices>
+                <Login>
+                    <Credentials>
+                        <Password>Administrator</Password>
+                        <Username>100yard-</Username>
+                        <Domain>Workgroup</Domain>
+                    </Credentials>
+                </Login>
+                <ImageSelection>
+                    <InstallImage>
+                        <Filename>Install.wim</Filename>
+                    </InstallImage>
+                    <InstallTo>
+                        <DiskID>0</DiskID>
+                        <PartitionID>1</PartitionID>
+                    </InstallTo>
+                </ImageSelection>
+            </WindowsDeploymentServices>
+        </component>
+    </settings>
+    <cpi:offlineImage cpi:source="wim:d:/sources/install.wim#Windows Server 2008 R2 SERVERENTERPRISE" xmlns:cpi="urn:schemas-microsoft-com:cpi"/>
+</unattend>

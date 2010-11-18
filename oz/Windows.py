@@ -20,6 +20,7 @@ import subprocess
 import re
 import os
 import ozutil
+import xml.dom.minidom
 
 class Windows2000andXPand2003(Guest.CDGuest):
     def __init__(self, idl, config):
@@ -101,7 +102,10 @@ class Windows2008(Guest.CDGuest):
     def __init__(self, idl, config):
         update = idl.update()
         arch = idl.arch()
-        self.siffile = ozutil.generate_full_auto_path("windows-" + update + "-jeos.sif")
+        self.unattendfile = ozutil.generate_full_auto_path("windows-" + update + "-jeos.xml")
+        self.key = idl.key()
+        if self.key is None:
+            raise Exception, "A key is required when installing Windows 2000, XP, or 2003"
 
         self.url = ozutil.check_url(idl.iso())
 
@@ -133,6 +137,14 @@ class Windows2008(Guest.CDGuest):
             winarch = "amd64"
         else:
             raise Exception, "Unexpected architecture " + self.arch
+
+        source = xml.dom.minidom.parse(self.unattendfile)
+        ProductKey = source.documentElement.getElementsByTagName("Key")[0]
+        ProductKey.childNodes[0].data = self.key
+
+        f = open(self.iso_contents + "/autounattend.xml", "w")
+        source.writexml(f)
+        f.close()
 
     def generate_install_media(self, force_download):
         self.get_original_iso(self.url, force_download)
