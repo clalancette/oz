@@ -42,6 +42,8 @@ class RHEL4Guest(Guest.CDGuest):
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)
 
+        self.output_services = idl.services()
+
         Guest.CDGuest.__init__(self, "RHEL-4", update, arch, nicmodel, None,
                                None, diskbus, config)
 
@@ -280,7 +282,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
             # FIXME: what if the output is blank?
 
-            output = self.output_cdl_xml(data[0].split("\n"))
+            output = self.output_cdl_xml(data[0].split("\n"), self.output_services)
 
             # FIXME: should we try to do a graceful shutdown here?  At the very
             # least we should do a sync

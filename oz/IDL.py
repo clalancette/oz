@@ -59,6 +59,16 @@ class IDL(object):
         else:
             raise Exception, "Unknown install type " + self._installtype + " in IDL"
 
+        services = self.doc.xpathEval('/image/services')
+        # there may be 0 or 1 <services> elements
+
+        if len(services) == 0:
+            self._services = "<services/>"
+        elif len(services) == 1:
+            self._services = str(services[0])
+        else:
+            raise Exception, "Invalid number of services, expected 0 or 1"
+
     def __del__(self):
         if self.doc is not None:
             self.doc.freeDoc()
@@ -77,3 +87,5 @@ class IDL(object):
         return self._key
     def installtype(self):
         return self._installtype
+    def services(self):
+        return self._services

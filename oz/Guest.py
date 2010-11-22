@@ -538,10 +538,13 @@ class Guest(object):
 
         return addr[0]
 
-    def output_cdl_xml(self, lines):
+    def output_cdl_xml(self, lines, services):
         doc = xml.dom.minidom.Document()
         cdl = doc.createElement("cdl")
         doc.appendChild(cdl)
+
+        tmp = xml.dom.minidom.parseString(services)
+        cdl.appendChild(tmp.documentElement)
 
         packagesNode = doc.createElement("packages")
         cdl.appendChild(packagesNode)
