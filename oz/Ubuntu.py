@@ -40,7 +40,8 @@ class Ubuntu810and904and910Guest(Guest.CDGuest):
                                        "isolinux/boot.cat", "-no-emul-boot",
                                        "-boot-load-size", "4",
                                        "-boot-info-table", "-v", "-v",
-                                       "-o", output, inputdir])
+                                       "-o", self.output_iso,
+                                       self.iso_contents])
 
     def generate_install_media(self, force_download):
         self.get_original_iso(self.isourl, force_download)
@@ -101,7 +102,8 @@ class Ubuntu710and8041Guest(Guest.CDGuest):
                                        "isolinux/boot.cat", "-no-emul-boot",
                                        "-boot-load-size", "4",
                                        "-boot-info-table", "-v", "-v",
-                                       "-o", output, inputdir])
+                                       "-o", self.output_iso,
+                                       self.iso_contents])
 
     def generate_install_media(self, force_download):
         self.get_original_iso(self.isourl, force_download)
@@ -153,7 +155,8 @@ class Ubuntu610and704Guest(Guest.CDGuest):
                                        "isolinux/boot.cat", "-no-emul-boot",
                                        "-boot-load-size", "4",
                                        "-boot-info-table", "-v", "-v",
-                                       "-o", output, inputdir])
+                                       "-o", self.output_iso,
+                                       self.iso_contents])
 
     def generate_install_media(self, force_download):
         self.get_original_iso(self.isourl, force_download)
