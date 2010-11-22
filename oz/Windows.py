@@ -20,7 +20,7 @@ import subprocess
 import re
 import os
 import ozutil
-import xml.dom.minidom
+import libxml2
 
 class Windows2000andXPand2003(Guest.CDGuest):
     def __init__(self, idl, config):
@@ -132,19 +132,27 @@ class Windows2008(Guest.CDGuest):
         self.geteltorito(self.orig_iso, self.iso_contents + "/cdboot/boot.bin")
 
         if self.arch == "i386":
-            winarch = self.arch
+            winarch = "x86"
         elif self.arch == "x86_64":
             winarch = "amd64"
         else:
             raise Exception, "Unexpected architecture " + self.arch
 
-        source = xml.dom.minidom.parse(self.unattendfile)
-        ProductKey = source.documentElement.getElementsByTagName("Key")[0]
-        ProductKey.childNodes[0].data = self.key
+        doc = libxml2.parseFile(self.unattendfile)
+        xp = doc.xpathNewContext()
+        xp.xpathRegisterNs("ms", "urn:schemas-microsoft-com:unattend")
 
-        f = open(self.iso_contents + "/autounattend.xml", "w")
-        source.writexml(f)
-        f.close()
+        for component in xp.xpathEval('/ms:unattend/ms:settings/ms:component'):
+            component.setProp('processorArchitecture', winarch)
+
+        keys = xp.xpathEval('/ms:unattend/ms:settings/ms:component/ms:UserData/ms:ProductKey/ms:Key')
+
+        if len(keys) != 1:
+            raise Exception, "Failed to find Key element"
+
+        keys[0].setContent(self.key)
+
+        doc.saveFile(self.iso_contents + "/autounattend.xml")
 
     def generate_install_media(self, force_download):
         self.get_original_iso(self.url, force_download)
