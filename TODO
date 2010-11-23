@@ -9,7 +9,7 @@
      - Dragonfly BSD
      - Windows Vista, 2008, 7, 98, 95, ME
      - RHL 5.2, 6.0, 6.1, 6.2 (only nfs installs work)
-2.  Add partition/disk size support to the IDL.
+2.  Add partition/disk size support to the TDL.
 3.  Add improved error logging to guest installation.  That is, if the guest
 installation fails, we want to get detailed error information out of the
 installer to find out why.  Fedora/RHEL support doing remote syslog via
@@ -30,11 +30,11 @@ work.  Or we could possibly use libguestfs; it is unclear.
 8.  Before attempting an install, check the data_dir and output_dir to make
 sure that they will approximately have enough space for the install media
 and the output disk image, respectively.
-9.  Include the example IDLs in the RPM spec file.
+9.  Include the example TDLs in the RPM spec file.
 10. Manpages for oz-install, oz-generate-cdl, oz-customize.
 11. More flexible ISO installs - a local file should work just fine when we
 are doing ISO installs (but not URL installs).
-12. Relax-NG schema for IDL/CDL.
+12. Relax-NG schema for TDL/CDL.
 13. Documentation on how to use the classes, and what new classes need to
 provide.
 14. Add the ability to do (optional) checksumming on the downloaded install

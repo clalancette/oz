@@ -51,15 +51,15 @@ class OpenSUSEGuest(Guest.CDGuest):
         self.generate_new_iso()
         self.cleanup_iso()
 
-def get_class(idl, config):
-    update = idl.update()
-    arch = idl.arch()
+def get_class(tdl, config):
+    update = tdl.update()
+    arch = tdl.arch()
     autoyast = ozutil.generate_full_auto_path("opensuse-" + update + "-jeos.xml")
 
-    if idl.installtype() != 'iso':
+    if tdl.installtype() != 'iso':
         raise Exception, "OpenSUSE installs must be done via ISO"
 
-    url = ozutil.check_url(idl.iso())
+    url = ozutil.check_url(tdl.iso())
 
     if update == "11.1" or update == "11.2" or update == "11.3":
         return OpenSUSEGuest(update, arch, url, autoyast, config)

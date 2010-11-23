@@ -23,18 +23,18 @@ import os
 import RedHat
 
 class FedoraGuest(Guest.CDGuest):
-    def __init__(self, idl, config, nicmodel, haverepo, diskbus, brokenisomethod):
-        update = idl.update()
-        arch = idl.arch()
+    def __init__(self, tdl, config, nicmodel, haverepo, diskbus, brokenisomethod):
+        update = tdl.update()
+        arch = tdl.arch()
         self.ks_file = ozutil.generate_full_auto_path("fedora-" + update + "-jeos.ks")
         self.haverepo = haverepo
         self.brokenisomethod = brokenisomethod
-        self.installtype = idl.installtype()
+        self.installtype = tdl.installtype()
 
         if self.installtype == 'url':
-            self.url = idl.url()
+            self.url = tdl.url()
         elif self.installtype == 'iso':
-            self.url = idl.iso()
+            self.url = tdl.iso()
         else:
             raise Exception, "Fedora installs must be done via url or iso"
 
@@ -45,8 +45,8 @@ class FedoraGuest(Guest.CDGuest):
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)
 
-        self.output_services = idl.services()
-        self.packages = idl.packages()
+        self.output_services = tdl.services()
+        self.packages = tdl.packages()
 
         Guest.CDGuest.__init__(self, "Fedora", update, arch, nicmodel, None,
                                None, diskbus, config)
@@ -330,10 +330,10 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
         return output
 
-def get_class(idl, config):
-    update = idl.update()
+def get_class(tdl, config):
+    update = tdl.update()
     if update == "10" or update == "11" or update == "12" or update == "13" or update == "14":
-        return FedoraGuest(idl, config, "virtio", True, "virtio", True)
+        return FedoraGuest(tdl, config, "virtio", True, "virtio", True)
     if update == "7" or update == "8" or update == "9":
-        return FedoraGuest(idl, config, "rtl8139", False, None, False)
+        return FedoraGuest(tdl, config, "rtl8139", False, None, False)
     raise Exception, "Unsupported Fedora update " + update

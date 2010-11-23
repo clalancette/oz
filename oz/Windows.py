@@ -23,19 +23,19 @@ import ozutil
 import libxml2
 
 class Windows2000andXPand2003(Guest.CDGuest):
-    def __init__(self, idl, config):
-        update = idl.update()
-        arch = idl.arch()
+    def __init__(self, tdl, config):
+        update = tdl.update()
+        arch = tdl.arch()
 
         if update == "2000" and arch != "i386":
             raise Exception, "Windows 2000 only supports i386 architecture"
-        self.key = idl.key()
+        self.key = tdl.key()
         if self.key is None:
             raise Exception, "A key is required when installing Windows 2000, XP, or 2003"
         self.siffile = ozutil.generate_full_auto_path("windows-" + update + "-jeos.sif")
 
-        self.url = ozutil.check_url(idl.iso())
-        if idl.installtype() != 'iso':
+        self.url = ozutil.check_url(tdl.iso())
+        if tdl.installtype() != 'iso':
             raise Exception, "Windows installs must be done via iso"
 
         Guest.CDGuest.__init__(self, "Windows", update, arch, None,
@@ -99,17 +99,17 @@ class Windows2000andXPand2003(Guest.CDGuest):
         return self.generate_define_xml("hd", want_install_disk=False)
 
 class Windows2008(Guest.CDGuest):
-    def __init__(self, idl, config):
-        update = idl.update()
-        arch = idl.arch()
+    def __init__(self, tdl, config):
+        update = tdl.update()
+        arch = tdl.arch()
         self.unattendfile = ozutil.generate_full_auto_path("windows-" + update + "-jeos.xml")
-        self.key = idl.key()
+        self.key = tdl.key()
         if self.key is None:
             raise Exception, "A key is required when installing Windows 2000, XP, or 2003"
 
-        self.url = ozutil.check_url(idl.iso())
+        self.url = ozutil.check_url(tdl.iso())
 
-        if idl.installtype() != 'iso':
+        if tdl.installtype() != 'iso':
             raise Exception, "Windows installs must be done via iso"
 
         Guest.CDGuest.__init__(self, "Windows", update, arch, None,
@@ -171,10 +171,10 @@ class Windows2008(Guest.CDGuest):
         self.wait_for_install_finish(3600)
         return self.generate_define_xml("hd", want_install_disk=False)
 
-def get_class(idl, config):
-    update = idl.update()
+def get_class(tdl, config):
+    update = tdl.update()
     if update == "2000" or update == "XP" or update == "2003":
-        return Windows2000andXPand2003(idl, config)
+        return Windows2000andXPand2003(tdl, config)
     if update == "2008":
-        return Windows2008(idl, config)
+        return Windows2008(tdl, config)
     raise Exception, "Unsupported Windows update " + update

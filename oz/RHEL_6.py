@@ -23,17 +23,17 @@ import os
 import RedHat
 
 class RHEL6Guest(Guest.CDGuest):
-    def __init__(self, idl, config):
-        update = idl.update()
-        arch = idl.arch()
-        key = idl.key()
+    def __init__(self, tdl, config):
+        update = tdl.update()
+        arch = tdl.arch()
+        key = tdl.key()
         self.ks_file = ozutil.generate_full_auto_path("rhel-6-jeos.ks")
-        self.installtype = idl.installtype()
+        self.installtype = tdl.installtype()
 
         if self.installtype == 'url':
-            self.url = idl.url()
+            self.url = tdl.url()
         elif self.installtype == 'iso':
-            self.url = idl.iso()
+            self.url = tdl.iso()
         else:
             raise Exception, "RHEL-6 installs must be done via url or iso"
 
@@ -44,7 +44,7 @@ class RHEL6Guest(Guest.CDGuest):
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)
 
-        self.output_services = idl.services()
+        self.output_services = tdl.services()
 
         Guest.CDGuest.__init__(self, "RHEL-6", update, arch, "virtio", None,
                                None, "virtio", config)
@@ -290,8 +290,8 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
         return output
 
-def get_class(idl, config):
-    update = idl.update()
+def get_class(tdl, config):
+    update = tdl.update()
     if update == "0":
-        return RHEL6Guest(idl, config)
+        return RHEL6Guest(tdl, config)
     raise Exception, "Unsupported RHEL-6 update " + update

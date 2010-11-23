@@ -190,14 +190,14 @@ class Ubuntu610and704Guest(Guest.CDGuest):
         f.writelines(lines)
         f.close()
 
-def get_class(idl, config):
-    update = idl.update()
-    arch = idl.arch()
+def get_class(tdl, config):
+    update = tdl.update()
+    arch = tdl.arch()
     preseed = ozutil.generate_full_auto_path("ubuntu-" + update + "-jeos.preseed")
-    if idl.installtype() != 'iso':
+    if tdl.installtype() != 'iso':
         raise Exception, "Ubuntu installs must be done via iso"
 
-    isourl = ozutil.check_url(idl.iso())
+    isourl = ozutil.check_url(tdl.iso())
 
     # FIXME: there are certain types of Ubuntu ISOs that do, and do not work.
     # For instance, for *some* Ubuntu releases, you must use the -alternate

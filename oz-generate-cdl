@@ -22,7 +22,7 @@ import os
 import logging
 import stat
 
-import oz.IDL
+import oz.TDL
 import oz.Fedora
 import oz.FedoraCore
 import oz.RHEL_2_1
@@ -37,7 +37,7 @@ import oz.OpenSUSE
 import ConfigParser
 
 def usage():
-    print "Usage: oz-generate-cdl [OPTIONS] <idl> <libvirt_xml_file>"
+    print "Usage: oz-generate-cdl [OPTIONS] <tdl> <libvirt_xml_file>"
     print " OPTIONS:"
     print "  -d <level>\tTurn up logging level.  The levels are:"
     print "\t\t\t0 - errors only (this is the default)"
@@ -100,39 +100,39 @@ if os.geteuid() != 0:
 if len(args) != 2:
     usage()
 
-idlfile = args[0]
+tdlfile = args[0]
 libvirt_xml_file = args[1]
 
 logging.basicConfig(level=loglevel, format=logformat)
 
-idl = oz.IDL.IDL(idlfile)
+tdl = oz.TDL.TDL(tdlfile)
 
-distro = idl.distro()
+distro = tdl.distro()
 
 config = ConfigParser.SafeConfigParser()
 if os.access(config_file, os.F_OK):
     config.read(config_file)
 
 if distro == "Fedora":
-    guest = oz.Fedora.get_class(idl, config)
+    guest = oz.Fedora.get_class(tdl, config)
 elif distro == "FedoraCore":
-    guest = oz.FedoraCore.get_class(idl, config)
+    guest = oz.FedoraCore.get_class(tdl, config)
 elif distro == "RHEL-2.1":
-    guest = oz.RHEL_2_1.get_class(idl, config)
+    guest = oz.RHEL_2_1.get_class(tdl, config)
 elif distro == "RHEL-3":
-    guest = oz.RHEL_3.get_class(idl, config)
+    guest = oz.RHEL_3.get_class(tdl, config)
 elif distro == "RHEL-4":
-    guest = oz.RHEL_4.get_class(idl, config)
+    guest = oz.RHEL_4.get_class(tdl, config)
 elif distro == "RHEL-5":
-    guest = oz.RHEL_5.get_class(idl, config)
+    guest = oz.RHEL_5.get_class(tdl, config)
 elif distro == "RHEL-6":
-    guest = oz.RHEL_6.get_class(idl, config)
+    guest = oz.RHEL_6.get_class(tdl, config)
 elif distro == "Ubuntu":
-    guest = oz.Ubuntu.get_class(idl, config)
+    guest = oz.Ubuntu.get_class(tdl, config)
 elif distro == "Windows":
-    guest = oz.Windows.get_class(idl, config)
+    guest = oz.Windows.get_class(tdl, config)
 elif distro == "RHL":
-    guest = oz.RHL.get_class(idl, config)
+    guest = oz.RHL.get_class(tdl, config)
 else:
     usage()
 

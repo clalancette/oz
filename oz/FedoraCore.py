@@ -23,16 +23,16 @@ import os
 import RedHat
 
 class FedoraCoreGuest(Guest.CDGuest):
-    def __init__(self, idl, config):
-        update = idl.update()
-        arch = idl.arch()
+    def __init__(self, tdl, config):
+        update = tdl.update()
+        arch = tdl.arch()
         self.ks_file = ozutil.generate_full_auto_path("fedoracore-" + update + "-jeos.ks")
-        self.installtype = idl.installtype()
+        self.installtype = tdl.installtype()
 
         if self.installtype == 'url':
-            self.url = idl.url()
+            self.url = tdl.url()
         elif self.installtype == 'iso':
-            self.url = idl.iso()
+            self.url = tdl.iso()
         else:
             raise Exception, "FedoraCore installs must be done via url or iso"
 
@@ -43,7 +43,7 @@ class FedoraCoreGuest(Guest.CDGuest):
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)
 
-        self.output_services = idl.services()
+        self.output_services = tdl.services()
 
         Guest.CDGuest.__init__(self, "FedoraCore", update, arch, "rtl8139",
                                None, None, None, config)
@@ -293,10 +293,10 @@ class FedoraCore4Guest(FedoraCoreGuest):
     def generate_diskimage(self):
         self.generate_blank_diskimage()
 
-def get_class(idl, config):
-    update = idl.update()
+def get_class(tdl, config):
+    update = tdl.update()
     if update == "6" or update == "5" or update == "3" or update == "2" or update == "1":
-        return FedoraCoreGuest(idl, config)
+        return FedoraCoreGuest(tdl, config)
     if update == "4":
-        return FedoraCore4Guest(idl, config)
+        return FedoraCore4Guest(tdl, config)
     raise Exception, "Unsupported FedoraCore update " + update

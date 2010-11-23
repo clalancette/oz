@@ -22,42 +22,42 @@ def get_value(doc, xmlstring):
         return None
     return res[0].getContent()
 
-class IDL(object):
+class TDL(object):
     def __init__(self, filename):
         self.doc = None
         self.doc = libxml2.parseFile(filename)
 
         self._distro = get_value(self.doc, '/image/os/name')
         if self._distro is None:
-            raise Exception, "Failed to find OS name in IDL"
+            raise Exception, "Failed to find OS name in TDL"
 
         self._update = get_value(self.doc, '/image/os/version')
         if self._update is None:
-            raise Exception, "Failed to find OS version in IDL"
+            raise Exception, "Failed to find OS version in TDL"
 
         self._arch = get_value(self.doc, '/image/os/arch')
         if self._arch is None:
-            raise Exception, "Failed to find OS architecture in IDL"
+            raise Exception, "Failed to find OS architecture in TDL"
 
         self._key = get_value(self.doc, '/image/os/key')
         # key is not required, so it is not fatal if it is None
 
         install = self.doc.xpathEval('/image/os/install')
         if len(install) != 1:
-            raise Exception, "Failed to find OS install in IDL"
+            raise Exception, "Failed to find OS install in TDL"
         if not install[0].hasProp('type'):
-            raise Exception, "Failed to find OS install type in IDL"
+            raise Exception, "Failed to find OS install type in TDL"
         self._installtype = install[0].prop('type')
         if self._installtype == "url":
             self._url = get_value(self.doc, '/image/os/install/url')
             if self._url is None:
-                raise Exception, "Failed to find OS install URL in IDL"
+                raise Exception, "Failed to find OS install URL in TDL"
         elif self._installtype == "iso":
             self._iso = get_value(self.doc, '/image/os/install/iso')
             if self._iso is None:
-                raise Exception, "Failed to find OS install ISO in IDL"
+                raise Exception, "Failed to find OS install ISO in TDL"
         else:
-            raise Exception, "Unknown install type " + self._installtype + " in IDL"
+            raise Exception, "Unknown install type " + self._installtype + " in TDL"
 
         services = self.doc.xpathEval('/image/services')
         # there may be 0 or 1 <services> elements

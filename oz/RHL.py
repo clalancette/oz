@@ -23,16 +23,16 @@ import ozutil
 import RedHat
 
 class RHL9Guest(Guest.CDGuest):
-    def __init__(self, idl, config):
-        update = idl.update()
-        arch = idl.arch()
+    def __init__(self, tdl, config):
+        update = tdl.update()
+        arch = tdl.arch()
 
         self.ks_file = ozutil.generate_full_auto_path("rhl-" + update + "-jeos.ks")
 
-        if idl.installtype() != 'url':
+        if tdl.installtype() != 'url':
             raise Exception, "RHL installs must be done via url"
 
-        self.url = ozutil.check_url(idl.url())
+        self.url = ozutil.check_url(tdl.url())
 
         ozutil.deny_localhost(self.url)
 
@@ -88,16 +88,16 @@ class RHL9Guest(Guest.CDGuest):
         self.cleanup_iso()
 
 class RHL70and71and72and73and8Guest(Guest.FDGuest):
-    def __init__(self, idl, config, nicmodel):
-        update = idl.update()
-        arch = idl.arch()
+    def __init__(self, tdl, config, nicmodel):
+        update = tdl.update()
+        arch = tdl.arch()
 
         self.ks_file = ozutil.generate_full_auto_path("rhl-" + update + "-jeos.ks")
 
-        if idl.installtype() != 'url':
+        if tdl.installtype() != 'url':
             raise Exception, "RHL installs must be done via url"
 
-        self.url = ozutil.check_url(idl.url())
+        self.url = ozutil.check_url(tdl.url())
 
         ozutil.deny_localhost(self.url)
 
@@ -168,12 +168,12 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
         self.modify_floppy()
         self.cleanup_floppy()
 
-def get_class(idl, config):
-    update = idl.update()
+def get_class(tdl, config):
+    update = tdl.update()
     if update == "9":
-        return RHL9Guest(idl, config)
+        return RHL9Guest(tdl, config)
     if update == "7.2" or update == "7.3" or update == "8":
-        return RHL70and71and72and73and8Guest(idl, config, "rtl8139")
+        return RHL70and71and72and73and8Guest(tdl, config, "rtl8139")
     # FIXME: RHL 6.2 does not work via HTTP because of a bug in the installer;
     # when parsing a URL passed in via "method", it fails to put a / at the
     # beginning of the URL.  What this means is that when the installer goes
@@ -190,5 +190,5 @@ def get_class(idl, config):
     # VFS: Cannot open root device 08:21
     # Kernel panic: VFS: Unable to mount root fs on 08:21
     if update == "7.0" or update == "7.1":
-        return RHL70and71and72and73and8Guest(idl, config, "ne2k_pci")
+        return RHL70and71and72and73and8Guest(tdl, config, "ne2k_pci")
     raise Exception, "Unsupported RHL update " + update
