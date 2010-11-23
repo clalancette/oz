@@ -26,8 +26,9 @@ class RHEL3Guest(Guest.CDGuest):
         update = idl.update()
         arch = idl.arch()
         self.ks_file = ozutil.generate_full_auto_path("rhel-3-jeos.ks")
+        self.installtype = idl.installtype()
 
-        if idl.installtype() != 'url':
+        if self.installtype != 'url':
             raise Exception, "RHEL-3 installs must be done via url"
 
         self.url = ozutil.check_url(idl.url())
