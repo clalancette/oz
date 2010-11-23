@@ -9,13 +9,13 @@
     </install>
   </os>
   <description>Fedora 13</description>
-  <packages action='add'>
-    <package name='bash' action='remove'/>
+  <services>
+    <requires>foo</requires>
+    <provides>bar</provides>
+  </services>
+  <packages>
+    <package name='bash'/>
     <package name='kernel'/>
     <package name='grub'/>
-  </packages>
-  <packages action='remove'>
-    <package name='openoffice.org'/>
-    <package name='gnumeric' action='add'/>
   </packages>
 </image>
