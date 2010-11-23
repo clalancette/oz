@@ -48,6 +48,7 @@ def usage():
     print "  -f\t\tForce download of the installation media even if it is already cached"
     print "  -g\t\tGenerate the CDL after installation"
     print "  -h\t\tPrint this help message"
+    print "  -u\t\tAfter installation, do the customization"
     print " Currently supported architectures are:"
     print "   i386, x86_64"
     print " Currently supported distros are:"
@@ -65,7 +66,7 @@ def usage():
     sys.exit(1)
 
 try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], 'c:d:fgh', ['config', 'debug', 'force-download', 'generate-cdl', 'help'])
+    opts, args = getopt.gnu_getopt(sys.argv[1:], 'c:d:fghu', ['config', 'debug', 'force-download', 'generate-cdl', 'help', 'customize'])
 except getopt.GetoptError, err:
     print str(err)
     usage()
@@ -75,6 +76,7 @@ logformat = "%(message)s"
 force_download = False
 config_file = "/etc/oz/oz.cfg"
 generate_cdl = False
+customize = False
 for o, a in opts:
     if o in ("-h", "--help"):
         usage()
@@ -98,6 +100,8 @@ for o, a in opts:
         generate_cdl = True
     elif o in ("-c", "--config"):
         config_file = a
+    elif o in ("-u", "--customize"):
+        customize = True
     else:
         assert False, "unhandled option"
 
@@ -149,6 +153,10 @@ try:
     guest.generate_diskimage()
     try:
         libvirt_xml = guest.install()
+
+        if customize:
+            guest.customize(libvirt_xml)
+
         if generate_cdl:
             print guest.generate_cdl(libvirt_xml)
         else:
