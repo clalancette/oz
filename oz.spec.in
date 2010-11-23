@@ -61,7 +61,7 @@ mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/oz
 %dir %attr(0755, root, root) %{_localstatedir}/lib/oz/floppies/
 %dir %attr(0755, root, root) %{_localstatedir}/lib/oz/cdltmp/
 %{python_sitelib}/oz/*
-%{_bindir}/ozinstall
+%{_bindir}/oz-install
 %{_bindir}/oz-generate-cdl
 %{_bindir}/oz-customize
 %{python_sitelib}/oz-*.egg-info

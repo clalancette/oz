@@ -31,7 +31,7 @@ work.  Or we could possibly use libguestfs; it is unclear.
 sure that they will approximately have enough space for the install media
 and the output disk image, respectively.
 9.  Include the example IDLs in the RPM spec file.
-10. Manpages for ozinstall, oz-generate-cdl.
+10. Manpages for oz-install, oz-generate-cdl, oz-customize.
 11. More flexible ISO installs - a local file should work just fine when we
 are doing ISO installs (but not URL installs).
 12. Relax-NG schema for IDL/CDL.

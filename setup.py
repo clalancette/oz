@@ -24,6 +24,6 @@ setup(name='oz',
       package_dir={'oz': 'oz'},
       package_data={'oz': ['auto/*', 'guesttools/*']},
       packages=['oz'],
-      scripts=['ozinstall', 'oz-generate-cdl', 'oz-customize'],
+      scripts=['oz-install', 'oz-generate-cdl', 'oz-customize'],
       cmdclass={'sdist': sdist},
       )
