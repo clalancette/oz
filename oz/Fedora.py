@@ -20,6 +20,7 @@ import subprocess
 import re
 import ozutil
 import os
+import RedHat
 
 class FedoraGuest(Guest.CDGuest):
     def __init__(self, idl, config, nicmodel, haverepo, diskbus, brokenisomethod):
@@ -87,13 +88,7 @@ class FedoraGuest(Guest.CDGuest):
 
     def generate_new_iso(self):
         self.log.debug("Generating new ISO")
-        Guest.subprocess_check_output(["mkisofs", "-r", "-T", "-J", "-V",
-                                       "Custom", "-b", "isolinux/isolinux.bin",
-                                       "-c", "isolinux/boot.cat",
-                                       "-no-emul-boot", "-boot-load-size", "4",
-                                       "-boot-info-table", "-v", "-v",
-                                       "-o", self.output_iso,
-                                       self.iso_contents])
+        RedHat.generate_iso(self.output_iso, self.iso_contents)
 
     def generate_install_media(self, force_download):
         self.log.info("Generating install media")
