@@ -20,6 +20,7 @@ import sys
 import getopt
 import os
 import logging
+import stat
 
 import oz.IDL
 import oz.Fedora
