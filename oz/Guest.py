@@ -476,41 +476,43 @@ class Guest(object):
 
 
         self.log.info("Setting up guestfs handle for %s" % (self.name))
-        self.g = guestfs.GuestFS()
+        g = guestfs.GuestFS()
 
         self.log.debug("Adding disk image %s" % (input_disk))
-        self.g.add_drive(input_disk)
+        g.add_drive(input_disk)
 
         self.log.debug("Launching guestfs")
-        self.g.launch()
+        g.launch()
 
         self.log.debug("Inspecting guest OS")
-        os = self.g.inspect_os()
+        os = g.inspect_os()
 
         self.log.debug("Getting mountpoints")
-        mountpoints = self.g.inspect_get_mountpoints(os[0])
+        mountpoints = g.inspect_get_mountpoints(os[0])
 
         self.log.debug("Mounting /")
         for point in mountpoints:
             if point[0] == '/':
-                self.g.mount(point[1], '/')
+                g.mount(point[1], '/')
                 break
 
         self.log.debug("Mount other filesystems")
         for point in mountpoints:
             if point[0] != '/':
-                self.g.mount(point[1], point[0])
+                g.mount(point[1], point[0])
 
-    def guestfs_handle_cleanup(self):
+        return g
+
+    def guestfs_handle_cleanup(self, g_handle):
         self.log.info("Cleaning up guestfs handle for %s" % (self.name))
         self.log.debug("Syncing")
-        self.g.sync()
+        g_handle.sync()
 
         self.log.debug("Unmounting all")
-        self.g.umount_all()
+        g_handle.umount_all()
 
         self.log.debug("Killing guestfs subprocess")
-        self.g.kill_subprocess()
+        g_handle.kill_subprocess()
 
     def wait_for_guest_boot(self):
         self.log.info("Listening on %d for %s to boot" % (self.listen_port, self.name))

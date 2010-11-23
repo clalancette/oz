@@ -91,33 +91,10 @@ class RHEL6Guest(Guest.CDGuest):
         self.generate_new_iso()
         self.cleanup_iso()
 
-    def get_default_runlevel(self):
-        runlevel = "3"
-        if self.g.exists('/etc/inittab'):
-            lines = self.g.cat('/etc/inittab').split("\n")
-            for line in lines:
-                if re.match('id:', line):
-                    # FIXME: this parsing is a bit iffy
-                    runlevel = line.split(':')[1]
-                    break
-
-        return runlevel
-
-    def get_service_runlevel_link(self, runlevel, service):
-        lines = self.g.cat('/etc/init.d/' + service).split("\n")
-        startlevel = "99"
-        for line in lines:
-            if re.match('# chkconfig:', line):
-                # FIXME: this parsing could get ugly fast
-                startlevel = line.split(':')[1].split()[1]
-                break
-
-        return "/etc/rc.d/rc" + runlevel + ".d/S" + startlevel + service
-
-    def collect_setup(self, diskimage):
+    def collect_setup(self, libvirt_xml):
         self.log.info("CDL Collection Setup")
 
-        self.guestfs_handle_setup(diskimage)
+        g_handle = self.guestfs_handle_setup(libvirt_xml)
 
         # we have to do 3 things to make sure we can ssh into Fedora 13:
         # 1)  Upload our ssh key
@@ -125,15 +102,15 @@ class RHEL6Guest(Guest.CDGuest):
         # 3)  Make sure that port 22 is open in the firewall
         # 4)  Make the guest announce itself to the host
 
-        runlevel = self.get_default_runlevel()
+        runlevel = RedHat.get_default_runlevel(g_handle)
 
         # part 1; upload the keys
         self.log.debug("Step 1: Uploading ssh keys")
-        if not self.g.exists('/root/.ssh'):
-            self.g.mkdir('/root/.ssh')
+        if not g_handle.exists('/root/.ssh'):
+            g_handle.mkdir('/root/.ssh')
 
-        if self.g.exists('/root/.ssh/authorized_keys'):
-            self.g.mv('/root/.ssh/authorized_keys',
+        if g_handle.exists('/root/.ssh/authorized_keys'):
+            g_handle.mv('/root/.ssh/authorized_keys',
                       '/root/.ssh/authorized_keys.cdl')
 
         if not os.access(self.cdl_tmp, os.F_OK):
@@ -148,17 +125,18 @@ class RHEL6Guest(Guest.CDGuest):
         subprocess.call(['ssh-keygen', '-q', '-t', 'rsa', '-b', '2048',
                          '-N', '', '-f', privname])
 
-        self.g.upload(pubname, '/root/.ssh/authorized_keys')
+        g_handle.upload(pubname, '/root/.ssh/authorized_keys')
 
         # part 2; check and setup sshd
         self.log.debug("Step 2: setup sshd")
-        if not self.g.exists('/etc/init.d/sshd') or not self.g.exists('/usr/sbin/sshd'):
+        if not g_handle.exists('/etc/init.d/sshd') or not g_handle.exists('/usr/sbin/sshd'):
             raise Exception, "ssh not installed on the image, cannot continue"
 
-        startuplink = self.get_service_runlevel_link(runlevel, 'sshd')
-        if self.g.exists(startuplink):
-            self.g.mv(startuplink, startuplink + ".cdl")
-        self.g.ln_sf('/etc/init.d/sshd', startuplink)
+        startuplink = RedHat.get_service_runlevel_link(g_handle, runlevel,
+                                                       'sshd')
+        if g_handle.exists(startuplink):
+            g_handle.mv(startuplink, startuplink + ".cdl")
+        g_handle.ln_sf('/etc/init.d/sshd', startuplink)
 
         sshd_config = \
 """SyslogFacility AUTHPRIV
@@ -180,84 +158,86 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         f.write(sshd_config)
         f.close()
 
-        if self.g.exists('/etc/ssh/sshd_config'):
-            self.g.mv('/etc/ssh/sshd_config', '/etc/ssh/sshd_config.cdl')
-        self.g.upload(sshd_config_file, '/etc/ssh/sshd_config')
+        if g_handle.exists('/etc/ssh/sshd_config'):
+            g_handle.mv('/etc/ssh/sshd_config', '/etc/ssh/sshd_config.cdl')
+        g_handle.upload(sshd_config_file, '/etc/ssh/sshd_config')
         os.unlink(sshd_config_file)
 
         # part 3; open up iptables
         self.log.debug("Step 3: Open up the firewall")
-        if self.g.exists('/etc/sysconfig/iptables'):
-            self.g.mv('/etc/sysconfig/iptables', '/etc/sysconfig/iptables.cdl')
+        if g_handle.exists('/etc/sysconfig/iptables'):
+            g_handle.mv('/etc/sysconfig/iptables', '/etc/sysconfig/iptables.cdl')
         # implicit else; if there is no iptables file, the firewall is open
 
         # part 4; make sure the guest announces itself
         self.log.debug("Step 4: Guest announcement")
-        if not self.g.exists('/etc/init.d/crond') or not self.g.exists('/usr/sbin/crond'):
+        if not g_handle.exists('/etc/init.d/crond') or not g_handle.exists('/usr/sbin/crond'):
             raise Exception, "cron not installed on the image, cannot continue"
 
         cdlpath = ozutil.generate_full_guesttools_path('cdl-nc')
-        self.g.upload(cdlpath, '/root/cdl-nc')
-        self.g.chmod(0755, '/root/cdl-nc')
+        g_handle.upload(cdlpath, '/root/cdl-nc')
+        g_handle.chmod(0755, '/root/cdl-nc')
 
         announcefile = self.cdl_tmp + "/announce"
         f = open(announcefile, 'w')
         f.write('*/1 * * * * root /bin/bash -c "/root/cdl-nc ' + self.host_bridge_ip + ' ' + str(self.listen_port) + '"\n')
         f.close()
 
-        self.g.upload(announcefile, '/etc/cron.d/announce')
+        g_handle.upload(announcefile, '/etc/cron.d/announce')
 
-        startuplink = self.get_service_runlevel_link(runlevel, 'crond')
-        if self.g.exists(startuplink):
-            self.g.mv(startuplink, startuplink + ".cdl")
-        self.g.ln_sf('/etc/init.d/crond', startuplink)
+        startuplink = RedHat.get_service_runlevel_link(g_handle, runlevel,
+                                                       'crond')
+        if g_handle.exists(startuplink):
+            g_handle.mv(startuplink, startuplink + ".cdl")
+        g_handle.ln_sf('/etc/init.d/crond', startuplink)
 
         os.unlink(announcefile)
-        self.guestfs_handle_cleanup()
+        self.guestfs_handle_cleanup(g_handle)
 
-    def collect_teardown(self, diskimage):
+    def collect_teardown(self, libvirt_xml):
         self.log.info("CDL Collection Teardown")
 
-        self.guestfs_handle_setup(diskimage)
+        g_handle = self.guestfs_handle_setup(libvirt_xml)
 
         # reset the authorized keys
-        if self.g.exists('/root/.ssh/authorized_keys'):
-            self.g.rm('/root/.ssh/authorized_keys')
-        if self.g.exists('/root/.ssh/authorized_keys.cdl'):
-            self.g.mv('/root/.ssh/authorized_keys.cdl',
+        if g_handle.exists('/root/.ssh/authorized_keys'):
+            g_handle.rm('/root/.ssh/authorized_keys')
+        if g_handle.exists('/root/.ssh/authorized_keys.cdl'):
+            g_handle.mv('/root/.ssh/authorized_keys.cdl',
                       '/root/.ssh/authorized_keys')
 
         # reset iptables
-        if self.g.exists('/etc/sysconfig/iptables'):
-            self.g.rm('/etc/sysconfig/iptables')
-        if self.g.exists('/etc/sysconfig/iptables.cdl'):
-            self.g.mv('/etc/sysconfig/iptables')
+        if g_handle.exists('/etc/sysconfig/iptables'):
+            g_handle.rm('/etc/sysconfig/iptables')
+        if g_handle.exists('/etc/sysconfig/iptables.cdl'):
+            g_handle.mv('/etc/sysconfig/iptables')
 
         # remove announce cronjob
-        if self.g.exists('/etc/cron.d/announce'):
-            self.g.rm('/etc/cron.d/announce')
+        if g_handle.exists('/etc/cron.d/announce'):
+            g_handle.rm('/etc/cron.d/announce')
 
         # remove cdl-nc binary
-        if self.g.exists('/root/cdl-nc'):
-            self.g.rm('/root/cdl-nc')
+        if g_handle.exists('/root/cdl-nc'):
+            g_handle.rm('/root/cdl-nc')
 
         # remove custom sshd_config
-        if self.g.exists('/etc/ssh/sshd_config'):
-            self.g.rm('/etc/ssh/sshd_config')
-        if self.g.exists('/etc/ssh/sshd_config.cdl'):
-            self.g.mv('/etc/ssh/sshd_config.cdl', '/etc/ssh/sshd_config')
+        if g_handle.exists('/etc/ssh/sshd_config'):
+            g_handle.rm('/etc/ssh/sshd_config')
+        if g_handle.exists('/etc/ssh/sshd_config.cdl'):
+            g_handle.mv('/etc/ssh/sshd_config.cdl', '/etc/ssh/sshd_config')
 
         # reset the service links
-        runlevel = self.get_default_runlevel()
+        runlevel = RedHat.get_default_runlevel(g_handle)
 
         for service in ["sshd", "crond"]:
-            startuplink = self.get_service_runlevel_link(runlevel, service)
-            if self.g.exists(startuplink):
-                self.g.rm(startuplink)
-            if self.g.exists(startuplink + ".cdl"):
-                self.g.mv(startuplink + ".cdl", startuplink)
+            startuplink = RedHat.get_service_runlevel_link(g_handle, runlevel,
+                                                           service)
+            if g_handle.exists(startuplink):
+                g_handle.rm(startuplink)
+            if g_handle.exists(startuplink + ".cdl"):
+                g_handle.mv(startuplink + ".cdl", startuplink)
 
-        self.guestfs_handle_cleanup()
+        self.guestfs_handle_cleanup(g_handle)
 
     def generate_cdl(self, libvirt_xml):
         self.log.info("Generating CDL")
@@ -271,12 +251,9 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
             guestaddr = self.wait_for_guest_boot()
 
-            data = subprocess.Popen(["ssh", "-i",
-                                     self.cdl_tmp + '/id_rsa-cdl-gen',
-                                     "-o", "StrictHostKeyChecking=no",
-                                     "-o", "ConnectTimeout=5", guestaddr,
-                                     'rpm -qa'], stdout=subprocess.PIPE).communicate()
-
+            data = RedHat.guest_execute_command(guestaddr,
+                                                self.cdl_tmp + '/id_rsa-cdl-gen',
+                                                'rpm -qa')
             # FIXME: what if the output is blank?
 
             output = self.output_cdl_xml(data[0].split("\n"), self.output_services)
