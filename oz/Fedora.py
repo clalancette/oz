@@ -45,6 +45,7 @@ class FedoraGuest(Guest.CDGuest):
         # in is the DVD, not the CD (since we can't change disks midway)
 
         self.output_services = idl.services()
+        self.packages = idl.packages()
 
         Guest.CDGuest.__init__(self, "Fedora", update, arch, nicmodel, None,
                                None, diskbus, config)
@@ -104,6 +105,12 @@ class FedoraGuest(Guest.CDGuest):
         self.modify_iso()
         self.generate_new_iso()
         self.cleanup_iso()
+
+    def guest_execute_command(self, guestaddr, command):
+        return subprocess.Popen(["ssh", "-i", self.cdl_tmp + '/id_rsa-cdl-gen',
+                                 "-o", "StrictHostKeyChecking=no",
+                                 "-o", "ConnectTimeout=5", guestaddr,
+                                 command], stdout=subprocess.PIPE).communicate()
 
     def get_default_runlevel(self):
         runlevel = "3"
@@ -285,16 +292,40 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
             guestaddr = self.wait_for_guest_boot()
 
-            data = subprocess.Popen(["ssh", "-i",
-                                     self.cdl_tmp + '/id_rsa-cdl-gen',
-                                     "-o", "StrictHostKeyChecking=no",
-                                     "-o", "ConnectTimeout=5", guestaddr,
-                                     'rpm -qa'], stdout=subprocess.PIPE).communicate()
+            data = self.guest_execute_command(guestaddr, 'rpm -qa')
 
             # FIXME: what if the output is blank?
 
             output = self.output_cdl_xml(data[0].split("\n"), self.output_services)
 
+            # FIXME: should we try to do a graceful shutdown here?  At the very
+            # least we should do a sync
+        finally:
+            if self.libvirt_dom is not None:
+                self.libvirt_dom.destroy()
+            self.collect_teardown(libvirt_xml)
+
+        return output
+
+    def customize(self, libvirt_xml):
+        self.log.info("Customizing image")
+        self.collect_setup(libvirt_xml)
+
+        try:
+            self.libvirt_dom = self.libvirt_conn.defineXML(libvirt_xml)
+            self.libvirt_dom.create()
+
+            guestaddr = self.wait_for_guest_boot()
+
+            for package in self.packages:
+                data = self.guest_execute_command(guestaddr, 'yum -y install %s' % (package))
+                # FIXME: what if the output is blank?
+
+            data = self.guest_execute_command(guestaddr, 'rpm -qa')
+
+            # FIXME: what if the output is blank?
+
+            output = self.output_cdl_xml(data[0].split("\n"), self.output_services)
             # FIXME: should we try to do a graceful shutdown here?  At the very
             # least we should do a sync
         finally:

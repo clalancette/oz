@@ -63,6 +63,7 @@ mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/oz
 %{python_sitelib}/oz/*
 %{_bindir}/ozinstall
 %{_bindir}/oz-generate-cdl
+%{_bindir}/oz-customize
 %{python_sitelib}/oz-*.egg-info
 
 

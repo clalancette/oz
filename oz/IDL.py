@@ -69,6 +69,10 @@ class IDL(object):
         else:
             raise Exception, "Invalid number of services, expected 0 or 1"
 
+        self._packages = []
+        for package in self.doc.xpathEval('/image/packages/package'):
+            self._packages.append(package.prop('name'))
+
     def __del__(self):
         if self.doc is not None:
             self.doc.freeDoc()
@@ -89,3 +93,5 @@ class IDL(object):
         return self._installtype
     def services(self):
         return self._services
+    def packages(self):
+        return self._packages
