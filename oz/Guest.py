@@ -695,7 +695,7 @@ class CDGuest(Guest):
         #
         # Virtual Disk - A series of sectors on the CD which INT 13 presents
         # to the system as a drive with 200 byte virtual sectors. There are 4
-        # virtual sectors found in each “sector” on a CD.
+        # virtual sectors found in each sector on a CD.
         #
         # (note that the bytes above are in hex).  So we read count*512
         eltoritodata = cdfile.read(count*512)
