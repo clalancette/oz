@@ -145,10 +145,10 @@ class Windows2008(Guest.CDGuest):
         for component in xp.xpathEval('/ms:unattend/ms:settings/ms:component'):
             component.setProp('processorArchitecture', winarch)
 
-        keys = xp.xpathEval('/ms:unattend/ms:settings/ms:component/ms:UserData/ms:ProductKey/ms:Key')
+        keys = xp.xpathEval('/ms:unattend/ms:settings/ms:component/ms:ProductKey')
 
-        if len(keys) != 1:
-            raise Exception, "Failed to find Key element"
+        if len(keys[0].content) == 0:
+	    keys[0].freeNode()
 
         keys[0].setContent(self.key)
 
@@ -168,7 +168,10 @@ class Windows2008(Guest.CDGuest):
         self.wait_for_install_finish(1000)
         self.generate_define_xml("hd")
         self.libvirt_dom.create()
-        self.wait_for_install_finish(3600)
+        self.wait_for_install_finish(1000)
+        self.generate_define_xml("hd")
+        self.libvirt_dom.create()
+        self.wait_for_install_finish(1000)
         return self.generate_define_xml("hd", want_install_disk=False)
 
 def get_class(tdl, config):
