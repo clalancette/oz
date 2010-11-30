@@ -165,13 +165,13 @@ class Windows2008(Guest.CDGuest):
         self.log.info("Running install for %s" % (self.name))
         self.generate_define_xml("cdrom")
         self.libvirt_dom.create()
-        self.wait_for_install_finish(1000)
+        self.wait_for_install_finish(6000)
         self.generate_define_xml("hd")
         self.libvirt_dom.create()
-        self.wait_for_install_finish(1000)
+        self.wait_for_install_finish(6000)
         self.generate_define_xml("hd")
         self.libvirt_dom.create()
-        self.wait_for_install_finish(1000)
+        self.wait_for_install_finish(6000)
         return self.generate_define_xml("hd", want_install_disk=False)
 
 def get_class(tdl, config):
