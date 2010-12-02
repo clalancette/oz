@@ -23,7 +23,7 @@ import time
 import xml.dom.minidom
 import pycurl
 import sys
-import urllib
+import urllib2
 import re
 import stat
 import urlparse
@@ -362,26 +362,19 @@ class Guest(object):
     def get_original_media(self, url, output, force_download):
         original_available = False
 
-        # note that all redirects should already have been resolved by
-        # this point; this is merely to check that the media that we are
-        # trying to fetch actually exists
-        conn = urllib.urlopen(url)
-        if conn.getcode() != 200:
-            raise Exception, "Could not access install url %s: %d" % (url, conn.getcode())
-
-        if not force_download and os.access(output, os.F_OK):
-            try:
-                for header in conn.headers.headers:
-                    if re.match("Content-Length:", header):
-                        if int(header.split()[1]) == os.stat(output)[stat.ST_SIZE]:
-                            original_available = True
-                        break
-            except:
-                # if any of the above failed, then the worst case is that we
-                # re-download something we didn't need to.  So just go on
-                pass
-
-        conn.close()
+        request = urllib2.Request(url)
+        try:
+            response = urllib2.urlopen(request)
+            url = response.geturl()
+            if not force_download and os.access(output, os.F_OK):
+                content_length = int(response.info()["Content-Length"])
+                if (content_length == os.stat(output)[stat.ST_SIZE]):
+                    original_available = True
+            response.close()
+        except urllib2.URLError, e:
+            raise e
+        except:
+            pass
 
         if original_available:
             self.log.info("Original install media available, using cached version")
