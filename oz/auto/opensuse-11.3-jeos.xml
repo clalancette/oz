@@ -146,7 +146,7 @@
   </user_defaults>
   <users config:type="list">
     <user>
-      <encrypted config:type="boolean">true</encrypted>
+      <encrypted config:type="boolean">false</encrypted>
       <fullname>root</fullname>
       <gid>0</gid>
       <home>/root</home>
@@ -160,7 +160,7 @@
       </password_settings>
       <shell>/bin/bash</shell>
       <uid>0</uid>
-      <user_password>$2a$10$irXV70PWfuZlIcwGuRsBp.qIou3Lq.UXVLXHD07QISJHxQqvnETJS</user_password>
+      <user_password>ozrootpw</user_password>
       <username>root</username>
     </user>
   </users>
