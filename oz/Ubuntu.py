@@ -197,7 +197,7 @@ def get_class(tdl, config):
     if tdl.installtype() != 'iso':
         raise Exception, "Ubuntu installs must be done via iso"
 
-    isourl = ozutil.check_url(tdl.iso())
+    isourl = tdl.iso()
 
     # FIXME: there are certain types of Ubuntu ISOs that do, and do not work.
     # For instance, for *some* Ubuntu releases, you must use the -alternate

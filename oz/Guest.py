@@ -22,9 +22,7 @@ import shutil
 import time
 import xml.dom.minidom
 import pycurl
-import sys
 import urllib2
-import re
 import stat
 import ozutil
 import libxml2
@@ -360,9 +358,8 @@ class Guest(object):
     def get_original_media(self, url, output, force_download):
         original_available = False
 
-        request = urllib2.Request(url)
         try:
-            response = urllib2.urlopen(request)
+            response = urllib2.urlopen(url)
             url = response.geturl()
             if not force_download and os.access(output, os.F_OK):
                 content_length = int(response.info()["Content-Length"])

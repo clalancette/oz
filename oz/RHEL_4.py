@@ -34,8 +34,6 @@ class RHEL4Guest(Guest.CDGuest):
         else:
             raise Exception, "RHEL-4 installs must be done via url or iso"
 
-        self.url = ozutil.check_url(self.url)
-
         if self.installtype == 'url':
             ozutil.deny_localhost(self.url)
         # FIXME: if doing an ISO install, we have to check that the ISO passed

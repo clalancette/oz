@@ -32,7 +32,7 @@ class RHL9Guest(Guest.CDGuest):
         if tdl.installtype() != 'url':
             raise Exception, "RHL installs must be done via url"
 
-        self.url = ozutil.check_url(tdl.url())
+        self.url = tdl.url()
 
         ozutil.deny_localhost(self.url)
 
@@ -97,7 +97,7 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
         if tdl.installtype() != 'url':
             raise Exception, "RHL installs must be done via url"
 
-        self.url = ozutil.check_url(tdl.url())
+        self.url = tdl.url()
 
         ozutil.deny_localhost(self.url)
 
