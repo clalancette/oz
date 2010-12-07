@@ -490,16 +490,15 @@ class Guest(object):
     def output_cdl_xml(self, lines, services):
         doc = libxml2.newDoc("1.0")
         cdl = doc.newChild(None, "cdl", None)
-        packages = cdl.newChild(None, "packages", None)
-
         servDoc = libxml2.parseMemory(services, len(services))
         cdl.addChild(servDoc.getRootElement())
+        packages = cdl.newChild(None, "packages", None)
 
         for line in lines:
             if line == "":
                 continue
-            packages.newChild(None, "package", None)
-            packages.setProp("name", line)
+            package = packages.newChild(None, "package", None)
+            package.setProp("name", line)
 
         return doc.serialize(None, 1)
 
