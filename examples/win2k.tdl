@@ -1,4 +1,4 @@
-<image>
+<template>
   <name>win2kjeos</name>
   <os>
     <name>Windows</name>
@@ -10,4 +10,4 @@
     <key>MY_KEY_HERE</key>
   </os>
   <description>Windows 2000</description>
-</image>
+</template>

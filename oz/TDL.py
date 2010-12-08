@@ -27,39 +27,39 @@ class TDL(object):
         self.doc = None
         self.doc = libxml2.parseFile(filename)
 
-        self._distro = get_value(self.doc, '/image/os/name')
+        self._distro = get_value(self.doc, '/template/os/name')
         if self._distro is None:
             raise Exception, "Failed to find OS name in TDL"
 
-        self._update = get_value(self.doc, '/image/os/version')
+        self._update = get_value(self.doc, '/template/os/version')
         if self._update is None:
             raise Exception, "Failed to find OS version in TDL"
 
-        self._arch = get_value(self.doc, '/image/os/arch')
+        self._arch = get_value(self.doc, '/template/os/arch')
         if self._arch is None:
             raise Exception, "Failed to find OS architecture in TDL"
 
-        self._key = get_value(self.doc, '/image/os/key')
+        self._key = get_value(self.doc, '/template/os/key')
         # key is not required, so it is not fatal if it is None
 
-        install = self.doc.xpathEval('/image/os/install')
+        install = self.doc.xpathEval('/template/os/install')
         if len(install) != 1:
             raise Exception, "Failed to find OS install in TDL"
         if not install[0].hasProp('type'):
             raise Exception, "Failed to find OS install type in TDL"
         self._installtype = install[0].prop('type')
         if self._installtype == "url":
-            self._url = get_value(self.doc, '/image/os/install/url')
+            self._url = get_value(self.doc, '/template/os/install/url')
             if self._url is None:
                 raise Exception, "Failed to find OS install URL in TDL"
         elif self._installtype == "iso":
-            self._iso = get_value(self.doc, '/image/os/install/iso')
+            self._iso = get_value(self.doc, '/template/os/install/iso')
             if self._iso is None:
                 raise Exception, "Failed to find OS install ISO in TDL"
         else:
             raise Exception, "Unknown install type " + self._installtype + " in TDL"
 
-        services = self.doc.xpathEval('/image/services')
+        services = self.doc.xpathEval('/template/services')
         # there may be 0 or 1 <services> elements
 
         if len(services) == 0:
@@ -70,7 +70,7 @@ class TDL(object):
             raise Exception, "Invalid number of services, expected 0 or 1"
 
         self._packages = []
-        for package in self.doc.xpathEval('/image/packages/package'):
+        for package in self.doc.xpathEval('/template/packages/package'):
             self._packages.append(package.prop('name'))
 
     def __del__(self):

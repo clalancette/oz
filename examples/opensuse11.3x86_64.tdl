@@ -1,4 +1,4 @@
-<image>
+<template>
   <name>opensuse11.3jeos</name>
   <os>
     <name>OpenSUSE</name>
@@ -9,4 +9,4 @@
     </install>
   </os>
   <description>OpenSUSE 11.3</description>
-</image>
+</template>
