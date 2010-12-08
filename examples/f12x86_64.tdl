@@ -1,4 +1,4 @@
-<image>
+<template>
   <name>f12jeos</name>
   <os>
     <name>Fedora</name>
@@ -9,4 +9,4 @@
     </install>
   </os>
   <description>Fedora 12</description>
-</image>
+</template>

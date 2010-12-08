@@ -31,7 +31,7 @@ class RHEL3Guest(Guest.CDGuest):
         if self.installtype != 'url':
             raise Exception, "RHEL-3 installs must be done via url"
 
-        self.url = ozutil.check_url(tdl.url())
+        self.url = tdl.url()
 
         ozutil.deny_localhost(self.url)
 

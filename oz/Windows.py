@@ -34,7 +34,7 @@ class Windows2000andXPand2003(Guest.CDGuest):
             raise Exception, "A key is required when installing Windows 2000, XP, or 2003"
         self.siffile = ozutil.generate_full_auto_path("windows-" + update + "-jeos.sif")
 
-        self.url = ozutil.check_url(tdl.iso())
+        self.url = tdl.iso()
         if tdl.installtype() != 'iso':
             raise Exception, "Windows installs must be done via iso"
 
@@ -107,7 +107,7 @@ class Windows2008(Guest.CDGuest):
         if self.key is None:
             raise Exception, "A key is required when installing Windows 2000, XP, or 2003"
 
-        self.url = ozutil.check_url(tdl.iso())
+        self.url = tdl.iso()
 
         if tdl.installtype() != 'iso':
             raise Exception, "Windows installs must be done via iso"

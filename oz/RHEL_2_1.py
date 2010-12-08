@@ -31,7 +31,7 @@ class RHEL21Guest(Guest.FDGuest):
         if tdl.installtype() != 'url':
             raise Exception, "RHEL-2.1 installs must be done via url or iso"
 
-        self.url = ozutil.check_url(tdl.url())
+        self.url = tdl.url()
 
         ozutil.deny_localhost(self.url)
 

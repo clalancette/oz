@@ -7,7 +7,7 @@ langsupport --default en_US en_US
 mouse generic3ps/2 --device psaux
 skipx
 network --device eth0 --bootproto dhcp
-rootpw --iscrypted $1$ls9x0WTf$SW8tTB.nEc9mO6xdDpPfl.
+rootpw --iscrypted $1$0q7k23Sr$aKkhNCvyxvwmc5DoVi28k.
 firewall --disabled
 authconfig --enableshadow --enablemd5
 timezone --utc America/New_York

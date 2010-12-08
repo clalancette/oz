@@ -5,7 +5,7 @@ lang en_US
 mouse generic3ps/2 --device psaux
 skipx
 network --bootproto dhcp
-rootpw 100yard-
+rootpw ozrootpw
 auth --useshadow --enablemd5
 timezone --utc America/New_York
 lilo --location mbr --linear

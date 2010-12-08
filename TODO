@@ -65,3 +65,4 @@ that.
 19. FedoraCore 6 x86_64 takes *much* longer to install than we give it time for.
 20. RHEL-3 GOLD x86_64 fails to boot.
 21. RHEL-4 GOLD, U1, U2 x86_64 crashes during install.
+22. Handle FTP URLs in addition to HTTP.

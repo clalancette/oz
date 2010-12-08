@@ -1,4 +1,4 @@
-<image>
+<template>
   <name>ubuntu9.10jeos</name>
   <os>
     <name>Ubuntu</name>
@@ -9,4 +9,4 @@
     </install>
   </os>
   <description>Ubuntu 9.10</description>
-</image>
+</template>

@@ -14,7 +14,7 @@
     UnattendSwitch="Yes"
 
 [GuiUnattended]
-    AdminPassword=100yard-
+    AdminPassword=ozrootpw
     AutoLogon=Yes
     AutoLogonCount=1
     OEMSkipRegional=1

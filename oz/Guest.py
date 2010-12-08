@@ -20,14 +20,9 @@ import os
 import subprocess
 import shutil
 import time
-import xml.dom.minidom
 import pycurl
-import sys
 import urllib2
-import re
 import stat
-import urlparse
-import httplib
 import ozutil
 import libxml2
 import logging
@@ -161,149 +156,109 @@ class Guest(object):
             os.unlink(self.diskimage)
 
     def targetDev(self, doc, devicetype, path, bus):
-        installNode = doc.createElement("disk")
-        installNode.setAttribute("type", "file")
-        installNode.setAttribute("device", devicetype)
-        sourceInstallNode = doc.createElement("source")
-        sourceInstallNode.setAttribute("file", path)
-        installNode.appendChild(sourceInstallNode)
-        targetInstallNode = doc.createElement("target")
-        targetInstallNode.setAttribute("dev", bus)
-        installNode.appendChild(targetInstallNode)
-        return installNode
+        install = doc.newChild(None, "disk", None)
+        install.setProp("type", "file")
+        install.setProp("device", devicetype)
+        source = install.newChild(None, "source", None)
+        source.setProp("file", path)
+        target = install.newChild(None, "target", None)
+        target.setProp("dev", bus)
 
     def generate_define_xml(self, bootdev, want_install_disk=True):
         self.log.info("Generate/define XML for guest %s with bootdev %s" % (self.name, bootdev))
 
+        # create XML document
+        doc = libxml2.newDoc("1.0")
+
         # create top-level domain element
-        doc = xml.dom.minidom.Document()
-        domain = doc.createElement("domain")
-        domain.setAttribute("type", "kvm")
-        doc.appendChild(domain)
+        domain = doc.newChild(None, "domain", None)
+        domain.setProp("type", "kvm")
 
         # create name element
-        nameNode = doc.createElement("name")
-        nameNode.appendChild(doc.createTextNode(self.name))
-        domain.appendChild(nameNode)
+        name = domain.newChild(None, "name", self.name)
 
-        # create memory nodes
-        memoryNode = doc.createElement("memory")
-        currentMemoryNode = doc.createElement("currentMemory")
-        memoryNode.appendChild(doc.createTextNode(str(1024 * 1024)))
-        currentMemoryNode.appendChild(doc.createTextNode(str(1024 * 1024)))
-        domain.appendChild(memoryNode)
-        domain.appendChild(currentMemoryNode)
+        # create memory elements
+        memory = domain.newChild(None, "memory", "1048576")
+        currentMemory = domain.newChild(None, "currentMemory", "1048576")
 
         # create uuid
-        uuidNode = doc.createElement("uuid")
-        uuidNode.appendChild(doc.createTextNode(str(self.uuid)))
-        domain.appendChild(uuidNode)
+        uuid = domain.newChild(None, "uuid", str(self.uuid))
 
-        # clock offset
-        offsetNode = doc.createElement("clock")
-        offsetNode.setAttribute("offset", self.clockoffset)
-        domain.appendChild(offsetNode)
+        # create clock offset
+        clock = domain.newChild(None, "clock", None)
+        clock.setProp("offset", self.clockoffset)
 
         # create vcpu
-        vcpusNode = doc.createElement("vcpu")
-        vcpusNode.appendChild(doc.createTextNode(str(1)))
-        domain.appendChild(vcpusNode)
+        vcpu = domain.newChild(None, "vcpu", "1")
 
         # create features
-        featuresNode = doc.createElement("features")
-        acpiNode = doc.createElement("acpi")
-        apicNode = doc.createElement("apic")
-        paeNode = doc.createElement("pae")
-        featuresNode.appendChild(acpiNode)
-        featuresNode.appendChild(apicNode)
-        featuresNode.appendChild(paeNode)
-        domain.appendChild(featuresNode)
+        features = domain.newChild(None, "features", None)
+        acpi = features.newChild(None, "acpi", None)
+        apic = features.newChild(None, "apic", None)
+        pae = features.newChild(None, "pae", None)
 
         # create os
-        osNode = doc.createElement("os")
-        typeNode = doc.createElement("type")
-        typeNode.appendChild(doc.createTextNode("hvm"))
-        osNode.appendChild(typeNode)
-        bootNode = doc.createElement("boot")
-        bootNode.setAttribute("dev", bootdev)
-        osNode.appendChild(bootNode)
-        domain.appendChild(osNode)
+        osNode = domain.newChild(None, "os", None)
+        ostype = osNode.newChild(None, "type", "hvm")
+        boot = osNode.newChild(None, "boot", None)
+        boot.setProp("dev", bootdev)
 
-        # create poweroff, reboot, crash nodes
-        poweroffNode = doc.createElement("on_poweroff")
-        rebootNode = doc.createElement("on_reboot")
-        crashNode = doc.createElement("on_crash")
-        poweroffNode.appendChild(doc.createTextNode("destroy"))
-        rebootNode.appendChild(doc.createTextNode("destroy"))
-        crashNode.appendChild(doc.createTextNode("destroy"))
-        domain.appendChild(poweroffNode)
-        domain.appendChild(rebootNode)
-        domain.appendChild(crashNode)
+        # create poweroff, reboot, crash
+        poweroff = domain.newChild(None, "on_poweroff", "destroy")
+        reboot = domain.newChild(None, "on_reboot", "destroy")
+        crash = domain.newChild(None, "on_crash", "destroy")
 
-        # create devices section
-        devicesNode = doc.createElement("devices")
+        # create devices
+        devices = domain.newChild(None, "devices", None)
         # console
-        consoleNode = doc.createElement("console")
-        consoleNode.setAttribute("device", "pty")
-        devicesNode.appendChild(consoleNode)
+        console = devices.newChild(None, "console", None)
+        console.setProp("device", "pty")
         # graphics
-        graphicsNode = doc.createElement("graphics")
-        graphicsNode.setAttribute("type", "vnc")
-        graphicsNode.setAttribute("port", "-1")
-        devicesNode.appendChild(graphicsNode)
+        graphics = devices.newChild(None, "graphics", None)
+        graphics.setProp("port", "-1")
+        graphics.setProp("type", "vnc")
         # network
-        interfaceNode = doc.createElement("interface")
-        interfaceNode.setAttribute("type", "bridge")
-        sourceNode = doc.createElement("source")
-        sourceNode.setAttribute("bridge", "virbr0")
-        interfaceNode.appendChild(sourceNode)
-        macNode = doc.createElement("mac")
-        macNode.setAttribute("address", self.macaddr)
-        interfaceNode.appendChild(macNode)
-        modelNode = doc.createElement("model")
-        modelNode.setAttribute("type", self.nicmodel)
-        interfaceNode.appendChild(modelNode)
-        devicesNode.appendChild(interfaceNode)
+        interface = devices.newChild(None, "interface", None)
+        interface.setProp("type", "bridge")
+        interfaceSource = interface.newChild(None, "source", None)
+        interfaceSource.setProp("bridge", "virbr0")
+        interfaceMac = interface.newChild(None, "mac", None)
+        interfaceMac.setProp("address", self.macaddr)
+        interfaceModel = interface.newChild(None, "model", None)
+        interfaceModel.setProp("type", "virtio")
         # input
-        inputNode = doc.createElement("input")
+        inputdev = devices.newChild(None, "input", None)
         if self.mousetype == "ps2":
-            inputNode.setAttribute("type", "mouse")
-            inputNode.setAttribute("bus", "ps2")
+            inputdev.setProp("bus", "ps2")
+            inputdev.setProp("type", "mouse")
         elif self.mousetype == "usb":
-            inputNode.setAttribute("type", "tablet")
-            inputNode.setAttribute("bus", "usb")
-        devicesNode.appendChild(inputNode)
+            inputdev.setProp("type", "tablet")
+            inputdev.setProp("bus", "usb")
         # console
-        consoleNode = doc.createElement("console")
-        consoleNode.setAttribute("type", "pty")
-        targetConsoleNode = doc.createElement("target")
-        targetConsoleNode.setAttribute("port", "0")
-        consoleNode.appendChild(targetConsoleNode)
-        devicesNode.appendChild(consoleNode)
+        console = devices.newChild(None, "console", None)
+        console.setProp("type", "pty")
+        consoleTarget = console.newChild(None, "target", None)
+        consoleTarget.setProp("port", "0")
         # boot disk
-        diskNode = doc.createElement("disk")
-        diskNode.setAttribute("type", "file")
-        diskNode.setAttribute("device", "disk")
-        targetNode = doc.createElement("target")
-        targetNode.setAttribute("dev", self.disk_dev)
-        targetNode.setAttribute("bus", self.disk_bus)
-        diskNode.appendChild(targetNode)
-        sourceDiskNode = doc.createElement("source")
-        sourceDiskNode.setAttribute("file", self.diskimage)
-        diskNode.appendChild(sourceDiskNode)
-        devicesNode.appendChild(diskNode)
+        bootDisk = devices.newChild(None, "disk", None)
+        bootDisk.setProp("device", "disk")
+        bootDisk.setProp("type", "file")
+        bootTarget = bootDisk.newChild(None, "target", None)
+        bootTarget.setProp("dev", self.disk_dev)
+        bootTarget.setProp("bus", self.disk_bus)
+        bootSource = bootDisk.newChild(None, "source", None)
+        bootSource.setProp("file", self.diskimage)
         # install disk (cdrom or floppy)
         if want_install_disk:
             if hasattr(self, "output_iso"):
-                devicesNode.appendChild(self.targetDev(doc, "cdrom", self.output_iso, "hdc"))
+                self.targetDev(devices, "cdrom", self.output_iso, "hdc")
             if hasattr(self, "output_floppy"):
-                devicesNode.appendChild(self.targetDev(doc, "floppy", self.output_floppy, "fda"))
-        domain.appendChild(devicesNode)
+                self.targetDev(devices, "floppy", self.output_floppy, "fda")
 
-        self.log.debug("Generated XML:\n%s" % (doc.toprettyxml()))
-        self.libvirt_dom = self.libvirt_conn.defineXML(doc.toxml())
+        self.log.debug("Generated XML:\n%s" % (doc.serialize(None, 1)))
+        self.libvirt_dom = self.libvirt_conn.defineXML(doc.serialize(None, 1))
 
-        return doc.toxml()
+        return doc.serialize(None, 1)
 
     def generate_blank_diskimage(self, size=10):
         self.log.info("Generating %dGB blank diskimage for %s" % (size, self.name))
@@ -362,13 +317,12 @@ class Guest(object):
     def get_original_media(self, url, output, force_download):
         original_available = False
 
-        request = urllib2.Request(url)
         try:
-            response = urllib2.urlopen(request)
+            response = urllib2.urlopen(url)
             url = response.geturl()
             if not force_download and os.access(output, os.F_OK):
                 content_length = int(response.info()["Content-Length"])
-                if (content_length == os.stat(output)[stat.ST_SIZE]):
+                if content_length == os.stat(output)[stat.ST_SIZE]:
                     original_available = True
             response.close()
         except urllib2.URLError, e:
@@ -534,24 +488,19 @@ class Guest(object):
         return addr[0]
 
     def output_cdl_xml(self, lines, services):
-        doc = xml.dom.minidom.Document()
-        cdl = doc.createElement("cdl")
-        doc.appendChild(cdl)
-
-        tmp = xml.dom.minidom.parseString(services)
-        cdl.appendChild(tmp.documentElement)
-
-        packagesNode = doc.createElement("packages")
-        cdl.appendChild(packagesNode)
+        doc = libxml2.newDoc("1.0")
+        cdl = doc.newChild(None, "cdl", None)
+        servDoc = libxml2.parseMemory(services, len(services))
+        cdl.addChild(servDoc.getRootElement())
+        packages = cdl.newChild(None, "packages", None)
 
         for line in lines:
             if line == "":
                 continue
-            packageNode = doc.createElement("package")
-            packageNode.setAttribute("name", line)
-            packagesNode.appendChild(packageNode)
+            package = packages.newChild(None, "package", None)
+            package.setProp("name", line)
 
-        return doc.toxml()
+        return doc.serialize(None, 1)
 
 class CDGuest(Guest):
     def __init__(self, distro, update, arch, nicmodel, clockoffset, mousetype,
