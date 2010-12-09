@@ -490,6 +490,7 @@ class Guest(object):
         cdl.addChild(servDoc.getRootElement())
         packages = cdl.newChild(None, "packages", None)
 
+        lines.sort()
         for line in lines:
             if line == "":
                 continue
