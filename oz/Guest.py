@@ -500,16 +500,17 @@ class Guest(object):
         return doc.serialize(None, 1)
 
 class CDGuest(Guest):
-    def __init__(self, distro, update, arch, nicmodel, clockoffset, mousetype,
-                 diskbus, config):
-        Guest.__init__(self, distro, update, arch, nicmodel, clockoffset, mousetype, diskbus, config)
-        # FIXME: now that we have both "iso" and "url" type installs, it
-        # might behoove us to encode this into orig_iso.  Otherwise, when you
-        # switch between them on the same OS, you continually download the
-        # "net" install one vs. the full ISO DVD.
-        self.orig_iso = self.data_dir + "/isos/" + self.name + ".iso"
-        self.output_iso = self.output_dir + "/" + self.name + "-oz.iso"
-        self.iso_contents = self.data_dir + "/isocontent/" + self.name
+    def __init__(self, distro, update, arch, installtype, nicmodel,
+                 clockoffset, mousetype, diskbus, config):
+        Guest.__init__(self, distro, update, arch, nicmodel, clockoffset,
+                       mousetype, diskbus, config)
+
+        self.orig_iso = self.data_dir + "/isos/" + self.name + "-" + installtype + ".iso"
+        self.output_iso = self.output_dir + "/" + self.name + "-" + installtype + "-oz.iso"
+        self.iso_contents = self.data_dir + "/isocontent/" + self.name + "-" + installtype
+        self.log.debug("Original ISO path: %s" % self.orig_iso)
+        self.log.debug("Output ISO path: %s" % self.output_iso)
+        self.log.debug("ISO content path: %s" % self.iso_contents)
 
     def get_original_iso(self, isourl, force_download):
         return self.get_original_media(isourl, self.orig_iso, force_download)

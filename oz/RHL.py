@@ -39,7 +39,7 @@ class RHL9Guest(Guest.CDGuest):
         if arch != "i386":
             raise Exception, "Invalid arch " + arch + "for RHL guest"
 
-        Guest.CDGuest.__init__(self, "RHL", "9", "i386", "rtl8139", None,
+        Guest.CDGuest.__init__(self, "RHL", "9", "i386", "url", "rtl8139", None,
                                None, None, config)
 
     def modify_iso(self):

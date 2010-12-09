@@ -38,7 +38,7 @@ class Windows2000andXPand2003(Guest.CDGuest):
         if tdl.installtype() != 'iso':
             raise Exception, "Windows installs must be done via iso"
 
-        Guest.CDGuest.__init__(self, "Windows", update, arch, None,
+        Guest.CDGuest.__init__(self, "Windows", update, arch, 'iso', 'rtl8139',
                                "localtime", "usb", None, config)
 
     def generate_new_iso(self):
@@ -112,7 +112,7 @@ class Windows2008and7(Guest.CDGuest):
         if tdl.installtype() != 'iso':
             raise Exception, "Windows installs must be done via iso"
 
-        Guest.CDGuest.__init__(self, "Windows", update, arch, None,
+        Guest.CDGuest.__init__(self, "Windows", update, arch, 'iso', 'rtl8139',
                                "localtime", "usb", None, config)
 
     def generate_new_iso(self):

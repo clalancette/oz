@@ -26,17 +26,16 @@ class RHEL3Guest(Guest.CDGuest):
         update = tdl.update()
         arch = tdl.arch()
         self.ks_file = ozutil.generate_full_auto_path("rhel-3-jeos.ks")
-        self.installtype = tdl.installtype()
 
-        if self.installtype != 'url':
+        if tdl.installtype() != 'url':
             raise Exception, "RHEL-3 installs must be done via url"
 
         self.url = tdl.url()
 
         ozutil.deny_localhost(self.url)
 
-        Guest.CDGuest.__init__(self, "RHEL-3", update, arch, "rtl8139", None,
-                               None, None, config)
+        Guest.CDGuest.__init__(self, "RHEL-3", update, arch, 'url',
+                               None, None, None, None, config)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")

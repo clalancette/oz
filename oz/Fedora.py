@@ -38,14 +38,15 @@ class FedoraGuest(Guest.CDGuest):
 
         if self.installtype == 'url':
             ozutil.deny_localhost(self.url)
+
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)
 
         self.output_services = tdl.services()
         self.packages = tdl.packages()
 
-        Guest.CDGuest.__init__(self, "Fedora", update, arch, nicmodel, None,
-                               None, diskbus, config)
+        Guest.CDGuest.__init__(self, "Fedora", update, arch, self.installtype,
+                               nicmodel, None, None, diskbus, config)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")

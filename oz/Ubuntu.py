@@ -24,7 +24,8 @@ import ozutil
 
 class Ubuntu810and904and910Guest(Guest.CDGuest):
     def __init__(self, update, arch, preseed, iso, initrd, config):
-        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, "virtio", None, None, "virtio", config)
+        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, 'iso', "virtio",
+                               None, None, "virtio", config)
         self.ubuntuarch = arch
         if self.ubuntuarch == "x86_64":
             self.ubuntuarch = "amd64"
@@ -87,7 +88,8 @@ class Ubuntu810and904and910Guest(Guest.CDGuest):
 
 class Ubuntu710and8041Guest(Guest.CDGuest):
     def __init__(self, update, arch, preseed, iso, config):
-        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, "rtl8139", None, None, None, config)
+        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, 'iso', "rtl8139",
+                               None, None, None, config)
         self.ubuntuarch = arch
         if self.ubuntuarch == "x86_64":
             self.ubuntuarch = "amd64"
@@ -140,7 +142,8 @@ class Ubuntu710and8041Guest(Guest.CDGuest):
 
 class Ubuntu610and704Guest(Guest.CDGuest):
     def __init__(self, update, arch, preseed, iso, config):
-        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, "rtl8139", None, None, None, config)
+        Guest.CDGuest.__init__(self, "Ubuntu", update, arch, 'iso', "rtl8139",
+                               None, None, None, config)
         self.ubuntuarch = arch
         if self.ubuntuarch == "x86_64":
             self.ubuntuarch = "amd64"
