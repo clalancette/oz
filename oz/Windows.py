@@ -98,7 +98,7 @@ class Windows2000andXPand2003(Guest.CDGuest):
         self.wait_for_install_finish(3600)
         return self.generate_define_xml("hd", want_install_disk=False)
 
-class Windows2008(Guest.CDGuest):
+class Windows2008and7(Guest.CDGuest):
     def __init__(self, tdl, config):
         update = tdl.update()
         arch = tdl.arch()
@@ -178,6 +178,6 @@ def get_class(tdl, config):
     update = tdl.update()
     if update == "2000" or update == "XP" or update == "2003":
         return Windows2000andXPand2003(tdl, config)
-    if update == "2008":
-        return Windows2008(tdl, config)
+    if update == "2008" or update == "7":
+        return Windows2008and7(tdl, config)
     raise Exception, "Unsupported Windows update " + update
