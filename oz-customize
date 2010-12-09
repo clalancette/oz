@@ -39,6 +39,7 @@ import ConfigParser
 def usage():
     print "Usage: oz-customize [OPTIONS] <tdl> <libvirt_xml_file>"
     print " OPTIONS:"
+    print "  -c <config>\tGet config from <config> (default is /etc/oz/oz.cfg)"
     print "  -d <level>\tTurn up logging level.  The levels are:"
     print "\t\t\t0 - errors only (this is the default)"
     print "\t\t\t1 - errors and warnings"
