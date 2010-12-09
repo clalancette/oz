@@ -126,7 +126,8 @@ class Guest(object):
         else:
             raise Exception, "Unknown diskbus type " + diskbus
 
-        self.log.debug("Name: %s, UUID: %s, MAC: %s, distro: %s" % (self.name, self.uuid, self.macaddr, self.distro))
+        self.log.debug("Name: %s, UUID: %s" % (self.name, self.uuid))
+        self.log.debug("MAC: %s, distro: %s" % (self.macaddr, self.distro))
         self.log.debug("update: %s, arch: %s, diskimage: %s" % (self.update, self.arch, self.diskimage))
         self.log.debug("host IP: %s, nicmodel: %s, clockoffset: %s" % (self.host_bridge_ip, self.nicmodel, self.clockoffset))
         self.log.debug("mousetype: %s, disk_bus: %s, disk_dev: %s" % (self.mousetype, self.disk_bus, self.disk_dev))
