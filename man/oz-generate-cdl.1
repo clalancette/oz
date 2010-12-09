@@ -1,0 +1,47 @@
+.TH OZ-GENERATE-CDL 1 "Dec 2010" "oz-generate-cdl"
+
+.SH NAME
+oz-generate-cdl - tool to generate a CDL (package manifest) of a disk image
+
+.SH SYNOPSIS
+.B oz-generate-cdl [OPTIONS] <tdl-file> <libvirt-xml-file>
+
+.SH DESCRIPTION
+This is a tool to generate a package manifest (also called CDL) from a
+disk image.  This program can be used as a counterpart to oz-install,
+though it does not have to be used in conjunction.
+
+Note that oz-generate-cdl does the actual installation using a combination
+of KVM and libvirt, so both of these must be available (and working)
+for oz-customize to have a chance to succeed.
+
+.SH OPTIONS
+.TP
+.B "\-c <config>"
+Get the configuration from config file \fBconfig\fR, instead of the
+default /etc/oz/oz.cfg.  The config file is in standard ini format
+with a single section called \fBpaths\fR.  There are two possible keys
+under \fBpaths\fR: \fBoutput_dir\fR describes where to store the
+images after they are built, and \fBdata_dir\fR describes where to
+cache install media and use temporary storage.  Both locations have to
+have a decent amount of free disk space in order for oz-generate-cdl to
+work properly.
+.TP
+.B "\-d <loglevel>"
+Turn on debugging output to level \fBloglevel\fR.  The log levels are:
+.RS 7
+.IP "0 - errors only (this is the default)"
+.IP "1 - errors and warnings"
+.IP "2 - errors, warnings, and information"
+.IP "3 - all messages"
+.IP "4 - all messages, prepended with the level and classname"
+.RE
+.TP
+.B "\-h"
+Print a short help message.
+
+.SH SEE ALSO
+oz-install(1), oz-customize(1)
+
+.SH AUTHOR
+Chris Lalancette <clalance@redhat.com>

@@ -4,6 +4,10 @@ import os
 
 VERSION = '0.0.4'
 
+datafiles = [('share/man/man1', ['man/oz-install.1', 'man/oz-customize.1',
+                                 'man/oz-generate-cdl.1'])
+             ]
+
 class sdist(_sdist):
     """ custom sdist command, to prep oz.spec file for inclusion """
 
@@ -26,4 +30,5 @@ setup(name='oz',
       packages=['oz'],
       scripts=['oz-install', 'oz-generate-cdl', 'oz-customize'],
       cmdclass={'sdist': sdist},
+      data_files = datafiles,
       )
