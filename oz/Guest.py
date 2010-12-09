@@ -63,10 +63,6 @@ def subprocess_check_output(*popenargs, **kwargs):
         raise ProcessError(retcode, cmd, output=output)
     return output
 
-class NullHandler(logging.Handler):
-    def emit(self, record):
-        pass
-
 class Guest(object):
     def __init__(self, distro, update, arch, nicmodel, clockoffset, mousetype,
                  diskbus, config):
