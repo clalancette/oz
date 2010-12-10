@@ -348,6 +348,7 @@ class Guest(object):
     def get_original_media(self, url, output, force_download):
         original_available = False
 
+        self.log.info("Trying to download %s" % (url))
         try:
             response = urllib2.urlopen(url)
             url = response.geturl()
