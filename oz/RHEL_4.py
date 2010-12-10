@@ -114,28 +114,38 @@ class RHEL4Guest(Guest.CDGuest):
 
         self.collect_setup(libvirt_xml)
 
-        output = ''
+        cdl_output = ''
         try:
             self.libvirt_dom = self.libvirt_conn.defineXML(libvirt_xml)
             self.libvirt_dom.create()
 
             guestaddr = self.wait_for_guest_boot()
 
-            data = RedHat.guest_execute_command(guestaddr,
-                                                self.cdl_tmp + '/id_rsa-cdl-gen',
-                                                'rpm -qa')
-            # FIXME: what if the output is blank?
+            output = RedHat.guest_execute_command(guestaddr,
+                                                  self.cdl_tmp + '/id_rsa-cdl-gen',
+                                                  'rpm -qa')
+            stdout = output[0]
+            stderr = output[1]
+            returncode = output[2]
+            if returncode != 0:
+                raise Exception, "Failed to execute guest command 'rpm -qa': %s" % (stderr)
 
-            output = self.output_cdl_xml(data[0].split("\n"), self.output_services)
 
-            # FIXME: should we try to do a graceful shutdown here?  At the very
-            # least we should do a sync
+            cdl_output = self.output_cdl_xml(stdout.split("\n"),
+                                             self.output_services)
+
+            RedHat.guest_execute_command(guestaddr,
+                                         self.cdl_tmp + '/id_rsa-cdl-gen',
+                                         'shutdown -h now')
+
+            if self.wait_for_guest_shutdown():
+                self.libvirt_dom = None
         finally:
             if self.libvirt_dom is not None:
                 self.libvirt_dom.destroy()
             self.collect_teardown(libvirt_xml)
 
-        return output
+        return cdl_output
 
 def get_class(tdl, config):
     update = tdl.update()

@@ -125,29 +125,37 @@ class FedoraGuest(Guest.CDGuest):
 
         self.collect_setup(libvirt_xml)
 
-        output = ''
+        cdl_output = ''
         try:
             self.libvirt_dom = self.libvirt_conn.defineXML(libvirt_xml)
             self.libvirt_dom.create()
 
             guestaddr = self.wait_for_guest_boot()
 
-            data = RedHat.guest_execute_command(guestaddr,
-                                                self.cdl_tmp + '/id_rsa-cdl-gen',
-                                                'rpm -qa')
+            output = RedHat.guest_execute_command(guestaddr,
+                                                  self.cdl_tmp + '/id_rsa-cdl-gen',
+                                                  'rpm -qa')
+            stdout = output[0]
+            stderr = output[1]
+            returncode = output[2]
+            if returncode != 0:
+                raise Exception, "Failed to execute guest command 'rpm -qa': %s" % (stderr)
 
-            # FIXME: what if the output is blank?
+            cdl_output = self.output_cdl_xml(stdout.split("\n"),
+                                             self.output_services)
 
-            output = self.output_cdl_xml(data[0].split("\n"), self.output_services)
+            RedHat.guest_execute_command(guestaddr,
+                                         self.cdl_tmp + '/id_rsa-cdl-gen',
+                                         'shutdown -h now')
 
-            # FIXME: should we try to do a graceful shutdown here?  At the very
-            # least we should do a sync
+            if self.wait_for_guest_shutdown():
+                self.libvirt_dom = None
         finally:
             if self.libvirt_dom is not None:
                 self.libvirt_dom.destroy()
             self.collect_teardown(libvirt_xml)
 
-        return output
+        return cdl_output
 
     def customize(self, libvirt_xml):
         self.log.info("Customizing image")
@@ -159,27 +167,30 @@ class FedoraGuest(Guest.CDGuest):
 
             guestaddr = self.wait_for_guest_boot()
 
+            packstr = ''
             for package in self.packages:
-                data = RedHat.guest_execute_command(guestaddr,
-                                                    self.cdl_tmp + '/id_rsa-cdl-gen',
-                                                    'yum -y install %s' % (package))
-                # FIXME: what if the output is blank?
+                packstr += package + ' '
 
-            data = RedHat.guest_execute_command(guestaddr,
-                                                self.cdl_tmp + '/id_rsa-cdl-gen',
-                                                'rpm -qa')
+            output = RedHat.guest_execute_command(guestaddr,
+                                                  self.cdl_tmp + '/id_rsa-cdl-gen',
+                                                  'yum -y install %s' % (packstr))
 
-            # FIXME: what if the output is blank?
+            stdout = output[0]
+            stderr = output[1]
+            returncode = output[2]
+            if returncode != 0:
+                raise Exception, "Failed to execute guest command 'yum -y install %s': %s" % (packstr, stderr)
 
-            output = self.output_cdl_xml(data[0].split("\n"), self.output_services)
-            # FIXME: should we try to do a graceful shutdown here?  At the very
-            # least we should do a sync
+            RedHat.guest_execute_command(guestaddr,
+                                         self.cdl_tmp + '/id_rsa-cdl-gen',
+                                         'shutdown -h now')
+
+            if self.wait_for_guest_shutdown():
+                self.libvirt_dom = None
         finally:
             if self.libvirt_dom is not None:
                 self.libvirt_dom.destroy()
             self.collect_teardown(libvirt_xml)
-
-        return output
 
 def get_class(tdl, config):
     update = tdl.update()

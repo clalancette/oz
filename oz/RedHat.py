@@ -13,10 +13,16 @@ def generate_iso(output_iso, input_dir):
                                    "-o", output_iso, input_dir ])
 
 def guest_execute_command(guestaddr, keypath, command):
-    return subprocess.Popen(["ssh", "-i", keypath,
-                             "-o", "StrictHostKeyChecking=no",
-                             "-o", "ConnectTimeout=5", guestaddr,
-                             command], stdout=subprocess.PIPE).communicate()
+    sub = subprocess.Popen(["ssh", "-i", keypath,
+                            "-o", "StrictHostKeyChecking=no",
+                            "-o", "ConnectTimeout=5", guestaddr,
+                            command], stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE)
+
+    data = sub.communicate()
+
+    # here we return a tuple that is (stdout,stderr,returncode)
+    return data+(sub.returncode,)
 
 def get_default_runlevel(g_handle):
     runlevel = "3"

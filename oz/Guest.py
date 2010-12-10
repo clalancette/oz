@@ -311,6 +311,29 @@ class Guest(object):
 
         self.log.info("Install of %s succeeded" % (self.name))
 
+    def wait_for_guest_shutdown(self, count=60):
+        origcount = count
+        success = False
+        while count > 0:
+            try:
+                if count % 10 == 0:
+                    self.log.debug("Waiting for %s to shutdown, %d/%d" % (self.name, count, origcount))
+                info = self.libvirt_dom.info()
+                if info[0] == libvirt.VIR_DOMAIN_SHUTOFF:
+                    # the domain is now shutoff, so get out of here
+                    success = True
+                    break
+                elif info[0] != libvirt.VIR_DOMAIN_RUNNING and info[0] != libvirt.VIR_DOMAIN_BLOCKED:
+                    # the domain isn't running or blocked; something bad
+                    # happened, so get out of here
+                    break
+                count -= 1
+            except:
+                pass
+            time.sleep(1)
+
+        return success
+
     def get_original_media(self, url, output, force_download):
         original_available = False
 
