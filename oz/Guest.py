@@ -152,6 +152,17 @@ class Guest(object):
         if delete_disk and os.access(self.diskimage, os.F_OK):
             os.unlink(self.diskimage)
 
+    # the next 3 methods are intended to be overridden by the individual
+    # OS backends; raise an error if they are called but not implemented
+    def generate_install_media(self):
+        raise Exception, "Install media for %s is not implemented, install cannot continue" % (self.name)
+
+    def customize(self):
+        raise Exception, "Customization for %s is not implemented" % (self.name)
+
+    def generate_cdl(self):
+        raise Exception, "CDL generation for %s is not implemented" % (self.name)
+
     def targetDev(self, doc, devicetype, path, bus):
         install = doc.newChild(None, "disk", None)
         install.setProp("type", "file")
