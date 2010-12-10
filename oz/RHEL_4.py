@@ -88,7 +88,7 @@ class RHEL4Guest(Guest.CDGuest):
         self.cleanup_iso()
 
     def collect_setup(self, libvirt_xml):
-        self.log.info("CDL Collection Setup")
+        self.log.info("Collection Setup")
 
         g_handle = self.guestfs_handle_setup(libvirt_xml)
 
@@ -100,7 +100,7 @@ class RHEL4Guest(Guest.CDGuest):
             self.guestfs_handle_cleanup(g_handle)
 
     def collect_teardown(self, libvirt_xml):
-        self.log.info("CDL Collection Teardown")
+        self.log.info("Collection Teardown")
 
         g_handle = self.guestfs_handle_setup(libvirt_xml)
 
