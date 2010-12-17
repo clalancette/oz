@@ -30,7 +30,6 @@ import random
 import guestfs
 import socket
 import select
-import tarfile
 import struct
 import numpy
 
@@ -427,10 +426,20 @@ class Guest(object):
         if len(namenode) != 1:
             raise Exception, "invalid libvirt XML with no name"
         input_name = namenode[0].getContent()
-        disks = input_doc.xpathEval('/domain/devices/disk/source')
+        disks = input_doc.xpathEval('/domain/devices/disk')
         if len(disks) != 1:
             raise Exception, "oz cannot handle a libvirt domain with more than 1 disk"
-        input_disk = disks[0].prop('file')
+        source = disks[0].xpathEval('source')
+        if len(source) != 1:
+            raise Exception, "invalid <disk> entry without a source"
+        input_disk = source[0].prop('file')
+        driver = disks[0].xpathEval('driver')
+        if len(driver) == 0:
+            input_disk_type = 'raw'
+        elif len(driver) != 1:
+            input_disk_type = driver[0].prop('type')
+        else:
+            raise Exception, "invalid <disk> entry without a driver"
 
         for domid in self.libvirt_conn.listDomainsID():
             self.log.debug("DomID: %d" % (domid))
@@ -449,6 +458,9 @@ class Guest(object):
                 continue
             for guestdisk in disks:
                 for source in guestdisk.xpathEval("source"):
+                    # FIXME: this will only work for files; we can make it work
+                    # for other things by following something like:
+                    # http://git.annexia.org/?p=libguestfs.git;a=blob;f=src/virt.c;h=2c6be3c6a2392ab8242d1f4cee9c0d1445844385;hb=HEAD#l169
                     filename = str(source.prop('file'))
                     if filename == input_disk:
                         raise Exception, "Cannot setup CDL generation on a running disk"
@@ -458,27 +470,45 @@ class Guest(object):
         g = guestfs.GuestFS()
 
         self.log.debug("Adding disk image %s" % (input_disk))
-        g.add_drive(input_disk)
+        # NOTE: we use "add_drive_opts" here so we can specify the type
+        # of the diskimage.  Otherwise it might be possible for an attacker
+        # to fool libguestfs with a specially-crafted diskimage that looks
+        # like a qcow2 disk (thanks to rjones for the tip)
+        g.add_drive_opts(input_disk, format=input_disk_type)
 
         self.log.debug("Launching guestfs")
         g.launch()
 
         self.log.debug("Inspecting guest OS")
-        os = g.inspect_os()
+        roots = g.inspect_os()
+
+        if len(roots) == 0:
+            raise Exception, "No operating systems found on the disk"
 
         self.log.debug("Getting mountpoints")
-        mountpoints = g.inspect_get_mountpoints(os[0])
+        for root in roots:
+            self.log.debug("Root device: %s" % root)
 
-        self.log.debug("Mounting /")
-        for point in mountpoints:
-            if point[0] == '/':
-                g.mount(point[1], '/')
-                break
-
-        self.log.debug("Mount other filesystems")
-        for point in mountpoints:
-            if point[0] != '/':
-                g.mount(point[1], point[0])
+            # the problem here is that the list of mountpoints returned by
+            # inspect_get_mountpoints is in no particular order.  So if the
+            # diskimage contains /usr and /usr/local on different devices,
+            # but /usr/local happened to come first in the listing, the
+            # devices would get mapped improperly.  The clever solution here is
+            # to sort the mount paths by length; this will ensure that they
+            # are mounted in the right order.  Thanks to rjones for the hint,
+            # and the example code that comes from the libguestfs.org python
+            # example page.
+            mps = g.inspect_get_mountpoints(root)
+            def compare(a, b):
+                if len(a[0]) > len(b[0]):
+                    return 1
+                elif len(a[0]) == len(b[0]):
+                    return 0
+                else:
+                    return -1
+            mps.sort(compare)
+            for mp_dev in mps:
+                g.mount_options('', mp_dev[1], mp_dev[0])
 
         return g
 
@@ -557,35 +587,38 @@ class CDGuest(Guest):
             shutil.rmtree(self.iso_contents)
         os.makedirs(self.iso_contents)
 
-        tarout = self.iso_contents + "/data.tar"
-
         self.log.info("Setting up guestfs handle for %s" % (self.name))
         gfs = guestfs.GuestFS()
         self.log.debug("Adding ISO image %s" % (self.orig_iso))
-        gfs.add_drive(self.orig_iso)
+        gfs.add_drive_opts(self.orig_iso, readonly=1, format='raw')
         self.log.debug("Launching guestfs")
         gfs.launch()
         self.log.debug("Mounting ISO")
-        gfs.mount("/dev/sda", "/")
-        self.log.debug("Getting data from ISO onto %s" % (tarout))
-        gfs.tar_out("/", tarout)
+        gfs.mount_options('ro', "/dev/sda", "/")
 
-        self.log.debug("Cleaning up guestfs process")
+        # create a pipe that we will use to hook gfs.tar_out to tar
+        rd,wr = os.pipe()
+
+        # setup read side of the pipe
+        current = os.getcwd()
+        os.chdir(self.iso_contents)
+        tar = subprocess.Popen(["tar", "-x", "-v"], stdin=rd,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        # use the /dev/fd trick to write the data from the ISO to the pipe
+        self.log.debug("Extracting ISO contents:")
+        gfs.tar_out("/", "/dev/fd/%d" % wr)
+
+        self.log.debug("%s" % tar.stdout.read())
+
+        # cleanup
+        os.close(rd)
+        os.close(wr)
+        os.chdir(current)
+
         gfs.sync()
         gfs.umount_all()
         gfs.kill_subprocess()
-
-        self.log.debug("Extracting tarball")
-        tar = tarfile.open(tarout)
-
-        # FIXME: the documentation for extractall says that this is potentially
-        # dangerous with random data.  In particular, files that start with /
-        # or contain .. may cause problems.  We'll need to do some validation
-        # here
-        tar.extractall(path=self.iso_contents)
-
-        self.log.debug("Removing tarball")
-        os.unlink(tarout)
 
     def geteltorito(self, cdfile, outfile):
         cdfile = open(cdfile, "r")
