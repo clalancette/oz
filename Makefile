@@ -8,4 +8,4 @@ srpm: sdist
 	rpmbuild -bs oz.spec --define "_sourcedir `pwd`/dist"
 
 clean:
-	rm -rf MANIFEST build dist usr *~ oz.spec *.pyc oz/*~ oz/*.pyc examples/*~ oz/auto/*~
+	rm -rf MANIFEST build dist usr *~ oz.spec *.pyc oz/*~ oz/*.pyc examples/*~ oz/auto/*~ man/*~
