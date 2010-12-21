@@ -596,26 +596,17 @@ class CDGuest(Guest):
         self.log.debug("Mounting ISO")
         gfs.mount_options('ro', "/dev/sda", "/")
 
-        # create a pipe that we will use to hook gfs.tar_out to tar
-        rd,wr = os.pipe()
+        self.log.debug("Extracting tarball")
+        tarout = self.iso_contents + "/data.tar"
+        gfs.tar_out("/", tarout)
 
-        # setup read side of the pipe
         current = os.getcwd()
         os.chdir(self.iso_contents)
-        tar = subprocess.Popen(["tar", "-x", "-v"], stdin=rd,
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess_check_output(["tar", "-x", "-v", "-f", tarout])
 
-        # use the /dev/fd trick to write the data from the ISO to the pipe
-        self.log.debug("Extracting ISO contents:")
-        gfs.tar_out("/", "/dev/fd/%d" % wr)
-
-        self.log.debug("%s" % tar.stdout.read())
-
-        # cleanup
-        os.close(rd)
-        os.close(wr)
+        self.log.debug("Cleaning up")
+        os.unlink(tarout)
         os.chdir(current)
-
         gfs.sync()
         gfs.umount_all()
         gfs.kill_subprocess()
