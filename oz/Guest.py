@@ -232,7 +232,7 @@ class Guest(object):
         interfaceMac = interface.newChild(None, "mac", None)
         interfaceMac.setProp("address", self.macaddr)
         interfaceModel = interface.newChild(None, "model", None)
-        interfaceModel.setProp("type", "virtio")
+        interfaceModel.setProp("type", self.nicmodel)
         # input
         inputdev = devices.newChild(None, "input", None)
         if self.mousetype == "ps2":
