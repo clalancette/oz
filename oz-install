@@ -20,6 +20,7 @@ import sys
 import getopt
 import os
 import logging
+import time
 
 import oz.TDL
 import oz.Fedora
@@ -160,7 +161,9 @@ try:
         if generate_icicle:
             print guest.generate_icicle(libvirt_xml)
 
-        print libvirt_xml
+        filename = guest.name + time.strftime("%b_%d_%Y-%H:%M:%S")
+        open(filename, 'w').write(libvirt_xml)
+        print "Libvirt XML was written to " + filename
     except:
         guest.cleanup_old_guest()
         raise
