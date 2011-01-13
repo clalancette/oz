@@ -530,7 +530,7 @@ class Guest(object):
         g_handle.kill_subprocess()
 
     def wait_for_guest_boot(self):
-        self.log.info("Listening on %d for %s to boot" % (self.listen_port, self.name))
+        self.log.info("Waiting for guest %s to boot" % (self.name))
 
         listen = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         listen.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -541,15 +541,24 @@ class Guest(object):
                                  "--dport", str(self.listen_port),
                                  "-j", "ACCEPT"])
 
+
         try:
-            rlist, wlist, xlist = select.select([listen], [], [], 300)
+            addr = None
+            count = 300
+            while count > 0:
+                self.log.debug("Waiting for guest %s to boot, %d/300" % (self.name, count))
+                rlist, wlist, xlist = select.select([listen], [], [], 10)
+                if len(rlist) > 0:
+                    new_sock, addr = listen.accept()
+                    new_sock.close()
+                    listen.close()
+                    break
+                count -= 10
         finally:
             subprocess.call(["iptables", "-D", "INPUT", "1"])
-        if len(rlist) == 0:
+
+        if addr is None:
             raise OzException("Timed out waiting for domain to boot")
-        new_sock, addr = listen.accept()
-        new_sock.close()
-        listen.close()
 
         self.log.debug("IP address of guest is %s" % (addr[0]))
 
