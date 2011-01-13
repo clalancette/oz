@@ -46,7 +46,7 @@ def usage():
     print "\t\t\t3 - all messages"
     print "\t\t\t4 - all messages, prepended with the level and classname"
     print "  -f\t\tForce download of the installation media even if it is already cached"
-    print "  -g\t\tGenerate the CDL after installation"
+    print "  -g\t\tGenerate the ICICLE after installation"
     print "  -h\t\tPrint this help message"
     print "  -u\t\tAfter installation, do the customization"
     print " Currently supported architectures are:"
@@ -66,7 +66,7 @@ def usage():
     sys.exit(1)
 
 try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], 'c:d:fghu', ['config', 'debug', 'force-download', 'generate-cdl', 'help', 'customize'])
+    opts, args = getopt.gnu_getopt(sys.argv[1:], 'c:d:fghu', ['config', 'debug', 'force-download', 'generate-icicle', 'help', 'customize'])
 except getopt.GetoptError, err:
     print str(err)
     usage()
@@ -75,7 +75,7 @@ loglevel = logging.ERROR
 logformat = "%(message)s"
 force_download = False
 config_file = "/etc/oz/oz.cfg"
-generate_cdl = False
+generate_icicle = False
 customize = False
 for o, a in opts:
     if o in ("-h", "--help"):
@@ -96,8 +96,8 @@ for o, a in opts:
             usage()
     elif o in ("-f", "--force-download"):
         force_download = True
-    elif o in ("-g", "--generate-cdl"):
-        generate_cdl = True
+    elif o in ("-g", "--generate-icicle"):
+        generate_icicle = True
     elif o in ("-c", "--config"):
         config_file = a
     elif o in ("-u", "--customize"):
@@ -157,10 +157,10 @@ try:
         if customize:
             guest.customize(libvirt_xml)
 
-        if generate_cdl:
-            print guest.generate_cdl(libvirt_xml)
-        else:
-            print libvirt_xml
+        if generate_icicle:
+            print guest.generate_icicle(libvirt_xml)
+
+        print libvirt_xml
     except:
         guest.cleanup_old_guest()
         raise

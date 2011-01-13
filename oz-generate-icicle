@@ -37,7 +37,7 @@ import oz.OpenSUSE
 import ConfigParser
 
 def usage():
-    print "Usage: oz-generate-cdl [OPTIONS] <tdl> <libvirt_xml_file>"
+    print "Usage: oz-generate-icicle [OPTIONS] <tdl> <libvirt_xml_file>"
     print " OPTIONS:"
     print "  -c <config>\tGet config from <config> (default is /etc/oz/oz.cfg)"
     print "  -d <level>\tTurn up logging level.  The levels are:"
@@ -145,4 +145,4 @@ if os.stat(libvirt_xml_file)[stat.ST_SIZE] > (5 * 1024 * 1024):
 
 libvirt_xml = open(libvirt_xml_file, 'r').read()
 
-print guest.generate_cdl(libvirt_xml)
+print guest.generate_icicle(libvirt_xml)

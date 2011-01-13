@@ -31,14 +31,14 @@ python setup.py build
 %{__rm} -rf $RPM_BUILD_ROOT
 python setup.py install -O1 --root=$RPM_BUILD_ROOT
 
-%{__rm} -f $RPM_BUILD_ROOT%{python_sitelib}/oz/guesttools/cdl-nc.c
+%{__rm} -f $RPM_BUILD_ROOT%{python_sitelib}/oz/guesttools/icicle-nc.c
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/isocontent/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/isos/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/mnt/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/floppycontent/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/floppies/
-mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/cdltmp/
+mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/icicletmp/
 
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/oz
 %{__cp} oz.cfg $RPM_BUILD_ROOT%{_sysconfdir}/oz
@@ -59,10 +59,10 @@ mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/oz
 %dir %attr(0755, root, root) %{_localstatedir}/lib/oz/mnt/
 %dir %attr(0755, root, root) %{_localstatedir}/lib/oz/floppycontent/
 %dir %attr(0755, root, root) %{_localstatedir}/lib/oz/floppies/
-%dir %attr(0755, root, root) %{_localstatedir}/lib/oz/cdltmp/
+%dir %attr(0755, root, root) %{_localstatedir}/lib/oz/icicletmp/
 %{python_sitelib}/oz/*
 %{_bindir}/oz-install
-%{_bindir}/oz-generate-cdl
+%{_bindir}/oz-generate-icicle
 %{_bindir}/oz-customize
 %{python_sitelib}/oz-*.egg-info
 %{_mandir}/man1/*

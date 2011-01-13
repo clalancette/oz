@@ -95,7 +95,7 @@ class RHEL6Guest(Guest.CDGuest):
         g_handle = self.guestfs_handle_setup(libvirt_xml)
 
         try:
-            RedHat.image_ssh_setup(self.log, g_handle, self.cdl_tmp,
+            RedHat.image_ssh_setup(self.log, g_handle, self.icicle_tmp,
                                    self.host_bridge_ip, self.listen_port,
                                    libvirt_xml)
         finally:
@@ -111,12 +111,12 @@ class RHEL6Guest(Guest.CDGuest):
         finally:
             self.guestfs_handle_cleanup(g_handle)
 
-    def generate_cdl(self, libvirt_xml):
-        self.log.info("Generating CDL")
+    def generate_icicle(self, libvirt_xml):
+        self.log.info("Generating ICICLE")
 
         self.collect_setup(libvirt_xml)
 
-        cdl_output = ''
+        icicle_output = ''
         try:
             self.libvirt_dom = self.libvirt_conn.defineXML(libvirt_xml)
             self.libvirt_dom.create()
@@ -124,7 +124,7 @@ class RHEL6Guest(Guest.CDGuest):
             guestaddr = self.wait_for_guest_boot()
 
             output = RedHat.guest_execute_command(guestaddr,
-                                                  self.cdl_tmp + '/id_rsa-cdl-gen',
+                                                  self.icicle_tmp + '/id_rsa-icicle-gen',
                                                   'rpm -qa')
             stdout = output[0]
             stderr = output[1]
@@ -132,11 +132,11 @@ class RHEL6Guest(Guest.CDGuest):
             if returncode != 0:
                 raise OzException("Failed to execute guest command 'rpm -qa': %s" % (stderr))
 
-            cdl_output = self.output_cdl_xml(stdout.split("\n"),
-                                             self.output_services)
+            icicle_output = self.output_icicle_xml(stdout.split("\n"),
+                                                   self.output_services)
 
             RedHat.guest_execute_command(guestaddr,
-                                         self.cdl_tmp + '/id_rsa-cdl-gen',
+                                         self.icicle_tmp + '/id_rsa-icicle-gen',
                                          'shutdown -h now')
 
             if self.wait_for_guest_shutdown():
@@ -146,7 +146,7 @@ class RHEL6Guest(Guest.CDGuest):
                 self.libvirt_dom.destroy()
             self.collect_teardown(libvirt_xml)
 
-        return cdl_output
+        return icicle_output
 
     def customize(self, libvirt_xml):
         self.log.info("Customizing image")
@@ -165,7 +165,7 @@ class RHEL6Guest(Guest.CDGuest):
             # FIXME: for this to succeed, we might actually have to upload
             # an /etc/yum.repos.d/*.repo
             output = RedHat.guest_execute_command(guestaddr,
-                                                  self.cdl_tmp + '/id_rsa-cdl-gen',
+                                                  self.icicle_tmp + '/id_rsa-icicle-gen',
                                                   'yum -y install %s' % (packstr))
             stdout = output[0]
             stderr = output[1]
@@ -174,7 +174,7 @@ class RHEL6Guest(Guest.CDGuest):
                 raise OzException("Failed to execute guest command 'yum -y install %s': %s" % (packstr, stderr))
 
             RedHat.guest_execute_command(guestaddr,
-                                         self.cdl_tmp + '/id_rsa-cdl-gen',
+                                         self.icicle_tmp + '/id_rsa-icicle-gen',
                                          'shutdown -h now')
 
             if self.wait_for_guest_shutdown():

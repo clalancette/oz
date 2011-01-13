@@ -54,7 +54,7 @@ def get_service_runlevel_link(g_handle, service):
     return "/etc/rc.d/rc" + runlevel + ".d/S" + startlevel + service
 
 
-def image_ssh_setup(log, g_handle, cdl_tmp, host_bridge_ip, listen_port, libvirt_xml):
+def image_ssh_setup(log, g_handle, icicle_tmp, host_bridge_ip, listen_port, libvirt_xml):
     # we have to do 3 things to make sure we can ssh into Fedora 13:
     # 1)  Upload our ssh key
     # 2)  Make sure sshd is running on boot
@@ -68,13 +68,13 @@ def image_ssh_setup(log, g_handle, cdl_tmp, host_bridge_ip, listen_port, libvirt
 
     if g_handle.exists('/root/.ssh/authorized_keys'):
         g_handle.mv('/root/.ssh/authorized_keys',
-                    '/root/.ssh/authorized_keys.cdl')
+                    '/root/.ssh/authorized_keys.icicle')
 
-    if not os.access(cdl_tmp, os.F_OK):
-        os.makedirs(cdl_tmp)
+    if not os.access(icicle_tmp, os.F_OK):
+        os.makedirs(icicle_tmp)
 
-    privname = cdl_tmp + '/id_rsa-cdl-gen'
-    pubname = cdl_tmp + '/id_rsa-cdl-gen.pub'
+    privname = icicle_tmp + '/id_rsa-icicle-gen'
+    pubname = icicle_tmp + '/id_rsa-icicle-gen.pub'
     if os.access(privname, os.F_OK):
         os.remove(privname)
     if os.access(pubname, os.F_OK):
@@ -91,7 +91,7 @@ def image_ssh_setup(log, g_handle, cdl_tmp, host_bridge_ip, listen_port, libvirt
 
     startuplink = get_service_runlevel_link(g_handle, 'sshd')
     if g_handle.exists(startuplink):
-        g_handle.mv(startuplink, startuplink + ".cdl")
+        g_handle.mv(startuplink, startuplink + ".icicle")
     g_handle.ln_sf('/etc/init.d/sshd', startuplink)
 
     sshd_config = \
@@ -109,20 +109,20 @@ X11Forwarding yes
 Subsystem	sftp	/usr/libexec/openssh/sftp-server
 """
 
-    sshd_config_file = cdl_tmp + "/sshd_config"
+    sshd_config_file = icicle_tmp + "/sshd_config"
     f = open(sshd_config_file, 'w')
     f.write(sshd_config)
     f.close()
 
     if g_handle.exists('/etc/ssh/sshd_config'):
-        g_handle.mv('/etc/ssh/sshd_config', '/etc/ssh/sshd_config.cdl')
+        g_handle.mv('/etc/ssh/sshd_config', '/etc/ssh/sshd_config.icicle')
     g_handle.upload(sshd_config_file, '/etc/ssh/sshd_config')
     os.unlink(sshd_config_file)
 
     # part 3; open up iptables
     log.debug("Step 3: Open up the firewall")
     if g_handle.exists('/etc/sysconfig/iptables'):
-        g_handle.mv('/etc/sysconfig/iptables', '/etc/sysconfig/iptables.cdl')
+        g_handle.mv('/etc/sysconfig/iptables', '/etc/sysconfig/iptables.icicle')
     # implicit else; if there is no iptables file, the firewall is open
 
     # part 4; make sure the guest announces itself
@@ -130,20 +130,20 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
     if not g_handle.exists('/etc/init.d/crond') or not g_handle.exists('/usr/sbin/crond'):
         raise OzException("cron not installed on the image, cannot continue")
 
-    cdlpath = ozutil.generate_full_guesttools_path('cdl-nc')
-    g_handle.upload(cdlpath, '/root/cdl-nc')
-    g_handle.chmod(0755, '/root/cdl-nc')
+    iciclepath = ozutil.generate_full_guesttools_path('icicle-nc')
+    g_handle.upload(iciclepath, '/root/icicle-nc')
+    g_handle.chmod(0755, '/root/icicle-nc')
 
-    announcefile = cdl_tmp + "/announce"
+    announcefile = icicle_tmp + "/announce"
     f = open(announcefile, 'w')
-    f.write('*/1 * * * * root /bin/bash -c "/root/cdl-nc ' + host_bridge_ip + ' ' + str(listen_port) + '"\n')
+    f.write('*/1 * * * * root /bin/bash -c "/root/icicle-nc ' + host_bridge_ip + ' ' + str(listen_port) + '"\n')
     f.close()
 
     g_handle.upload(announcefile, '/etc/cron.d/announce')
 
     startuplink = get_service_runlevel_link(g_handle, 'crond')
     if g_handle.exists(startuplink):
-        g_handle.mv(startuplink, startuplink + ".cdl")
+        g_handle.mv(startuplink, startuplink + ".icicle")
     g_handle.ln_sf('/etc/init.d/crond', startuplink)
 
     os.unlink(announcefile)
@@ -153,15 +153,15 @@ def image_ssh_teardown(log, g_handle):
     log.debug("Resetting authorized_keys")
     if g_handle.exists('/root/.ssh/authorized_keys'):
         g_handle.rm('/root/.ssh/authorized_keys')
-    if g_handle.exists('/root/.ssh/authorized_keys.cdl'):
-        g_handle.mv('/root/.ssh/authorized_keys.cdl',
+    if g_handle.exists('/root/.ssh/authorized_keys.icicle'):
+        g_handle.mv('/root/.ssh/authorized_keys.icicle',
                     '/root/.ssh/authorized_keys')
 
     # reset iptables
     log.debug("Resetting iptables rules")
     if g_handle.exists('/etc/sysconfig/iptables'):
         g_handle.rm('/etc/sysconfig/iptables')
-    if g_handle.exists('/etc/sysconfig/iptables.cdl'):
+    if g_handle.exists('/etc/sysconfig/iptables.icicle'):
         g_handle.mv('/etc/sysconfig/iptables')
 
     # remove announce cronjob
@@ -169,17 +169,17 @@ def image_ssh_teardown(log, g_handle):
     if g_handle.exists('/etc/cron.d/announce'):
         g_handle.rm('/etc/cron.d/announce')
 
-    # remove cdl-nc binary
-    log.debug("Removing cdl-nc binary")
-    if g_handle.exists('/root/cdl-nc'):
-        g_handle.rm('/root/cdl-nc')
+    # remove icicle-nc binary
+    log.debug("Removing icicle-nc binary")
+    if g_handle.exists('/root/icicle-nc'):
+        g_handle.rm('/root/icicle-nc')
 
     # remove custom sshd_config
     log.debug("Resetting sshd_config")
     if g_handle.exists('/etc/ssh/sshd_config'):
         g_handle.rm('/etc/ssh/sshd_config')
-    if g_handle.exists('/etc/ssh/sshd_config.cdl'):
-        g_handle.mv('/etc/ssh/sshd_config.cdl', '/etc/ssh/sshd_config')
+    if g_handle.exists('/etc/ssh/sshd_config.icicle'):
+        g_handle.mv('/etc/ssh/sshd_config.icicle', '/etc/ssh/sshd_config')
 
     # reset the service links
     for service in ["sshd", "crond"]:
@@ -187,6 +187,6 @@ def image_ssh_teardown(log, g_handle):
         startuplink = get_service_runlevel_link(g_handle, service)
         if g_handle.exists(startuplink):
             g_handle.rm(startuplink)
-        if g_handle.exists(startuplink + ".cdl"):
-            g_handle.mv(startuplink + ".cdl", startuplink)
+        if g_handle.exists(startuplink + ".icicle"):
+            g_handle.mv(startuplink + ".icicle", startuplink)
 

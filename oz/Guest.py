@@ -94,7 +94,7 @@ class Guest(object):
             self.data_dir = "/var/lib/oz"
 
         self.diskimage = self.output_dir + "/" + self.name + ".dsk"
-        self.cdl_tmp = self.data_dir + "/cdltmp/" + self.name
+        self.icicle_tmp = self.data_dir + "/icicletmp/" + self.name
         self.listen_port = random.randrange(1024, 65535)
         self.libvirt_conn = libvirt.open("qemu:///system")
 
@@ -136,7 +136,7 @@ class Guest(object):
         self.log.debug("update: %s, arch: %s, diskimage: %s" % (self.update, self.arch, self.diskimage))
         self.log.debug("host IP: %s, nicmodel: %s, clockoffset: %s" % (self.host_bridge_ip, self.nicmodel, self.clockoffset))
         self.log.debug("mousetype: %s, disk_bus: %s, disk_dev: %s" % (self.mousetype, self.disk_bus, self.disk_dev))
-        self.log.debug("cdltmp: %s, listen_port: %d" % (self.cdl_tmp, self.listen_port))
+        self.log.debug("icicletmp: %s, listen_port: %d" % (self.icicle_tmp, self.listen_port))
 
     def cleanup_old_guest(self, delete_disk=True):
         def handler(ctxt, err):
@@ -165,8 +165,8 @@ class Guest(object):
     def customize(self):
         raise OzException("Customization for %s is not implemented" % (self.name))
 
-    def generate_cdl(self):
-        raise OzException("CDL generation for %s is not implemented" % (self.name))
+    def generate_icicle(self):
+        raise OzException("ICICLE generation for %s is not implemented" % (self.name))
 
     def targetDev(self, doc, devicetype, path, bus):
         install = doc.newChild(None, "disk", None)
@@ -457,7 +457,7 @@ class Guest(object):
                 # hm, odd, a domain without a name?
                 raise OzException("Saw a domain without a name, something weird is going on")
             if input_name == namenode[0].getContent():
-                raise OzException("Cannot setup CDL generation on a running guest")
+                raise OzException("Cannot setup ICICLE generation on a running guest")
             disks = doc.xpathEval('/domain/devices/disk')
             if len(disks) < 1:
                 # odd, a domain without a disk, but don't worry about it
@@ -469,7 +469,7 @@ class Guest(object):
                     # http://git.annexia.org/?p=libguestfs.git;a=blob;f=src/virt.c;h=2c6be3c6a2392ab8242d1f4cee9c0d1445844385;hb=HEAD#l169
                     filename = str(source.prop('file'))
                     if filename == input_disk:
-                        raise OzException("Cannot setup CDL generation on a running disk")
+                        raise OzException("Cannot setup ICICLE generation on a running disk")
 
 
         self.log.info("Setting up guestfs handle for %s" % (self.name))
@@ -555,12 +555,12 @@ class Guest(object):
 
         return addr[0]
 
-    def output_cdl_xml(self, lines, services):
+    def output_icicle_xml(self, lines, services):
         doc = libxml2.newDoc("1.0")
-        cdl = doc.newChild(None, "cdl", None)
+        icicle = doc.newChild(None, "icicle", None)
         servDoc = libxml2.parseMemory(services, len(services))
-        cdl.addChild(servDoc.getRootElement())
-        packages = cdl.newChild(None, "packages", None)
+        icicle.addChild(servDoc.getRootElement())
+        packages = icicle.newChild(None, "packages", None)
 
         lines.sort()
         for line in lines:
@@ -728,8 +728,11 @@ class CDGuest(Guest):
         shutil.rmtree(self.iso_contents)
 
     def cleanup_install(self):
-        self.log.info("Cleaning up modified ISO")
+        self.log.info("Cleaning up after install")
         os.unlink(self.output_iso)
+        self.log.debug("Removed modified ISO")
+        if self.libvirt_dom is not None:
+            self.libvirt_dom.undefine()
 
 class FDGuest(Guest):
     def __init__(self, distro, update, arch, nicmodel, clockoffset, mousetype,
