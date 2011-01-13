@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!-- A Relax NG schema for the ICICLE (Content and Intended Configuration Language) format -->
+<grammar xmlns="http://relaxng.org/ns/structure/1.0">
+  <start>
+    <ref name='icicle'/>
+  </start>
+
+  <define name='icicle'>
+    <element name='icicle'>
+      <interleave>
+	<optional>
+	  <element name='services'>
+	    <text/>
+	  </element>
+	</optional>
+	<element name='packages'>
+	  <zeroOrMore>
+	    <element name='package'>
+	      <attribute name='name'>
+		<text/>
+	      </attribute>
+	    </element>
+	  </zeroOrMore>
+	</element>
+      </interleave>
+    </element>
+  </define>
+</grammar>

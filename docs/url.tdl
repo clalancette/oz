@@ -1,0 +1,11 @@
+<template>
+  <name>f12jeos</name>
+  <os>
+    <name>Fedora</name>
+    <version>12</version>
+    <arch>x86_64</arch>
+    <install type='iso'>
+      <iso>http://download.fedoraproject.org/pub/fedora/linux/releases/12/Fedora/x86_64/os/</iso>
+    </install>
+  </os>
+</template>
