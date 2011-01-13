@@ -28,15 +28,15 @@ class Windows2000andXPand2003(Guest.CDGuest):
         arch = tdl.arch()
 
         if update == "2000" and arch != "i386":
-            raise Exception, "Windows 2000 only supports i386 architecture"
+            raise OzException("Windows 2000 only supports i386 architecture")
         self.key = tdl.key()
         if self.key is None:
-            raise Exception, "A key is required when installing Windows 2000, XP, or 2003"
+            raise OzException("A key is required when installing Windows 2000, XP, or 2003")
         self.siffile = ozutil.generate_full_auto_path("windows-" + update + "-jeos.sif")
 
         self.url = tdl.iso()
         if tdl.installtype() != 'iso':
-            raise Exception, "Windows installs must be done via iso"
+            raise OzException("Windows installs must be done via iso")
 
         Guest.CDGuest.__init__(self, "Windows", update, arch, 'iso', 'rtl8139',
                                "localtime", "usb", None, config)
@@ -61,7 +61,7 @@ class Windows2000andXPand2003(Guest.CDGuest):
         elif self.arch == "x86_64":
             winarch = "amd64"
         else:
-            raise Exception, "Unexpected architecture " + self.arch
+            raise OzException("Unexpected architecture " + self.arch)
 
         computername = "OZ" + str(random.randrange(1, 900000))
 
@@ -105,12 +105,12 @@ class Windows2008and7(Guest.CDGuest):
         self.unattendfile = ozutil.generate_full_auto_path("windows-" + update + "-jeos.xml")
         self.key = tdl.key()
         if self.key is None:
-            raise Exception, "A key is required when installing Windows 2000, XP, or 2003"
+            raise OzException("A key is required when installing Windows 2000, XP, or 2003")
 
         self.url = tdl.iso()
 
         if tdl.installtype() != 'iso':
-            raise Exception, "Windows installs must be done via iso"
+            raise OzException("Windows installs must be done via iso")
 
         Guest.CDGuest.__init__(self, "Windows", update, arch, 'iso', 'rtl8139',
                                "localtime", "usb", None, config)
@@ -136,7 +136,7 @@ class Windows2008and7(Guest.CDGuest):
         elif self.arch == "x86_64":
             winarch = "amd64"
         else:
-            raise Exception, "Unexpected architecture " + self.arch
+            raise OzException("Unexpected architecture " + self.arch)
 
         doc = libxml2.parseFile(self.unattendfile)
         xp = doc.xpathNewContext()
@@ -180,4 +180,4 @@ def get_class(tdl, config):
         return Windows2000andXPand2003(tdl, config)
     if update == "2008" or update == "7":
         return Windows2008and7(tdl, config)
-    raise Exception, "Unsupported Windows update " + update
+    raise OzException("Unsupported Windows update " + update)

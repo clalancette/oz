@@ -87,7 +87,7 @@ def image_ssh_setup(log, g_handle, cdl_tmp, host_bridge_ip, listen_port, libvirt
     # part 2; check and setup sshd
     log.debug("Step 2: setup sshd")
     if not g_handle.exists('/etc/init.d/sshd') or not g_handle.exists('/usr/sbin/sshd'):
-        raise Exception, "ssh not installed on the image, cannot continue"
+        raise OzException("ssh not installed on the image, cannot continue")
 
     startuplink = get_service_runlevel_link(g_handle, 'sshd')
     if g_handle.exists(startuplink):
@@ -128,7 +128,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
     # part 4; make sure the guest announces itself
     log.debug("Step 4: Guest announcement")
     if not g_handle.exists('/etc/init.d/crond') or not g_handle.exists('/usr/sbin/crond'):
-        raise Exception, "cron not installed on the image, cannot continue"
+        raise OzException("cron not installed on the image, cannot continue")
 
     cdlpath = ozutil.generate_full_guesttools_path('cdl-nc')
     g_handle.upload(cdlpath, '/root/cdl-nc')

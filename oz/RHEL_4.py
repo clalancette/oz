@@ -32,7 +32,7 @@ class RHEL4Guest(Guest.CDGuest):
         elif self.installtype == 'iso':
             self.url = tdl.iso()
         else:
-            raise Exception, "RHEL-4 installs must be done via url or iso"
+            raise OzException("RHEL-4 installs must be done via url or iso")
 
         if self.installtype == 'url':
             ozutil.deny_localhost(self.url)
@@ -128,7 +128,7 @@ class RHEL4Guest(Guest.CDGuest):
             stderr = output[1]
             returncode = output[2]
             if returncode != 0:
-                raise Exception, "Failed to execute guest command 'rpm -qa': %s" % (stderr)
+                raise OzException("Failed to execute guest command 'rpm -qa': %s" % (stderr))
 
 
             cdl_output = self.output_cdl_xml(stdout.split("\n"),
@@ -153,4 +153,4 @@ def get_class(tdl, config):
         return RHEL4Guest(tdl, config, "rtl8139", None)
     if update == "U8":
         return RHEL4Guest(tdl, config, "virtio", "virtio")
-    raise Exception, "Unsupported RHEL-4 update " + update
+    raise OzException("Unsupported RHEL-4 update " + update)

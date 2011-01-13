@@ -22,20 +22,16 @@ so this needs further research.
 5.  If two of the same OSes are being installed at the same time on the same
 machine, they will trample all over each other.  We need to handle this
 situation.
-6.  We should have our own exception class, rather than just raising "Exception"
-all of the time.
-7.  Before attempting an install, check the data_dir and output_dir to make
+6.  Before attempting an install, check the data_dir and output_dir to make
 sure that they will approximately have enough space for the install media
 and the output disk image, respectively.
-8.  Include the example TDLs in the RPM spec file.
-9. More flexible ISO installs - a local file should work just fine when we
-are doing ISO installs (but not URL installs).
-10. Relax-NG schema for TDL/CDL.
-11. Documentation on how to use the classes, and what new classes need to
+7.  Include the example TDLs in the RPM spec file.
+8.  Relax-NG schema for TDL/ICICLE.
+9.  Documentation on how to use the classes, and what new classes need to
 provide.
-12. Add the ability to do (optional) checksumming on the downloaded install
+10. Add the ability to do (optional) checksumming on the downloaded install
 media.
-13. With windows from MSDN (at least 2000, maybe other versions too), the
+11. With windows from MSDN (at least 2000, maybe other versions too), the
 top-level doesn't really contain the bits you care about.  What happens is
 that there are 3 boot options on the CD: installer for Professional, Server, and
 Advanced Server.  The directory structure on the CD is something like:
@@ -52,12 +48,12 @@ then copy just that subdirectory.  You'll also need to extract the appropriate
 parts of eltorito so it boots automatically, and then you'll also need to set
 i386/txtsetup.sif [SetupData]: SetupSourcePath = "\".  See
 http://old.bink.nu/bootcd/
-14. Write a boxgrinder plugin.  This requires implementing a ruby class
+12. Write a boxgrinder plugin.  This requires implementing a ruby class
 for it, and implementing .after_init, .deliverables_exists?, .run, .deliverables.
-15. RHEL-3 U1 and U2 fail to install.  This is probably due to a bug in anaconda
+13. RHEL-3 U1 and U2 fail to install.  This is probably due to a bug in anaconda
 that prevents "method=" on the command-line to work, though I have not confirmed
 that.
-16. FedoraCore 1, 2, and 3 x86_64, fail to boot for some reason.
-17. FedoraCore 6 x86_64 takes *much* longer to install than we give it time for.
-18. RHEL-3 GOLD x86_64 fails to boot.
-19. RHEL-4 GOLD, U1, U2 x86_64 crashes during install.
+14. FedoraCore 1, 2, and 3 x86_64, fail to boot for some reason.
+15. FedoraCore 6 x86_64 takes *much* longer to install than we give it time for.
+16. RHEL-3 GOLD x86_64 fails to boot.
+17. RHEL-4 GOLD, U1, U2 x86_64 crashes during install.

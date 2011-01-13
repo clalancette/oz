@@ -62,11 +62,17 @@ def subprocess_check_output(*popenargs, **kwargs):
         raise ProcessError(retcode, cmd, output=output)
     return output
 
+class OzException(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+    def __str__(self):
+        return self.msg
+
 class Guest(object):
     def __init__(self, distro, update, arch, nicmodel, clockoffset, mousetype,
                  diskbus, config):
         if arch != "i386" and arch != "x86_64":
-            raise Exception, "Unsupported guest arch " + arch
+            raise OzException("Unsupported guest arch " + arch)
         self.log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
         self.uuid = uuid.uuid4()
         mac = [0x52, 0x54, 0x00, random.randint(0x00, 0xff),
@@ -101,11 +107,11 @@ class Guest(object):
                 doc = libxml2.parseMemory(xml, len(xml))
                 ip = doc.xpathEval('/network/ip')
                 if len(ip) != 1:
-                    raise Exception, "Failed to find host IP address for virbr0"
+                    raise OzException("Failed to find host IP address for virbr0")
                 self.host_bridge_ip = ip[0].prop('address')
                 break
         if self.host_bridge_ip is None:
-            raise Exception, "Default libvirt network (virbr0) does not exist, install cannot continue"
+            raise OzException("Default libvirt network (virbr0) does not exist, install cannot continue")
 
         self.nicmodel = nicmodel
         if self.nicmodel is None:
@@ -123,7 +129,7 @@ class Guest(object):
             self.disk_bus = "virtio"
             self.disk_dev = "vda"
         else:
-            raise Exception, "Unknown diskbus type " + diskbus
+            raise OzException("Unknown diskbus type " + diskbus)
 
         self.log.debug("Name: %s, UUID: %s" % (self.name, self.uuid))
         self.log.debug("MAC: %s, distro: %s" % (self.macaddr, self.distro))
@@ -154,13 +160,13 @@ class Guest(object):
     # the next 3 methods are intended to be overridden by the individual
     # OS backends; raise an error if they are called but not implemented
     def generate_install_media(self):
-        raise Exception, "Install media for %s is not implemented, install cannot continue" % (self.name)
+        raise OzException("Install media for %s is not implemented, install cannot continue" % (self.name))
 
     def customize(self):
-        raise Exception, "Customization for %s is not implemented" % (self.name)
+        raise OzException("Customization for %s is not implemented" % (self.name))
 
     def generate_cdl(self):
-        raise Exception, "CDL generation for %s is not implemented" % (self.name)
+        raise OzException("CDL generation for %s is not implemented" % (self.name))
 
     def targetDev(self, doc, devicetype, path, bus):
         install = doc.newChild(None, "disk", None)
@@ -315,9 +321,9 @@ class Guest(object):
             screenshot = self.name + "-" + str(time.time()) + ".png"
             self.capture_screenshot(self.libvirt_dom.XMLDesc(0), screenshot)
             if failed:
-                raise Exception, "Failed installation, domain went to state %d" % (info[0])
+                raise OzException("Failed installation, domain went to state %d" % (info[0]))
             else:
-                raise Exception, "Timed out waiting for install to finish"
+                raise OzException("Timed out waiting for install to finish")
 
         self.log.info("Install of %s succeeded" % (self.name))
 
@@ -393,7 +399,7 @@ class Guest(object):
             if os.stat(output)[stat.ST_SIZE] == 0:
                 # if we see a zero-sized media after the download, we know
                 # something went wrong
-                raise Exception, "Media of 0 size downloaded"
+                raise OzException("Media of 0 size downloaded")
 
     def capture_screenshot(self, xml, filename):
         doc = libxml2.parseMemory(xml, len(xml))
@@ -424,14 +430,14 @@ class Guest(object):
         input_doc = libxml2.parseMemory(libvirt_xml, len(libvirt_xml))
         namenode = input_doc.xpathEval('/domain/name')
         if len(namenode) != 1:
-            raise Exception, "invalid libvirt XML with no name"
+            raise OzException("invalid libvirt XML with no name")
         input_name = namenode[0].getContent()
         disks = input_doc.xpathEval('/domain/devices/disk')
         if len(disks) != 1:
-            raise Exception, "oz cannot handle a libvirt domain with more than 1 disk"
+            raise OzException("oz cannot handle a libvirt domain with more than 1 disk")
         source = disks[0].xpathEval('source')
         if len(source) != 1:
-            raise Exception, "invalid <disk> entry without a source"
+            raise OzException("invalid <disk> entry without a source")
         input_disk = source[0].prop('file')
         driver = disks[0].xpathEval('driver')
         if len(driver) == 0:
@@ -439,7 +445,7 @@ class Guest(object):
         elif len(driver) != 1:
             input_disk_type = driver[0].prop('type')
         else:
-            raise Exception, "invalid <disk> entry without a driver"
+            raise OzException("invalid <disk> entry without a driver")
 
         for domid in self.libvirt_conn.listDomainsID():
             self.log.debug("DomID: %d" % (domid))
@@ -449,9 +455,9 @@ class Guest(object):
             namenode = doc.xpathEval('/domain/name')
             if len(namenode) != 1:
                 # hm, odd, a domain without a name?
-                raise Exception, "Saw a domain without a name, something weird is going on"
+                raise OzException("Saw a domain without a name, something weird is going on")
             if input_name == namenode[0].getContent():
-                raise Exception, "Cannot setup CDL generation on a running guest"
+                raise OzException("Cannot setup CDL generation on a running guest")
             disks = doc.xpathEval('/domain/devices/disk')
             if len(disks) < 1:
                 # odd, a domain without a disk, but don't worry about it
@@ -463,7 +469,7 @@ class Guest(object):
                     # http://git.annexia.org/?p=libguestfs.git;a=blob;f=src/virt.c;h=2c6be3c6a2392ab8242d1f4cee9c0d1445844385;hb=HEAD#l169
                     filename = str(source.prop('file'))
                     if filename == input_disk:
-                        raise Exception, "Cannot setup CDL generation on a running disk"
+                        raise OzException("Cannot setup CDL generation on a running disk")
 
 
         self.log.info("Setting up guestfs handle for %s" % (self.name))
@@ -483,7 +489,7 @@ class Guest(object):
         roots = g.inspect_os()
 
         if len(roots) == 0:
-            raise Exception, "No operating systems found on the disk"
+            raise OzException("No operating systems found on the disk")
 
         self.log.debug("Getting mountpoints")
         for root in roots:
@@ -540,7 +546,7 @@ class Guest(object):
         finally:
             subprocess.call(["iptables", "-D", "INPUT", "1"])
         if len(rlist) == 0:
-            raise Exception, "Timed out waiting for domain to boot"
+            raise OzException("Timed out waiting for domain to boot")
         new_sock, addr = listen.accept()
         new_sock.close()
         listen.close()
@@ -625,11 +631,13 @@ class CDGuest(Guest):
         spec = cdfile.read(struct.calcsize(fmt))
         (boot, isoIdent, version, toritoSpec, unused, bootP) = struct.unpack(fmt, spec)
         if boot != 0x0:
-            raise Exception, "invalid boot"
+            raise OzException("invalid CD boot sector")
         if version != 0x1:
-            raise Exception, "invalid version"
-        if isoIdent != "CD001" or toritoSpec != "EL TORITO SPECIFICATION":
-            raise Exception, "isoIdentification not correct"
+            raise OzException("invalid CD version")
+        if isoIdent != "CD001":
+            raise OzException("invalid CD isoIdentification")
+        if toritoSpec != "EL TORITO SPECIFICATION":
+            raise OzException("invalid CD torito specification")
 
         # OK, this looks like a CD.  Seek to the boot sector, and look for the
         # header, 0x55, and 0xaa in the first 32 bytes
@@ -638,13 +646,13 @@ class CDGuest(Guest):
         bootdata = cdfile.read(struct.calcsize(fmt))
         (header, platform, unused, manu, unused2, five, aa) = struct.unpack(fmt, bootdata)
         if header != 0x1:
-            raise Exception, "invalid header"
+            raise OzException("invalid CD boot sector header")
         if platform != 0x0 and platform != 0x1 and platform != 0x2:
-            raise Exception, "invalid platform"
+            raise OzException("invalid CD boot sector platform")
         if unused != 0x0:
-            raise Exception, "invalid unused boot sector field"
+            raise OzException("invalid CD unused boot sector field")
         if five != 0x55 or aa != 0xaa:
-            raise Exception, "invalid footer"
+            raise OzException("invalid CD boot sector footer")
 
         def checksum(data):
             s = 0
@@ -653,8 +661,9 @@ class CDGuest(Guest):
                 s = numpy.uint16(numpy.uint16(s) + numpy.uint16(w))
             return s
 
-        if checksum(bootdata) != 0:
-            raise Exception, "invalid checksum"
+        csum = checksum(bootdata)
+        if csum != 0:
+            raise OzException("invalid CD checksum: expected 0, saw %d" % (csum))
 
         # OK, everything so far has checked out.  Read the default/initial boot
         # entry
@@ -664,9 +673,9 @@ class CDGuest(Guest):
         (boot, media, loadsegment, systemtype, unused, scount, imgstart, unused2) = struct.unpack(fmt, defaultentry)
 
         if boot != 0x88:
-            raise Exception, "invalid boot indicator"
+            raise OzException("invalid CD initial boot indicator")
         if unused != 0x0 or unused2 != 0x0:
-            raise Exception, "invalid unused initial boot field"
+            raise EOzxception("invalid CD initial boot unused field")
 
         if media == 0 or media == 4:
             count = scount
@@ -680,7 +689,7 @@ class CDGuest(Guest):
             # 2.88MB floppy in sectors
             count = 2880*1024/512
         else:
-            raise Exception, "invalid media type"
+            raise OzException("invalid CD media type")
 
         # finally, seek to "imgstart", and read "count" sectors, which contains
         # the boot image

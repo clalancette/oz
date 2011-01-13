@@ -28,7 +28,7 @@ class RHEL3Guest(Guest.CDGuest):
         self.ks_file = ozutil.generate_full_auto_path("rhel-3-jeos.ks")
 
         if tdl.installtype() != 'url':
-            raise Exception, "RHEL-3 installs must be done via url"
+            raise OzException("RHEL-3 installs must be done via url")
 
         self.url = tdl.url()
 
@@ -75,4 +75,4 @@ def get_class(tdl, config):
     update = tdl.update()
     if update == "GOLD" or update == "U1" or update == "U2" or update == "U3" or update == "U4" or update == "U5" or update == "U6" or update == "U7" or update == "U8" or update == "U9":
         return RHEL3Guest(tdl, config)
-    raise Exception, "Unsupported RHEL-3 update " + update
+    raise OzException("Unsupported RHEL-3 update " + update)

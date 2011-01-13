@@ -30,14 +30,14 @@ class RHL9Guest(Guest.CDGuest):
         self.ks_file = ozutil.generate_full_auto_path("rhl-" + update + "-jeos.ks")
 
         if tdl.installtype() != 'url':
-            raise Exception, "RHL installs must be done via url"
+            raise Guest.OzException("RHL installs must be done via url")
 
         self.url = tdl.url()
 
         ozutil.deny_localhost(self.url)
 
         if arch != "i386":
-            raise Exception, "Invalid arch " + arch + "for RHL guest"
+            raise Guest.OzException("Invalid arch " + arch + "for RHL guest")
 
         Guest.CDGuest.__init__(self, "RHL", "9", "i386", "url", "rtl8139", None,
                                None, None, config)
@@ -95,14 +95,14 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
         self.ks_file = ozutil.generate_full_auto_path("rhl-" + update + "-jeos.ks")
 
         if tdl.installtype() != 'url':
-            raise Exception, "RHL installs must be done via url"
+            raise Guest.OzException("RHL installs must be done via url")
 
         self.url = tdl.url()
 
         ozutil.deny_localhost(self.url)
 
         if arch != "i386":
-            raise Exception, "Invalid arch " + arch + "for RHL guest"
+            raise Guest.OzException("Invalid arch " + arch + "for RHL guest")
 
         Guest.FDGuest.__init__(self, "RHL", update, "i386", nicmodel, None,
                                None, None, config)
@@ -191,4 +191,4 @@ def get_class(tdl, config):
     # Kernel panic: VFS: Unable to mount root fs on 08:21
     if update == "7.0" or update == "7.1":
         return RHL70and71and72and73and8Guest(tdl, config, "ne2k_pci")
-    raise Exception, "Unsupported RHL update " + update
+    raise Guest.OzException("Unsupported RHL update " + update)

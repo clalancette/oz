@@ -58,11 +58,11 @@ def get_class(tdl, config):
     autoyast = ozutil.generate_full_auto_path("opensuse-" + update + "-jeos.xml")
 
     if tdl.installtype() != 'iso':
-        raise Exception, "OpenSUSE installs must be done via ISO"
+        raise OzException("OpenSUSE installs must be done via ISO")
 
     url = tdl.iso()
 
     if update == "11.1" or update == "11.2" or update == "11.3":
         return OpenSUSEGuest(update, arch, url, autoyast, config)
 
-    raise Exception, "Unsupported OpenSUSE update " + update
+    raise OzException("Unsupported OpenSUSE update " + update)
