@@ -45,6 +45,9 @@ class ProcessError(Exception):
     def __str__(self):
         return "'%s' failed(%d): %s" % (self.cmd, self.returncode, self.output)
 
+def libvirt_error_handler(ctxt, err):
+    pass
+
 # NOTE: python 2.7 already defines subprocess.capture_output, but I can't
 # depend on that yet.  So write my own
 def subprocess_check_output(*popenargs, **kwargs):
@@ -96,6 +99,7 @@ class Guest(object):
         self.diskimage = self.output_dir + "/" + self.name + ".dsk"
         self.icicle_tmp = self.data_dir + "/icicletmp/" + self.name
         self.listen_port = random.randrange(1024, 65535)
+        libvirt.registerErrorHandler(libvirt_error_handler, 'context')
         self.libvirt_conn = libvirt.open("qemu:///system")
 
         # we have to make sure that the private libvirt bridge is available
@@ -139,9 +143,6 @@ class Guest(object):
         self.log.debug("icicletmp: %s, listen_port: %d" % (self.icicle_tmp, self.listen_port))
 
     def cleanup_old_guest(self, delete_disk=True):
-        def handler(ctxt, err):
-            pass
-        libvirt.registerErrorHandler(handler, 'context')
         self.log.info("Cleaning up guest named %s" % (self.name))
         try:
             dom = self.libvirt_conn.lookupByName(self.name)
@@ -152,7 +153,6 @@ class Guest(object):
             dom.undefine()
         except:
             pass
-        libvirt.registerErrorHandler(None, None)
 
         if delete_disk and os.access(self.diskimage, os.F_OK):
             os.unlink(self.diskimage)
@@ -177,8 +177,8 @@ class Guest(object):
         target = install.newChild(None, "target", None)
         target.setProp("dev", bus)
 
-    def generate_define_xml(self, bootdev, want_install_disk=True):
-        self.log.info("Generate/define XML for guest %s with bootdev %s" % (self.name, bootdev))
+    def generate_xml(self, bootdev, want_install_disk=True):
+        self.log.info("Generate XML for guest %s with bootdev %s" % (self.name, bootdev))
 
         # create XML document
         doc = libxml2.newDoc("1.0")
@@ -269,7 +269,6 @@ class Guest(object):
                 self.targetDev(devices, "floppy", self.output_floppy, "fda")
 
         self.log.debug("Generated XML:\n%s" % (doc.serialize(None, 1)))
-        self.libvirt_dom = self.libvirt_conn.defineXML(doc.serialize(None, 1))
 
         return doc.serialize(None, 1)
 
@@ -294,61 +293,68 @@ class Guest(object):
         f.write("\x00")
         f.close()
 
-    def wait_for_install_finish(self, count):
+    def wait_for_install_finish(self, libvirt_dom, count):
         origcount = count
-        failed = False
         while count > 0:
+            if count % 10 == 0:
+                self.log.debug("Waiting for %s to finish installing, %d/%d" % (self.name, count, origcount))
             try:
-                if count % 10 == 0:
-                    self.log.debug("Waiting for %s to finish installing, %d/%d" % (self.name, count, origcount))
-                info = self.libvirt_dom.info()
-                if info[0] == libvirt.VIR_DOMAIN_SHUTOFF:
-                    # the domain is now shutoff, so get out of here
+                info = libvirt_dom.info()
+            except libvirt.libvirtError, e:
+                self.log.debug("Libvirt Domain Info Failed:")
+                self.log.debug(" code is %d" % e.get_error_code())
+                self.log.debug(" domain is %d" % e.get_error_domain())
+                self.log.debug(" message is %s" % e.get_error_message())
+                self.log.debug(" level is %d" % e.get_error_level())
+                self.log.debug(" str1 is %s" % e.get_str1())
+                self.log.debug(" str2 is %s" % e.get_str2())
+                self.log.debug(" str3 is %s" % e.get_str3())
+                self.log.debug(" int1 is %d" % e.get_int1())
+                self.log.debug(" int2 is %d" % e.get_int2())
+                if e.get_error_domain() == libvirt.VIR_FROM_QEMU and (e.get_error_code() in [libvirt.VIR_ERR_NO_DOMAIN, libvirt.VIR_ERR_SYSTEM_ERROR]):
                     break
-                elif info[0] != libvirt.VIR_DOMAIN_RUNNING and info[0] != libvirt.VIR_DOMAIN_BLOCKED:
-                    # the domain isn't running or blocked; something bad
-                    # happened, so get out of here and report the error
-                    failed = True
-                    break
-                count -= 1
-            except:
-                pass
+                else:
+                    raise
+
+            count -= 1
             time.sleep(1)
 
-        if failed or count == 0:
+        if count == 0:
             # if we timed out, then let's make sure to take a screenshot.
             # FIXME: where should we put this screenshot?
             screenshot = self.name + "-" + str(time.time()) + ".png"
-            self.capture_screenshot(self.libvirt_dom.XMLDesc(0), screenshot)
-            if failed:
-                raise OzException("Failed installation, domain went to state %d" % (info[0]))
-            else:
-                raise OzException("Timed out waiting for install to finish")
+            self.capture_screenshot(libvirt_dom.XMLDesc(0), screenshot)
+            raise OzException("Timed out waiting for install to finish")
 
         self.log.info("Install of %s succeeded" % (self.name))
 
-    def wait_for_guest_shutdown(self, count=60):
+    def wait_for_guest_shutdown(self, libvirt_dom, count=60):
         origcount = count
-        success = False
         while count > 0:
+            if count % 10 == 0:
+                self.log.debug("Waiting for %s to shutdown, %d/%d" % (self.name, count, origcount))
             try:
-                if count % 10 == 0:
-                    self.log.debug("Waiting for %s to shutdown, %d/%d" % (self.name, count, origcount))
-                info = self.libvirt_dom.info()
-                if info[0] == libvirt.VIR_DOMAIN_SHUTOFF:
-                    # the domain is now shutoff, so get out of here
-                    success = True
+                info = libvirt_dom.info()
+            except libvirt.libvirtError, e:
+                self.log.debug("Libvirt Domain Info Failed:")
+                self.log.debug(" code is %d" % e.get_error_code())
+                self.log.debug(" domain is %d" % e.get_error_domain())
+                self.log.debug(" message is %s" % e.get_error_message())
+                self.log.debug(" level is %d" % e.get_error_level())
+                self.log.debug(" str1 is %s" % e.get_str1())
+                self.log.debug(" str2 is %s" % e.get_str2())
+                self.log.debug(" str3 is %s" % e.get_str3())
+                self.log.debug(" int1 is %d" % e.get_int1())
+                self.log.debug(" int2 is %d" % e.get_int2())
+                if e.get_error_domain() == libvirt.VIR_FROM_QEMU and (e.get_error_code() in [libvirt.VIR_ERR_NO_DOMAIN, libvirt.VIR_ERR_SYSTEM_ERROR]):
                     break
-                elif info[0] != libvirt.VIR_DOMAIN_RUNNING and info[0] != libvirt.VIR_DOMAIN_BLOCKED:
-                    # the domain isn't running or blocked; something bad
-                    # happened, so get out of here
-                    break
-                count -= 1
-            except:
-                pass
+                else:
+                    raise
+
+            count -= 1
             time.sleep(1)
 
-        return success
+        return count != 0
 
     def get_original_media(self, url, output, force_download):
         original_available = False
@@ -725,12 +731,11 @@ class CDGuest(Guest):
 
     def install(self):
         self.log.info("Running install for %s" % (self.name))
-        self.generate_define_xml("cdrom")
-        self.libvirt_dom.create()
+        xml = self.generate_xml("cdrom")
+        dom = self.libvirt_conn.createXML(xml, 0)
+        self.wait_for_install_finish(dom, 1200)
 
-        self.wait_for_install_finish(1200)
-
-        return self.generate_define_xml("hd", want_install_disk=False)
+        return self.generate_xml("hd", want_install_disk=False)
 
     def cleanup_iso(self):
         self.log.info("Cleaning up old ISO data")
@@ -740,8 +745,6 @@ class CDGuest(Guest):
         self.log.info("Cleaning up after install")
         os.unlink(self.output_iso)
         self.log.debug("Removed modified ISO")
-        if self.libvirt_dom is not None:
-            self.libvirt_dom.undefine()
 
 class FDGuest(Guest):
     def __init__(self, distro, update, arch, nicmodel, clockoffset, mousetype,
@@ -760,17 +763,17 @@ class FDGuest(Guest):
 
     def install(self):
         self.log.info("Running install for %s" % (self.name))
-        self.generate_define_xml("fd")
-        self.libvirt_dom.create()
+        xml = self.generate_xml("fd")
+        dom = self.libvirt_conn.createXML(xml, 0)
+        self.wait_for_install_finish(dom, 1200)
 
-        self.wait_for_install_finish(1200)
-
-        return self.generate_define_xml("hd", want_install_disk=False)
+        return self.generate_xml("hd", want_install_disk=False)
 
     def cleanup_floppy(self):
         self.log.info("Cleaning up floppy data")
         shutil.rmtree(self.floppy_contents)
 
     def cleanup_install(self):
-        self.log.info("Cleaning up modified floppy")
+        self.log.info("Cleaning up after install")
         os.unlink(self.output_floppy)
+        self.log.debug("Removed modified floppy")

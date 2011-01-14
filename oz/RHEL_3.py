@@ -21,7 +21,7 @@ import re
 import ozutil
 import RedHat
 
-class RHEL3Guest(Guest.CDGuest):
+class RHEL3Guest(RedHat.RedHatCDGuest):
     def __init__(self, tdl, config):
         self.tdl = tdl
         self.ks_file = ozutil.generate_full_auto_path("rhel-3-jeos.ks")
@@ -58,16 +58,12 @@ class RHEL3Guest(Guest.CDGuest):
         f.writelines(lines)
         f.close()
 
-    def generate_new_iso(self):
-        self.log.debug("Generating new ISO")
-        RedHat.generate_iso(self.output_iso, self.iso_contents)
-
     def generate_install_media(self, force_download):
         self.log.info("Generating install media")
         self.get_original_iso(self.url + "/images/boot.iso", force_download)
         self.copy_iso()
         self.modify_iso()
-        self.generate_new_iso()
+        self.generate_iso()
         self.cleanup_iso()
 
 def get_class(tdl, config):

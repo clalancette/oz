@@ -20,7 +20,7 @@ import re
 import ozutil
 import RedHat
 
-class RHEL4Guest(Guest.CDGuest):
+class RHEL4Guest(RedHat.RedHatCDGuest):
     def __init__(self, tdl, config, nicmodel, diskbus):
         self.tdl = tdl
         self.ks_file = ozutil.generate_full_auto_path("rhel-4-jeos.ks")
@@ -67,10 +67,6 @@ class RHEL4Guest(Guest.CDGuest):
         f.writelines(lines)
         f.close()
 
-    def generate_new_iso(self):
-        self.log.debug("Generating new ISO")
-        RedHat.generate_iso(self.output_iso, self.iso_contents)
-
     def generate_install_media(self, force_download):
         self.log.info("Generating install media")
         fetchurl = self.url
@@ -79,68 +75,8 @@ class RHEL4Guest(Guest.CDGuest):
         self.get_original_iso(fetchurl, force_download)
         self.copy_iso()
         self.modify_iso()
-        self.generate_new_iso()
+        self.generate_iso()
         self.cleanup_iso()
-
-    def collect_setup(self, libvirt_xml):
-        self.log.info("Collection Setup")
-
-        g_handle = self.guestfs_handle_setup(libvirt_xml)
-
-        try:
-            RedHat.image_ssh_setup(self.log, g_handle, self.icicle_tmp,
-                                   self.host_bridge_ip, self.listen_port,
-                                   libvirt_xml)
-        finally:
-            self.guestfs_handle_cleanup(g_handle)
-
-    def collect_teardown(self, libvirt_xml):
-        self.log.info("Collection Teardown")
-
-        g_handle = self.guestfs_handle_setup(libvirt_xml)
-
-        try:
-            RedHat.image_ssh_teardown(self.log, g_handle)
-        finally:
-            self.guestfs_handle_cleanup(g_handle)
-
-    def generate_icicle(self, libvirt_xml):
-        self.log.info("Generating ICICLE")
-
-        self.collect_setup(libvirt_xml)
-
-        icicle_output = ''
-        try:
-            self.libvirt_dom = self.libvirt_conn.defineXML(libvirt_xml)
-            self.libvirt_dom.create()
-
-            guestaddr = self.wait_for_guest_boot()
-
-            output = RedHat.guest_execute_command(guestaddr,
-                                                  self.icicle_tmp + '/id_rsa-icicle-gen',
-                                                  'rpm -qa')
-            stdout = output[0]
-            stderr = output[1]
-            returncode = output[2]
-            if returncode != 0:
-                raise Guest.OzException("Failed to execute guest command 'rpm -qa': %s" % (stderr))
-
-
-            icicle_output = self.output_icicle_xml(stdout.split("\n"),
-                                                   self.tdl.services)
-
-            RedHat.guest_execute_command(guestaddr,
-                                         self.icicle_tmp + '/id_rsa-icicle-gen',
-                                         'shutdown -h now')
-
-            if self.wait_for_guest_shutdown():
-                self.libvirt_dom = None
-        finally:
-            if self.libvirt_dom is not None:
-                self.libvirt_dom.destroy()
-            self.collect_teardown(libvirt_xml)
-
-        return icicle_output
 
 def get_class(tdl, config):
     if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7"]:

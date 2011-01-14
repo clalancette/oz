@@ -89,13 +89,15 @@ class Windows2000andXPand2003(Guest.CDGuest):
 
     def install(self):
         self.log.info("Running install for %s" % (self.name))
-        self.generate_define_xml("cdrom")
-        self.libvirt_dom.create()
-        self.wait_for_install_finish(1000)
-        self.generate_define_xml("hd")
-        self.libvirt_dom.create()
-        self.wait_for_install_finish(3600)
-        return self.generate_define_xml("hd", want_install_disk=False)
+        xml = self.generate_xml("cdrom")
+        dom = self.libvirt_conn.createXML(xml, 0)
+        self.wait_for_install_finish(dom, 1000)
+
+        xml = self.generate_xml("hd")
+        dom = self.libvirt_conn.createXML(xml, 0)
+        self.wait_for_install_finish(dom, 3600)
+
+        return self.generate_xml("hd", want_install_disk=False)
 
 class Windows2008and7(Guest.CDGuest):
     def __init__(self, tdl, config):
@@ -156,16 +158,19 @@ class Windows2008and7(Guest.CDGuest):
 
     def install(self):
         self.log.info("Running install for %s" % (self.name))
-        self.generate_define_xml("cdrom")
-        self.libvirt_dom.create()
-        self.wait_for_install_finish(6000)
-        self.generate_define_xml("hd")
-        self.libvirt_dom.create()
-        self.wait_for_install_finish(6000)
-        self.generate_define_xml("hd")
-        self.libvirt_dom.create()
-        self.wait_for_install_finish(6000)
-        return self.generate_define_xml("hd", want_install_disk=False)
+        xml = self.generate_xml("cdrom")
+        dom = self.libvirt_conn.createXML(xml, 0)
+        self.wait_for_install_finish(dom, 6000)
+
+        xml = self.generate_xml("hd")
+        dom = self.libvirt_conn.createXML(xml, 0)
+        self.wait_for_install_finish(dom, 6000)
+
+        xml = self.generate_xml("hd")
+        dom = self.libvirt_conn.createXML(xml, 0)
+        self.wait_for_install_finish(dom, 6000)
+
+        return self.generate_xml("hd", want_install_disk=False)
 
 def get_class(tdl, config):
     if tdl.update in ["2000", "XP", "2003"]:
