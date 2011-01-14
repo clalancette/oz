@@ -160,6 +160,8 @@ class FedoraGuest(Guest.CDGuest):
     def customize(self, libvirt_xml):
         self.log.info("Customizing image")
 
+        keyfile = self.icicle_tmp + '/id_rsa-icicle-gen'
+
         if not self.packages:
             self.log.info("No additional packages to install, skipping customization")
             return
@@ -176,8 +178,7 @@ class FedoraGuest(Guest.CDGuest):
             for package in self.packages:
                 packstr += package + ' '
 
-            output = RedHat.guest_execute_command(guestaddr,
-                                                  self.icicle_tmp + '/id_rsa-icicle-gen',
+            output = RedHat.guest_execute_command(guestaddr, keyfile,
                                                   'yum -y install %s' % (packstr))
 
             stdout = output[0]
@@ -186,8 +187,7 @@ class FedoraGuest(Guest.CDGuest):
             if returncode != 0:
                 raise Exception, "Failed to execute guest command 'yum -y install %s': %s" % (packstr, stderr)
 
-            RedHat.guest_execute_command(guestaddr,
-                                         self.icicle_tmp + '/id_rsa-icicle-gen',
+            RedHat.guest_execute_command(guestaddr, keyfile,
                                          'shutdown -h now')
 
             if self.wait_for_guest_shutdown():
