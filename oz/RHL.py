@@ -24,15 +24,15 @@ import RedHat
 
 class RHL9Guest(Guest.CDGuest):
     def __init__(self, tdl, config):
-        update = tdl.update()
-        arch = tdl.arch()
+        update = tdl.update
+        arch = tdl.arch
 
         self.ks_file = ozutil.generate_full_auto_path("rhl-" + update + "-jeos.ks")
 
-        if tdl.installtype() != 'url':
+        if tdl.installtype != 'url':
             raise Guest.OzException("RHL installs must be done via url")
 
-        self.url = tdl.url()
+        self.url = tdl.url
 
         ozutil.deny_localhost(self.url)
 
@@ -89,15 +89,15 @@ class RHL9Guest(Guest.CDGuest):
 
 class RHL70and71and72and73and8Guest(Guest.FDGuest):
     def __init__(self, tdl, config, nicmodel):
-        update = tdl.update()
-        arch = tdl.arch()
+        update = tdl.update
+        arch = tdl.arch
 
         self.ks_file = ozutil.generate_full_auto_path("rhl-" + update + "-jeos.ks")
 
-        if tdl.installtype() != 'url':
+        if tdl.installtype != 'url':
             raise Guest.OzException("RHL installs must be done via url")
 
-        self.url = tdl.url()
+        self.url = tdl.url
 
         ozutil.deny_localhost(self.url)
 
@@ -169,7 +169,7 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
         self.cleanup_floppy()
 
 def get_class(tdl, config):
-    update = tdl.update()
+    update = tdl.update
     if update == "9":
         return RHL9Guest(tdl, config)
     if update == "7.2" or update == "7.3" or update == "8":

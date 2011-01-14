@@ -23,14 +23,14 @@ import RedHat
 
 class RHEL3Guest(Guest.CDGuest):
     def __init__(self, tdl, config):
-        update = tdl.update()
-        arch = tdl.arch()
+        update = tdl.update
+        arch = tdl.arch
         self.ks_file = ozutil.generate_full_auto_path("rhel-3-jeos.ks")
 
-        if tdl.installtype() != 'url':
+        if tdl.installtype != 'url':
             raise Guest.OzException("RHEL-3 installs must be done via url")
 
-        self.url = tdl.url()
+        self.url = tdl.url
 
         ozutil.deny_localhost(self.url)
 
@@ -72,7 +72,7 @@ class RHEL3Guest(Guest.CDGuest):
         self.cleanup_iso()
 
 def get_class(tdl, config):
-    update = tdl.update()
+    update = tdl.update
     if update == "GOLD" or update == "U1" or update == "U2" or update == "U3" or update == "U4" or update == "U5" or update == "U6" or update == "U7" or update == "U8" or update == "U9":
         return RHEL3Guest(tdl, config)
     raise Guest.OzException("Unsupported RHEL-3 update " + update)

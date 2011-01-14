@@ -22,16 +22,16 @@ import RedHat
 
 class RHEL6Guest(Guest.CDGuest):
     def __init__(self, tdl, config):
-        update = tdl.update()
-        arch = tdl.arch()
-        key = tdl.key()
+        update = tdl.update
+        arch = tdl.arch
+        key = tdl.key
         self.ks_file = ozutil.generate_full_auto_path("rhel-6-jeos.ks")
-        self.installtype = tdl.installtype()
+        self.installtype = tdl.installtype
 
         if self.installtype == 'url':
-            self.url = tdl.url()
+            self.url = tdl.url
         elif self.installtype == 'iso':
-            self.url = tdl.iso()
+            self.url = tdl.iso
         else:
             raise Guest.OzException("RHEL-6 installs must be done via url or iso")
 
@@ -41,8 +41,8 @@ class RHEL6Guest(Guest.CDGuest):
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)
 
-        self.packages = tdl.packages()
-        self.output_services = tdl.services()
+        self.packages = tdl.packages
+        self.output_services = tdl.services
 
         Guest.CDGuest.__init__(self, "RHEL-6", update, arch, self.installtype,
                                "virtio", None, None, "virtio", config)
@@ -185,7 +185,7 @@ class RHEL6Guest(Guest.CDGuest):
             self.collect_teardown(libvirt_xml)
 
 def get_class(tdl, config):
-    update = tdl.update()
+    update = tdl.update
     if update == "0":
         return RHEL6Guest(tdl, config)
     raise Guest.OzException("Unsupported RHEL-6 update " + update)

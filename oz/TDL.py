@@ -28,19 +28,19 @@ class TDL(object):
         self.doc = None
         self.doc = libxml2.parseFile(filename)
 
-        self._distro = get_value(self.doc, '/template/os/name')
-        if self._distro is None:
+        self.distro = get_value(self.doc, '/template/os/name')
+        if self.distro is None:
             raise Guest.OzException("Failed to find OS name in TDL")
 
-        self._update = get_value(self.doc, '/template/os/version')
-        if self._update is None:
+        self.update = get_value(self.doc, '/template/os/version')
+        if self.update is None:
             raise Guest.OzException("Failed to find OS version in TDL")
 
-        self._arch = get_value(self.doc, '/template/os/arch')
-        if self._arch is None:
+        self.arch = get_value(self.doc, '/template/os/arch')
+        if self.arch is None:
             raise Guest.OzException("Failed to find OS architecture in TDL")
 
-        self._key = get_value(self.doc, '/template/os/key')
+        self.key = get_value(self.doc, '/template/os/key')
         # key is not required, so it is not fatal if it is None
 
         install = self.doc.xpathEval('/template/os/install')
@@ -48,51 +48,32 @@ class TDL(object):
             raise Guest.OzException("Failed to find OS install in TDL")
         if not install[0].hasProp('type'):
             raise Guest.OzException("Failed to find OS install type in TDL")
-        self._installtype = install[0].prop('type')
-        if self._installtype == "url":
-            self._url = get_value(self.doc, '/template/os/install/url')
-            if self._url is None:
+        self.installtype = install[0].prop('type')
+        if self.installtype == "url":
+            self.url = get_value(self.doc, '/template/os/install/url')
+            if self.url is None:
                 raise Guest.OzException("Failed to find OS install URL in TDL")
-        elif self._installtype == "iso":
-            self._iso = get_value(self.doc, '/template/os/install/iso')
-            if self._iso is None:
+        elif self.installtype == "iso":
+            self.iso = get_value(self.doc, '/template/os/install/iso')
+            if self.iso is None:
                 raise Guest.OzException("Failed to find OS install ISO in TDL")
         else:
-            raise Guest.OzException("Unknown install type " + self._installtype + " in TDL")
+            raise Guest.OzException("Unknown install type " + self.installtype + " in TDL")
 
         services = self.doc.xpathEval('/template/services')
         # there may be 0 or 1 <services> elements
 
         if len(services) == 0:
-            self._services = "<services/>"
+            self.services = "<services/>"
         elif len(services) == 1:
-            self._services = str(services[0])
+            self.services = str(services[0])
         else:
             raise Guest.OzException("Invalid number of services, expected 0 or 1")
 
-        self._packages = []
+        self.packages = []
         for package in self.doc.xpathEval('/template/packages/package'):
-            self._packages.append(package.prop('name'))
+            self.packages.append(package.prop('name'))
 
     def __del__(self):
         if self.doc is not None:
             self.doc.freeDoc()
-
-    def distro(self):
-        return self._distro
-    def update(self):
-        return self._update
-    def arch(self):
-        return self._arch
-    def url(self):
-        return self._url
-    def iso(self):
-        return self._iso
-    def key(self):
-        return self._key
-    def installtype(self):
-        return self._installtype
-    def services(self):
-        return self._services
-    def packages(self):
-        return self._packages

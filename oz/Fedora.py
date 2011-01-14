@@ -22,17 +22,17 @@ import RedHat
 
 class FedoraGuest(Guest.CDGuest):
     def __init__(self, tdl, config, nicmodel, haverepo, diskbus, brokenisomethod):
-        update = tdl.update()
-        arch = tdl.arch()
+        update = tdl.update
+        arch = tdl.arch
         self.ks_file = ozutil.generate_full_auto_path("fedora-" + update + "-jeos.ks")
         self.haverepo = haverepo
         self.brokenisomethod = brokenisomethod
-        self.installtype = tdl.installtype()
+        self.installtype = tdl.installtype
 
         if self.installtype == 'url':
-            self.url = tdl.url()
+            self.url = tdl.url
         elif self.installtype == 'iso':
-            self.url = tdl.iso()
+            self.url = tdl.iso
         else:
             raise Exception, "Fedora installs must be done via url or iso"
 
@@ -42,8 +42,8 @@ class FedoraGuest(Guest.CDGuest):
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)
 
-        self.output_services = tdl.services()
-        self.packages = tdl.packages()
+        self.output_services = tdl.services
+        self.packages = tdl.packages
 
         Guest.CDGuest.__init__(self, "Fedora", update, arch, self.installtype,
                                nicmodel, None, None, diskbus, config)
@@ -193,7 +193,7 @@ class FedoraGuest(Guest.CDGuest):
             self.collect_teardown(libvirt_xml)
 
 def get_class(tdl, config):
-    update = tdl.update()
+    update = tdl.update
     if update == "10" or update == "11" or update == "12" or update == "13" or update == "14":
         return FedoraGuest(tdl, config, "virtio", True, "virtio", True)
     if update == "7" or update == "8" or update == "9":

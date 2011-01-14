@@ -22,15 +22,15 @@ import RedHat
 
 class RHEL4Guest(Guest.CDGuest):
     def __init__(self, tdl, config, nicmodel, diskbus):
-        update = tdl.update()
-        arch = tdl.arch()
+        update = tdl.update
+        arch = tdl.arch
         self.ks_file = ozutil.generate_full_auto_path("rhel-4-jeos.ks")
-        self.installtype = tdl.installtype()
+        self.installtype = tdl.installtype
 
         if self.installtype == 'url':
-            self.url = tdl.url()
+            self.url = tdl.url
         elif self.installtype == 'iso':
-            self.url = tdl.iso()
+            self.url = tdl.iso
         else:
             raise Guest.OzException("RHEL-4 installs must be done via url or iso")
 
@@ -40,7 +40,7 @@ class RHEL4Guest(Guest.CDGuest):
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)
 
-        self.output_services = tdl.services()
+        self.output_services = tdl.services
 
         Guest.CDGuest.__init__(self, "RHEL-4", update, arch, self.installtype,
                                nicmodel, None, None, diskbus, config)
@@ -148,7 +148,7 @@ class RHEL4Guest(Guest.CDGuest):
         return icicle_output
 
 def get_class(tdl, config):
-    update = tdl.update()
+    update = tdl.update
     if update == "GOLD" or update == "U1" or update == "U2" or update == "U3" or update == "U4" or update == "U5" or update == "U6" or update == "U7":
         return RHEL4Guest(tdl, config, "rtl8139", None)
     if update == "U8":

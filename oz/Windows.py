@@ -24,18 +24,18 @@ import libxml2
 
 class Windows2000andXPand2003(Guest.CDGuest):
     def __init__(self, tdl, config):
-        update = tdl.update()
-        arch = tdl.arch()
+        update = tdl.update
+        arch = tdl.arch
 
         if update == "2000" and arch != "i386":
             raise Guest.OzException("Windows 2000 only supports i386 architecture")
-        self.key = tdl.key()
+        self.key = tdl.key
         if self.key is None:
             raise Guest.OzException("A key is required when installing Windows 2000, XP, or 2003")
         self.siffile = ozutil.generate_full_auto_path("windows-" + update + "-jeos.sif")
 
-        self.url = tdl.iso()
-        if tdl.installtype() != 'iso':
+        self.url = tdl.iso
+        if tdl.installtype != 'iso':
             raise Guest.OzException("Windows installs must be done via iso")
 
         Guest.CDGuest.__init__(self, "Windows", update, arch, 'iso', 'rtl8139',
@@ -100,16 +100,16 @@ class Windows2000andXPand2003(Guest.CDGuest):
 
 class Windows2008and7(Guest.CDGuest):
     def __init__(self, tdl, config):
-        update = tdl.update()
-        arch = tdl.arch()
+        update = tdl.update
+        arch = tdl.arch
         self.unattendfile = ozutil.generate_full_auto_path("windows-" + update + "-jeos.xml")
-        self.key = tdl.key()
+        self.key = tdl.key
         if self.key is None:
             raise Guest.OzException("A key is required when installing Windows 2000, XP, or 2003")
 
-        self.url = tdl.iso()
+        self.url = tdl.iso
 
-        if tdl.installtype() != 'iso':
+        if tdl.installtype != 'iso':
             raise Guest.OzException("Windows installs must be done via iso")
 
         Guest.CDGuest.__init__(self, "Windows", update, arch, 'iso', 'rtl8139',
@@ -175,7 +175,7 @@ class Windows2008and7(Guest.CDGuest):
         return self.generate_define_xml("hd", want_install_disk=False)
 
 def get_class(tdl, config):
-    update = tdl.update()
+    update = tdl.update
     if update == "2000" or update == "XP" or update == "2003":
         return Windows2000andXPand2003(tdl, config)
     if update == "2008" or update == "7":

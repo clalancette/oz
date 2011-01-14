@@ -194,13 +194,13 @@ class Ubuntu610and704Guest(Guest.CDGuest):
         f.close()
 
 def get_class(tdl, config):
-    update = tdl.update()
-    arch = tdl.arch()
+    update = tdl.update
+    arch = tdl.arch
     preseed = ozutil.generate_full_auto_path("ubuntu-" + update + "-jeos.preseed")
-    if tdl.installtype() != 'iso':
+    if tdl.installtype != 'iso':
         raise Guest.OzException("Ubuntu installs must be done via iso")
 
-    isourl = tdl.iso()
+    isourl = tdl.iso
 
     # FIXME: there are certain types of Ubuntu ISOs that do, and do not work.
     # For instance, for *some* Ubuntu releases, you must use the -alternate

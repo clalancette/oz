@@ -117,33 +117,31 @@ logging.basicConfig(level=loglevel, format=logformat)
 
 tdl = oz.TDL.TDL(args[0])
 
-distro = tdl.distro()
-
 config = ConfigParser.SafeConfigParser()
 if os.access(config_file, os.F_OK):
     config.read(config_file)
 
-if distro == "Fedora":
+if tdl.distro == "Fedora":
     guest = oz.Fedora.get_class(tdl, config)
-elif distro == "FedoraCore":
+elif tdl.distro == "FedoraCore":
     guest = oz.FedoraCore.get_class(tdl, config)
-elif distro == "RHEL-2.1":
+elif tdl.distro == "RHEL-2.1":
     guest = oz.RHEL_2_1.get_class(tdl, config)
-elif distro == "RHEL-3":
+elif tdl.distro == "RHEL-3":
     guest = oz.RHEL_3.get_class(tdl, config)
-elif distro == "RHEL-4":
+elif tdl.distro == "RHEL-4":
     guest = oz.RHEL_4.get_class(tdl, config)
-elif distro == "RHEL-5":
+elif tdl.distro == "RHEL-5":
     guest = oz.RHEL_5.get_class(tdl, config)
-elif distro == "RHEL-6":
+elif tdl.distro == "RHEL-6":
     guest = oz.RHEL_6.get_class(tdl, config)
-elif distro == "Ubuntu":
+elif tdl.distro == "Ubuntu":
     guest = oz.Ubuntu.get_class(tdl, config)
-elif distro == "Windows":
+elif tdl.distro == "Windows":
     guest = oz.Windows.get_class(tdl, config)
-elif distro == "RHL":
+elif tdl.distro == "RHL":
     guest = oz.RHL.get_class(tdl, config)
-elif distro == "OpenSUSE":
+elif tdl.distro == "OpenSUSE":
     guest = oz.OpenSUSE.get_class(tdl, config)
 else:
     usage()

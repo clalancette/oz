@@ -22,15 +22,15 @@ import RedHat
 
 class FedoraCoreGuest(Guest.CDGuest):
     def __init__(self, tdl, config):
-        update = tdl.update()
-        arch = tdl.arch()
+        update = tdl.update
+        arch = tdl.arch
         self.ks_file = ozutil.generate_full_auto_path("fedoracore-" + update + "-jeos.ks")
-        self.installtype = tdl.installtype()
+        self.installtype = tdl.installtype
 
         if self.installtype == 'url':
-            self.url = tdl.url()
+            self.url = tdl.url
         elif self.installtype == 'iso':
-            self.url = tdl.iso()
+            self.url = tdl.iso
         else:
             raise Guest.OzException("FedoraCore installs must be done via url or iso")
 
@@ -40,8 +40,8 @@ class FedoraCoreGuest(Guest.CDGuest):
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)
 
-        self.packages = tdl.packages()
-        self.output_services = tdl.services()
+        self.packages = tdl.packages
+        self.output_services = tdl.services
 
         Guest.CDGuest.__init__(self, "FedoraCore", update, arch,
                                self.installtype, 'rtl8139', None, None, None,
@@ -188,7 +188,7 @@ class FedoraCore4Guest(FedoraCoreGuest):
         self.generate_blank_diskimage()
 
 def get_class(tdl, config):
-    update = tdl.update()
+    update = tdl.update
     if update == "6" or update == "5" or update == "3" or update == "2" or update == "1":
         return FedoraCoreGuest(tdl, config)
     if update == "4":
