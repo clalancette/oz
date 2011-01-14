@@ -39,6 +39,8 @@ class TDL(object):
         self.arch = get_value(self.doc, '/template/os/arch')
         if self.arch is None:
             raise Guest.OzException("Failed to find OS architecture in TDL")
+        if self.arch != "i386" and self.arch != "x86_64":
+            raise Guest.OzException("Architecture must be one of 'i386' or 'x86_64'")
 
         self.key = get_value(self.doc, '/template/os/key')
         # key is not required, so it is not fatal if it is None

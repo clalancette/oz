@@ -20,7 +20,10 @@
               <text/>
             </element>
             <element name='arch'>
-              <text/>
+	      <choice>
+		<value>i386</value>
+		<value>x86_64</value>
+	      </choice>
             </element>
             <element name='install'>
 	      <choice>
