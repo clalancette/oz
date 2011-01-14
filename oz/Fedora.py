@@ -159,6 +159,11 @@ class FedoraGuest(Guest.CDGuest):
 
     def customize(self, libvirt_xml):
         self.log.info("Customizing image")
+
+        if not self.packages:
+            self.log.info("No additional packages to install, skipping customization")
+            return
+
         self.collect_setup(libvirt_xml)
 
         try:
