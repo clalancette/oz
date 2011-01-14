@@ -198,7 +198,7 @@ def get_class(tdl, config):
     arch = tdl.arch()
     preseed = ozutil.generate_full_auto_path("ubuntu-" + update + "-jeos.preseed")
     if tdl.installtype() != 'iso':
-        raise OzException("Ubuntu installs must be done via iso")
+        raise Guest.OzException("Ubuntu installs must be done via iso")
 
     isourl = tdl.iso()
 
@@ -215,4 +215,4 @@ def get_class(tdl, config):
         return Ubuntu710and8041Guest(update, arch, preseed, isourl, config)
     if update == "6.10" or update == "7.04":
         return Ubuntu610and704Guest(update, arch, preseed, isourl, config)
-    raise OzException("Unsupported Ubuntu update " + update)
+    raise Guest.OzException("Unsupported Ubuntu update " + update)

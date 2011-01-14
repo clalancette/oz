@@ -33,7 +33,7 @@ class RHEL6Guest(Guest.CDGuest):
         elif self.installtype == 'iso':
             self.url = tdl.iso()
         else:
-            raise OzException("RHEL-6 installs must be done via url or iso")
+            raise Guest.OzException("RHEL-6 installs must be done via url or iso")
 
         if self.installtype == 'url':
             ozutil.deny_localhost(self.url)
@@ -130,7 +130,7 @@ class RHEL6Guest(Guest.CDGuest):
             stderr = output[1]
             returncode = output[2]
             if returncode != 0:
-                raise OzException("Failed to execute guest command 'rpm -qa': %s" % (stderr))
+                raise Guest.OzException("Failed to execute guest command 'rpm -qa': %s" % (stderr))
 
             icicle_output = self.output_icicle_xml(stdout.split("\n"),
                                                    self.output_services)
@@ -171,7 +171,7 @@ class RHEL6Guest(Guest.CDGuest):
             stderr = output[1]
             returncode = output[2]
             if returncode != 0:
-                raise OzException("Failed to execute guest command 'yum -y install %s': %s" % (packstr, stderr))
+                raise Guest.OzException("Failed to execute guest command 'yum -y install %s': %s" % (packstr, stderr))
 
             RedHat.guest_execute_command(guestaddr,
                                          self.icicle_tmp + '/id_rsa-icicle-gen',
@@ -188,4 +188,4 @@ def get_class(tdl, config):
     update = tdl.update()
     if update == "0":
         return RHEL6Guest(tdl, config)
-    raise OzException("Unsupported RHEL-6 update " + update)
+    raise Guest.OzException("Unsupported RHEL-6 update " + update)

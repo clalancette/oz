@@ -33,7 +33,7 @@ class RHEL5Guest(Guest.CDGuest):
         elif self.installtype == 'iso':
             self.url = tdl.iso()
         else:
-            raise OzException("RHEL-5 installs must be done via url or iso")
+            raise Guest.OzException("RHEL-5 installs must be done via url or iso")
 
         if self.installtype == 'url':
             ozutil.deny_localhost(self.url)
@@ -130,7 +130,7 @@ class RHEL5Guest(Guest.CDGuest):
             stderr = output[1]
             returncode = output[2]
             if returncode != 0:
-                raise OzException("Failed to execute guest command 'rpm -qa': %s" % (stderr))
+                raise Guest.OzException("Failed to execute guest command 'rpm -qa': %s" % (stderr))
 
             icicle_output = self.output_icicle_xml(stdout.split("\n"),
                                                    self.output_services)
@@ -172,7 +172,7 @@ class RHEL5Guest(Guest.CDGuest):
             stderr = output[1]
             returncode = output[2]
             if returncode != 0:
-                raise OzException("Failed to execute guest command 'yum -y install %s': %s" % (packstr, stderr))
+                raise Guest.OzException("Failed to execute guest command 'yum -y install %s': %s" % (packstr, stderr))
 
             RedHat.guest_execute_command(guestaddr,
                                          self.icicle_tmp + '/id_rsa-icicle-gen',
@@ -191,4 +191,4 @@ def get_class(tdl, config):
         return RHEL5Guest(tdl, config, "rtl8139", None)
     if update == "U4" or update == "U5":
         return RHEL5Guest(tdl, config, "virtio", "virtio")
-    raise OzException("Unsupported RHEL-5 update " + update)
+    raise Guest.OzException("Unsupported RHEL-5 update " + update)
