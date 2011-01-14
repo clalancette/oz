@@ -22,30 +22,23 @@ import RedHat
 
 class RHEL6Guest(Guest.CDGuest):
     def __init__(self, tdl, config):
-        update = tdl.update
-        arch = tdl.arch
-        key = tdl.key
+        self.tdl = tdl
         self.ks_file = ozutil.generate_full_auto_path("rhel-6-jeos.ks")
-        self.installtype = tdl.installtype
 
-        if self.installtype == 'url':
-            self.url = tdl.url
-        elif self.installtype == 'iso':
-            self.url = tdl.iso
+        if self.tdl.installtype == 'url':
+            self.url = self.tdl.url
+            ozutil.deny_localhost(self.url)
+        elif self.tdl.installtype == 'iso':
+            self.url = self.tdl.iso
         else:
             raise Guest.OzException("RHEL-6 installs must be done via url or iso")
-
-        if self.installtype == 'url':
-            ozutil.deny_localhost(self.url)
 
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)
 
-        self.packages = tdl.packages
-        self.output_services = tdl.services
-
-        Guest.CDGuest.__init__(self, "RHEL-6", update, arch, self.installtype,
-                               "virtio", None, None, "virtio", config)
+        Guest.CDGuest.__init__(self, "RHEL-6", self.tdl.update, self.tdl.arch,
+                               self.tdl.installtype, "virtio", None, None,
+                               "virtio", config)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")
@@ -64,7 +57,7 @@ class RHEL6Guest(Guest.CDGuest):
         lines.append("label customiso\n")
         lines.append("  kernel vmlinuz\n")
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
-        if self.installtype == "url":
+        if self.tdl.installtype == "url":
             initrdline += " repo=" + self.url + "\n"
         else:
             initrdline += "\n"
@@ -81,7 +74,7 @@ class RHEL6Guest(Guest.CDGuest):
     def generate_install_media(self, force_download):
         self.log.info("Generating install media")
         fetchurl = self.url
-        if self.installtype == 'url':
+        if self.tdl.installtype == 'url':
             fetchurl += "/images/boot.iso"
         self.get_original_iso(fetchurl, force_download)
         self.copy_iso()
@@ -133,7 +126,7 @@ class RHEL6Guest(Guest.CDGuest):
                 raise Guest.OzException("Failed to execute guest command 'rpm -qa': %s" % (stderr))
 
             icicle_output = self.output_icicle_xml(stdout.split("\n"),
-                                                   self.output_services)
+                                                   self.tdl.services)
 
             RedHat.guest_execute_command(guestaddr,
                                          self.icicle_tmp + '/id_rsa-icicle-gen',
@@ -159,7 +152,7 @@ class RHEL6Guest(Guest.CDGuest):
             guestaddr = self.wait_for_guest_boot()
 
             packstr = ''
-            for package in self.packages:
+            for package in self.tdl.packages:
                 packstr += package + ' '
 
             # FIXME: for this to succeed, we might actually have to upload
@@ -185,7 +178,6 @@ class RHEL6Guest(Guest.CDGuest):
             self.collect_teardown(libvirt_xml)
 
 def get_class(tdl, config):
-    update = tdl.update
-    if update == "0":
+    if tdl.update in ["0"]:
         return RHEL6Guest(tdl, config)
-    raise Guest.OzException("Unsupported RHEL-6 update " + update)
+    raise Guest.OzException("Unsupported RHEL-6 update " + tdl.update)

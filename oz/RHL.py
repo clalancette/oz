@@ -24,20 +24,17 @@ import RedHat
 
 class RHL9Guest(Guest.CDGuest):
     def __init__(self, tdl, config):
-        update = tdl.update
-        arch = tdl.arch
+        self.tdl = tdl
 
-        self.ks_file = ozutil.generate_full_auto_path("rhl-" + update + "-jeos.ks")
+        self.ks_file = ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks")
 
-        if tdl.installtype != 'url':
+        if self.tdl.installtype != 'url':
             raise Guest.OzException("RHL installs must be done via url")
 
-        self.url = tdl.url
+        ozutil.deny_localhost(self.tdl.url)
 
-        ozutil.deny_localhost(self.url)
-
-        if arch != "i386":
-            raise Guest.OzException("Invalid arch " + arch + "for RHL guest")
+        if self.tdl.arch != "i386":
+            raise Guest.OzException("Invalid arch " + self.tdl.arch + "for RHL guest")
 
         Guest.CDGuest.__init__(self, "RHL", "9", "i386", "url", "rtl8139", None,
                                None, None, config)
@@ -53,7 +50,7 @@ class RHL9Guest(Guest.CDGuest):
 
         for line in lines:
             if re.match("^url", line):
-                lines[lines.index(line)] = "url --url " + self.url + "\n"
+                lines[lines.index(line)] = "url --url " + self.tdl.url + "\n"
 
         f = open(output_ks, "w")
         f.writelines(lines)
@@ -70,7 +67,7 @@ class RHL9Guest(Guest.CDGuest):
                 lines[lines.index(line)] = "default customiso\n"
         lines.append("label customiso\n")
         lines.append("  kernel vmlinuz\n")
-        lines.append("  append initrd=initrd.img ks=cdrom:/ks.cfg method=" + self.url + "\n")
+        lines.append("  append initrd=initrd.img ks=cdrom:/ks.cfg method=" + self.tdl.url + "\n")
 
         f = open(self.iso_contents + "/isolinux/isolinux.cfg", "w")
         f.writelines(lines)
@@ -81,7 +78,7 @@ class RHL9Guest(Guest.CDGuest):
         RedHat.generate_iso(self.output_iso, self.iso_contents)
 
     def generate_install_media(self, force_download):
-        self.get_original_iso(self.url + "/images/boot.iso", force_download)
+        self.get_original_iso(self.tdl.url + "/images/boot.iso", force_download)
         self.copy_iso()
         self.modify_iso()
         self.generate_new_iso()
@@ -89,23 +86,20 @@ class RHL9Guest(Guest.CDGuest):
 
 class RHL70and71and72and73and8Guest(Guest.FDGuest):
     def __init__(self, tdl, config, nicmodel):
-        update = tdl.update
-        arch = tdl.arch
+        self.tdl = tdl
 
-        self.ks_file = ozutil.generate_full_auto_path("rhl-" + update + "-jeos.ks")
+        self.ks_file = ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks")
 
-        if tdl.installtype != 'url':
+        if self.tdl.installtype != 'url':
             raise Guest.OzException("RHL installs must be done via url")
 
-        self.url = tdl.url
+        ozutil.deny_localhost(self.tdl.url)
 
-        ozutil.deny_localhost(self.url)
+        if self.tdl.arch != "i386":
+            raise Guest.OzException("Invalid arch " + self.tdl.arch + "for RHL guest")
 
-        if arch != "i386":
-            raise Guest.OzException("Invalid arch " + arch + "for RHL guest")
-
-        Guest.FDGuest.__init__(self, "RHL", update, "i386", nicmodel, None,
-                               None, None, config)
+        Guest.FDGuest.__init__(self, "RHL", self.tdl.update, "i386", nicmodel,
+                               None, None, None, config)
 
     def modify_floppy(self):
         if not os.access(self.floppy_contents, os.F_OK):
@@ -121,7 +115,7 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
 
         for line in lines:
             if re.match("^url", line):
-                lines[lines.index(line)] = "url --url " + self.url + "\n"
+                lines[lines.index(line)] = "url --url " + self.tdl.url + "\n"
 
         f = open(output_ks, "w")
         f.writelines(lines)
@@ -145,7 +139,7 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
                 lines[lines.index(line)] = "default customboot\n"
         lines.append("label customboot\n")
         lines.append("  kernel vmlinuz\n")
-        lines.append("  append initrd=initrd.img lang= devfs=nomount ramdisk_size=9216 ks=floppy method=" + self.url + "\n")
+        lines.append("  append initrd=initrd.img lang= devfs=nomount ramdisk_size=9216 ks=floppy method=" + self.tdl.url + "\n")
 
         f = open(self.floppy_contents + "/SYSLINUX.CFG", "w")
         f.writelines(lines)
@@ -162,17 +156,16 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
                                        "::SYSLINUX.CFG"])
 
     def generate_install_media(self, force_download):
-        self.get_original_floppy(self.url + "/images/bootnet.img",
+        self.get_original_floppy(self.tdl.url + "/images/bootnet.img",
                                  force_download)
         self.copy_floppy()
         self.modify_floppy()
         self.cleanup_floppy()
 
 def get_class(tdl, config):
-    update = tdl.update
-    if update == "9":
+    if tdl.update in ["9"]:
         return RHL9Guest(tdl, config)
-    if update == "7.2" or update == "7.3" or update == "8":
+    if tdl.update in ["7.2", "7.3", "8"]:
         return RHL70and71and72and73and8Guest(tdl, config, "rtl8139")
     # FIXME: RHL 6.2 does not work via HTTP because of a bug in the installer;
     # when parsing a URL passed in via "method", it fails to put a / at the
@@ -189,6 +182,6 @@ def get_class(tdl, config):
     # The panic is:
     # VFS: Cannot open root device 08:21
     # Kernel panic: VFS: Unable to mount root fs on 08:21
-    if update == "7.0" or update == "7.1":
+    if tdl.update in ["7.0", "7.1"]:
         return RHL70and71and72and73and8Guest(tdl, config, "ne2k_pci")
     raise Guest.OzException("Unsupported RHL update " + update)

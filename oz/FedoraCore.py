@@ -22,30 +22,23 @@ import RedHat
 
 class FedoraCoreGuest(Guest.CDGuest):
     def __init__(self, tdl, config):
-        update = tdl.update
-        arch = tdl.arch
-        self.ks_file = ozutil.generate_full_auto_path("fedoracore-" + update + "-jeos.ks")
-        self.installtype = tdl.installtype
+        self.tdl = tdl
+        self.ks_file = ozutil.generate_full_auto_path("fedoracore-" + self.tdl.update + "-jeos.ks")
 
-        if self.installtype == 'url':
-            self.url = tdl.url
-        elif self.installtype == 'iso':
-            self.url = tdl.iso
+        if self.tdl.installtype == 'url':
+            self.url = self.tdl.url
+            ozutil.deny_localhost(self.url)
+        elif self.tdl.installtype == 'iso':
+            self.url = self.tdl.iso
         else:
             raise Guest.OzException("FedoraCore installs must be done via url or iso")
-
-        if self.installtype == 'url':
-            ozutil.deny_localhost(self.url)
 
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)
 
-        self.packages = tdl.packages
-        self.output_services = tdl.services
-
-        Guest.CDGuest.__init__(self, "FedoraCore", update, arch,
-                               self.installtype, 'rtl8139', None, None, None,
-                               config)
+        Guest.CDGuest.__init__(self, "FedoraCore", self.tdl.update,
+                               self.tdl.arch, self.tdl.installtype, 'rtl8139',
+                               None, None, None, config)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")
@@ -64,7 +57,7 @@ class FedoraCoreGuest(Guest.CDGuest):
         lines.append("label customiso\n")
         lines.append("  kernel vmlinuz\n")
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method="
-        if self.installtype == "url":
+        if self.tdl.installtype == "url":
             initrdline += self.url + "\n"
         else:
             initrdline += "cdrom:/dev/cdrom\n"
@@ -81,7 +74,7 @@ class FedoraCoreGuest(Guest.CDGuest):
     def generate_install_media(self, force_download):
         self.log.info("Generating install media")
         fetchurl = self.url
-        if self.installtype == 'url':
+        if self.tdl.installtype == 'url':
             fetchurl += "/images/boot.iso"
         self.get_original_iso(fetchurl, force_download)
         self.copy_iso()
@@ -133,7 +126,7 @@ class FedoraCoreGuest(Guest.CDGuest):
                 raise Guest.OzException("Failed to execute guest command 'rpm -qa': %s" % (stderr))
 
             icicle_output = self.output_icicle_xml(stdout.split("\n"),
-                                                   self.output_services)
+                                                   self.tdl.services)
 
             RedHat.guest_execute_command(guestaddr,
                                          self.icicle_tmp + '/id_rsa-icicle-gen',
@@ -159,7 +152,7 @@ class FedoraCoreGuest(Guest.CDGuest):
             guestaddr = self.wait_for_guest_boot()
 
             packstr = ''
-            for package in self.packages:
+            for package in self.tdl.packages:
                 packstr += package + ' '
 
             output = RedHat.guest_execute_command(guestaddr,
@@ -188,9 +181,8 @@ class FedoraCore4Guest(FedoraCoreGuest):
         self.generate_blank_diskimage()
 
 def get_class(tdl, config):
-    update = tdl.update
-    if update == "6" or update == "5" or update == "3" or update == "2" or update == "1":
+    if tdl.update in ["1", "2", "3", "5", "6"]:
         return FedoraCoreGuest(tdl, config)
-    if update == "4":
+    if tdl.update in ["4"]:
         return FedoraCore4Guest(tdl, config)
-    raise Guest.OzException("Unsupported FedoraCore update " + update)
+    raise Guest.OzException("Unsupported FedoraCore update " + tdl.update)

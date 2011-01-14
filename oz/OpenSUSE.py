@@ -4,18 +4,23 @@ import shutil
 import ozutil
 
 class OpenSUSEGuest(Guest.CDGuest):
-    def __init__(self, update, arch, url, autoyast, config):
-        Guest.CDGuest.__init__(self, "OpenSUSE", update, arch, 'iso', "rtl8139",
-                               None, None, None, config)
-        self.isourl = url
-        self.autoyast = autoyast
+    def __init__(self, tdl, config):
+        self.tdl = tdl
+
+        if self.tdl.installtype != 'iso':
+            raise Guest.OzException("OpenSUSE installs must be done via ISO")
+
+        self.autoyast = ozutil.generate_full_auto_path("opensuse-" + self.tdl.update + "-jeos.xml")
+
+        Guest.CDGuest.__init__(self, "OpenSUSE", self.tdl.update, self.tdl.arch,
+                               'iso', "rtl8139", None, None, None, config)
 
     def modify_iso(self):
         self.log.debug("Putting the autoyast in place")
         shutil.copy(self.autoyast, self.iso_contents + "/autoinst.xml")
 
         self.log.debug("Modifying the boot options")
-        f = open(self.iso_contents + "/boot/" + self.arch + "/loader/isolinux.cfg", "r")
+        f = open(self.iso_contents + "/boot/" + self.tdl.arch + "/loader/isolinux.cfg", "r")
         lines = f.readlines()
         f.close()
         for line in lines:
@@ -27,7 +32,7 @@ class OpenSUSEGuest(Guest.CDGuest):
         lines.append("  kernel linux\n")
         lines.append("  append initrd=initrd splash=silent instmode=cd autoyast=default")
 
-        f = open(self.iso_contents + "/boot/" + self.arch + "/loader/isolinux.cfg", "w")
+        f = open(self.iso_contents + "/boot/" + self.tdl.arch + "/loader/isolinux.cfg", "w")
         f.writelines(lines)
         f.close()
 
@@ -35,8 +40,8 @@ class OpenSUSEGuest(Guest.CDGuest):
         self.log.info("Generating new ISO")
         Guest.subprocess_check_output(["mkisofs", "-r", "-J", "-V", "Custom",
                                        "-l", "-b",
-                                       "boot/" + self.arch + "/loader/isolinux.bin",
-                                       "-c", "boot/" + self.arch + "/loader/boot.cat",
+                                       "boot/" + self.tdl.arch + "/loader/isolinux.bin",
+                                       "-c", "boot/" + self.tdl.arch + "/loader/boot.cat",
                                        "-no-emul-boot", "-boot-load-size", "4",
                                        "-boot-info-table", "-graft-points",
                                        "-iso-level", "4", "-pad",
@@ -46,23 +51,14 @@ class OpenSUSEGuest(Guest.CDGuest):
 
     def generate_install_media(self, force_download):
         self.log.info("Generating install media")
-        self.get_original_iso(self.isourl, force_download)
+        self.get_original_iso(self.tdl.iso, force_download)
         self.copy_iso()
         self.modify_iso()
         self.generate_new_iso()
         self.cleanup_iso()
 
 def get_class(tdl, config):
-    update = tdl.update
-    arch = tdl.arch
-    autoyast = ozutil.generate_full_auto_path("opensuse-" + update + "-jeos.xml")
+    if tdl.update in ["11.1", "11.2", "11.3"]:
+        return OpenSUSEGuest(tdl.config)
 
-    if tdl.installtype != 'iso':
-        raise Guest.OzException("OpenSUSE installs must be done via ISO")
-
-    url = tdl.iso
-
-    if update == "11.1" or update == "11.2" or update == "11.3":
-        return OpenSUSEGuest(update, arch, url, autoyast, config)
-
-    raise Guest.OzException("Unsupported OpenSUSE update " + update)
+    raise Guest.OzException("Unsupported OpenSUSE update " + tdl.update)

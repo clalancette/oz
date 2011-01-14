@@ -22,31 +22,25 @@ import RedHat
 
 class FedoraGuest(Guest.CDGuest):
     def __init__(self, tdl, config, nicmodel, haverepo, diskbus, brokenisomethod):
-        update = tdl.update
-        arch = tdl.arch
-        self.ks_file = ozutil.generate_full_auto_path("fedora-" + update + "-jeos.ks")
+        self.tdl = tdl
+        self.ks_file = ozutil.generate_full_auto_path("fedora-" + self.tdl.update + "-jeos.ks")
         self.haverepo = haverepo
         self.brokenisomethod = brokenisomethod
-        self.installtype = tdl.installtype
 
-        if self.installtype == 'url':
-            self.url = tdl.url
-        elif self.installtype == 'iso':
-            self.url = tdl.iso
+        if self.tdl.installtype == 'url':
+            self.url = self.tdl.url
+            ozutil.deny_localhost(self.url)
+        elif self.tdl.installtype == 'iso':
+            self.url = self.tdl.iso
         else:
             raise Exception, "Fedora installs must be done via url or iso"
-
-        if self.installtype == 'url':
-            ozutil.deny_localhost(self.url)
 
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)
 
-        self.output_services = tdl.services
-        self.packages = tdl.packages
-
-        Guest.CDGuest.__init__(self, "Fedora", update, arch, self.installtype,
-                               nicmodel, None, None, diskbus, config)
+        Guest.CDGuest.__init__(self, "Fedora", self.tdl.update, self.tdl.arch,
+                               self.tdl.installtype, nicmodel, None, None,
+                               diskbus, config)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")
@@ -65,7 +59,7 @@ class FedoraGuest(Guest.CDGuest):
         lines.append("label customiso\n")
         lines.append("  kernel vmlinuz\n")
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
-        if self.installtype == "url":
+        if self.tdl.installtype == "url":
             if self.haverepo:
                 initrdline += " repo="
             else:
@@ -90,7 +84,7 @@ class FedoraGuest(Guest.CDGuest):
     def generate_install_media(self, force_download):
         self.log.info("Generating install media")
         fetchurl = self.url
-        if self.installtype == 'url':
+        if self.tdl.installtype == 'url':
             fetchurl += "/images/boot.iso"
         self.get_original_iso(fetchurl, force_download)
         self.copy_iso()
@@ -132,24 +126,26 @@ class FedoraGuest(Guest.CDGuest):
 
             guestaddr = self.wait_for_guest_boot()
 
-            output = RedHat.guest_execute_command(guestaddr,
-                                                  self.icicle_tmp + '/id_rsa-icicle-gen',
-                                                  'rpm -qa')
-            stdout = output[0]
-            stderr = output[1]
-            returncode = output[2]
-            if returncode != 0:
-                raise Exception, "Failed to execute guest command 'rpm -qa': %s" % (stderr)
+            try:
+                output = RedHat.guest_execute_command(guestaddr,
+                                                      self.icicle_tmp + '/id_rsa-icicle-gen',
+                                                      'rpm -qa')
+                stdout = output[0]
+                stderr = output[1]
+                returncode = output[2]
+                if returncode != 0:
+                    raise Guest.OzException("Failed to execute guest command 'rpm -qa': %s" % (stderr))
 
-            icicle_output = self.output_icicle_xml(stdout.split("\n"),
-                                                   self.output_services)
+                icicle_output = self.output_icicle_xml(stdout.split("\n"),
+                                                       self.tdl.services)
 
-            RedHat.guest_execute_command(guestaddr,
-                                         self.icicle_tmp + '/id_rsa-icicle-gen',
-                                         'shutdown -h now')
+            finally:
+                RedHat.guest_execute_command(guestaddr,
+                                             self.icicle_tmp + '/id_rsa-icicle-gen',
+                                             'shutdown -h now')
 
-            if self.wait_for_guest_shutdown():
-                self.libvirt_dom = None
+                if self.wait_for_guest_shutdown():
+                    self.libvirt_dom = None
         finally:
             if self.libvirt_dom is not None:
                 self.libvirt_dom.destroy()
@@ -162,7 +158,7 @@ class FedoraGuest(Guest.CDGuest):
 
         keyfile = self.icicle_tmp + '/id_rsa-icicle-gen'
 
-        if not self.packages:
+        if not self.tdl.packages:
             self.log.info("No additional packages to install, skipping customization")
             return
 
@@ -174,33 +170,34 @@ class FedoraGuest(Guest.CDGuest):
 
             guestaddr = self.wait_for_guest_boot()
 
-            packstr = ''
-            for package in self.packages:
-                packstr += package + ' '
+            try:
+                packstr = ''
+                for package in self.packages:
+                    packstr += package + ' '
 
-            output = RedHat.guest_execute_command(guestaddr, keyfile,
-                                                  'yum -y install %s' % (packstr))
+                output = RedHat.guest_execute_command(guestaddr, keyfile,
+                                                      'yum -y install %s' % (packstr))
 
-            stdout = output[0]
-            stderr = output[1]
-            returncode = output[2]
-            if returncode != 0:
-                raise Exception, "Failed to execute guest command 'yum -y install %s': %s" % (packstr, stderr)
+                stdout = output[0]
+                stderr = output[1]
+                returncode = output[2]
+                if returncode != 0:
+                    raise OzException("Failed to execute guest command 'yum -y install %s': %s" % (packstr, stderr))
 
-            RedHat.guest_execute_command(guestaddr, keyfile,
-                                         'shutdown -h now')
+            finally:
+                RedHat.guest_execute_command(guestaddr, keyfile,
+                                             'shutdown -h now')
 
-            if self.wait_for_guest_shutdown():
-                self.libvirt_dom = None
+                if self.wait_for_guest_shutdown():
+                    self.libvirt_dom = None
         finally:
             if self.libvirt_dom is not None:
                 self.libvirt_dom.destroy()
             self.collect_teardown(libvirt_xml)
 
 def get_class(tdl, config):
-    update = tdl.update
-    if update == "10" or update == "11" or update == "12" or update == "13" or update == "14":
+    if tdl.update in ["10", "11", "12", "13", "14"]:
         return FedoraGuest(tdl, config, "virtio", True, "virtio", True)
-    if update == "7" or update == "8" or update == "9":
+    if tdl.update in ["7", "8", "9"]:
         return FedoraGuest(tdl, config, "rtl8139", False, None, False)
-    raise Exception, "Unsupported Fedora update " + update
+    raise Guest.OzException("Unsupported Fedora update " + tdl.update)

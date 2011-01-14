@@ -22,24 +22,30 @@ import os
 import ozutil
 import libxml2
 
+def get_windows_arch(tdl_arch):
+    arch = tdl_arch
+    if arch == "x86_64":
+        arch = "amd64"
+    return arch
+
 class Windows2000andXPand2003(Guest.CDGuest):
     def __init__(self, tdl, config):
-        update = tdl.update
-        arch = tdl.arch
+        self.tdl = tdl
 
-        if update == "2000" and arch != "i386":
+        if self.tdl.update == "2000" and self.tdl.arch != "i386":
             raise Guest.OzException("Windows 2000 only supports i386 architecture")
-        self.key = tdl.key
-        if self.key is None:
+        if self.tdl.key is None:
             raise Guest.OzException("A key is required when installing Windows 2000, XP, or 2003")
-        self.siffile = ozutil.generate_full_auto_path("windows-" + update + "-jeos.sif")
+        self.siffile = ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif")
 
-        self.url = tdl.iso
-        if tdl.installtype != 'iso':
+        if self.tdl.installtype != 'iso':
             raise Guest.OzException("Windows installs must be done via iso")
 
-        Guest.CDGuest.__init__(self, "Windows", update, arch, 'iso', 'rtl8139',
-                               "localtime", "usb", None, config)
+        self.winarch = get_windows_arch(self.tdl.arch)
+
+        Guest.CDGuest.__init__(self, "Windows", self.tdl.update, self.tdl.arch,
+                               'iso', 'rtl8139', "localtime", "usb", None,
+                               config)
 
     def generate_new_iso(self):
         self.log.debug("Generating new ISO")
@@ -56,13 +62,6 @@ class Windows2000andXPand2003(Guest.CDGuest):
         os.mkdir(self.iso_contents + "/cdboot")
         self.geteltorito(self.orig_iso, self.iso_contents + "/cdboot/boot.bin")
 
-        if self.arch == "i386":
-            winarch = self.arch
-        elif self.arch == "x86_64":
-            winarch = "amd64"
-        else:
-            raise Guest.OzException("Unexpected architecture " + self.arch)
-
         computername = "OZ" + str(random.randrange(1, 900000))
 
         f = open(self.siffile, "r")
@@ -71,18 +70,18 @@ class Windows2000andXPand2003(Guest.CDGuest):
 
         for line in lines:
             if re.match(" *ProductKey", line):
-                lines[lines.index(line)] = "    ProductKey=" + self.key + "\n"
+                lines[lines.index(line)] = "    ProductKey=" + self.tdl.key + "\n"
             elif re.match(" *ProductID", line):
-                lines[lines.index(line)] = "    ProductID=" + self.key + "\n"
+                lines[lines.index(line)] = "    ProductID=" + self.tdl.key + "\n"
             elif re.match(" *ComputerName", line):
                 lines[lines.index(line)] = "    ComputerName=" + computername + "\n"
 
-        f = open(self.iso_contents + "/" + winarch + "/winnt.sif", "w")
+        f = open(self.iso_contents + "/" + self.winarch + "/winnt.sif", "w")
         f.writelines(lines)
         f.close()
 
     def generate_install_media(self, force_download):
-        self.get_original_iso(self.url, force_download)
+        self.get_original_iso(self.tdl.iso, force_download)
         self.copy_iso()
         self.modify_iso()
         self.generate_new_iso()
@@ -100,20 +99,21 @@ class Windows2000andXPand2003(Guest.CDGuest):
 
 class Windows2008and7(Guest.CDGuest):
     def __init__(self, tdl, config):
-        update = tdl.update
-        arch = tdl.arch
-        self.unattendfile = ozutil.generate_full_auto_path("windows-" + update + "-jeos.xml")
-        self.key = tdl.key
-        if self.key is None:
+        self.tdl = tdl
+
+        if self.tdl.key is None:
             raise Guest.OzException("A key is required when installing Windows 2000, XP, or 2003")
 
-        self.url = tdl.iso
+        self.unattendfile = ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.xml")
 
-        if tdl.installtype != 'iso':
+        if self.tdl.installtype != 'iso':
             raise Guest.OzException("Windows installs must be done via iso")
 
-        Guest.CDGuest.__init__(self, "Windows", update, arch, 'iso', 'rtl8139',
-                               "localtime", "usb", None, config)
+        self.winarch = get_windows_arch(self.tdl.arch)
+
+        Guest.CDGuest.__init__(self, "Windows", self.tdl.update, self.tdl.arch,
+                               'iso', 'rtl8139', "localtime", "usb", None,
+                               config)
 
     def generate_new_iso(self):
         self.log.debug("Generating new ISO")
@@ -131,31 +131,24 @@ class Windows2008and7(Guest.CDGuest):
         os.mkdir(self.iso_contents + "/cdboot")
         self.geteltorito(self.orig_iso, self.iso_contents + "/cdboot/boot.bin")
 
-        if self.arch == "i386":
-            winarch = "x86"
-        elif self.arch == "x86_64":
-            winarch = "amd64"
-        else:
-            raise Guest.OzException("Unexpected architecture " + self.arch)
-
         doc = libxml2.parseFile(self.unattendfile)
         xp = doc.xpathNewContext()
         xp.xpathRegisterNs("ms", "urn:schemas-microsoft-com:unattend")
 
         for component in xp.xpathEval('/ms:unattend/ms:settings/ms:component'):
-            component.setProp('processorArchitecture', winarch)
+            component.setProp('processorArchitecture', self.tdl.winarch)
 
         keys = xp.xpathEval('/ms:unattend/ms:settings/ms:component/ms:ProductKey')
 
         if len(keys[0].content) == 0:
 	    keys[0].freeNode()
 
-        keys[0].setContent(self.key)
+        keys[0].setContent(self.tdl.key)
 
         doc.saveFile(self.iso_contents + "/autounattend.xml")
 
     def generate_install_media(self, force_download):
-        self.get_original_iso(self.url, force_download)
+        self.get_original_iso(self.tdl.iso, force_download)
         self.copy_iso()
         self.modify_iso()
         self.generate_new_iso()
@@ -175,9 +168,8 @@ class Windows2008and7(Guest.CDGuest):
         return self.generate_define_xml("hd", want_install_disk=False)
 
 def get_class(tdl, config):
-    update = tdl.update
-    if update == "2000" or update == "XP" or update == "2003":
+    if tdl.update in ["2000", "XP", "2003"]:
         return Windows2000andXPand2003(tdl, config)
-    if update == "2008" or update == "7":
+    if tdl.update in ["2008", "7"]:
         return Windows2008and7(tdl, config)
-    raise Guest.OzException("Unsupported Windows update " + update)
+    raise Guest.OzException("Unsupported Windows update " + tdl.update)
