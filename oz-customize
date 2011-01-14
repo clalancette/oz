@@ -143,4 +143,4 @@ if os.stat(libvirt_xml_file)[stat.ST_SIZE] > (5 * 1024 * 1024):
 
 libvirt_xml = open(libvirt_xml_file, 'r').read()
 
-print guest.customize(libvirt_xml)
+guest.customize(libvirt_xml)
