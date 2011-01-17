@@ -33,8 +33,9 @@ class RHEL3Guest(RedHat.RedHatCDGuest):
 
         ozutil.deny_localhost(self.url)
 
-        Guest.CDGuest.__init__(self, "RHEL-3", self.tdl.update, self.tdl.arch,
-                               'url', None, None, None, None, config)
+        RedHat.RedHatCDGuest.__init__(self, "RHEL-3", self.tdl.update,
+                                      self.tdl.arch, 'url', None, None, None,
+                                      None, config)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")

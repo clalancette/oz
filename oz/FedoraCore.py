@@ -36,9 +36,9 @@ class FedoraCoreGuest(RedHat.RedHatCDGuest):
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)
 
-        Guest.CDGuest.__init__(self, "FedoraCore", self.tdl.update,
-                               self.tdl.arch, self.tdl.installtype, 'rtl8139',
-                               None, None, None, config)
+        RedHat.RedHatCDGuest.__init__(self, "FedoraCore", self.tdl.update,
+                                      self.tdl.arch, self.tdl.installtype,
+                                      'rtl8139', None, None, None, config)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")
