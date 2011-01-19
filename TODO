@@ -22,9 +22,8 @@ so this needs further research.
 5.  If two of the same OSes are being installed at the same time on the same
 machine, they will trample all over each other.  We need to handle this
 situation.
-6.  Before attempting an install, check the data_dir and output_dir to make
-sure that they will approximately have enough space for the install media
-and the output disk image, respectively.
+6.  Before attempting an install, check the output_dir to make sure it will
+approximately have enough space for the output disk image.
 7.  Include the example TDLs in the RPM spec file.
 8.  Documentation on how to use the classes, and what new classes need to
 provide.

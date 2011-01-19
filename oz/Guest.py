@@ -357,25 +357,35 @@ class Guest(object):
         return count != 0
 
     def get_original_media(self, url, output, force_download):
-        original_available = False
+        self.log.info("Fetching the original media")
 
-        self.log.info("Trying to download %s" % (url))
         try:
             response = urllib2.urlopen(url)
             url = response.geturl()
-            if not force_download and os.access(output, os.F_OK):
-                content_length = int(response.info()["Content-Length"])
-                if content_length == os.stat(output)[stat.ST_SIZE]:
-                    original_available = True
+            content_length = int(response.info()["Content-Length"])
             response.close()
         except urllib2.URLError, e:
             raise e
         except:
             pass
 
+        if content_length == 0:
+            raise OzException("Install media of 0 size detected, something is wrong")
+
+        original_available = False
+        if not force_download and os.access(output, os.F_OK):
+            if content_length == os.stat(output)[stat.ST_SIZE]:
+                original_available = True
+
         if original_available:
             self.log.info("Original install media available, using cached version")
         else:
+            # before fetching everything, make sure that we have enough
+            # space on the filesystem to store the data we are about to download
+            outdir = os.path.dirname(output)
+            devdata = os.statvfs(outdir)
+            if (devdata.f_bsize*devdata.f_bavail) < content_length:
+                raise OzException("Not enough room on %s for install media" % (outdir))
             self.log.info("Fetching the original install media from %s" % (url))
             self.last_mb = -1
             def progress(down_total, down_current, up_total, up_current):
