@@ -138,7 +138,7 @@ class Windows2008and7(Guest.CDGuest):
         xp.xpathRegisterNs("ms", "urn:schemas-microsoft-com:unattend")
 
         for component in xp.xpathEval('/ms:unattend/ms:settings/ms:component'):
-            component.setProp('processorArchitecture', self.tdl.winarch)
+            component.setProp('processorArchitecture', self.winarch)
 
         keys = xp.xpathEval('/ms:unattend/ms:settings/ms:component/ms:ProductKey')
 
