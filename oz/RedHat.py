@@ -13,6 +13,20 @@ class RedHatCDGuest(Guest.CDGuest):
                                nicmodel, clockoffset, mousetype, diskbus,
                                config)
         self.sshprivkey = self.icicle_tmp + '/id_rsa-icicle-gen'
+        self.sshd_config = \
+"""SyslogFacility AUTHPRIV
+PasswordAuthentication yes
+ChallengeResponseAuthentication no
+GSSAPIAuthentication yes
+GSSAPICleanupCredentials yes
+UsePAM yes
+AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES
+AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT
+AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE
+AcceptEnv XMODIFIERS
+X11Forwarding yes
+Subsystem	sftp	/usr/libexec/openssh/sftp-server
+"""
 
     def generate_iso(self):
         self.log.debug("Generating new ISO")
@@ -157,24 +171,9 @@ class RedHatCDGuest(Guest.CDGuest):
             g_handle.mv(startuplink, startuplink + ".icicle")
         g_handle.ln_sf('/etc/init.d/sshd', startuplink)
 
-        sshd_config = \
-"""SyslogFacility AUTHPRIV
-PasswordAuthentication yes
-ChallengeResponseAuthentication no
-GSSAPIAuthentication yes
-GSSAPICleanupCredentials yes
-UsePAM yes
-AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES
-AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT
-AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE
-AcceptEnv XMODIFIERS
-X11Forwarding yes
-Subsystem	sftp	/usr/libexec/openssh/sftp-server
-"""
-
         sshd_config_file = self.icicle_tmp + "/sshd_config"
         f = open(sshd_config_file, 'w')
-        f.write(sshd_config)
+        f.write(self.sshd_config)
         f.close()
 
         if g_handle.exists('/etc/ssh/sshd_config'):

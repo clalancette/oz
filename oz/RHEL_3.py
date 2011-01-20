@@ -36,6 +36,16 @@ class RHEL3Guest(RedHat.RedHatCDGuest):
         RedHat.RedHatCDGuest.__init__(self, "RHEL-3", self.tdl.update,
                                       self.tdl.arch, 'url', None, None, None,
                                       None, config)
+        # this has to be *after* RedHatCDGuest.__init__ so that we override
+        # the value that was set there
+        self.sshd_config = \
+"""SyslogFacility AUTHPRIV
+PasswordAuthentication yes
+ChallengeResponseAuthentication no
+X11Forwarding yes
+Subsystem	sftp	/usr/libexec/openssh/sftp-server
+"""
+
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")
