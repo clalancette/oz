@@ -161,13 +161,13 @@ class Guest(object):
 
     # the next 3 methods are intended to be overridden by the individual
     # OS backends; raise an error if they are called but not implemented
-    def generate_install_media(self):
+    def generate_install_media(self, force_download):
         raise OzException("Install media for %s is not implemented, install cannot continue" % (self.name))
 
-    def customize(self):
+    def customize(self, libvirt_xml):
         raise OzException("Customization for %s is not implemented" % (self.name))
 
-    def generate_icicle(self):
+    def generate_icicle(self, libvirt_xml):
         raise OzException("ICICLE generation for %s is not implemented" % (self.name))
 
     def targetDev(self, doc, devicetype, path, bus):
