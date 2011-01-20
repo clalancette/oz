@@ -56,6 +56,8 @@ def subprocess_check_output(*popenargs, **kwargs):
 
     ozutil.executable_exists(popenargs[0][0])
 
+    # FIXME: this doesn't seem to do the right thing with respect to stderr
+    # and reporting errors.  Needs to be looked into
     process = subprocess.Popen(stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT, *popenargs, **kwargs)
     output, unused_err = process.communicate()
