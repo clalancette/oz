@@ -24,9 +24,10 @@ def get_value(doc, xmlstring):
     return res[0].getContent()
 
 class TDL(object):
-    def __init__(self, filename):
+    def __init__(self, xmlstring):
         self.doc = None
-        self.doc = libxml2.parseFile(filename)
+
+        self.doc = libxml2.parseDoc(xmlstring)
 
         self.distro = get_value(self.doc, '/template/os/name')
         if self.distro is None:

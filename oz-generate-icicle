@@ -106,7 +106,7 @@ libvirt_xml_file = args[1]
 
 logging.basicConfig(level=loglevel, format=logformat)
 
-tdl = oz.TDL.TDL(tdlfile)
+tdl = oz.TDL.TDL(open(tdlfile, 'r').read())
 
 config = ConfigParser.SafeConfigParser()
 if os.access(config_file, os.F_OK):

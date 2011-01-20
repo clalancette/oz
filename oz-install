@@ -115,7 +115,7 @@ if len(args) != 1:
 
 logging.basicConfig(level=loglevel, format=logformat)
 
-tdl = oz.TDL.TDL(args[0])
+tdl = oz.TDL.TDL(open(args[0], 'r').read())
 
 config = ConfigParser.SafeConfigParser()
 if os.access(config_file, os.F_OK):
