@@ -1,7 +1,9 @@
-import Guest
 import subprocess
 import re
 import os
+import shutil
+
+import Guest
 import ozutil
 
 class RedHatCDGuest(Guest.CDGuest):
@@ -122,6 +124,7 @@ class RedHatCDGuest(Guest.CDGuest):
             self.image_ssh_teardown_step_4(g_handle)
         finally:
             self.guestfs_handle_cleanup(g_handle)
+            shutil.rmtree(self.icicle_tmp)
 
     def image_ssh_setup_step_1(self, g_handle):
         # part 1; upload the keys
@@ -132,9 +135,6 @@ class RedHatCDGuest(Guest.CDGuest):
         if g_handle.exists('/root/.ssh/authorized_keys'):
             g_handle.mv('/root/.ssh/authorized_keys',
                         '/root/.ssh/authorized_keys.icicle')
-
-        if not os.access(self.icicle_tmp, os.F_OK):
-            os.makedirs(self.icicle_tmp)
 
         pubname = self.sshprivkey + ".pub"
         if os.access(self.sshprivkey, os.F_OK):
@@ -215,6 +215,9 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
     def collect_setup(self, libvirt_xml):
         self.log.info("Collection Setup")
+
+        if not os.access(self.icicle_tmp, os.F_OK):
+            os.makedirs(self.icicle_tmp)
 
         g_handle = self.guestfs_handle_setup(libvirt_xml)
 
