@@ -631,18 +631,21 @@ class CDGuest(Guest):
 
         self.log.debug("Extracting tarball")
         tarout = self.iso_contents + "/data.tar"
-        gfs.tar_out("/", tarout)
+        isostat = gfs.statvfs("/")
+        outputstat = os.statvfs(self.iso_contents)
+        if (outputstat.f_bsize*outputstat.f_bavail) < (isostat['blocks']*isostat['bsize']):
+            raise OzException("Not enough room on %s to extract install media" % (self.iso_contents))
 
-        current = os.getcwd()
-        os.chdir(self.iso_contents)
-        subprocess_check_output(["tar", "-x", "-v", "-f", tarout])
+        try:
+            gfs.tar_out("/", tarout)
+            gfs.sync()
+            gfs.umount_all()
+            gfs.kill_subprocess()
 
-        self.log.debug("Cleaning up")
-        os.unlink(tarout)
-        os.chdir(current)
-        gfs.sync()
-        gfs.umount_all()
-        gfs.kill_subprocess()
+            subprocess_check_output(["tar", "-x", "-v", "-C", self.iso_contents,
+                                     "-f", tarout])
+        finally:
+            os.unlink(tarout)
 
     def geteltorito(self, cdfile, outfile):
         cdfile = open(cdfile, "r")
