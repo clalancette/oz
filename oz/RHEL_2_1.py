@@ -92,6 +92,7 @@ class RHEL21Guest(Guest.FDGuest):
         self.get_original_floppy(self.url + "/images/bootnet.img", force_download)
         self.copy_floppy()
         self.modify_floppy()
+        self.cleanup_floppy()
 
 def get_class(tdl, config):
     if tdl.update in ["GOLD", "U2", "U3", "U4", "U5", "U6"]:
