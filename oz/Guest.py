@@ -658,8 +658,7 @@ class CDGuest(Guest):
         # some padding that happens that causes the unpacking to fail.  Instead
         # we force "standard" alignment, which really has no constraints
         fmt = "=B5sB23s41sI"
-        spec = cdfile.read(struct.calcsize(fmt))
-        (boot, isoIdent, version, toritoSpec, unused, bootP) = struct.unpack(fmt, spec)
+        (boot, isoIdent, version, toritoSpec, unused, bootP) = struct.unpack(fmt, cdfile.read(struct.calcsize(fmt)))
         if boot != 0x0:
             raise OzException("invalid CD boot sector")
         if version != 0x1:
@@ -699,8 +698,7 @@ class CDGuest(Guest):
         # entry
         cdfile.seek(bootP*2048+32)
         fmt = "=BBHBBHIB"
-        defaultentry = cdfile.read(struct.calcsize(fmt))
-        (boot, media, loadsegment, systemtype, unused, scount, imgstart, unused2) = struct.unpack(fmt, defaultentry)
+        (boot, media, loadsegment, systemtype, unused, scount, imgstart, unused2) = struct.unpack(fmt, cdfile.read(struct.calcsize(fmt)))
 
         if boot != 0x88:
             raise OzException("invalid CD initial boot indicator")
