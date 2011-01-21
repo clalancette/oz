@@ -33,9 +33,6 @@ class RHEL4Guest(RedHat.RedHatCDGuest):
         else:
             raise Guest.OzException("RHEL-4 installs must be done via url or iso")
 
-        # FIXME: if doing an ISO install, we have to check that the ISO passed
-        # in is the DVD, not the CD (since we can't change disks midway)
-
         RedHat.RedHatCDGuest.__init__(self, "RHEL-4", self.tdl.update,
                                       self.tdl.arch, self.tdl.installtype,
                                       nicmodel, None, None, diskbus, config)
@@ -67,6 +64,18 @@ class RHEL4Guest(RedHat.RedHatCDGuest):
         f.writelines(lines)
         f.close()
 
+    def check_dvd(self):
+        f = open(self.iso_contents + "/.discinfo")
+        lines = f.readlines()
+        f.close()
+
+        if not lines[1].startswith("Red Hat Enterprise Linux 4."):
+            raise Guest.OzException("Invalid .discinfo file on ISO")
+        if lines[2].strip() != self.arch:
+            raise Guest.OzException("Invalid .discinfo architecture on ISO")
+        if lines[3].strip() != "1,2,3,4,5":
+            raise Guest.OzException("Only DVDs are supported for RHEL-4 ISO installs")
+
     def generate_install_media(self, force_download):
         self.log.info("Generating install media")
         fetchurl = self.url
@@ -74,6 +83,8 @@ class RHEL4Guest(RedHat.RedHatCDGuest):
             fetchurl += "/images/boot.iso"
         self.get_original_iso(fetchurl, force_download)
         self.copy_iso()
+        if self.tdl.installtype == 'iso':
+            self.check_dvd()
         self.modify_iso()
         self.generate_iso()
         self.cleanup_iso()

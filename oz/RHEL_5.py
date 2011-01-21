@@ -14,9 +14,11 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-import Guest
 import shutil
 import re
+import struct
+
+import Guest
 import ozutil
 import RedHat
 
@@ -32,9 +34,6 @@ class RHEL5Guest(RedHat.RedHatCDGuest):
             self.url = self.tdl.iso
         else:
             raise Guest.OzException("RHEL-5 installs must be done via url or iso")
-
-        # FIXME: if doing an ISO install, we have to check that the ISO passed
-        # in is the DVD, not the CD (since we can't change disks midway)
 
         RedHat.RedHatCDGuest.__init__(self, "RHEL-5", self.tdl.update,
                                       self.tdl.arch, self.tdl.installtype,
@@ -67,12 +66,39 @@ class RHEL5Guest(RedHat.RedHatCDGuest):
         f.writelines(lines)
         f.close()
 
+    def check_dvd(self):
+        # we use this function to check to make sure that the ISO we downloaded
+        # is the DVD ISO, not the CD one.
+        cdfile = open(self.orig_iso, 'r')
+
+        # the first 32768 bytes are unused by ISO 9660
+        cdfile.seek(32768)
+        fmt = "=B5sBB32s32sQLL32sHHHH"
+        (desc_type, identifier, version, unused1, system_identifier, volume_identifier, unused2, space_size_le, space_size_be, unused3, set_size_le, set_size_be, seqnum_le, seqnum_be) = struct.unpack(fmt, cdfile.read(struct.calcsize(fmt)))
+        cdfile.close()
+
+        if desc_type != 0x1:
+            raise Guest.OzException("Invalid primary volume descriptor")
+        if identifier != "CD001":
+            raise Guest.OzException("invalid CD isoIdentification")
+        if unused1 != 0x0:
+            raise Guest.OzException("data in unused field")
+        if unused2 != 0x0:
+            raise Guest.OzException("data in 2nd unused field")
+
+        print "volume_ident: %s" % volume_identifier
+        print "update: %s, arch: %s" % (self.update, self.arch)
+        if not re.match("RHEL/5\.[0-9] " + self.arch + " DVD", volume_identifier):
+            raise Guest.OzException("Only DVDs are supported for RHEL-5 ISO installs")
+
     def generate_install_media(self, force_download):
         self.log.info("Generating install media")
         fetchurl = self.url
         if self.tdl.installtype == 'url':
             fetchurl += "/images/boot.iso"
         self.get_original_iso(fetchurl, force_download)
+        if self.tdl.installtype == 'iso':
+            self.check_dvd()
         self.copy_iso()
         self.modify_iso()
         self.generate_iso()

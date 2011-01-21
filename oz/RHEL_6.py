@@ -33,9 +33,6 @@ class RHEL6Guest(RedHat.RedHatCDGuest):
         else:
             raise Guest.OzException("RHEL-6 installs must be done via url or iso")
 
-        # FIXME: if doing an ISO install, we have to check that the ISO passed
-        # in is the DVD, not the CD (since we can't change disks midway)
-
         RedHat.RedHatCDGuest.__init__(self, "RHEL-6", self.tdl.update,
                                       self.tdl.arch, self.tdl.installtype,
                                       "virtio", None, None, "virtio", config)
