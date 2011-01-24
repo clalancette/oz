@@ -313,7 +313,7 @@ class Guest(object):
                 self.log.debug(" str3 is %s" % e.get_str3())
                 self.log.debug(" int1 is %d" % e.get_int1())
                 self.log.debug(" int2 is %d" % e.get_int2())
-                if e.get_error_domain() == libvirt.VIR_FROM_QEMU and (e.get_error_code() in [libvirt.VIR_ERR_NO_DOMAIN, libvirt.VIR_ERR_SYSTEM_ERROR]):
+                if e.get_error_domain() == libvirt.VIR_FROM_QEMU and (e.get_error_code() in [libvirt.VIR_ERR_NO_DOMAIN, libvirt.VIR_ERR_SYSTEM_ERROR, libvirt.VIR_ERR_OPERATION_FAILED]):
                     break
                 else:
                     raise
@@ -348,7 +348,7 @@ class Guest(object):
                 self.log.debug(" str3 is %s" % e.get_str3())
                 self.log.debug(" int1 is %d" % e.get_int1())
                 self.log.debug(" int2 is %d" % e.get_int2())
-                if e.get_error_domain() == libvirt.VIR_FROM_QEMU and (e.get_error_code() in [libvirt.VIR_ERR_NO_DOMAIN, libvirt.VIR_ERR_SYSTEM_ERROR]):
+                if e.get_error_domain() == libvirt.VIR_FROM_QEMU and (e.get_error_code() in [libvirt.VIR_ERR_NO_DOMAIN, libvirt.VIR_ERR_SYSTEM_ERROR, libvirt.VIR_ERR_OPERATION_FAILED]):
                     break
                 else:
                     raise
