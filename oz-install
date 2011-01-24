@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright (C) 2010  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,7 @@ import getopt
 import os
 import logging
 import time
+import ConfigParser
 
 import oz.TDL
 import oz.Fedora
@@ -34,7 +35,6 @@ import oz.RHL
 import oz.Ubuntu
 import oz.Windows
 import oz.OpenSUSE
-import ConfigParser
 
 def usage():
     print "Usage: ozinstall [OPTIONS] <tdl>"
