@@ -644,19 +644,36 @@ class CDGuest(Guest):
 
             subprocess_check_output(["tar", "-x", "-v", "-C", self.iso_contents,
                                      "-f", tarout])
+        except:
+            shutil.rmtree(self.iso_contents)
+            raise
         finally:
             os.unlink(tarout)
 
     def geteltorito(self, cdfile, outfile):
         cdfile = open(cdfile, "r")
 
-        # the 17th sector contains the boot specification, and also contains the
-        # offset of the "boot" sector
+        # check out the primary volume descriptor to make sure it is sane
+        cdfile.seek(16*2048)
+        fmt = "=B5sBB32s32sQLL32sHHHH"
+        (desc_type, identifier, version, unused1, system_identifier, volume_identifier, unused2, space_size_le, space_size_be, unused3, set_size_le, set_size_be, seqnum_le, seqnum_be) = struct.unpack(fmt, cdfile.read(struct.calcsize(fmt)))
+
+        if desc_type != 0x1:
+            raise OzException("Invalid primary volume descriptor")
+        if identifier != "CD001":
+            raise OzException("invalid CD isoIdentification")
+        if unused1 != 0x0:
+            raise OzException("data in unused field")
+        if unused2 != 0x0:
+            raise OzException("data in 2nd unused field")
+
+        # the 17th sector contains the boot specification and the offset of the
+        # boot sector
         cdfile.seek(17*2048)
 
         # NOTE: With "native" alignment (the default for struct), there is
-        # some padding that happens that causes the unpacking to fail.  Instead
-        # we force "standard" alignment, which really has no constraints
+        # some padding that happens that causes the unpacking to fail.
+        # Instead we force "standard" alignment, which has no padding
         fmt = "=B5sB23s41sI"
         (boot, isoIdent, version, toritoSpec, unused, bootP) = struct.unpack(fmt, cdfile.read(struct.calcsize(fmt)))
         if boot != 0x0:
@@ -668,8 +685,8 @@ class CDGuest(Guest):
         if toritoSpec != "EL TORITO SPECIFICATION":
             raise OzException("invalid CD torito specification")
 
-        # OK, this looks like a CD.  Seek to the boot sector, and look for the
-        # header, 0x55, and 0xaa in the first 32 bytes
+        # OK, this looks like a bootable CD.  Seek to the boot sector, and
+        # look for the header, 0x55, and 0xaa in the first 32 bytes
         cdfile.seek(bootP*2048)
         fmt = "=BBH24sHBB"
         bootdata = cdfile.read(struct.calcsize(fmt))
@@ -694,8 +711,8 @@ class CDGuest(Guest):
         if csum != 0:
             raise OzException("invalid CD checksum: expected 0, saw %d" % (csum))
 
-        # OK, everything so far has checked out.  Read the default/initial boot
-        # entry
+        # OK, everything so far has checked out.  Read the default/initial
+        # boot entry
         cdfile.seek(bootP*2048+32)
         fmt = "=BBHBBHIB"
         (boot, media, loadsegment, systemtype, unused, scount, imgstart, unused2) = struct.unpack(fmt, cdfile.read(struct.calcsize(fmt)))
@@ -703,7 +720,7 @@ class CDGuest(Guest):
         if boot != 0x88:
             raise OzException("invalid CD initial boot indicator")
         if unused != 0x0 or unused2 != 0x0:
-            raise EOzxception("invalid CD initial boot unused field")
+            raise OzException("invalid CD initial boot unused field")
 
         if media == 0 or media == 4:
             count = scount
@@ -719,20 +736,21 @@ class CDGuest(Guest):
         else:
             raise OzException("invalid CD media type")
 
-        # finally, seek to "imgstart", and read "count" sectors, which contains
-        # the boot image
+        # finally, seek to "imgstart", and read "count" sectors, which
+        # contains the boot image
         cdfile.seek(imgstart*2048)
 
         # The eltorito specification section 2.5 says:
         #
         # Sector Count. This is the number of virtual/emulated sectors the
-        # system will store at Load Segment during the initial boot procedure.
+        # system will store at Load Segment during the initial boot
+        # procedure.
         #
         # and then Section 1.5 says:
         #
         # Virtual Disk - A series of sectors on the CD which INT 13 presents
-        # to the system as a drive with 200 byte virtual sectors. There are 4
-        # virtual sectors found in each sector on a CD.
+        # to the system as a drive with 200 byte virtual sectors. There
+        # are 4 virtual sectors found in each sector on a CD.
         #
         # (note that the bytes above are in hex).  So we read count*512
         eltoritodata = cdfile.read(count*512)
