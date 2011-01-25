@@ -71,8 +71,9 @@ class RHEL5Guest(RedHat.RedHatCDGuest):
         # is the DVD ISO, not the CD one.
         cdfile = open(self.orig_iso, 'r')
 
-        # the first 32768 bytes are unused by ISO 9660
-        cdfile.seek(32768)
+        # the first 32768 bytes are unused by ISO 9660.  The 16th sector
+        # contains the primary volume descriptor
+        cdfile.seek(16*2048)
         fmt = "=B5sBB32s32sQLL32sHHHH"
         (desc_type, identifier, version, unused1, system_identifier, volume_identifier, unused2, space_size_le, space_size_be, unused3, set_size_le, set_size_be, seqnum_le, seqnum_be) = struct.unpack(fmt, cdfile.read(struct.calcsize(fmt)))
         cdfile.close()
@@ -86,8 +87,6 @@ class RHEL5Guest(RedHat.RedHatCDGuest):
         if unused2 != 0x0:
             raise Guest.OzException("data in 2nd unused field")
 
-        print "volume_ident: %s" % volume_identifier
-        print "update: %s, arch: %s" % (self.update, self.arch)
         if not re.match("RHEL/5\.[0-9] " + self.arch + " DVD", volume_identifier):
             raise Guest.OzException("Only DVDs are supported for RHEL-5 ISO installs")
 
