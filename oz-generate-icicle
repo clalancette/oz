@@ -103,6 +103,4 @@ except oz.DistroException:
 if os.stat(libvirt_xml_file)[stat.ST_SIZE] > (5 * 1024 * 1024):
     raise Exception, "libvirt XML file is too big!"
 
-libvirt_xml = open(libvirt_xml_file, 'r').read()
-
-print guest.generate_icicle(libvirt_xml)
+print guest.generate_icicle(open(libvirt_xml_file, 'r').read())
