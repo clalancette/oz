@@ -27,6 +27,14 @@ def get_ubuntu_arch(tdl_arch):
         arch = "amd64"
     return arch
 
+def make_ubuntu_iso(input_dir, output_file):
+    Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom", "-J", "-l",
+                                   "-b", "isolinux/isolinux.bin",
+                                   "-c", "isolinux/boot.cat", "-no-emul-boot",
+                                   "-boot-load-size", "4", "-cache-inodes",
+                                   "-boot-info-table", "-v", "-v",
+                                   "-o", output_file, input_dir])
+
 class Ubuntu810and904and910Guest(Guest.CDGuest):
     def __init__(self, tdl, initrd, config):
         self.tdl = tdl
@@ -45,14 +53,7 @@ class Ubuntu810and904and910Guest(Guest.CDGuest):
 
     def generate_new_iso(self):
         self.log.info("Generating new ISO")
-        Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom",
-                                       "-cache-inodes", "-J", "-l", "-b",
-                                       "isolinux/isolinux.bin", "-c",
-                                       "isolinux/boot.cat", "-no-emul-boot",
-                                       "-boot-load-size", "4",
-                                       "-boot-info-table", "-v", "-v",
-                                       "-o", self.output_iso,
-                                       self.iso_contents])
+        make_ubuntu_iso(self.iso_contents, self.output_iso)
 
     def generate_install_media(self, force_download):
         self.get_original_iso(self.tdl.iso, force_download)
@@ -70,6 +71,7 @@ class Ubuntu810and904and910Guest(Guest.CDGuest):
         f = open(self.iso_contents + "/isolinux/text.cfg", "r")
         lines = f.readlines()
         f.close()
+
         for line in lines:
             if re.match("default", line):
                 lines[lines.index(line)] = "default customiso\n"
@@ -77,6 +79,7 @@ class Ubuntu810and904and910Guest(Guest.CDGuest):
         lines.append("  menu label ^Customiso\n")
         lines.append("  kernel /casper/vmlinuz\n")
         lines.append("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us boot=casper automatic-ubiquity noprompt initrd=" + self.initrd + " ramdisk_size=14984 --\n")
+
         f = open(self.iso_contents + "/isolinux/text.cfg", "w")
         f.writelines(lines)
         f.close()
@@ -85,6 +88,7 @@ class Ubuntu810and904and910Guest(Guest.CDGuest):
         f = open(self.iso_contents + "/isolinux/isolinux.cfg", "r")
         lines = f.readlines()
         f.close()
+
         for line in lines:
             if re.match("default", line):
                 lines[lines.index(line)] = "default customiso\n"
@@ -92,6 +96,7 @@ class Ubuntu810and904and910Guest(Guest.CDGuest):
                 lines[lines.index(line)] = "timeout 10\n"
             elif re.match("gfxboot", line):
                 lines[lines.index(line)] = ""
+
         f = open(self.iso_contents + "/isolinux/isolinux.cfg", "w")
         f.writelines(lines)
         f.close()
@@ -112,14 +117,7 @@ class Ubuntu710and8041Guest(Guest.CDGuest):
 
     def generate_new_iso(self):
         self.log.info("Generating new ISO")
-        Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom",
-                                       "-cache-inodes", "-J", "-l", "-b",
-                                       "isolinux/isolinux.bin", "-c",
-                                       "isolinux/boot.cat", "-no-emul-boot",
-                                       "-boot-load-size", "4",
-                                       "-boot-info-table", "-v", "-v",
-                                       "-o", self.output_iso,
-                                       self.iso_contents])
+        make_ubuntu_iso(self.iso_contents, self.output_iso)
 
     def generate_install_media(self, force_download):
         self.get_original_iso(self.tdl.iso, force_download)
@@ -137,6 +135,7 @@ class Ubuntu710and8041Guest(Guest.CDGuest):
         f = open(self.iso_contents + "/isolinux/isolinux.cfg", "r")
         lines = f.readlines()
         f.close()
+
         for line in lines:
             if re.match(" *TIMEOUT", line, re.IGNORECASE):
                 lines[lines.index(line)] = "TIMEOUT 1\n"
@@ -150,6 +149,7 @@ class Ubuntu710and8041Guest(Guest.CDGuest):
         lines.append("  menu label ^Customiso\n")
         lines.append("  kernel /casper/vmlinuz\n")
         lines.append("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us boot=casper automatic-ubiquity noprompt initrd=/casper/initrd.gz --\n")
+
         f = open(self.iso_contents + "/isolinux/isolinux.cfg", "w")
         f.writelines(lines)
         f.close()
@@ -170,14 +170,7 @@ class Ubuntu610and704Guest(Guest.CDGuest):
 
     def generate_new_iso(self):
         self.log.info("Generating new ISO")
-        Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom",
-                                       "-cache-inodes", "-J", "-l", "-b",
-                                       "isolinux/isolinux.bin", "-c",
-                                       "isolinux/boot.cat", "-no-emul-boot",
-                                       "-boot-load-size", "4",
-                                       "-boot-info-table", "-v", "-v",
-                                       "-o", self.output_iso,
-                                       self.iso_contents])
+        make_ubuntu_iso(self.iso_contents, self.output_iso)
 
     def generate_install_media(self, force_download):
         self.get_original_iso(self.tdl.iso, force_download)
@@ -194,6 +187,7 @@ class Ubuntu610and704Guest(Guest.CDGuest):
         f = open(self.iso_contents + "/isolinux/isolinux.cfg", "r")
         lines = f.readlines()
         f.close()
+
         for line in lines:
             if re.match(" *TIMEOUT", line, re.IGNORECASE):
                 lines[lines.index(line)] = "TIMEOUT 1\n"
@@ -207,6 +201,7 @@ class Ubuntu610and704Guest(Guest.CDGuest):
         lines.append("  menu label ^Customiso\n")
         lines.append("  kernel /install/vmlinuz\n")
         lines.append("  append file=/cdrom/preseed/customiso.seed locale=en_US console-setup/ask_detect=false console-setup/layoutcode=us priority=critical ramdisk_size=141876 root=/dev/ram rw initrd=/install/initrd.gz --\n")
+
         f = open(self.iso_contents + "/isolinux/isolinux.cfg", "w")
         f.writelines(lines)
         f.close()
