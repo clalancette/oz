@@ -24,17 +24,7 @@ import stat
 import ConfigParser
 
 import oz.TDL
-import oz.Fedora
-import oz.FedoraCore
-import oz.RHEL_2_1
-import oz.RHEL_3
-import oz.RHEL_4
-import oz.RHEL_5
-import oz.RHEL_6
-import oz.RHL
-import oz.Ubuntu
-import oz.Windows
-import oz.OpenSUSE
+import oz.GuestFactory
 
 def usage():
     print "Usage: oz-generate-icicle [OPTIONS] <tdl> <libvirt_xml_file>"
@@ -50,17 +40,7 @@ def usage():
     print " Currently supported architectures are:"
     print "   i386, x86_64"
     print " Currently supported distros are:"
-    print "   Fedora: 7, 8, 9, 10, 11, 12, 13"
-    print "   Fedora Core: 1, 2, 3, 4, 5, 6"
-    print "   RHEL 2.1: GOLD, U2, U3, U4, U5, U6"
-    print "   RHEL 3: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9"
-    print "   RHEL 4: GOLD, U1, U2, U3, U4, U5, U6, U7, U8"
-    print "   RHEL 5: GOLD, U1, U2, U3, U4, U5, U6"
-    print "   RHEL 6: 0"
-    print "   Ubuntu: 6.10, 7.04, 7.10, 8.04.[1,2,3,4], 8.10, 9.04, 9.10"
-    print "   Windows: 2000, XP, 2003"
-    print "   RHL: 7.0, 7.1, 7.2, 7.3, 8, 9"
-    print "   OpenSUSE: 11.1, 11.2, 11.3"
+    oz.GuestFactory.distrolist()
     sys.exit(1)
 
 try:
@@ -112,27 +92,9 @@ config = ConfigParser.SafeConfigParser()
 if os.access(config_file, os.F_OK):
     config.read(config_file)
 
-if tdl.distro == "Fedora":
-    guest = oz.Fedora.get_class(tdl, config)
-elif tdl.distro == "FedoraCore":
-    guest = oz.FedoraCore.get_class(tdl, config)
-elif tdl.distro == "RHEL-2.1":
-    guest = oz.RHEL_2_1.get_class(tdl, config)
-elif tdl.distro == "RHEL-3":
-    guest = oz.RHEL_3.get_class(tdl, config)
-elif tdl.distro == "RHEL-4":
-    guest = oz.RHEL_4.get_class(tdl, config)
-elif tdl.distro == "RHEL-5":
-    guest = oz.RHEL_5.get_class(tdl, config)
-elif tdl.distro == "RHEL-6":
-    guest = oz.RHEL_6.get_class(tdl, config)
-elif tdl.distro == "Ubuntu":
-    guest = oz.Ubuntu.get_class(tdl, config)
-elif tdl.distro == "Windows":
-    guest = oz.Windows.get_class(tdl, config)
-elif tdl.distro == "RHL":
-    guest = oz.RHL.get_class(tdl, config)
-else:
+try:
+    guest = oz.GuestFactory.guest_factory(tdl, config)
+except oz.DistroException:
     usage()
 
 # Arbitrarily limit the size of the XML file that we will support to 5MB.
