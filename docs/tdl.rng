@@ -49,6 +49,18 @@
 	    </oneOrMore>
 	  </element>
 	</optional>
+	<optional>
+	  <element name='files'>
+	    <oneOrMore>
+	      <element name='file'>
+		<attribute name='name'>
+		  <text/>
+		</attribute>
+		<text/>
+	      </element>
+	    </oneOrMore>
+	  </element>
+	</optional>
       </interleave>
     </element>
   </define>

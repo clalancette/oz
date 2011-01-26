@@ -302,6 +302,25 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
         return icicle_output
 
+    def guest_live_upload(self, guestaddr, file_to_upload, destination):
+        self.guest_execute_command(guestaddr, "mkdir -p " + os.path.dirname(destination))
+
+        return Guest.subprocess_check_output(["scp", "-i", self.sshprivkey,
+                                              "-o", "StrictHostKeyChecking=no",
+                                              "-o", "ConnectTimeout=5",
+                                              file_to_upload,
+                                              guestaddr + ":" + destination])
+
+    def customize_files(self, guestaddr):
+        self.log.info("Uploading custom files")
+        for name,content in self.tdl.files.items():
+            localname = self.icicle_tmp + "/file"
+            f = open(localname, 'w')
+            f.write(content)
+            f.close()
+            self.guest_live_upload(guestaddr, localname, name)
+            os.unlink(localname)
+
     def shutdown_guest(self, guestaddr, libvirt_dom):
         try:
             self.guest_execute_command(guestaddr, 'shutdown -h now')
@@ -318,8 +337,8 @@ class RedHatCDYumGuest(RedHatCDGuest):
     def customize(self, libvirt_xml):
         self.log.info("Customizing image")
 
-        if not self.tdl.packages:
-            self.log.info("No additional packages to install, skipping customization")
+        if not self.tdl.packages and not self.tdl.files:
+            self.log.info("No additional packages or files to install, skipping customization")
             return
 
         self.collect_setup(libvirt_xml)
@@ -339,6 +358,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
                     self.guest_execute_command(guestaddr,
                                                'yum -y install %s' % (packstr))
 
+                self.customize_files(guestaddr)
             finally:
                 libvirt_dom = self.shutdown_guest(guestaddr, libvirt_dom)
 

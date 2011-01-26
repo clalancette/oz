@@ -75,6 +75,14 @@ class TDL(object):
                 raise Guest.OzException("Package without a name was given")
             self.packages.append(name)
 
+        self.files = {}
+        for afile in self.doc.xpathEval('/template/files/file'):
+            name = afile.prop('name')
+            if name is None:
+                raise Guest.OzException("File without a name was given")
+            # we allow empty content so that you can "touch" files
+            self.files[name] = afile.getContent().strip()
+
     def __del__(self):
         if self.doc is not None:
             self.doc.freeDoc()
