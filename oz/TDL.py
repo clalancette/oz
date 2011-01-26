@@ -49,10 +49,10 @@ class TDL(object):
 
         install = self.doc.xpathEval('/template/os/install')
         if len(install) != 1:
-            raise Guest.OzException("Failed to find OS install in TDL")
-        if not install[0].hasProp('type'):
-            raise Guest.OzException("Failed to find OS install type in TDL")
+            raise Guest.OzException("Expected 1 OS install section in TDL, saw %d" % (len(install)))
         self.installtype = install[0].prop('type')
+        if self.installtype is None:
+            raise Guest.OzException("Failed to find OS install type in TDL")
         if self.installtype == "url":
             self.url = get_value(self.doc, '/template/os/install/url')
             if self.url is None:
