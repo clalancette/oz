@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <icicle>
-  <services/>
   <packages>
     <package name="ConsoleKit-0.4.1-5.fc13.x86_64"/>
     <package name="ConsoleKit-libs-0.4.1-5.fc13.x86_64"/>

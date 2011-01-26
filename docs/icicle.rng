@@ -8,11 +8,6 @@
   <define name='icicle'>
     <element name='icicle'>
       <interleave>
-	<optional>
-	  <element name='services'>
-	    <text/>
-	  </element>
-	</optional>
 	<element name='packages'>
 	  <zeroOrMore>
 	    <element name='package'>

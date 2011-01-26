@@ -299,8 +299,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                 if returncode != 0:
                     raise Guest.OzException("Failed to execute guest command 'rpm -qa': %s" % (stderr))
 
-                icicle_output = self.output_icicle_xml(stdout.split("\n"),
-                                                       self.tdl.services)
+                icicle_output = self.output_icicle_xml(stdout.split("\n"))
 
             finally:
                 output = self.guest_execute_command(guestaddr,

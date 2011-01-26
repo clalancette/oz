@@ -9,10 +9,6 @@
     </install>
   </os>
   <description>Fedora 13</description>
-  <services>
-    <requires>foo</requires>
-    <provides>bar</provides>
-  </services>
   <packages>
     <package name='bash'/>
     <package name='kernel'/>

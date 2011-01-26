@@ -64,16 +64,6 @@ class TDL(object):
         else:
             raise Guest.OzException("Unknown install type " + self.installtype + " in TDL")
 
-        services = self.doc.xpathEval('/template/services')
-        # there may be 0 or 1 <services> elements
-
-        if len(services) == 0:
-            self.services = "<services/>"
-        elif len(services) == 1:
-            self.services = str(services[0])
-        else:
-            raise Guest.OzException("Invalid number of services, expected 0 or 1")
-
         self.packages = []
         for package in self.doc.xpathEval('/template/packages/package'):
             self.packages.append(package.prop('name'))

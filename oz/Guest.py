@@ -582,11 +582,9 @@ class Guest(object):
 
         return addr[0]
 
-    def output_icicle_xml(self, lines, services):
+    def output_icicle_xml(self, lines):
         doc = libxml2.newDoc("1.0")
         icicle = doc.newChild(None, "icicle", None)
-        servDoc = libxml2.parseMemory(services, len(services))
-        icicle.addChild(servDoc.getRootElement())
         packages = icicle.newChild(None, "packages", None)
 
         lines.sort()
