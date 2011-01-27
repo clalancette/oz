@@ -61,6 +61,20 @@
 	    </oneOrMore>
 	  </element>
 	</optional>
+	<optional>
+	  <element name='repositories'>
+	    <oneOrMore>
+	      <element name='repository'>
+		<attribute name='url'>
+		  <text/>
+		</attribute>
+		<attribute name='name'>
+		  <text/>
+		</attribute>
+	      </element>
+	    </oneOrMore>
+	  </element>
+	</optional>
       </interleave>
     </element>
   </define>

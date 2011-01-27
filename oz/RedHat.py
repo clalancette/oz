@@ -334,6 +334,22 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         return libvirt_dom
 
 class RedHatCDYumGuest(RedHatCDGuest):
+    def customize_repos(self, guestaddr):
+        for repo in self.tdl.repositories:
+            filename = repo.name + ".repo"
+            localname = self.icicle_tmp + "/" + filename
+            f = open(localname, 'w')
+            f.write("[%s]\n" % repo.name)
+            f.write("name=%s\n" % repo.name)
+            f.write("baseurl=%s\n" % repo.url)
+            f.write("enabled=1\n")
+            # FIXME: need to allow gpg to be configured in TDL
+            f.write("gpgcheck=0\n")
+            f.close()
+
+            self.guest_live_upload(guestaddr, localname,
+                                   "/etc/yum.repos.d/" + filename)
+
     def customize(self, libvirt_xml):
         self.log.info("Customizing image")
 
@@ -350,6 +366,8 @@ class RedHatCDYumGuest(RedHatCDGuest):
             guestaddr = self.wait_for_guest_boot()
 
             try:
+                self.customize_repos(guestaddr)
+
                 packstr = ''
                 for package in self.tdl.packages:
                     packstr += package + ' '

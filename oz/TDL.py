@@ -24,6 +24,11 @@ def get_value(doc, xmlstring):
         return None
     return res[0].getContent()
 
+class Repository(object):
+    def __init__(self, name, url):
+        self.name = name
+        self.url = url
+
 class TDL(object):
     def __init__(self, xmlstring):
         self.doc = None
@@ -82,6 +87,16 @@ class TDL(object):
                 raise Guest.OzException("File without a name was given")
             # we allow empty content so that you can "touch" files
             self.files[name] = afile.getContent().strip()
+
+        self.repositories = []
+        for repo in self.doc.xpathEval('/template/repositories/repository'):
+            name = repo.prop('name')
+            if name is None:
+                raise Guest.OzException("Repository without a name was given")
+            url = repo.prop('url')
+            if url is None:
+                raise Guest.OzException("Repository without a url was given")
+            self.repositories.append(Repository(name, url))
 
     def __del__(self):
         if self.doc is not None:
