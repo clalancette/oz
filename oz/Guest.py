@@ -92,8 +92,8 @@ class Guest(object):
 
         self.libvirt_type = self.get_conf(config, 'libvirt', 'type', 'kvm')
 
-        self.diskimage = self.output_dir + "/" + self.name + ".dsk"
-        self.icicle_tmp = self.data_dir + "/icicletmp/" + self.name
+        self.diskimage = os.path.join(self.output_dir, self.name + ".dsk")
+        self.icicle_tmp = os.path.join(self.data_dir, "icicletmp", self.name)
         self.listen_port = random.randrange(1024, 65535)
         libvirt.registerErrorHandler(libvirt_error_handler, 'context')
         self.libvirt_conn = libvirt.open(self.libvirt_uri)
@@ -453,7 +453,9 @@ class Guest(object):
 
         # we don't use subprocess_check_output here because if this fails,
         # we don't want to raise an exception, just print an error
-        ret = subprocess.call(['gvnccapture', vnc, filename], stdout=open('/dev/null', 'w'), stderr=subprocess.STDOUT)
+        ret = subprocess.call(['gvnccapture', vnc, filename],
+                              stdout=open('/dev/null', 'w'),
+                              stderr=subprocess.STDOUT)
         if ret != 0:
             self.log.error("Failed to take screenshot")
 
@@ -618,7 +620,8 @@ class CDGuest(Guest):
                                      self.distro + self.update + self.arch + "-" + installtype + ".iso")
         self.output_iso = os.path.join(self.output_dir,
                                        self.name + "-" + installtype + "-oz.iso")
-        self.iso_contents = self.data_dir + "/isocontent/" + self.name + "-" + installtype
+        self.iso_contents = os.path.join(self.data_dir, "isocontent",
+                                         self.name + "-" + installtype)
         self.log.debug("Original ISO path: %s" % self.orig_iso)
         self.log.debug("Output ISO path: %s" % self.output_iso)
         self.log.debug("ISO content path: %s" % self.iso_contents)
@@ -642,7 +645,7 @@ class CDGuest(Guest):
         gfs.mount_options('ro', "/dev/sda", "/")
 
         self.log.debug("Extracting tarball")
-        tarout = self.iso_contents + "/data.tar"
+        tarout = os.path.join(self.iso_contents, "data.tar")
         isostat = gfs.statvfs("/")
         outputstat = os.statvfs(self.iso_contents)
         if (outputstat.f_bsize*outputstat.f_bavail) < (isostat['blocks']*isostat['bsize']):
@@ -794,9 +797,10 @@ class FDGuest(Guest):
                  mousetype, diskbus, config):
         Guest.__init__(self, name, distro, update, arch, nicmodel, clockoffset,
                        mousetype, diskbus, config)
-        self.orig_floppy = self.data_dir + "/floppies/" + self.distro + self.update + self.arch + ".img"
-        self.output_floppy = self.output_dir + "/" + self.name + "-oz.img"
-        self.floppy_contents = self.data_dir + "/floppycontent/" + self.name
+        self.orig_floppy = os.path.join(self.data_dir, "floppies",
+                                        self.distro + self.update + self.arch + ".img")
+        self.output_floppy = os.path.join(self.output_dir, self.name + "-oz.img")
+        self.floppy_contents = os.path.join(self.data_dir, "floppycontent", self.name)
 
     def get_original_floppy(self, floppyurl, force_download):
         return self.get_original_media(floppyurl, self.orig_floppy, force_download)

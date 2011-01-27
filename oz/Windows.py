@@ -62,8 +62,9 @@ class Windows2000andXPand2003(Guest.CDGuest):
                                        "-o", self.output_iso, self.iso_contents])
 
     def modify_iso(self):
-        os.mkdir(self.iso_contents + "/cdboot")
-        self.geteltorito(self.orig_iso, self.iso_contents + "/cdboot/boot.bin")
+        os.mkdir(os.path.join(self.iso_contents, "cdboot"))
+        self.geteltorito(self.orig_iso, os.path.join(self.iso_contents,
+                                                     "cdboot", "boot.bin"))
 
         computername = "OZ" + str(random.randrange(1, 900000))
 
@@ -79,7 +80,7 @@ class Windows2000andXPand2003(Guest.CDGuest):
             elif re.match(" *ComputerName", line):
                 lines[lines.index(line)] = "    ComputerName=" + computername + "\n"
 
-        f = open(self.iso_contents + "/" + self.winarch + "/winnt.sif", "w")
+        f = open(os.path.join(self.iso_contents, self.winarch, "winnt.sif"), "w")
         f.writelines(lines)
         f.close()
 
@@ -135,8 +136,9 @@ class Windows2008and7(Guest.CDGuest):
                                        "-o", self.output_iso, self.iso_contents])
 
     def modify_iso(self):
-        os.mkdir(self.iso_contents + "/cdboot")
-        self.geteltorito(self.orig_iso, self.iso_contents + "/cdboot/boot.bin")
+        os.mkdir(os.path.join(self.iso_contents, "cdboot"))
+        self.geteltorito(self.orig_iso, os.path.join(self.iso_contents,
+                                                     "cdboot", "boot.bin"))
 
         doc = libxml2.parseFile(self.unattendfile)
         xp = doc.xpathNewContext()
@@ -152,7 +154,7 @@ class Windows2008and7(Guest.CDGuest):
 
         keys[0].setContent(self.tdl.key)
 
-        doc.saveFile(self.iso_contents + "/autounattend.xml")
+        doc.saveFile(os.path.join(self.iso_contents, "autounattend.xml"))
 
     def generate_install_media(self, force_download):
         self.get_original_iso(self.tdl.iso, force_download)

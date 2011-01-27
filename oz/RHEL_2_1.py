@@ -48,7 +48,7 @@ class RHEL21Guest(Guest.FDGuest):
 
         self.log.debug("Putting the kickstart in place")
 
-        output_ks = self.floppy_contents + "/ks.cfg"
+        output_ks = os.path.join(self.floppy_contents, "ks.cfg")
         shutil.copyfile(self.ks_file, output_ks)
         f = open(output_ks, "r")
         lines = f.readlines()
@@ -69,7 +69,9 @@ class RHEL21Guest(Guest.FDGuest):
         Guest.subprocess_check_output(["mcopy", "-n", "-o", "-i",
                                        self.output_floppy, "::SYSLINUX.CFG",
                                        self.floppy_contents])
-        f = open(self.floppy_contents + "/SYSLINUX.CFG", "r")
+
+        syslinux = os.path.join(self.floppy_contents, "SYSLINUX.CFG")
+        f = open(syslinux, "r")
         lines = f.readlines()
         f.close()
 
@@ -82,13 +84,12 @@ class RHEL21Guest(Guest.FDGuest):
         lines.append("  kernel vmlinuz\n")
         lines.append("  append initrd=initrd.img lang= devfs=nomount ramdisk_dize=9216 ks=floppy method=" + self.url + "\n")
 
-        f = open(self.floppy_contents + "/SYSLINUX.CFG", "w")
+        f = open(syslinux, "w")
         f.writelines(lines)
         f.close()
 
         Guest.subprocess_check_output(["mcopy", "-n", "-o", "-i",
-                                       self.output_floppy,
-                                       self.floppy_contents + "/SYSLINUX.CFG",
+                                       self.output_floppy, syslinux,
                                        "::SYSLINUX.CFG"])
 
     def generate_install_media(self, force_download):

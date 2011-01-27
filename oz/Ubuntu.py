@@ -68,10 +68,13 @@ class Ubuntu810and904Guest(Guest.CDGuest):
     def modify_iso(self):
         self.log.debug("Putting the preseed file in place")
 
-        shutil.copy(self.preseed_file, self.iso_contents + "/preseed/customiso.seed")
+        shutil.copy(self.preseed_file, os.path.join(self.iso_contents,
+                                                    "preseed",
+                                                    "customiso.seed"))
 
         self.log.debug("Modifying text.cfg")
-        f = open(self.iso_contents + "/isolinux/text.cfg", "r")
+        textcfg = os.path.join(self.iso_contents, "isolinux", "text.cfg")
+        f = open(textcfg, "r")
         lines = f.readlines()
         f.close()
 
@@ -83,12 +86,13 @@ class Ubuntu810and904Guest(Guest.CDGuest):
         lines.append("  kernel /casper/vmlinuz\n")
         lines.append("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us boot=casper automatic-ubiquity noprompt initrd=" + self.initrd + " ramdisk_size=14984 --\n")
 
-        f = open(self.iso_contents + "/isolinux/text.cfg", "w")
+        f = open(textcfg, "w")
         f.writelines(lines)
         f.close()
 
         self.log.debug("Modifying isolinux.cfg")
-        f = open(self.iso_contents + "/isolinux/isolinux.cfg", "r")
+        isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
+        f = open(isolinuxcfg, "r")
         lines = f.readlines()
         f.close()
 
@@ -100,7 +104,7 @@ class Ubuntu810and904Guest(Guest.CDGuest):
             elif re.match("gfxboot", line):
                 lines[lines.index(line)] = ""
 
-        f = open(self.iso_contents + "/isolinux/isolinux.cfg", "w")
+        f = open(isolinuxcfg, "w")
         f.writelines(lines)
         f.close()
 
@@ -212,10 +216,13 @@ class Ubuntu710and8041Guest(Guest.CDGuest):
     def modify_iso(self):
         self.log.debug("Putting the preseed file in place")
 
-        shutil.copy(self.preseed_file, self.iso_contents + "/preseed/customiso.seed")
+        shutil.copy(self.preseed_file, os.path.join(self.iso_contents,
+                                                    "preseed",
+                                                    "customiso.seed"))
 
         self.log.debug("Modifying isolinux.cfg")
-        f = open(self.iso_contents + "/isolinux/isolinux.cfg", "r")
+        isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
+        f = open(isolinuxcfg, "r")
         lines = f.readlines()
         f.close()
 
@@ -233,7 +240,7 @@ class Ubuntu710and8041Guest(Guest.CDGuest):
         lines.append("  kernel /casper/vmlinuz\n")
         lines.append("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us boot=casper automatic-ubiquity noprompt initrd=/casper/initrd.gz --\n")
 
-        f = open(self.iso_contents + "/isolinux/isolinux.cfg", "w")
+        f = open(isolinuxcfg, "w")
         f.writelines(lines)
         f.close()
 
@@ -267,10 +274,13 @@ class Ubuntu610and704Guest(Guest.CDGuest):
 
     def modify_iso(self):
         self.log.debug("Putting the preseed file in place")
-        shutil.copy(self.preseed_file, self.iso_contents + "/preseed/customiso.seed")
+        shutil.copy(self.preseed_file, os.path.join(self.iso_contents,
+                                                    "preseed",
+                                                    "customiso.seed"))
 
         self.log.debug("Modifying isolinux.cfg")
-        f = open(self.iso_contents + "/isolinux/isolinux.cfg", "r")
+        isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
+        f = open(isolinuxcfg, "r")
         lines = f.readlines()
         f.close()
 
@@ -288,7 +298,7 @@ class Ubuntu610and704Guest(Guest.CDGuest):
         lines.append("  kernel /install/vmlinuz\n")
         lines.append("  append file=/cdrom/preseed/customiso.seed locale=en_US console-setup/ask_detect=false console-setup/layoutcode=us priority=critical ramdisk_size=141876 root=/dev/ram rw initrd=/install/initrd.gz --\n")
 
-        f = open(self.iso_contents + "/isolinux/isolinux.cfg", "w")
+        f = open(isolinuxcfg, "w")
         f.writelines(lines)
         f.close()
 

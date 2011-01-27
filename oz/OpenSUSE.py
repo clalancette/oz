@@ -16,6 +16,7 @@
 
 import re
 import shutil
+import os
 
 import Guest
 import ozutil
@@ -37,10 +38,13 @@ class OpenSUSEGuest(Guest.CDGuest):
 
     def modify_iso(self):
         self.log.debug("Putting the autoyast in place")
-        shutil.copy(self.autoyast, self.iso_contents + "/autoinst.xml")
+        shutil.copy(self.autoyast, os.path.join(self.iso_contents,
+                                                "autoinst.xml"))
 
         self.log.debug("Modifying the boot options")
-        f = open(self.iso_contents + "/boot/" + self.tdl.arch + "/loader/isolinux.cfg", "r")
+        isolinux_cfg = os.path.join(self.iso_contents, "boot", self.tdl.arch,
+                                    "loader", "isolinux.cfg")
+        f = open(isolinux_cfg, "r")
         lines = f.readlines()
         f.close()
         for line in lines:
@@ -52,7 +56,7 @@ class OpenSUSEGuest(Guest.CDGuest):
         lines.append("  kernel linux\n")
         lines.append("  append initrd=initrd splash=silent instmode=cd autoyast=default")
 
-        f = open(self.iso_contents + "/boot/" + self.tdl.arch + "/loader/isolinux.cfg", "w")
+        f = open(isolinux_cfg, "w")
         f.writelines(lines)
         f.close()
 

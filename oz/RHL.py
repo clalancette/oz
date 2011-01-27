@@ -44,7 +44,7 @@ class RHL9Guest(Guest.CDGuest):
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")
 
-        output_ks = self.iso_contents + "/ks.cfg"
+        output_ks = os.path.join(self.iso_contents, "ks.cfg")
         shutil.copyfile(self.ks_file, output_ks)
         f = open(output_ks, "r")
         lines = f.readlines()
@@ -59,7 +59,8 @@ class RHL9Guest(Guest.CDGuest):
         f.close()
 
         self.log.debug("Modifying the boot options")
-        f = open(self.iso_contents + "/isolinux/isolinux.cfg", "r")
+        isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
+        f = open(isolinuxcfg, "r")
         lines = f.readlines()
         f.close()
         for line in lines:
@@ -71,7 +72,7 @@ class RHL9Guest(Guest.CDGuest):
         lines.append("  kernel vmlinuz\n")
         lines.append("  append initrd=initrd.img ks=cdrom:/ks.cfg method=" + self.tdl.url + "\n")
 
-        f = open(self.iso_contents + "/isolinux/isolinux.cfg", "w")
+        f = open(isolinuxcfg, "w")
         f.writelines(lines)
         f.close()
 
@@ -111,7 +112,7 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
 
         self.log.debug("Putting the kickstart in place")
 
-        output_ks = self.floppy_contents + "/ks.cfg"
+        output_ks = os.path.join(self.floppy_contents, "ks.cfg")
         shutil.copyfile(self.ks_file, output_ks)
         f = open(output_ks, "r")
         lines = f.readlines()
@@ -132,7 +133,8 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
         Guest.subprocess_check_output(["mcopy", "-n", "-o", "-i",
                                        self.output_floppy, "::SYSLINUX.CFG",
                                        self.floppy_contents])
-        f = open(self.floppy_contents + "/SYSLINUX.CFG", "r")
+        syslinux = os.path.join(self.floppy_contents, "SYSLINUX.CFG")
+        f = open(syslinux, "r")
         lines = f.readlines()
         f.close()
 
@@ -145,7 +147,7 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
         lines.append("  kernel vmlinuz\n")
         lines.append("  append initrd=initrd.img lang= devfs=nomount ramdisk_size=9216 ks=floppy method=" + self.tdl.url + "\n")
 
-        f = open(self.floppy_contents + "/SYSLINUX.CFG", "w")
+        f = open(syslinux, "w")
         f.writelines(lines)
         f.close()
 
@@ -155,8 +157,7 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
                                        self.output_floppy, "::SYSLINUX.CFG"])
 
         Guest.subprocess_check_output(["mcopy", "-n", "-o", "-i",
-                                       self.output_floppy,
-                                       self.floppy_contents + "/SYSLINUX.CFG",
+                                       self.output_floppy, syslinux,
                                        "::SYSLINUX.CFG"])
 
     def generate_install_media(self, force_download):

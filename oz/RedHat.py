@@ -28,7 +28,7 @@ class RedHatCDGuest(Guest.CDGuest):
         Guest.CDGuest.__init__(self, name, distro, update, arch, installtype,
                                nicmodel, clockoffset, mousetype, diskbus,
                                config)
-        self.sshprivkey = self.icicle_tmp + '/id_rsa-icicle-gen'
+        self.sshprivkey = os.path.join(self.icicle_tmp, 'id_rsa-icicle-gen')
         self.sshd_config = \
 """SyslogFacility AUTHPRIV
 PasswordAuthentication yes
@@ -314,7 +314,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
     def customize_files(self, guestaddr):
         self.log.info("Uploading custom files")
         for name,content in self.tdl.files.items():
-            localname = self.icicle_tmp + "/file"
+            localname = os.path.join(self.icicle_tmp, "file")
             f = open(localname, 'w')
             f.write(content)
             f.close()
@@ -337,7 +337,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
     def customize_repos(self, guestaddr):
         for repo in self.tdl.repositories:
             filename = repo.name + ".repo"
-            localname = self.icicle_tmp + "/" + filename
+            localname = os.path.join(self.icicle_tmp, filename)
             f = open(localname, 'w')
             f.write("[%s]\n" % repo.name)
             f.write("name=%s\n" % repo.name)

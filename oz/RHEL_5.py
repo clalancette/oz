@@ -17,6 +17,7 @@
 import shutil
 import re
 import struct
+import os
 
 import Guest
 import ozutil
@@ -46,10 +47,11 @@ class RHEL5Guest(RedHat.RedHatCDYumGuest):
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")
 
-        shutil.copy(self.ks_file, self.iso_contents + "/ks.cfg")
+        shutil.copy(self.ks_file, os.path.join(self.iso_contents, "ks.cfg"))
 
         self.log.debug("Modifying the boot options")
-        f = open(self.iso_contents + "/isolinux/isolinux.cfg", "r")
+        isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
+        f = open(isolinuxcfg, "r")
         lines = f.readlines()
         f.close()
         for line in lines:
@@ -66,7 +68,7 @@ class RHEL5Guest(RedHat.RedHatCDYumGuest):
             initrdline += "cdrom:/dev/cdrom\n"
         lines.append(initrdline)
 
-        f = open(self.iso_contents + "/isolinux/isolinux.cfg", "w")
+        f = open(isolinuxcfg, "w")
         f.writelines(lines)
         f.close()
 
