@@ -144,7 +144,7 @@ class Guest(object):
         self.log.debug("mousetype: %s, disk_bus: %s, disk_dev: %s" % (self.mousetype, self.disk_bus, self.disk_dev))
         self.log.debug("icicletmp: %s, listen_port: %d" % (self.icicle_tmp, self.listen_port))
 
-    def cleanup_old_guest(self, delete_disk=True):
+    def cleanup_old_guest(self):
         self.log.info("Cleaning up guest named %s" % (self.name))
         try:
             dom = self.libvirt_conn.lookupByName(self.name)
@@ -156,8 +156,29 @@ class Guest(object):
         except:
             pass
 
-        if delete_disk and os.access(self.diskimage, os.F_OK):
+        if os.access(self.diskimage, os.F_OK):
             os.unlink(self.diskimage)
+
+    def check_for_guest_conflict(self):
+        # this method checks if anything we are going to do will conflict
+        # with what already exists.  In particular, if a guest with the same
+        # name, UUID, or diskimage already exists, we'll raise an exception
+        self.log.info("Checking for guest conflicts with %s" % (self.name))
+
+        try:
+            dom = self.libvirt_conn.lookupByName(self.name)
+            raise OzException("Domain with name %s already exists" % (self.name))
+        except:
+           pass
+
+        try:
+            dom = self.libvirt_conn.lookupByUUID(self.uuid)
+            raise OzException("Domain with UUID %s already exists" % (self.uuid))
+        except:
+            pass
+
+        if os.access(self.diskimage, os.F_OK):
+            raise OzException("Diskimage %s already exists" % (self.diskimage))
 
     # the next 3 methods are intended to be overridden by the individual
     # OS backends; raise an error if they are called but not implemented

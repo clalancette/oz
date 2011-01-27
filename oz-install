@@ -39,6 +39,7 @@ def usage():
     print "  -f\t\tForce download of installation media even if already cached"
     print "  -g\t\tGenerate the ICICLE after installation"
     print "  -h\t\tPrint this help message"
+    print "  -p\t\tCleanup old guests with the same name before installation"
     print "  -u\t\tAfter installation, do the customization"
     print " Currently supported architectures are:"
     print "   i386, x86_64"
@@ -47,9 +48,10 @@ def usage():
     sys.exit(1)
 
 try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], 'c:d:fghu',
+    opts, args = getopt.gnu_getopt(sys.argv[1:], 'c:d:fghpu',
                                    ['config', 'debug', 'force-download',
-                                    'generate-icicle', 'help', 'customize'])
+                                    'generate-icicle', 'help', 'cleanup',
+                                    'customize'])
 except getopt.GetoptError, err:
     print str(err)
     usage()
@@ -60,9 +62,10 @@ force_download = False
 config_file = "/etc/oz/oz.cfg"
 generate_icicle = False
 customize = False
+cleanup = False
 for o, a in opts:
-    if o in ("-h", "--help"):
-        usage()
+    if o in ("-c", "--config"):
+        config_file = a
     elif o in ("-d", "--debug"):
         if int(a) == 0:
             loglevel = logging.ERROR
@@ -81,8 +84,10 @@ for o, a in opts:
         force_download = True
     elif o in ("-g", "--generate-icicle"):
         generate_icicle = True
-    elif o in ("-c", "--config"):
-        config_file = a
+    elif o in ("-h", "--help"):
+        usage()
+    elif o in ("-p", "--cleanup"):
+        cleanup = True
     elif o in ("-u", "--customize"):
         customize = True
     else:
@@ -108,7 +113,11 @@ try:
 except oz.DistroException:
     usage()
 
-guest.cleanup_old_guest()
+if cleanup:
+    guest.cleanup_old_guest()
+else:
+    guest.check_for_guest_conflict()
+
 guest.generate_install_media(force_download)
 try:
     guest.generate_diskimage()
