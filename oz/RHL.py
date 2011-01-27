@@ -36,8 +36,8 @@ class RHL9Guest(Guest.CDGuest):
         if self.tdl.arch != "i386":
             raise Guest.OzException("Invalid arch " + self.tdl.arch + "for RHL guest")
 
-        Guest.CDGuest.__init__(self, "RHL", "9", "i386", "url", "rtl8139", None,
-                               None, None, config)
+        Guest.CDGuest.__init__(self, self.tdl.name, "RHL", "9", "i386", "url",
+                               "rtl8139", None, None, None, config)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")
@@ -98,8 +98,8 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
         if self.tdl.arch != "i386":
             raise Guest.OzException("Invalid arch " + self.tdl.arch + "for RHL guest")
 
-        Guest.FDGuest.__init__(self, "RHL", self.tdl.update, "i386", nicmodel,
-                               None, None, None, config)
+        Guest.FDGuest.__init__(self, self.tdl.name, "RHL", self.tdl.update,
+                               "i386", nicmodel, None, None, None, config)
 
     def modify_floppy(self):
         if not os.access(self.floppy_contents, os.F_OK):

@@ -23,9 +23,9 @@ import Guest
 import ozutil
 
 class RedHatCDGuest(Guest.CDGuest):
-    def __init__(self, distro, update, arch, installtype, nicmodel, clockoffset,
-                 mousetype, diskbus, config):
-        Guest.CDGuest.__init__(self, distro, update, arch, installtype,
+    def __init__(self, name, distro, update, arch, installtype, nicmodel,
+                 clockoffset, mousetype, diskbus, config):
+        Guest.CDGuest.__init__(self, name, distro, update, arch, installtype,
                                nicmodel, clockoffset, mousetype, diskbus,
                                config)
         self.sshprivkey = self.icicle_tmp + '/id_rsa-icicle-gen'

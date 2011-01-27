@@ -34,9 +34,10 @@ class RHEL6Guest(RedHat.RedHatCDYumGuest):
         else:
             raise Guest.OzException("RHEL-6 installs must be done via url or iso")
 
-        RedHat.RedHatCDYumGuest.__init__(self, "RHEL-6", self.tdl.update,
-                                         self.tdl.arch, self.tdl.installtype,
-                                         "virtio", None, None, "virtio", config)
+        RedHat.RedHatCDYumGuest.__init__(self, self.tdl.name, "RHEL-6",
+                                         self.tdl.update, self.tdl.arch,
+                                         self.tdl.installtype, "virtio", None,
+                                         None, "virtio", config)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")

@@ -30,6 +30,10 @@ class TDL(object):
 
         self.doc = libxml2.parseDoc(xmlstring)
 
+        self.name = get_value(self.doc, '/template/name')
+        if self.name is None:
+            raise Guest.OzException("Failed to find name of template in TDL")
+
         self.distro = get_value(self.doc, '/template/os/name')
         if self.distro is None:
             raise Guest.OzException("Failed to find OS name in TDL")

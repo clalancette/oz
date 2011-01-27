@@ -29,8 +29,9 @@ class OpenSUSEGuest(Guest.CDGuest):
 
         self.autoyast = ozutil.generate_full_auto_path("opensuse-" + self.tdl.update + "-jeos.xml")
 
-        Guest.CDGuest.__init__(self, "OpenSUSE", self.tdl.update, self.tdl.arch,
-                               'iso', "rtl8139", None, None, None, config)
+        Guest.CDGuest.__init__(self, self.tdl.name, "OpenSUSE",
+                               self.tdl.update, self.tdl.arch, 'iso',
+                               "rtl8139", None, None, None, config)
 
     def modify_iso(self):
         self.log.debug("Putting the autoyast in place")

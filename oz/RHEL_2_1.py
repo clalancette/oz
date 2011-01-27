@@ -35,8 +35,9 @@ class RHEL21Guest(Guest.FDGuest):
 
         ozutil.deny_localhost(self.url)
 
-        Guest.FDGuest.__init__(self, "RHEL-2.1", self.tdl.update, "i386",
-                               "pcnet", None, None, None, config)
+        Guest.FDGuest.__init__(self, self.tdl.name, "RHEL-2.1",
+                               self.tdl.update, "i386", "pcnet", None, None,
+                               None, config)
 
     def modify_floppy(self):
         if not os.access(self.floppy_contents, os.F_OK):

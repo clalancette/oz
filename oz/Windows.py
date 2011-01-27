@@ -43,9 +43,9 @@ class Windows2000andXPand2003(Guest.CDGuest):
 
         self.winarch = get_windows_arch(self.tdl.arch)
 
-        Guest.CDGuest.__init__(self, "Windows", self.tdl.update, self.tdl.arch,
-                               'iso', 'rtl8139', "localtime", "usb", None,
-                               config)
+        Guest.CDGuest.__init__(self, self.tdl.name, "Windows", self.tdl.update,
+                               self.tdl.arch, 'iso', 'rtl8139', "localtime",
+                               "usb", None, config)
 
     def generate_new_iso(self):
         self.log.debug("Generating new ISO")
@@ -113,9 +113,9 @@ class Windows2008and7(Guest.CDGuest):
 
         self.winarch = get_windows_arch(self.tdl.arch)
 
-        Guest.CDGuest.__init__(self, "Windows", self.tdl.update, self.tdl.arch,
-                               'iso', 'rtl8139', "localtime", "usb", None,
-                               config)
+        Guest.CDGuest.__init__(self, self.tdl.name, "Windows", self.tdl.update,
+                               self.tdl.arch, 'iso', 'rtl8139', "localtime",
+                               "usb", None, config)
 
     def generate_new_iso(self):
         self.log.debug("Generating new ISO")

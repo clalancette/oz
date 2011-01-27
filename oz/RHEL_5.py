@@ -35,9 +35,10 @@ class RHEL5Guest(RedHat.RedHatCDYumGuest):
         else:
             raise Guest.OzException("RHEL-5 installs must be done via url or iso")
 
-        RedHat.RedHatCDYumGuest.__init__(self, "RHEL-5", self.tdl.update,
-                                         self.tdl.arch, self.tdl.installtype,
-                                         nicmodel, None, None, diskbus, config)
+        RedHat.RedHatCDYumGuest.__init__(self, self.tdl.name, "RHEL-5",
+                                         self.tdl.update, self.tdl.arch,
+                                         self.tdl.installtype, nicmodel, None,
+                                         None, diskbus, config)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")

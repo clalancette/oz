@@ -33,9 +33,9 @@ class RHEL3Guest(RedHat.RedHatCDGuest):
 
         ozutil.deny_localhost(self.url)
 
-        RedHat.RedHatCDGuest.__init__(self, "RHEL-3", self.tdl.update,
-                                      self.tdl.arch, 'url', None, None, None,
-                                      None, config)
+        RedHat.RedHatCDGuest.__init__(self, self.tdl.name, "RHEL-3",
+                                      self.tdl.update, self.tdl.arch, 'url',
+                                      None, None, None, None, config)
         # this has to be *after* RedHatCDGuest.__init__ so that we override
         # the value that was set there
         self.sshd_config = \

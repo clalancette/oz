@@ -60,8 +60,8 @@ def subprocess_check_output(*popenargs, **kwargs):
     return (stdout, stderr, retcode)
 
 class Guest(object):
-    def __init__(self, distro, update, arch, nicmodel, clockoffset, mousetype,
-                 diskbus, config):
+    def __init__(self, name, distro, update, arch, nicmodel, clockoffset,
+                 mousetype, diskbus, config):
         if arch != "i386" and arch != "x86_64":
             raise OzException("Unsupported guest arch " + arch)
         self.log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
@@ -72,7 +72,7 @@ class Guest(object):
         self.distro = distro
         self.update = update
         self.arch = arch
-        self.name = self.distro + self.update + self.arch
+        self.name = name
 
         if config is not None and config.has_section('paths') and config.has_option('paths', 'output_dir'):
             self.output_dir = config.get('paths', 'output_dir')
@@ -603,13 +603,15 @@ class Guest(object):
         return doc.serialize(None, 1)
 
 class CDGuest(Guest):
-    def __init__(self, distro, update, arch, installtype, nicmodel,
+    def __init__(self, name, distro, update, arch, installtype, nicmodel,
                  clockoffset, mousetype, diskbus, config):
-        Guest.__init__(self, distro, update, arch, nicmodel, clockoffset,
+        Guest.__init__(self, name, distro, update, arch, nicmodel, clockoffset,
                        mousetype, diskbus, config)
 
-        self.orig_iso = self.data_dir + "/isos/" + self.name + "-" + installtype + ".iso"
-        self.output_iso = self.output_dir + "/" + self.name + "-" + installtype + "-oz.iso"
+        self.orig_iso = os.path.join(self.data_dir, "isos",
+                                     self.distro + self.update + self.arch + "-" + installtype + ".iso")
+        self.output_iso = os.path.join(self.output_dir,
+                                       self.name + "-" + installtype + "-oz.iso")
         self.iso_contents = self.data_dir + "/isocontent/" + self.name + "-" + installtype
         self.log.debug("Original ISO path: %s" % self.orig_iso)
         self.log.debug("Output ISO path: %s" % self.output_iso)
@@ -782,10 +784,11 @@ class CDGuest(Guest):
         self.log.debug("Removed modified ISO")
 
 class FDGuest(Guest):
-    def __init__(self, distro, update, arch, nicmodel, clockoffset, mousetype,
-                 diskbus, config):
-        Guest.__init__(self, distro, update, arch, nicmodel, clockoffset, mousetype, diskbus, config)
-        self.orig_floppy = self.data_dir + "/floppies/" + self.name + ".img"
+    def __init__(self, name, distro, update, arch, nicmodel, clockoffset,
+                 mousetype, diskbus, config):
+        Guest.__init__(self, name, distro, update, arch, nicmodel, clockoffset,
+                       mousetype, diskbus, config)
+        self.orig_floppy = self.data_dir + "/floppies/" + self.distro + self.update + self.arch + ".img"
         self.output_floppy = self.output_dir + "/" + self.name + "-oz.img"
         self.floppy_contents = self.data_dir + "/floppycontent/" + self.name
 

@@ -34,9 +34,10 @@ class RHEL4Guest(RedHat.RedHatCDGuest):
         else:
             raise Guest.OzException("RHEL-4 installs must be done via url or iso")
 
-        RedHat.RedHatCDGuest.__init__(self, "RHEL-4", self.tdl.update,
-                                      self.tdl.arch, self.tdl.installtype,
-                                      nicmodel, None, None, diskbus, config)
+        RedHat.RedHatCDGuest.__init__(self, self.tdl.name, "RHEL-4",
+                                      self.tdl.update, self.tdl.arch,
+                                      self.tdl.installtype, nicmodel, None,
+                                      None, diskbus, config)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")

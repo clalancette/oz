@@ -48,8 +48,9 @@ class Ubuntu810and904and910Guest(Guest.CDGuest):
 
         self.initrd = initrd
 
-        Guest.CDGuest.__init__(self, "Ubuntu", self.tdl.update, self.tdl.arch,
-                               'iso', "virtio", None, None, "virtio", config)
+        Guest.CDGuest.__init__(self, self.tdl.name, "Ubuntu", self.tdl.update,
+                               self.tdl.arch, 'iso', "virtio", None, None,
+                               "virtio", config)
 
     def generate_new_iso(self):
         self.log.info("Generating new ISO")
@@ -112,8 +113,9 @@ class Ubuntu710and8041Guest(Guest.CDGuest):
 
         self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + update + "-jeos.preseed")
 
-        Guest.CDGuest.__init__(self, "Ubuntu", self.tdl.update, self.tdl.arch,
-                               'iso', "rtl8139", None, None, None, config)
+        Guest.CDGuest.__init__(self, self.tdl.name, "Ubuntu", self.tdl.update,
+                               self.tdl.arch, 'iso', "rtl8139", None, None,
+                               None, config)
 
     def generate_new_iso(self):
         self.log.info("Generating new ISO")
@@ -165,8 +167,9 @@ class Ubuntu610and704Guest(Guest.CDGuest):
 
         self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + update + "-jeos.preseed")
 
-        Guest.CDGuest.__init__(self, "Ubuntu", self.tdl.update, self.tdl.arch,
-                               'iso', "rtl8139", None, None, None, config)
+        Guest.CDGuest.__init__(self, self.tdl.name, "Ubuntu", self.tdl.update,
+                               self.tdl.arch, 'iso', "rtl8139", None, None,
+                               None, config)
 
     def generate_new_iso(self):
         self.log.info("Generating new ISO")
