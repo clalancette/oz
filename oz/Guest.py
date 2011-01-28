@@ -50,8 +50,8 @@ def subprocess_check_output(*popenargs, **kwargs):
 
     ozutil.executable_exists(popenargs[0][0])
 
-    process = subprocess.Popen(stdout=subprocess.PIPE,
-                               stderr=subprocess.STDOUT, *popenargs, **kwargs)
+    process = subprocess.Popen(stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                               *popenargs, **kwargs)
     stdout, stderr = process.communicate()
     retcode = process.poll()
     if retcode:
@@ -174,7 +174,7 @@ class Guest(object):
         if os.access(self.diskimage, os.F_OK):
             raise OzException("Diskimage %s already exists" % (self.diskimage))
 
-    # the next 3 methods are intended to be overridden by the individual
+    # the next 4 methods are intended to be overridden by the individual
     # OS backends; raise an error if they are called but not implemented
     def generate_install_media(self, force_download):
         raise OzException("Install media for %s is not implemented, install cannot continue" % (self.name))
@@ -184,6 +184,11 @@ class Guest(object):
 
     def generate_icicle(self, libvirt_xml):
         raise OzException("ICICLE generation for %s is not implemented" % (self.name))
+
+    # this method is intended to be an optimization if the user wants to do
+    # both customize and generate_icicle
+    def customize_and_generate_icicle(self, libvirt_xml):
+        raise OzException("Customization and ICICLE generate for %s is not implemented" % (self.name))
 
     def targetDev(self, doc, devicetype, path, bus):
         install = doc.newChild(None, "disk", None)

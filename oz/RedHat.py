@@ -278,7 +278,13 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                                               "-o", "StrictHostKeyChecking=no",
                                               "-o", "ConnectTimeout=5",
                                               "-o", "UserKnownHostsFile=" + dummyknownhosts,
-                                              guestaddr, command])
+                                              "root@" + guestaddr, command])
+
+    def do_icicle(self, guestaddr):
+        stdout, stderr, retcode = self.guest_execute_command(guestaddr,
+                                                             'rpm -qa')
+
+        return self.output_icicle_xml(stdout.split("\n"))
 
     def generate_icicle(self, libvirt_xml):
         self.log.info("Generating ICICLE")
@@ -286,22 +292,18 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         self.collect_setup(libvirt_xml)
 
         icicle_output = ''
+        libvirt_dom = None
         try:
             libvirt_dom = self.libvirt_conn.createXML(libvirt_xml, 0)
 
-            guestaddr = self.wait_for_guest_boot()
-
             try:
-                stdout, stderr, retcode = self.guest_execute_command(guestaddr, 'rpm -qa')
-
-                icicle_output = self.output_icicle_xml(stdout.split("\n"))
-
+                guestaddr = None
+                guestaddr = self.wait_for_guest_boot()
+                icicle_output = self.do_icicle(guestaddr)
             finally:
-                libvirt_dom = self.shutdown_guest(guestaddr, libvirt_dom)
+                self.shutdown_guest(guestaddr, libvirt_dom)
 
         finally:
-            if libvirt_dom is not None:
-                libvirt_dom.destroy()
             self.collect_teardown(libvirt_xml)
 
         return icicle_output
@@ -317,7 +319,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                                               "-o", "ConnectTimeout=5",
                                               "-o", "UserKnownHostsFile=" + dummyknownhosts,
                                               file_to_upload,
-                                              guestaddr + ":" + destination])
+                                              "root@" + guestaddr + ":" + destination])
 
     def customize_files(self, guestaddr):
         self.log.info("Uploading custom files")
@@ -330,19 +332,22 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             os.unlink(localname)
 
     def shutdown_guest(self, guestaddr, libvirt_dom):
-        try:
-            self.guest_execute_command(guestaddr, 'shutdown -h now')
-            if self.wait_for_guest_shutdown(libvirt_dom):
-                libvirt_dom = None
-            else:
-                self.log.warn("Guest did not shutdown in time, going to kill")
-        except Guest.OzException:
-            self.log.warn("Failed shutting down guest, continuing anyway")
+        if guestaddr is not None:
+            try:
+                self.guest_execute_command(guestaddr, 'shutdown -h now')
+                if not self.wait_for_guest_shutdown(libvirt_dom):
+                    self.log.warn("Guest did not shutdown in time, going to kill")
+                else:
+                    libvirt_dom = None
+            except:
+                self.log.warn("Failed shutting down guest, forcibly killing")
 
-        return libvirt_dom
+        if libvirt_dom is not None:
+            libvirt_dom.destroy()
 
 class RedHatCDYumGuest(RedHatCDGuest):
     def customize_repos(self, guestaddr):
+        self.log.debug("Installing additional repository files")
         for repo in self.tdl.repositories:
             filename = repo.name + ".repo"
             localname = os.path.join(self.icicle_tmp, filename)
@@ -358,6 +363,23 @@ class RedHatCDYumGuest(RedHatCDGuest):
             self.guest_live_upload(guestaddr, localname,
                                    "/etc/yum.repos.d/" + filename)
 
+    def do_customize(self, guestaddr):
+        self.customize_repos(guestaddr)
+
+        self.log.debug("Installing custom packages")
+        packstr = ''
+        for package in self.tdl.packages:
+            packstr += package + ' '
+
+        if packstr != '':
+            self.guest_execute_command(guestaddr,
+                                       'yum -y install %s' % (packstr))
+
+        self.customize_files(guestaddr)
+
+        self.log.debug("Syncing")
+        self.guest_execute_command(guestaddr, 'sync')
+
     def customize(self, libvirt_xml):
         self.log.info("Customizing image")
 
@@ -371,24 +393,35 @@ class RedHatCDYumGuest(RedHatCDGuest):
         try:
             libvirt_dom = self.libvirt_conn.createXML(libvirt_xml, 0)
 
-            guestaddr = self.wait_for_guest_boot()
+            try:
+                guestaddr = None
+                guestaddr = self.wait_for_guest_boot()
+
+                self.do_customize(guestaddr)
+            finally:
+                self.shutdown_guest(guestaddr, libvirt_dom)
+        finally:
+            self.collect_teardown(libvirt_xml)
+
+    def customize_and_generate_icicle(self, libvirt_xml):
+        self.log.info("Customizing and generating ICICLE")
+
+        self.collect_setup(libvirt_xml)
+
+        libvirt_dom = None
+        try:
+            libvirt_dom = self.libvirt_conn.createXML(libvirt_xml, 0)
 
             try:
-                self.customize_repos(guestaddr)
+                guestaddr = self.wait_for_guest_boot()
 
-                packstr = ''
-                for package in self.tdl.packages:
-                    packstr += package + ' '
+                if self.tdl.packages or self.tdl.files:
+                    self.do_customize(guestaddr)
 
-                if packstr != '':
-                    self.guest_execute_command(guestaddr,
-                                               'yum -y install %s' % (packstr))
-
-                self.customize_files(guestaddr)
+                icicle = self.do_icicle(guestaddr)
             finally:
-                libvirt_dom = self.shutdown_guest(guestaddr, libvirt_dom)
-
+                self.shutdown_guest(guestaddr, libvirt_dom)
         finally:
-            if libvirt_dom is not None:
-                libvirt_dom.destroy()
             self.collect_teardown(libvirt_xml)
+
+        return icicle

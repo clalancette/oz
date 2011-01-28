@@ -130,10 +130,11 @@ try:
     try:
         libvirt_xml = guest.install()
 
-        if customize:
+        if customize and generate_icicle:
+            print guest.customize_and_generate_icicle(libvirt_xml)
+        elif customize:
             guest.customize(libvirt_xml)
-
-        if generate_icicle:
+        elif generate_icicle:
             print guest.generate_icicle(libvirt_xml)
 
         filename = guest.name + time.strftime("%b_%d_%Y-%H:%M:%S")
