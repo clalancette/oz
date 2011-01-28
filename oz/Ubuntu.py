@@ -35,7 +35,7 @@ def make_ubuntu_iso(input_dir, output_file):
                                    "-boot-info-table", "-v", "-v",
                                    "-o", output_file, input_dir])
 
-class Ubuntu810and904and910Guest(Guest.CDGuest):
+class Ubuntu810and904Guest(Guest.CDGuest):
     def __init__(self, tdl, initrd, config):
         self.tdl = tdl
 
@@ -99,6 +99,81 @@ class Ubuntu810and904and910Guest(Guest.CDGuest):
                 lines[lines.index(line)] = ""
 
         f = open(self.iso_contents + "/isolinux/isolinux.cfg", "w")
+        f.writelines(lines)
+        f.close()
+
+class Ubuntu910Guest(Guest.CDGuest):
+    def __init__(self, tdl, config):
+        self.tdl = tdl
+
+        if self.tdl.installtype != 'iso':
+            raise Guest.OzException("Ubuntu installs must be done via iso")
+
+        self.ubuntuarch = get_ubuntu_arch(self.tdl.arch)
+
+        self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
+
+        Guest.CDGuest.__init__(self, self.tdl.name, "Ubuntu", self.tdl.update,
+                               self.tdl.arch, 'iso', "virtio", None, None,
+                               "virtio", config)
+
+    def generate_new_iso(self):
+        self.log.info("Generating new ISO")
+        make_ubuntu_iso(self.iso_contents, self.output_iso)
+
+    def generate_install_media(self, force_download):
+        self.get_original_iso(self.tdl.iso, force_download)
+        self.copy_iso()
+        self.modify_iso()
+        self.generate_new_iso()
+        self.cleanup_iso()
+
+    def modify_iso(self):
+        self.log.debug("Modifying ISO")
+
+        self.log.debug("Copying preseed file")
+        shutil.copy(self.preseed_file, os.path.join(self.iso_contents,
+                                                    "preseed",
+                                                    "customiso.seed"))
+
+        self.log.debug("Modifying text.cfg")
+        textcfg = os.path.join(self.iso_contents, "isolinux", "text.cfg")
+        f = open(textcfg, "r")
+        lines = f.readlines()
+        f.close()
+
+        for line in lines:
+            if re.match("default", line):
+                lines[lines.index(line)] = "default customiso\n"
+        lines.append("label customiso\n")
+        lines.append("  menu label ^Customiso\n")
+        if os.path.isdir(os.path.join(self.iso_contents, "casper")):
+            lines.append("  kernel /casper/vmlinuz\n")
+            lines.append("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us boot=casper automatic-ubiquity noprompt initrd=/casper/initrd.lz ramdisk_size=14984 --\n")
+        else:
+            lines.append("  kernel /install/vmlinuz\n")
+            lines.append("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US netcfg/choose_interface=auto priority=critical initrd=/install/initrd.gz --\n")
+
+        f = open(textcfg, "w")
+        f.writelines(lines)
+        f.close()
+
+        self.log.debug("Modifying isolinux.cfg")
+        isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
+                                   "isolinux.cfg")
+        f = open(isolinuxcfg, "r")
+        lines = f.readlines()
+        f.close()
+
+        for line in lines:
+            if re.match("default", line):
+                lines[lines.index(line)] = "default customiso\n"
+            elif re.match("timeout", line):
+                lines[lines.index(line)] = "timeout 10\n"
+            elif re.match("gfxboot", line):
+                lines[lines.index(line)] = ""
+
+        f = open(isolinuxcfg, "w")
         f.writelines(lines)
         f.close()
 
@@ -215,10 +290,14 @@ def get_class(tdl, config):
     # ISO, and for some you can use either -desktop or -alternate.  We should
     # figure out which is which and give the user some feedback when we
     # can't actually succeed
+
+    # FIXME: For 9.10, both the -desktop and -netbook-remix CDs work (they both
+    # have casper).  The -server and -alternate do not work; is there another
+    # installation method we could possibly use?
     if tdl.update in ["9.10"]:
-        return Ubuntu810and904and910Guest(tdl, "/casper/initrd.lz", config)
+        return Ubuntu910Guest(tdl, config)
     if tdl.update in ["8.10", "9.04"]:
-        return Ubuntu810and904and910Guest(tdl, "/casper/initrd.gz", config)
+        return Ubuntu810and904Guest(tdl, "/casper/initrd.gz", config)
     if tdl.update in ["7.10", "8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4"]:
         return Ubuntu710and8041Guest(tdl, config)
     if tdl.update in ["6.10", "7.04"]:
