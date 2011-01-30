@@ -36,7 +36,7 @@ def make_ubuntu_iso(input_dir, output_file):
                                    "-o", output_file, input_dir])
 
 class Ubuntu810and904Guest(Guest.CDGuest):
-    def __init__(self, tdl, initrd, config):
+    def __init__(self, tdl, initrd, config, auto):
         self.tdl = tdl
 
         if self.tdl.installtype != 'iso':
@@ -44,7 +44,9 @@ class Ubuntu810and904Guest(Guest.CDGuest):
 
         self.ubuntuarch = get_ubuntu_arch(self.tdl.arch)
 
-        self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
+        self.preseed_file = auto
+        if self.preseed_file is None:
+            self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
 
         self.initrd = initrd
 
@@ -103,7 +105,7 @@ class Ubuntu810and904Guest(Guest.CDGuest):
         f.close()
 
 class Ubuntu910Guest(Guest.CDGuest):
-    def __init__(self, tdl, config):
+    def __init__(self, tdl, config, auto):
         self.tdl = tdl
 
         if self.tdl.installtype != 'iso':
@@ -111,7 +113,9 @@ class Ubuntu910Guest(Guest.CDGuest):
 
         self.ubuntuarch = get_ubuntu_arch(self.tdl.arch)
 
-        self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
+        self.preseed_file = auto
+        if self.preseed_file is None:
+            self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
 
         Guest.CDGuest.__init__(self, self.tdl.name, "Ubuntu", self.tdl.update,
                                self.tdl.arch, 'iso', "virtio", None, None,
@@ -178,7 +182,7 @@ class Ubuntu910Guest(Guest.CDGuest):
         f.close()
 
 class Ubuntu710and8041Guest(Guest.CDGuest):
-    def __init__(self, tdl, config):
+    def __init__(self, tdl, config, auto):
         self.tdl = tdl
 
         if self.tdl.installtype != 'iso':
@@ -186,7 +190,9 @@ class Ubuntu710and8041Guest(Guest.CDGuest):
 
         self.ubuntuarch = get_ubuntu_arch(self.tdl.arch)
 
-        self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + update + "-jeos.preseed")
+        self.preseed_file = auto
+        if self.preseed_file is None:
+            self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + update + "-jeos.preseed")
 
         Guest.CDGuest.__init__(self, self.tdl.name, "Ubuntu", self.tdl.update,
                                self.tdl.arch, 'iso', "rtl8139", None, None,
@@ -240,7 +246,9 @@ class Ubuntu610and704Guest(Guest.CDGuest):
 
         self.ubuntuarch = get_ubuntu_arch(self.tdl.arch)
 
-        self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + update + "-jeos.preseed")
+        self.preseed_file = auto
+        if self.preseed_file is None:
+            self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + update + "-jeos.preseed")
 
         Guest.CDGuest.__init__(self, self.tdl.name, "Ubuntu", self.tdl.update,
                                self.tdl.arch, 'iso', "rtl8139", None, None,
@@ -284,7 +292,7 @@ class Ubuntu610and704Guest(Guest.CDGuest):
         f.writelines(lines)
         f.close()
 
-def get_class(tdl, config):
+def get_class(tdl, config, auto):
     # FIXME: there are certain types of Ubuntu ISOs that do, and do not work.
     # For instance, for *some* Ubuntu releases, you must use the -alternate
     # ISO, and for some you can use either -desktop or -alternate.  We should
@@ -295,11 +303,11 @@ def get_class(tdl, config):
     # have casper).  The -server and -alternate do not work; is there another
     # installation method we could possibly use?
     if tdl.update in ["9.10"]:
-        return Ubuntu910Guest(tdl, config)
+        return Ubuntu910Guest(tdl, config, auto)
     if tdl.update in ["8.10", "9.04"]:
-        return Ubuntu810and904Guest(tdl, "/casper/initrd.gz", config)
+        return Ubuntu810and904Guest(tdl, "/casper/initrd.gz", config, auto)
     if tdl.update in ["7.10", "8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4"]:
-        return Ubuntu710and8041Guest(tdl, config)
+        return Ubuntu710and8041Guest(tdl, config, auto)
     if tdl.update in ["6.10", "7.04"]:
-        return Ubuntu610and704Guest(tdl, config)
+        return Ubuntu610and704Guest(tdl, config, auto)
     raise Guest.OzException("Unsupported Ubuntu update " + tdl.update)

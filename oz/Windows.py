@@ -29,14 +29,17 @@ def get_windows_arch(tdl_arch):
     return arch
 
 class Windows2000andXPand2003(Guest.CDGuest):
-    def __init__(self, tdl, config):
+    def __init__(self, tdl, config, auto):
         self.tdl = tdl
 
         if self.tdl.update == "2000" and self.tdl.arch != "i386":
             raise Guest.OzException("Windows 2000 only supports i386 architecture")
         if self.tdl.key is None:
             raise Guest.OzException("A key is required when installing Windows 2000, XP, or 2003")
-        self.siffile = ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif")
+
+        self.siffile = auto
+        if self.siffile is None:
+            self.siffile = ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif")
 
         if self.tdl.installtype != 'iso':
             raise Guest.OzException("Windows installs must be done via iso")
@@ -100,13 +103,15 @@ class Windows2000andXPand2003(Guest.CDGuest):
         return self.generate_xml("hd", want_install_disk=False)
 
 class Windows2008and7(Guest.CDGuest):
-    def __init__(self, tdl, config):
+    def __init__(self, tdl, config, auto):
         self.tdl = tdl
 
         if self.tdl.key is None:
             raise Guest.OzException("A key is required when installing Windows 2000, XP, or 2003")
 
-        self.unattendfile = ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.xml")
+        self.unattendfile = auto
+        if self.unattendfile is None:
+            self.unattendfile = ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.xml")
 
         if self.tdl.installtype != 'iso':
             raise Guest.OzException("Windows installs must be done via iso")
@@ -172,9 +177,9 @@ class Windows2008and7(Guest.CDGuest):
 
         return self.generate_xml("hd", want_install_disk=False)
 
-def get_class(tdl, config):
+def get_class(tdl, config, auto):
     if tdl.update in ["2000", "XP", "2003"]:
-        return Windows2000andXPand2003(tdl, config)
+        return Windows2000andXPand2003(tdl, config, auto)
     if tdl.update in ["2008", "7"]:
-        return Windows2008and7(tdl, config)
+        return Windows2008and7(tdl, config, auto)
     raise Guest.OzException("Unsupported Windows update " + tdl.update)

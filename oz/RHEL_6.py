@@ -22,9 +22,12 @@ import ozutil
 import RedHat
 
 class RHEL6Guest(RedHat.RedHatCDYumGuest):
-    def __init__(self, tdl, config):
+    def __init__(self, tdl, config, auto):
         self.tdl = tdl
-        self.ks_file = ozutil.generate_full_auto_path("rhel-6-jeos.ks")
+
+        self.ks_file = auto
+        if self.ks_file is None:
+            self.ks_file = ozutil.generate_full_auto_path("rhel-6-jeos.ks")
 
         if self.tdl.installtype == 'url':
             self.url = self.tdl.url
@@ -77,7 +80,7 @@ class RHEL6Guest(RedHat.RedHatCDYumGuest):
         self.generate_iso()
         self.cleanup_iso()
 
-def get_class(tdl, config):
+def get_class(tdl, config, auto):
     if tdl.update in ["0"]:
-        return RHEL6Guest(tdl, config)
+        return RHEL6Guest(tdl, config, auto)
     raise Guest.OzException("Unsupported RHEL-6 update " + tdl.update)

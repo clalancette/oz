@@ -22,9 +22,12 @@ import ozutil
 import RedHat
 
 class RHEL4Guest(RedHat.RedHatCDGuest):
-    def __init__(self, tdl, config, nicmodel, diskbus):
+    def __init__(self, tdl, config, auto, nicmodel, diskbus):
         self.tdl = tdl
-        self.ks_file = ozutil.generate_full_auto_path("rhel-4-jeos.ks")
+
+        self.ks_file = auto
+        if self.ks_file is None:
+            self.ks_file = ozutil.generate_full_auto_path("rhel-4-jeos.ks")
 
         if self.tdl.installtype == 'url':
             self.url = self.tdl.url
@@ -91,9 +94,9 @@ class RHEL4Guest(RedHat.RedHatCDGuest):
         self.generate_iso()
         self.cleanup_iso()
 
-def get_class(tdl, config):
+def get_class(tdl, config, auto):
     if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7"]:
-        return RHEL4Guest(tdl, config, "rtl8139", None)
+        return RHEL4Guest(tdl, config, auto, "rtl8139", None)
     if tdl.update in ["U8"]:
-        return RHEL4Guest(tdl, config, "virtio", "virtio")
+        return RHEL4Guest(tdl, config, auto, "virtio", "virtio")
     raise Guest.OzException("Unsupported RHEL-4 update " + tdl.update)

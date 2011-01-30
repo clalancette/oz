@@ -23,10 +23,12 @@ import ozutil
 import RedHat
 
 class RHL9Guest(Guest.CDGuest):
-    def __init__(self, tdl, config):
+    def __init__(self, tdl, config, auto):
         self.tdl = tdl
 
-        self.ks_file = ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks")
+        self.ks_file = auto
+        if self.ks_file is None:
+            self.ks_file = ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks")
 
         if self.tdl.installtype != 'url':
             raise Guest.OzException("RHL installs must be done via url")
@@ -85,10 +87,12 @@ class RHL9Guest(Guest.CDGuest):
         self.cleanup_iso()
 
 class RHL70and71and72and73and8Guest(Guest.FDGuest):
-    def __init__(self, tdl, config, nicmodel):
+    def __init__(self, tdl, config, auto, nicmodel):
         self.tdl = tdl
 
-        self.ks_file = ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks")
+        self.ks_file = auto
+        if self.ks_file is None:
+            self.ks_file = ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks")
 
         if self.tdl.installtype != 'url':
             raise Guest.OzException("RHL installs must be done via url")
@@ -162,11 +166,11 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
         self.modify_floppy()
         self.cleanup_floppy()
 
-def get_class(tdl, config):
+def get_class(tdl, config, auto):
     if tdl.update in ["9"]:
-        return RHL9Guest(tdl, config)
+        return RHL9Guest(tdl, config, auto)
     if tdl.update in ["7.2", "7.3", "8"]:
-        return RHL70and71and72and73and8Guest(tdl, config, "rtl8139")
+        return RHL70and71and72and73and8Guest(tdl, config, auto, "rtl8139")
     # FIXME: RHL 6.2 does not work via HTTP because of a bug in the installer;
     # when parsing a URL passed in via "method", it fails to put a / at the
     # beginning of the URL.  What this means is that when the installer goes
@@ -183,5 +187,5 @@ def get_class(tdl, config):
     # VFS: Cannot open root device 08:21
     # Kernel panic: VFS: Unable to mount root fs on 08:21
     if tdl.update in ["7.0", "7.1"]:
-        return RHL70and71and72and73and8Guest(tdl, config, "ne2k_pci")
+        return RHL70and71and72and73and8Guest(tdl, config, auto, "ne2k_pci")
     raise Guest.OzException("Unsupported RHL update " + update)

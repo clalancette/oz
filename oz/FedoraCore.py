@@ -22,9 +22,11 @@ import ozutil
 import RedHat
 
 class FedoraCoreGuest(RedHat.RedHatCDGuest):
-    def __init__(self, tdl, config):
+    def __init__(self, tdl, config, auto):
         self.tdl = tdl
-        self.ks_file = ozutil.generate_full_auto_path("fedoracore-" + self.tdl.update + "-jeos.ks")
+        self.ks_file = auto
+        if self.ks_file is None:
+            self.ks_file = ozutil.generate_full_auto_path("fedoracore-" + self.tdl.update + "-jeos.ks")
 
         if self.tdl.installtype == 'url':
             self.url = self.tdl.url
@@ -84,9 +86,9 @@ class FedoraCore4Guest(FedoraCoreGuest):
     def generate_diskimage(self):
         self.generate_blank_diskimage()
 
-def get_class(tdl, config):
+def get_class(tdl, config, auto):
     if tdl.update in ["1", "2", "3", "5", "6"]:
-        return FedoraCoreGuest(tdl, config)
+        return FedoraCoreGuest(tdl, config, auto)
     if tdl.update in ["4"]:
-        return FedoraCore4Guest(tdl, config)
+        return FedoraCore4Guest(tdl, config, auto)
     raise Guest.OzException("Unsupported FedoraCore update " + tdl.update)

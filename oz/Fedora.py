@@ -22,9 +22,12 @@ import ozutil
 import RedHat
 
 class FedoraGuest(RedHat.RedHatCDYumGuest):
-    def __init__(self, tdl, config, nicmodel, haverepo, diskbus, brokenisomethod):
+    def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,
+                 brokenisomethod):
         self.tdl = tdl
-        self.ks_file = ozutil.generate_full_auto_path("fedora-" + self.tdl.update + "-jeos.ks")
+        self.ks_file = auto
+        if self.ks_file is None:
+            self.ks_file = ozutil.generate_full_auto_path("fedora-" + self.tdl.update + "-jeos.ks")
         self.haverepo = haverepo
         self.brokenisomethod = brokenisomethod
 
@@ -90,9 +93,9 @@ class FedoraGuest(RedHat.RedHatCDYumGuest):
         self.generate_iso()
         self.cleanup_iso()
 
-def get_class(tdl, config):
+def get_class(tdl, config, auto):
     if tdl.update in ["10", "11", "12", "13", "14"]:
-        return FedoraGuest(tdl, config, "virtio", True, "virtio", True)
+        return FedoraGuest(tdl, config, auto, "virtio", True, "virtio", True)
     if tdl.update in ["7", "8", "9"]:
-        return FedoraGuest(tdl, config, "rtl8139", False, None, False)
+        return FedoraGuest(tdl, config, auto, "rtl8139", False, None, False)
     raise Guest.OzException("Unsupported Fedora update " + tdl.update)

@@ -21,13 +21,15 @@ import Guest
 import ozutil
 
 class OpenSUSEGuest(Guest.CDGuest):
-    def __init__(self, tdl, config):
+    def __init__(self, tdl, config, auto):
         self.tdl = tdl
 
         if self.tdl.installtype != 'iso':
             raise Guest.OzException("OpenSUSE installs must be done via ISO")
 
-        self.autoyast = ozutil.generate_full_auto_path("opensuse-" + self.tdl.update + "-jeos.xml")
+        self.autoyast = auto
+        if self.autoyast is None:
+            self.autoyast = ozutil.generate_full_auto_path("opensuse-" + self.tdl.update + "-jeos.xml")
 
         Guest.CDGuest.__init__(self, self.tdl.name, "OpenSUSE",
                                self.tdl.update, self.tdl.arch, 'iso',
@@ -75,8 +77,8 @@ class OpenSUSEGuest(Guest.CDGuest):
         self.generate_new_iso()
         self.cleanup_iso()
 
-def get_class(tdl, config):
+def get_class(tdl, config, auto):
     if tdl.update in ["11.1", "11.2", "11.3"]:
-        return OpenSUSEGuest(tdl.config)
+        return OpenSUSEGuest(tdl, config, auto)
 
     raise Guest.OzException("Unsupported OpenSUSE update " + tdl.update)

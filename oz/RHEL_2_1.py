@@ -22,11 +22,14 @@ import Guest
 import ozutil
 
 class RHEL21Guest(Guest.FDGuest):
-    def __init__(self, tdl, config):
+    def __init__(self, tdl, config, auto):
         self.tdl = tdl
         if self.tdl.arch != "i386":
             raise Guest.OzException("Invalid arch " + self.tdl.arch + "for RHEL-2.1 guest")
-        self.ks_file = ozutil.generate_full_auto_path("rhel-2.1-jeos.ks")
+
+        self.ks_file = auto
+        if self.ks_file is None:
+            self.ks_file = ozutil.generate_full_auto_path("rhel-2.1-jeos.ks")
 
         if self.tdl.installtype != 'url':
             raise Guest.OzException("RHEL-2.1 installs must be done via url or iso")
@@ -95,7 +98,7 @@ class RHEL21Guest(Guest.FDGuest):
         self.modify_floppy()
         self.cleanup_floppy()
 
-def get_class(tdl, config):
+def get_class(tdl, config, auto):
     if tdl.update in ["GOLD", "U2", "U3", "U4", "U5", "U6"]:
-        return RHEL21Guest(tdl, config)
+        return RHEL21Guest(tdl, config, auto)
     raise Guest.OzException("Unsupported RHEL-2.1 update " + tdl.update)

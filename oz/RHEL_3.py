@@ -22,9 +22,12 @@ import ozutil
 import RedHat
 
 class RHEL3Guest(RedHat.RedHatCDGuest):
-    def __init__(self, tdl, config):
+    def __init__(self, tdl, config, auto):
         self.tdl = tdl
-        self.ks_file = ozutil.generate_full_auto_path("rhel-3-jeos.ks")
+
+        self.ks_file = auto
+        if self.ks_file is None:
+            self.ks_file = ozutil.generate_full_auto_path("rhel-3-jeos.ks")
 
         if self.tdl.installtype != 'url':
             raise Guest.OzException("RHEL-3 installs must be done via url")
@@ -77,7 +80,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         self.generate_iso()
         self.cleanup_iso()
 
-def get_class(tdl, config):
+def get_class(tdl, config, auto):
     if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9"]:
-        return RHEL3Guest(tdl, config)
+        return RHEL3Guest(tdl, config, auto)
     raise Guest.OzException("Unsupported RHEL-3 update " + tdl.update)
