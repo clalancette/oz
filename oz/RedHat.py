@@ -245,27 +245,28 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         try:
             try:
                 self.image_ssh_setup_step_1(g_handle)
+
+                try:
+                    self.image_ssh_setup_step_2(g_handle)
+
+                    try:
+                        self.image_ssh_setup_step_3(g_handle)
+
+                        try:
+                            self.image_ssh_setup_step_4(g_handle)
+                        except:
+                            self.image_ssh_teardown_step_4(g_handle)
+                            raise
+                    except:
+                        self.image_ssh_teardown_step_3(g_handle)
+                        raise
+                except:
+                    self.image_ssh_teardown_step_2(g_handle)
+                    raise
             except:
                 self.image_ssh_teardown_step_1(g_handle)
                 raise
 
-            try:
-                self.image_ssh_setup_step_2(g_handle)
-            except:
-                self.image_ssh_teardown_step_2(g_handle)
-                raise
-
-            try:
-                self.image_ssh_setup_step_3(g_handle)
-            except:
-                self.image_ssh_teardown_step_3(g_handle)
-                raise
-
-            try:
-                self.image_ssh_setup_step_4(g_handle)
-            except:
-                self.image_ssh_teardown_step_4(g_handle)
-                raise
         finally:
             self.guestfs_handle_cleanup(g_handle)
 
