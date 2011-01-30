@@ -368,16 +368,14 @@ class Guest(object):
     def get_original_media(self, url, output, force_download):
         self.log.info("Fetching the original media")
 
-        try:
-            response = urllib2.urlopen(url)
-            url = response.geturl()
-            content_length = int(response.info()["Content-Length"])
-            response.close()
-        except urllib2.URLError, e:
-            raise e
-        except:
-            pass
+        response = urllib2.urlopen(url)
+        url = response.geturl()
+        info = response.info()
+        response.close()
 
+        if not info.has_key("Content-Length"):
+            raise OzException("Could not reach destination to fetch boot media")
+        content_length = int(info["Content-Length"])
         if content_length == 0:
             raise OzException("Install media of 0 size detected, something is wrong")
 
