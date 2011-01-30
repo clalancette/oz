@@ -60,6 +60,13 @@ def subprocess_check_output(*popenargs, **kwargs):
     return (stdout, stderr, retcode)
 
 class Guest(object):
+    def get_conf(self, config, section, key, default):
+        if config is not None and config.has_section(section) \
+                and config.has_option(section, key):
+            return config.get(section, key)
+        else:
+            return default
+
     def __init__(self, name, distro, update, arch, nicmodel, clockoffset,
                  mousetype, diskbus, config):
         if arch != "i386" and arch != "x86_64":
@@ -74,21 +81,22 @@ class Guest(object):
         self.arch = arch
         self.name = name
 
-        if config is not None and config.has_section('paths') and config.has_option('paths', 'output_dir'):
-            self.output_dir = config.get('paths', 'output_dir')
-        else:
-            self.output_dir = "/var/lib/libvirt/images"
+        self.output_dir = self.get_conf(config, 'paths', 'output_dir',
+                                        '/var/lib/libvirt/images')
 
-        if config is not None and config.has_section('paths') and config.has_option('paths', 'data_dir'):
-            self.data_dir = config.get('paths', 'data_dir')
-        else:
-            self.data_dir = "/var/lib/oz"
+        self.data_dir = self.get_conf(config, 'paths', 'data_dir',
+                                      '/var/lib/oz')
+
+        self.libvirt_uri = self.get_conf(config, 'libvirt', 'uri',
+                                         'qemu:///system')
+
+        self.libvirt_type = self.get_conf(config, 'libvirt', 'type', 'kvm')
 
         self.diskimage = self.output_dir + "/" + self.name + ".dsk"
         self.icicle_tmp = self.data_dir + "/icicletmp/" + self.name
         self.listen_port = random.randrange(1024, 65535)
         libvirt.registerErrorHandler(libvirt_error_handler, 'context')
-        self.libvirt_conn = libvirt.open("qemu:///system")
+        self.libvirt_conn = libvirt.open(self.libvirt_uri)
 
         # we have to make sure that the private libvirt bridge is available
         self.host_bridge_ip = None
@@ -194,7 +202,7 @@ class Guest(object):
 
         # create top-level domain element
         domain = doc.newChild(None, "domain", None)
-        domain.setProp("type", "kvm")
+        domain.setProp("type", self.libvirt_type)
 
         # create name element
         name = domain.newChild(None, "name", self.name)
