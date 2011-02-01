@@ -95,6 +95,34 @@ class Guest(object):
 
         return retval
 
+    def discover_libvirt_type(self):
+        if self.libvirt_type is None:
+            try:
+                stdout, stderr, retcode = subprocess_check_output(['virt-what'])
+            except:
+                self.log.warn("Could not determine hypervisor type (if any), trying to use KVM")
+                stdout = ''
+
+            if len(stdout) == 0:
+                # if there was *nothing* printed, then this is probably a
+                # bare-metal host.  Try to use KVM
+                self.libvirt_type = 'kvm'
+            else:
+                # otherwise, this is probably some virtualization solution and
+                # kvm will not work.  Try to use full emulation instead
+                self.libvirt_type = 'qemu'
+
+            # OK, we've discovered the type.  Check in with libvirt to see if
+            # this is available on this machine
+            libvirt_cap = self.libvirt_conn.getCapabilities()
+
+            doc = libxml2.parseDoc(libvirt_cap)
+
+            if len(doc.xpathEval("/capabilities/guest/arch/domain[@type='%s']" % (self.libvirt_type))) == 0:
+                raise oz.OzException.OzException("This host does not support %s guests" % (self.libvirt_type))
+
+        self.log.debug("Libvirt type is %s" % (self.libvirt_type))
+
     def discover_libvirt_bridge(self):
         if self.bridge_name is not None:
             # if the bridge name was specified in the config file, just detect
@@ -134,6 +162,7 @@ class Guest(object):
         libvirt.registerErrorHandler(libvirt_error_handler, 'context')
         self.libvirt_conn = libvirt.open(self.libvirt_uri)
         self.discover_libvirt_bridge()
+        self.discover_libvirt_type()
 
     def __init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus, config):
         self.tdl = tdl
@@ -159,7 +188,7 @@ class Guest(object):
         # configuration from 'libvirt' section
         self.libvirt_uri = self.get_conf(config, 'libvirt', 'uri',
                                          'qemu:///system')
-        self.libvirt_type = self.get_conf(config, 'libvirt', 'type', 'kvm')
+        self.libvirt_type = self.get_conf(config, 'libvirt', 'type', None)
         self.bridge_name = self.get_conf(config, 'libvirt', 'bridge_name', None)
 
         # configuration from 'cache' section
