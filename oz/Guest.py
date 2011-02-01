@@ -33,20 +33,14 @@ import select
 import struct
 import numpy
 
-class ProcessError(Exception):
-    """This exception is raised when a process run by
-    Guest.subprocess_check_output returns a non-zero exit status.  The exit
-    status will be stored in the returncode attribute
-    """
-    def __init__(self, returncode, cmd, output=None):
-        self.returncode = returncode
-        self.cmd = cmd
-        self.output = output
-    def __str__(self):
-        return "'%s' failed(%d): %s" % (self.cmd, self.returncode, self.output)
-
 def libvirt_error_handler(ctxt, err):
     pass
+
+class OzException(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+    def __str__(self):
+        return self.msg
 
 # NOTE: python 2.7 already defines subprocess.capture_output, but I can't
 # depend on that yet.  So write my own
@@ -56,22 +50,14 @@ def subprocess_check_output(*popenargs, **kwargs):
 
     ozutil.executable_exists(popenargs[0][0])
 
-    # FIXME: this doesn't seem to do the right thing with respect to stderr
-    # and reporting errors.  Needs to be looked into
     process = subprocess.Popen(stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT, *popenargs, **kwargs)
-    output, unused_err = process.communicate()
+    stdout, stderr = process.communicate()
     retcode = process.poll()
     if retcode:
         cmd = ' '.join(*popenargs)
-        raise ProcessError(retcode, cmd, output=output)
-    return output
-
-class OzException(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-    def __str__(self):
-        return self.msg
+        raise OzException("'%s' failed(%d): %s" % (cmd, retcode, stderr))
+    return (stdout, stderr, retcode)
 
 class Guest(object):
     def __init__(self, distro, update, arch, nicmodel, clockoffset, mousetype,
@@ -579,7 +565,6 @@ class Guest(object):
                                  "-m", "tcp", "-d", self.host_bridge_ip,
                                  "--dport", str(self.listen_port),
                                  "-j", "ACCEPT"])
-
 
         try:
             addr = None

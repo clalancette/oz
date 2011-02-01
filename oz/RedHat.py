@@ -270,15 +270,10 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             self.guestfs_handle_cleanup(g_handle)
 
     def guest_execute_command(self, guestaddr, command):
-        sub = subprocess.Popen(["ssh", "-i", self.sshprivkey,
-                                "-o", "StrictHostKeyChecking=no",
-                                "-o", "ConnectTimeout=5", guestaddr, command],
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        data = sub.communicate()
-
-        # here we return a tuple that is (stdout,stderr,returncode)
-        return data+(sub.returncode,)
+        return Guest.subprocess_check_output(["ssh", "-i", self.sshprivkey,
+                                              "-o", "StrictHostKeyChecking=no",
+                                              "-o", "ConnectTimeout=5",
+                                              guestaddr, command])
 
     def generate_icicle(self, libvirt_xml):
         self.log.info("Generating ICICLE")
@@ -292,12 +287,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             guestaddr = self.wait_for_guest_boot()
 
             try:
-                output = self.guest_execute_command(guestaddr, 'rpm -qa')
-                stdout = output[0]
-                stderr = output[1]
-                returncode = output[2]
-                if returncode != 0:
-                    raise Guest.OzException("Failed to execute guest command 'rpm -qa': %s" % (stderr))
+                stdout, stderr, retcode = self.guest_execute_command(guestaddr, 'rpm -qa')
 
                 icicle_output = self.output_icicle_xml(stdout.split("\n"))
 
