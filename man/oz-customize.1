@@ -20,13 +20,16 @@ for oz-customize to have a chance to succeed.
 .TP
 .B "\-c <config>"
 Get the configuration from config file \fBconfig\fR, instead of the
-default /etc/oz/oz.cfg.  The config file is in standard ini format
-with a single section called \fBpaths\fR.  There are two possible keys
+default /etc/oz/oz.cfg.  If neither one exists, Oz will use sensible
+defaults.  The config file is in standard ini format with two
+sections named \fBpaths\fR and \fBlibvirt\fR.  There are two possible keys
 under \fBpaths\fR: \fBoutput_dir\fR describes where to store the
 images after they are built, and \fBdata_dir\fR describes where to
 cache install media and use temporary storage.  Both locations have to
 have a decent amount of free disk space in order for oz-customize to
-work properly.
+work properly.  There are two possible keys under \fBlibvirt\fR:
+\fBuri\fR describes the libvirt URI to use to do the guest
+installation, and \fBtype\fR defines what type of virtualization to use.
 .TP
 .B "\-d <loglevel>"
 Turn on debugging output to level \fBloglevel\fR.  The log levels are:

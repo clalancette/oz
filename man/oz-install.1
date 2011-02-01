@@ -20,15 +20,26 @@ for oz-install to have a chance to succeed.
 
 .SH OPTIONS
 .TP
+.B "\-a <auto>"
+Use the user-provided auto installation file \fBauto\fR.  By default, Oz
+will use a hard-coded auto-installation file (kickstart, preseed, sif,
+etc) to do a basic OS installation.  Using this option, the user can
+provide an alternate auto-installation file to do the install.  The
+caveat is that user-provided auto-installation files are more likely
+to cause installation errors, so this option should be used with caution.
+.TP
 .B "\-c <config>"
 Get the configuration from config file \fBconfig\fR, instead of the
-default /etc/oz/oz.cfg.  The config file is in standard ini format
-with a single section called \fBpaths\fR.  There are two possible keys
+default /etc/oz/oz.cfg.  If neither one exists, Oz will use sensible
+defaults.  The config file is in standard ini format with two
+sections named \fBpaths\fR and \fBlibvirt\fR.  There are two possible keys
 under \fBpaths\fR: \fBoutput_dir\fR describes where to store the
 images after they are built, and \fBdata_dir\fR describes where to
 cache install media and use temporary storage.  Both locations have to
-have a decent amount of free disk space in order for oz-install to
-work properly.
+have a decent amount of free disk space in order for oz-customize to
+work properly.  There are two possible keys under \fBlibvirt\fR:
+\fBuri\fR describes the libvirt URI to use to do the guest
+installation, and \fBtype\fR defines what type of virtualization to use.
 .TP
 .B "\-d <loglevel>"
 Turn on debugging output to level \fBloglevel\fR.  The log levels are:
@@ -52,6 +63,13 @@ after the installation is complete.
 .TP
 .B "\-h"
 Print a short help message.
+.TP
+.B "\-p"
+Cleanup old guests before installation.  By default, if a guest with
+the same libvirt UUID, libvirt name, or diskimage exists prior to Oz
+starting installation, Oz will abort.  If this option is used, then Oz
+will undefine the libvirt guest with the same name or UUID and delete
+the diskimage, so it should be used with caution.
 .TP
 .B "\-u"
 Customize the image after installation.  This generally installs
