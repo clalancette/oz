@@ -40,13 +40,13 @@
 	</optional>
 	<optional>
 	  <element name='packages'>
-	    <zeroOrMore>
+	    <oneOrMore>
 	      <element name='package'>
 		<attribute name='name'>
 		  <text/>
 		</attribute>
 	      </element>
-	    </zeroOrMore>
+	    </oneOrMore>
 	  </element>
 	</optional>
       </interleave>
