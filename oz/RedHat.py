@@ -302,20 +302,26 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                 icicle_output = self.output_icicle_xml(stdout.split("\n"))
 
             finally:
-                output = self.guest_execute_command(guestaddr,
-                                                    'shutdown -h now')
-                returncode = output[2]
-                if returncode != 0:
-                    self.log.warn("Failed shutting down guest, continuing anyway")
-                else:
-                    if self.wait_for_guest_shutdown(libvirt_dom):
-                        libvirt_dom = None
+                libvirt_dom = self.shutdown_guest(guestaddr, libvirt_dom)
+
         finally:
             if libvirt_dom is not None:
                 libvirt_dom.destroy()
             self.collect_teardown(libvirt_xml)
 
         return icicle_output
+
+    def shutdown_guest(self, guestaddr, libvirt_dom):
+        try:
+            self.guest_execute_command(guestaddr, 'shutdown -h now')
+            if self.wait_for_guest_shutdown(libvirt_dom):
+                libvirt_dom = None
+            else:
+                self.log.warn("Guest did not shutdown in time, going to kill")
+        except Guest.OzException:
+            self.log.warn("Failed shutting down guest, continuing anyway")
+
+        return libvirt_dom
 
 class RedHatCDYumGuest(RedHatCDGuest):
     def customize(self, libvirt_xml):
