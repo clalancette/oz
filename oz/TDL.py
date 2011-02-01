@@ -66,7 +66,10 @@ class TDL(object):
 
         self.packages = []
         for package in self.doc.xpathEval('/template/packages/package'):
-            self.packages.append(package.prop('name'))
+            name = package.prop('name')
+            if name is None:
+                raise Guest.OzException("Package without a name was given")
+            self.packages.append(name)
 
     def __del__(self):
         if self.doc is not None:
