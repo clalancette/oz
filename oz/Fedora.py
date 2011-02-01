@@ -21,7 +21,7 @@ import Guest
 import ozutil
 import RedHat
 
-class FedoraGuest(RedHat.RedHatCDGuest):
+class FedoraGuest(RedHat.RedHatCDYumGuest):
     def __init__(self, tdl, config, nicmodel, haverepo, diskbus, brokenisomethod):
         self.tdl = tdl
         self.ks_file = ozutil.generate_full_auto_path("fedora-" + self.tdl.update + "-jeos.ks")
@@ -39,9 +39,9 @@ class FedoraGuest(RedHat.RedHatCDGuest):
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)
 
-        RedHat.RedHatCDGuest.__init__(self, "Fedora", self.tdl.update,
-                                      self.tdl.arch, self.tdl.installtype,
-                                      nicmodel, None, None, diskbus, config)
+        RedHat.RedHatCDYumGuest.__init__(self, "Fedora", self.tdl.update,
+                                         self.tdl.arch, self.tdl.installtype,
+                                         nicmodel, None, None, diskbus, config)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")
@@ -88,47 +88,6 @@ class FedoraGuest(RedHat.RedHatCDGuest):
         self.modify_iso()
         self.generate_iso()
         self.cleanup_iso()
-
-    def customize(self, libvirt_xml):
-        self.log.info("Customizing image")
-
-        keyfile = self.icicle_tmp + '/id_rsa-icicle-gen'
-
-        if not self.tdl.packages:
-            self.log.info("No additional packages to install, skipping customization")
-            return
-
-        self.collect_setup(libvirt_xml)
-
-        try:
-            libvirt_dom = self.libvirt_conn.createXML(libvirt_xml, 0)
-
-            guestaddr = self.wait_for_guest_boot()
-
-            try:
-                packstr = ''
-                for package in self.packages:
-                    packstr += package + ' '
-
-                output = RedHat.guest_execute_command(guestaddr, keyfile,
-                                                      'yum -y install %s' % (packstr))
-
-                stdout = output[0]
-                stderr = output[1]
-                returncode = output[2]
-                if returncode != 0:
-                    raise OzException("Failed to execute guest command 'yum -y install %s': %s" % (packstr, stderr))
-
-            finally:
-                RedHat.guest_execute_command(guestaddr, keyfile,
-                                             'shutdown -h now')
-
-                if self.wait_for_guest_shutdown(libvirt_dom):
-                    libvirt_dom = None
-        finally:
-            if libvirt_dom is not None:
-                libvirt_dom.destroy()
-            self.collect_teardown(libvirt_xml)
 
 def get_class(tdl, config):
     if tdl.update in ["10", "11", "12", "13", "14"]:

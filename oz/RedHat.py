@@ -316,3 +316,36 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             self.collect_teardown(libvirt_xml)
 
         return icicle_output
+
+class RedHatCDYumGuest(RedHatCDGuest):
+    def customize(self, libvirt_xml):
+        self.log.info("Customizing image")
+
+        if not self.tdl.packages:
+            self.log.info("No additional packages to install, skipping customization")
+            return
+
+        self.collect_setup(libvirt_xml)
+
+        libvirt_dom = None
+        try:
+            libvirt_dom = self.libvirt_conn.createXML(libvirt_xml, 0)
+
+            guestaddr = self.wait_for_guest_boot()
+
+            try:
+                packstr = ''
+                for package in self.tdl.packages:
+                    packstr += package + ' '
+
+                if packstr != '':
+                    self.guest_execute_command(guestaddr,
+                                               'yum -y install %s' % (packstr))
+
+            finally:
+                libvirt_dom = self.shutdown_guest(guestaddr, libvirt_dom)
+
+        finally:
+            if libvirt_dom is not None:
+                libvirt_dom.destroy()
+            self.collect_teardown(libvirt_xml)

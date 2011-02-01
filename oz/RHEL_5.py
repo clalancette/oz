@@ -22,7 +22,7 @@ import Guest
 import ozutil
 import RedHat
 
-class RHEL5Guest(RedHat.RedHatCDGuest):
+class RHEL5Guest(RedHat.RedHatCDYumGuest):
     def __init__(self, tdl, config, nicmodel, diskbus):
         self.tdl = tdl
         self.ks_file = ozutil.generate_full_auto_path("rhel-5-jeos.ks")
@@ -35,9 +35,9 @@ class RHEL5Guest(RedHat.RedHatCDGuest):
         else:
             raise Guest.OzException("RHEL-5 installs must be done via url or iso")
 
-        RedHat.RedHatCDGuest.__init__(self, "RHEL-5", self.tdl.update,
-                                      self.tdl.arch, self.tdl.installtype,
-                                      nicmodel, None, None, diskbus, config)
+        RedHat.RedHatCDYumGuest.__init__(self, "RHEL-5", self.tdl.update,
+                                         self.tdl.arch, self.tdl.installtype,
+                                         nicmodel, None, None, diskbus, config)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")
@@ -102,42 +102,6 @@ class RHEL5Guest(RedHat.RedHatCDGuest):
         self.modify_iso()
         self.generate_iso()
         self.cleanup_iso()
-
-    def customize(self, libvirt_xml):
-        self.log.info("Customizing image")
-        self.collect_setup(libvirt_xml)
-
-        try:
-            libvirt_dom = self.libvirt_conn.createXML(libvirt_xml, 0)
-
-            guestaddr = self.wait_for_guest_boot()
-
-            packstr = ''
-            for package in self.tdl.packages:
-                packstr += package + ' '
-
-            # FIXME: for this to succeed, we might actually have to upload
-            # an /etc/yum.repos.d/*.repo
-            output = RedHat.guest_execute_command(guestaddr,
-                                                  self.icicle_tmp + '/id_rsa-icicle-gen',
-                                                  'yum -y install %s' % (packstr))
-
-            stdout = output[0]
-            stderr = output[1]
-            returncode = output[2]
-            if returncode != 0:
-                raise Guest.OzException("Failed to execute guest command 'yum -y install %s': %s" % (packstr, stderr))
-
-            RedHat.guest_execute_command(guestaddr,
-                                         self.icicle_tmp + '/id_rsa-icicle-gen',
-                                         'shutdown -h now')
-
-            if self.wait_for_guest_shutdown(libvirt_dom):
-                libvirt_dom = None
-        finally:
-            if libvirt_dom is not None:
-                libvirt_dom.destroy()
-            self.collect_teardown(libvirt_xml)
 
 def get_class(tdl, config):
     if tdl.update in ["GOLD", "U1", "U2", "U3"]:
