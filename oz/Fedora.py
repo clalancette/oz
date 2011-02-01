@@ -34,7 +34,7 @@ class FedoraGuest(RedHat.RedHatCDGuest):
         elif self.tdl.installtype == 'iso':
             self.url = self.tdl.iso
         else:
-            raise Exception, "Fedora installs must be done via url or iso"
+            raise Guest.OzException("Fedora installs must be done via url or iso")
 
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)
