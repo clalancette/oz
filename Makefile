@@ -13,5 +13,13 @@ validate:
 	@echo "Validating ICICLE"
 	@cd docs ; ./validate-icicle.sh
 
+man2html:
+	@echo "Generating oz-install HTML page from man"
+	@groff -mandoc man/oz-install.1 -T html > man/oz-install.html
+	@echo "Generating oz-customize HTML page from man"
+	@groff -mandoc man/oz-customize.1 -T html > man/oz-customize.html
+	@echo "Generating oz-generate-icicle HTML page from man"
+	@groff -mandoc man/oz-generate-icicle.1 -T html > man/oz-generate-icicle.html
+
 clean:
-	rm -rf MANIFEST build dist usr *~ oz.spec *.pyc oz/*~ oz/*.pyc examples/*~ oz/auto/*~ man/*~ docs/*~
+	rm -rf MANIFEST build dist usr *~ oz.spec *.pyc oz/*~ oz/*.pyc examples/*~ oz/auto/*~ man/*~ docs/*~ man/*.html
