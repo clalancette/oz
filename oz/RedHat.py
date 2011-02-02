@@ -139,6 +139,14 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         if g_handle.exists(startuplink + ".icicle"):
             g_handle.mv(startuplink + ".icicle", startuplink)
 
+    def image_ssh_teardown_step_5(self, g_handle):
+        self.log.debug("Teardown step 5")
+        if g_handle.exists('/etc/selinux/config'):
+            g_handle.rm('/etc/selinux/config')
+
+        if g_handle.exists('/etc/selinux/config.icicle'):
+            g_handle.mv('/etc/selinux/config.icicle', '/etc/selinux/config')
+
     def collect_teardown(self, libvirt_xml):
         self.log.info("Collection Teardown")
 
@@ -152,6 +160,8 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             self.image_ssh_teardown_step_3(g_handle)
 
             self.image_ssh_teardown_step_4(g_handle)
+
+            self.image_ssh_teardown_step_5(g_handle)
         finally:
             self.guestfs_handle_cleanup(g_handle)
             shutil.rmtree(self.icicle_tmp)
@@ -228,6 +238,23 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
         os.unlink(announcefile)
 
+    def image_ssh_setup_step_5(self, g_handle):
+        # part 5; set SELinux to permissive mode so we don't have to deal with
+        # incorrect contexts
+        self.log.debug("Step 5: Set SELinux to permissive mode")
+        if g_handle.exists('/etc/selinux/config'):
+            g_handle.mv('/etc/selinux/config', '/etc/selinux/config.icicle')
+
+        selinuxfile = self.icicle_tmp + "/selinux"
+        f = open(selinuxfile, 'w')
+        f.write("SELINUX=permissive\n")
+        f.write("SELINUXTYPE=targeted\n")
+        f.close()
+
+        g_handle.upload(selinuxfile, "/etc/selinux/config")
+
+        os.unlink(selinuxfile)
+
     def collect_setup(self, libvirt_xml):
         self.log.info("Collection Setup")
 
@@ -240,6 +267,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         # 2)  Make sure sshd is running on boot
         # 3)  Make sure that port 22 is open in the firewall
         # 4)  Make the guest announce itself to the host
+        # 5)  Set SELinux to permissive mode
 
         try:
             try:
@@ -253,6 +281,12 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
                         try:
                             self.image_ssh_setup_step_4(g_handle)
+
+                            try:
+                                self.image_ssh_setup_step_5(g_handle)
+                            except:
+                                self.image_ssh_teardown_step_5(g_handle)
+                                raise
                         except:
                             self.image_ssh_teardown_step_4(g_handle)
                             raise
