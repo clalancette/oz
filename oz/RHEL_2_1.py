@@ -43,8 +43,7 @@ class RHEL21Guest(Guest.FDGuest):
                                None, config)
 
     def modify_floppy(self):
-        if not os.access(self.floppy_contents, os.F_OK):
-            os.makedirs(self.floppy_contents)
+        self.mkdir_p(self.floppy_contents)
 
         self.log.debug("Putting the kickstart in place")
 

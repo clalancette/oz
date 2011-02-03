@@ -231,8 +231,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
     def collect_setup(self, libvirt_xml):
         self.log.info("Collection Setup")
 
-        if not os.access(self.icicle_tmp, os.F_OK):
-            os.makedirs(self.icicle_tmp)
+        self.mkdir_p(self.icicle_tmp)
 
         g_handle = self.guestfs_handle_setup(libvirt_xml)
 

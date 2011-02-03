@@ -416,8 +416,7 @@ class Guest(object):
                     self.last_mb = current_mb
                     self.log.debug("%dkB of %dkB" % (down_current/1024, down_total/1024))
 
-            if not os.access(os.path.dirname(output), os.F_OK):
-                os.makedirs(os.path.dirname(output))
+            self.mkdir_p(os.path.dirname(output))
             self.outf = open(output, "w")
             def data(buf):
                 self.outf.write(buf)
@@ -614,6 +613,10 @@ class Guest(object):
             package.setProp("name", line)
 
         return doc.serialize(None, 1)
+
+    def mkdir_p(self, path):
+        if not os.access(path, os.F_OK):
+            os.makedirs(path)
 
 class CDGuest(Guest):
     def __init__(self, name, distro, update, arch, installtype, nicmodel,

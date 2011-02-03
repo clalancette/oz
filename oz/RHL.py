@@ -107,8 +107,7 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
                                "i386", nicmodel, None, None, None, config)
 
     def modify_floppy(self):
-        if not os.access(self.floppy_contents, os.F_OK):
-            os.makedirs(self.floppy_contents)
+        self.mkdir_p(self.floppy_contents)
 
         self.log.debug("Putting the kickstart in place")
 
