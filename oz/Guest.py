@@ -67,6 +67,19 @@ class Guest(object):
         else:
             return default
 
+    def get_boolean_conf(self, config, section, key, default):
+        value = self.get_conf(config, section, key, None)
+        if value is None:
+            value = default
+        elif value.lower() == 'true' or value.lower() == 'yes':
+            value = True
+        elif value.lower() == 'false' or value.lower() == 'no':
+            value = False
+        else:
+            raise OzException("Configuration parameter '%s' must be True, Yes, False, or No" % (key))
+
+        return value
+
     def __init__(self, name, distro, update, arch, nicmodel, clockoffset,
                  mousetype, diskbus, config):
         if arch != "i386" and arch != "x86_64":
@@ -91,6 +104,10 @@ class Guest(object):
                                          'qemu:///system')
 
         self.libvirt_type = self.get_conf(config, 'libvirt', 'type', 'kvm')
+
+        self.cache_original_media = self.get_boolean_conf(config, 'cache',
+                                                          'original_media',
+                                                          True)
 
         self.diskimage = os.path.join(self.output_dir, self.name + ".dsk")
         self.icicle_tmp = os.path.join(self.data_dir, "icicletmp", self.name)
@@ -137,6 +154,7 @@ class Guest(object):
         self.log.debug("host IP: %s, nicmodel: %s, clockoffset: %s" % (self.host_bridge_ip, self.nicmodel, self.clockoffset))
         self.log.debug("mousetype: %s, disk_bus: %s, disk_dev: %s" % (self.mousetype, self.disk_bus, self.disk_dev))
         self.log.debug("icicletmp: %s, listen_port: %d" % (self.icicle_tmp, self.listen_port))
+        self.log.debug("Cache original media?: %s" % (self.cache_original_media))
 
     def cleanup_old_guest(self):
         self.log.info("Cleaning up guest named %s" % (self.name))
@@ -799,6 +817,8 @@ class CDGuest(Guest):
         self.log.info("Cleaning up after install")
         os.unlink(self.output_iso)
         self.log.debug("Removed modified ISO")
+        if not self.cache_original_media:
+            os.unlink(self.orig_iso)
 
 class FDGuest(Guest):
     def __init__(self, name, distro, update, arch, nicmodel, clockoffset,
@@ -833,3 +853,5 @@ class FDGuest(Guest):
         self.log.info("Cleaning up after install")
         os.unlink(self.output_floppy)
         self.log.debug("Removed modified floppy")
+        if not self.cache_original_media:
+            os.unlink(self.orig_floppy)

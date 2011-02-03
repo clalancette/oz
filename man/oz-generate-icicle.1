@@ -56,6 +56,9 @@ data_dir = /var/lib/oz
 [libvirt]
 uri = qemu:///system
 type = kvm
+
+[cache]
+original_media = yes
 .fi
 .in
 
@@ -68,6 +71,13 @@ free disk space in order for Oz to work properly.
 The \fBlibvirt\fR section allows some manipulation of how Oz uses libvirt.
 The \fBuri\fR key describes the libvirt URI to use to do the guest
 installation, and the \fBtype\fR key defines what type of virtualization to use.
+
+The \fBcache\fR section allows some manipulation of how Oz caches
+data.  The caching of data in Oz is a tradeoff between installation
+time and storage space.  The \fBoriginal_media\fR key tells Oz
+to cache the original installation media so that it does not have to
+download it the next time an install for the same operating system is
+requested.
 
 .SH SEE ALSO
 oz-install(1), oz-customize(1)
