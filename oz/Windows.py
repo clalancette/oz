@@ -122,6 +122,11 @@ class Windows2000andXPand2003(Guest.CDGuest):
 
         self.wait_for_install_finish(dom, timeout)
 
+        if self.cache_jeos:
+            self.log.info("Caching JEOS")
+            self.mkdir_p(self.jeos_cache_dir)
+            ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
+
         return self.generate_xml("hd", want_install_disk=False)
 
 class Windows2008and7(Guest.CDGuest):
@@ -214,6 +219,11 @@ class Windows2008and7(Guest.CDGuest):
         xml = self.generate_xml("hd")
         dom = self.libvirt_conn.createXML(xml, 0)
         self.wait_for_install_finish(dom, timeout)
+
+        if self.cache_jeos:
+            self.log.info("Caching JEOS")
+            self.mkdir_p(self.jeos_cache_dir)
+            ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
 
         return self.generate_xml("hd", want_install_disk=False)
 

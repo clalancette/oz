@@ -49,6 +49,7 @@ type = kvm
 [cache]
 original_media = yes
 modified_media = no
+jeos = no
 .fi
 .in
 
@@ -70,7 +71,11 @@ download it the next time an install for the same operating system is
 requested.  The \fBmodified_media\fR key tells Oz to cache the
 oz-modified installation media so that it does not have to download
 and modify it the next time an install for the same operating system
-is requested.
+is requested.  The \fBjeos\fR key tells Oz to cache the installed
+operating system after installation.  This can significantly speed up
+subsequent installation of the same operating system, with the
+additional downside of the operating system getting out-of-date with
+respect to security updates.  Use with care.
 
 .SH SEE ALSO
 oz-generate-icicle(1), oz-install(1), oz-customize(1)

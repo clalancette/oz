@@ -50,3 +50,37 @@ def executable_exists(program):
                 return exe_file
 
     raise Exception, "Could not find %s" % (program)
+
+# a function to copy files sparsely.  The logic here is all taken from coreutils
+# cp, specifically 'sparse_copy'
+def copyfile_sparse(src, dest):
+    src_fd = os.open(src, os.O_RDONLY)
+    dest_fd = os.open(dest, os.O_WRONLY|os.O_CREAT|os.O_TRUNC)
+
+    sb = os.fstat(src_fd)
+
+    # See io_blksize() in coreutils for an explanation of why 32*1024
+    buf_size = max(32*1024, sb.st_blksize)
+
+    size = sb.st_size
+    destlen = 0
+    while size != 0:
+        buf = os.read(src_fd, min(buf_size, size))
+        if len(buf) == 0:
+            break
+
+        buflen = len(buf)
+        if buf == '\0'*buflen:
+            os.lseek(dest_fd, buflen, os.SEEK_CUR)
+        else:
+            # FIXME: check out the python implementation of write, we might have
+            # to handle EINTR here
+            os.write(dest_fd, buf)
+
+        destlen += len(buf)
+        size -= len(buf)
+
+    os.ftruncate(dest_fd, destlen)
+
+    os.close(src_fd)
+    os.close(dest_fd)

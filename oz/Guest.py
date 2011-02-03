@@ -23,7 +23,6 @@ import time
 import pycurl
 import urllib2
 import stat
-import ozutil
 import libxml2
 import logging
 import random
@@ -34,6 +33,7 @@ import struct
 import numpy
 import tempfile
 
+import ozutil
 import OzException
 
 def libvirt_error_handler(ctxt, err):
@@ -108,6 +108,11 @@ class Guest(object):
         self.cache_modified_media = self.get_boolean_conf(config, 'cache',
                                                           'modified_media',
                                                           False)
+
+        self.cache_jeos = self.get_boolean_conf(config, 'cache', 'jeos', False)
+        self.jeos_cache_dir = os.path.join(self.data_dir, "jeos")
+        self.jeos_filename = os.path.join(self.jeos_cache_dir,
+                                          self.distro + self.update + self.arch + ".dsk")
 
         self.diskimage = os.path.join(self.output_dir, self.name + ".dsk")
         self.icicle_tmp = os.path.join(self.data_dir, "icicletmp", self.name)
@@ -207,6 +212,13 @@ class Guest(object):
     # both customize and generate_icicle
     def customize_and_generate_icicle(self, libvirt_xml):
         raise OzException.OzException("Customization and ICICLE generate for %s%s is not implemented" % (self.distro, self.update))
+
+    def jeos(self, skip_jeos=True):
+        if not skip_jeos and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
+            self.log.info("Found cached JEOS, using it")
+            ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
+            return self.generate_xml("hd", want_install_disk=False)
+        return None
 
     def targetDev(self, doc, devicetype, path, bus):
         install = doc.newChild(None, "disk", None)
@@ -857,6 +869,11 @@ class CDGuest(Guest):
 
         self.wait_for_install_finish(dom, timeout)
 
+        if self.cache_jeos:
+            self.log.info("Caching JEOS")
+            self.mkdir_p(self.jeos_cache_dir)
+            ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
+
         return self.generate_xml("hd", want_install_disk=False)
 
     def cleanup_iso(self):
@@ -903,6 +920,11 @@ class FDGuest(Guest):
             timeout = 1200
 
         self.wait_for_install_finish(dom, timeout)
+
+        if self.cache_jeos:
+            self.log.info("Caching JEOS")
+            self.mkdir_p(self.jeos_cache_dir)
+            ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
 
         return self.generate_xml("hd", want_install_disk=False)
 
