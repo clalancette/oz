@@ -1,0 +1,86 @@
+#!/usr/bin/python
+
+# Copyright (C) 2011  Chris Lalancette <clalance@redhat.com>
+
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation;
+# version 2.1 of the License.
+
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+import sys
+import getopt
+import os
+import ConfigParser
+import shutil
+
+def usage():
+    print "Usage: oz-cleanup-cache [OPTIONS]"
+    print "  -c <config>\tGet config from <config> (default is /etc/oz/oz.cfg)"
+    print "  -f\t\tDon't ask any questions and just blindly remove all oz data"
+    print "  -h\t\tPrint this help message"
+    sys.exit(1)
+
+try:
+    opts, args = getopt.gnu_getopt(sys.argv[1:], 'c:fh',
+                                   ['config', 'force', 'help'])
+except getopt.GetoptError, err:
+    print str(err)
+    usage()
+
+force = False
+config_file = "/etc/oz/oz.cfg"
+for o, a in opts:
+    if o in ("-c", "--config"):
+        config_file = a
+    elif o in ("-f", "--force"):
+        force = True
+    elif o in ("-h", "--help"):
+        usage()
+    else:
+        assert False, "unhandled option"
+
+if os.geteuid() != 0:
+    print "%s must be run as root" % (sys.argv[0])
+    sys.exit(2)
+
+if len(args) != 0:
+    usage()
+
+config = ConfigParser.SafeConfigParser()
+if os.access(config_file, os.F_OK):
+    config.read(config_file)
+
+# FIXME: we really shouldn't hard-code this here; instead we should share
+# this location with oz/Guest.py
+data_dir = "/var/lib/oz"
+if config is not None and config.has_section('paths') and config.has_option('paths', 'data_dir'):
+    data_dir = config.get('paths', 'data_dir')
+
+floppy_cache = os.path.join(data_dir, "floppies")
+iso_cache = os.path.join(data_dir, "isos")
+
+if not force:
+    while True:
+        response = raw_input("Going to remove all content from %s and %s; continue? (y/N) " % (floppy_cache, iso_cache))
+        if len(response) == 0 or response.lower() == 'n':
+            sys.exit(0)
+        elif response.lower() == 'y':
+            break
+        else:
+            print "Please enter 'y' or 'n'"
+
+print "Removing all cached content from %s and %s" % (floppy_cache, iso_cache)
+
+if os.access(floppy_cache, os.F_OK):
+    shutil.rmtree(floppy_cache)
+if os.access(iso_cache, os.F_OK):
+    shutil.rmtree(iso_cache)

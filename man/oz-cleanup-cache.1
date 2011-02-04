@@ -1,19 +1,18 @@
-.TH OZ-GENERATE-ICICLE 1 "Dec 2010" "oz-generate-icicle"
+.TH OZ-CLEANUP-CACHE 1 "Feb 2011" "oz-cleanup-cache"
 
 .SH NAME
-oz-generate-icicle - tool to generate an ICICLE (package manifest) of a disk image
+oz-cleanup-cache - tool to remove cached oz data
 
 .SH SYNOPSIS
-.B oz-generate-icicle [OPTIONS] <tdl-file> <libvirt-xml-file>
+.B oz-cleanup-cache [OPTIONS]
 
 .SH DESCRIPTION
-This is a tool to generate a package manifest (also called ICICLE) from a
-disk image.  This program can be used as a counterpart to oz-install,
-though it does not have to be used in conjunction.
-
-Note that oz-generate-icicle does the actual work using a combination
-of KVM and libvirt, so both of these must be available (and working)
-for oz-generate-icicle to have a chance to succeed.
+This is a tool to remove all of the data that Oz has cached.  Because
+the data that Oz caches can grow fairly large, it may be worthwhile to
+periodically clean it up.  This is a simple script to do so.  Note
+that if you do cleanup the Oz cache, subsequent operating system
+installs will be slower since Oz will have to re-download the
+installation media.
 
 .SH OPTIONS
 .TP
@@ -24,16 +23,6 @@ defaults.  The config file is in standard ini format; for an
 explanation of the sections and keys, see the
 .B CONFIGURATION FILE
 section.
-.TP
-.B "\-d <loglevel>"
-Turn on debugging output to level \fBloglevel\fR.  The log levels are:
-.RS 7
-.IP "0 - errors only (this is the default)"
-.IP "1 - errors and warnings"
-.IP "2 - errors, warnings, and information"
-.IP "3 - all messages"
-.IP "4 - all messages, prepended with the level and classname"
-.RE
 .TP
 .B "\-h"
 Print a short help message.
@@ -80,7 +69,7 @@ download it the next time an install for the same operating system is
 requested.
 
 .SH SEE ALSO
-oz-install(1), oz-customize(1), oz-cleanup-cache(1)
+oz-generate-icicle(1), oz-install(1), oz-customize(1)
 
 .SH AUTHOR
 Chris Lalancette <clalance@redhat.com>
