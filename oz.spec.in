@@ -3,7 +3,7 @@
 Summary: Library and utilities for automated guest OS installs
 Name: oz
 Version: @VERSION@
-Release: 1
+Release: 1%{?dist}
 License: LGPLv2
 Group: Development
 URL: http://deltacloud.org
@@ -16,6 +16,7 @@ Requires: libvirt-python
 Requires: python-pycurl
 Requires: genisoimage
 Requires: numpy
+Requires: mtools
 
 %description
 Oz is a set of libraries and utilities for doing automated guest OS
@@ -69,6 +70,9 @@ mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/oz
 
 
 %changelog
+* Fri Feb  3 2011 Chris Lalancette <clalance@redhat.com> - 0.1.0-1
+- Initial public release of Oz.
+
 * Wed Nov  3 2010 Chris Lalancette <clalance@redhat.com> - 0.0.4-1
 - Initial build.
 
