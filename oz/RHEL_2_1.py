@@ -94,10 +94,23 @@ class RHEL21Guest(Guest.FDGuest):
 
     def generate_install_media(self, force_download):
         self.log.info("Generating install media")
-        self.get_original_floppy(self.url + "/images/bootnet.img", force_download)
+
+        if not force_download and os.access(self.modified_floppy_cache,
+                                            os.F_OK):
+            self.log.info("Using cached modified media")
+            shutil.copyfile(self.modified_floppy_cache, self.output_floppy)
+            return
+
+        self.get_original_floppy(self.url + "/images/bootnet.img",
+                                 force_download)
         self.copy_floppy()
-        self.modify_floppy()
-        self.cleanup_floppy()
+        try:
+            self.modify_floppy()
+            if self.cache_modified_media:
+                self.log.info("Caching modified media for future use")
+                shutil.copyfile(self.output_floppy, self.modified_floppy_cache)
+        finally:
+            self.cleanup_floppy()
 
 def get_class(tdl, config, auto):
     if tdl.update in ["GOLD", "U2", "U3", "U4", "U5", "U6"]:

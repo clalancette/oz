@@ -105,6 +105,9 @@ class Guest(object):
         self.cache_original_media = self.get_boolean_conf(config, 'cache',
                                                           'original_media',
                                                           True)
+        self.cache_modified_media = self.get_boolean_conf(config, 'cache',
+                                                          'modified_media',
+                                                          False)
 
         self.diskimage = os.path.join(self.output_dir, self.name + ".dsk")
         self.icicle_tmp = os.path.join(self.data_dir, "icicletmp", self.name)
@@ -644,16 +647,20 @@ class CDGuest(Guest):
 
         self.orig_iso = os.path.join(self.data_dir, "isos",
                                      self.distro + self.update + self.arch + "-" + installtype + ".iso")
+        self.modified_iso_cache = os.path.join(self.data_dir, "isos",
+                                               self.distro + self.update + self.arch + "-" + installtype + "-oz.iso")
         self.output_iso = os.path.join(self.output_dir,
                                        self.name + "-" + installtype + "-oz.iso")
         self.iso_contents = os.path.join(self.data_dir, "isocontent",
                                          self.name + "-" + installtype)
+
         self.log.debug("Original ISO path: %s" % self.orig_iso)
+        self.log.debug("Modified ISO cache: %s" % self.modified_iso_cache)
         self.log.debug("Output ISO path: %s" % self.output_iso)
         self.log.debug("ISO content path: %s" % self.iso_contents)
 
     def get_original_iso(self, isourl, force_download):
-        return self.get_original_media(isourl, self.orig_iso, force_download)
+        self.get_original_media(isourl, self.orig_iso, force_download)
 
     def copy_iso(self):
         self.log.info("Copying ISO contents for modification")
@@ -870,15 +877,18 @@ class FDGuest(Guest):
                        mousetype, diskbus, config)
         self.orig_floppy = os.path.join(self.data_dir, "floppies",
                                         self.distro + self.update + self.arch + ".img")
+        self.modified_floppy_cache = os.path.join(self.data_dir, "floppies",
+                                                  self.distro + self.update + self.arch + "-oz.img")
         self.output_floppy = os.path.join(self.output_dir, self.name + "-oz.img")
         self.floppy_contents = os.path.join(self.data_dir, "floppycontent", self.name)
 
         self.log.debug("Original floppy path: %s" % self.orig_floppy)
+        self.log.debug("Modified floppy cache: %s" % self.modified_floppy_cache)
         self.log.debug("Output floppy path: %s" % self.output_floppy)
         self.log.debug("Floppy content path: %s" % self.floppy_contents)
 
     def get_original_floppy(self, floppyurl, force_download):
-        return self.get_original_media(floppyurl, self.orig_floppy, force_download)
+        self.get_original_media(floppyurl, self.orig_floppy, force_download)
 
     def copy_floppy(self):
         self.log.info("Copying floppy contents for modification")

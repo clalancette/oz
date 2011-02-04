@@ -47,10 +47,13 @@ Turn on debugging output to level \fBloglevel\fR.  The log levels are:
 .RE
 .TP
 .B "\-f"
-Force the download of the install media.  By default, oz-install will
-always try to use a locally cached version of the install media if it
-is available.  You can use this flag to force it to always download
-the install media, even if it has a local version available.
+Force the generation of new installation media.  By default, oz-install will
+always try to use a locally cached version of the oz-modified install
+media if it is available.  Failing that, oz-install will try to use a
+locally cached version of the pristine install media if it is
+available.  You can use this flag to force it to always download and
+regenerate the oz-modified install media, even if it has a local
+version available.
 .TP
 .B "\-g"
 Generate the ICICLE (a package manifest, with some additional metadata)
@@ -91,6 +94,7 @@ type = kvm
 
 [cache]
 original_media = yes
+modified_media = no
 .fi
 .in
 
@@ -109,7 +113,10 @@ data.  The caching of data in Oz is a tradeoff between installation
 time and storage space.  The \fBoriginal_media\fR key tells Oz
 to cache the original installation media so that it does not have to
 download it the next time an install for the same operating system is
-requested.
+requested.  The \fBmodified_media\fR key tells Oz to cache the
+oz-modified installation media so that it does not have to download
+and modify it the next time an install for the same operating system
+is requested.
 
 .SH SEE ALSO
 oz-generate-icicle(1), oz-customize(1), oz-cleanup-cache(1)

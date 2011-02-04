@@ -382,9 +382,16 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
     def generate_install_media(self, force_download):
         self.log.info("Generating install media")
+
+        if not force_download and os.access(self.modified_iso_cache, os.F_OK):
+            self.log.info("Using cached modified media")
+            shutil.copyfile(self.modified_iso_cache, self.output_iso)
+            return
+
         fetchurl = self.url
         if self.tdl.installtype == 'url':
             fetchurl += "/images/boot.iso"
+
         self.get_original_iso(fetchurl, force_download)
         self.copy_iso()
         try:
@@ -392,6 +399,9 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                 self.check_dvd()
             self.modify_iso()
             self.generate_iso()
+            if self.cache_modified_media:
+                self.log.info("Caching modified media for future use")
+                shutil.copyfile(self.output_iso, self.modified_iso_cache)
         finally:
             self.cleanup_iso()
 

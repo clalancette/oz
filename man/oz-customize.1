@@ -60,6 +60,7 @@ type = kvm
 
 [cache]
 original_media = yes
+modified_media = no
 .fi
 .in
 
@@ -78,7 +79,10 @@ data.  The caching of data in Oz is a tradeoff between installation
 time and storage space.  The \fBoriginal_media\fR key tells Oz
 to cache the original installation media so that it does not have to
 download it the next time an install for the same operating system is
-requested.
+requested.  The \fBmodified_media\fR key tells Oz to cache the
+oz-modified installation media so that it does not have to download
+and modify it the next time an install for the same operating system
+is requested.
 
 .SH SEE ALSO
 oz-generate-icicle(1), oz-install(1), oz-cleanup-cache(1)

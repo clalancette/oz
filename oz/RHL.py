@@ -152,11 +152,25 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
                                        "::SYSLINUX.CFG"])
 
     def generate_install_media(self, force_download):
+        self.log.info("Generating install media")
+
+        if not force_download and os.access(self.modified_floppy_cache,
+                                            os.F_OK):
+            self.log.info("Using cached modified media")
+            shutil.copyfile(self.modified_floppy_cache, self.output_floppy)
+            return
+
         self.get_original_floppy(self.tdl.url + "/images/bootnet.img",
                                  force_download)
+
         self.copy_floppy()
-        self.modify_floppy()
-        self.cleanup_floppy()
+        try:
+            self.modify_floppy()
+            if self.cache_modified_media:
+                self.log.info("Caching modified media for future use")
+                shutil.copyfile(self.output_floppy, self.modified_floppy_cache)
+        finally:
+            self.cleanup_floppy()
 
 def get_class(tdl, config, auto):
     if tdl.update in ["9"]:
