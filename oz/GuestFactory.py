@@ -50,7 +50,7 @@ def distrolist():
     print "   RHEL 4: GOLD, U1, U2, U3, U4, U5, U6, U7, U8"
     print "   RHEL 5: GOLD, U1, U2, U3, U4, U5, U6"
     print "   RHEL 6: 0"
-    print "   Ubuntu: 6.10, 7.04, 7.10, 8.04.[1,2,3,4], 8.10, 9.04, 9.10"
+    print "   Ubuntu: 6.10, 7.04, 7.10, 8.04.[1,2,3,4], 8.10, 9.04, 9.10, 10.04.1"
     print "   Windows: 2000, XP, 2003"
     print "   RHL: 7.0, 7.1, 7.2, 7.3, 8, 9"
     print "   OpenSUSE: 11.1, 11.2, 11.3"

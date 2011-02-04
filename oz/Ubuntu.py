@@ -108,7 +108,7 @@ class Ubuntu810and904Guest(Guest.CDGuest):
         f.writelines(lines)
         f.close()
 
-class Ubuntu910Guest(Guest.CDGuest):
+class Ubuntu910and1004Guest(Guest.CDGuest):
     def __init__(self, tdl, config, auto):
         self.tdl = tdl
 
@@ -309,11 +309,8 @@ def get_class(tdl, config, auto):
     # figure out which is which and give the user some feedback when we
     # can't actually succeed
 
-    # FIXME: For 9.10, both the -desktop and -netbook-remix CDs work (they both
-    # have casper).  The -server and -alternate do not work; is there another
-    # installation method we could possibly use?
-    if tdl.update in ["9.10"]:
-        return Ubuntu910Guest(tdl, config, auto)
+    if tdl.update in ["9.10", "10.04.1"]:
+        return Ubuntu910and1004Guest(tdl, config, auto)
     if tdl.update in ["8.10", "9.04"]:
         return Ubuntu810and904Guest(tdl, "/casper/initrd.gz", config, auto)
     if tdl.update in ["7.10", "8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4"]:
