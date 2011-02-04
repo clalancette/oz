@@ -21,28 +21,30 @@ import os
 import Guest
 import ozutil
 
-def get_ubuntu_arch(tdl_arch):
-    arch = tdl_arch
-    if arch == "x86_64":
-        arch = "amd64"
-    return arch
+class Ubuntu(Guest.CDGuest):
+    def generate_new_iso(self):
+        self.log.info("Generating new ISO")
+        Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom", "-J",
+                                       "-l", "-b", "isolinux/isolinux.bin",
+                                       "-c", "isolinux/boot.cat",
+                                       "-no-emul-boot", "-boot-load-size", "4",
+                                       "-cache-inodes", "-boot-info-table",
+                                       "-v", "-v", "-o", self.output_iso,
+                                       self.iso_contents])
 
-def make_ubuntu_iso(input_dir, output_file):
-    Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom", "-J", "-l",
-                                   "-b", "isolinux/isolinux.bin",
-                                   "-c", "isolinux/boot.cat", "-no-emul-boot",
-                                   "-boot-load-size", "4", "-cache-inodes",
-                                   "-boot-info-table", "-v", "-v",
-                                   "-o", output_file, input_dir])
+    def generate_install_media(self, force_download):
+        self.get_original_iso(self.tdl.iso, force_download)
+        self.copy_iso()
+        self.modify_iso()
+        self.generate_new_iso()
+        self.cleanup_iso()
 
-class Ubuntu810and904Guest(Guest.CDGuest):
+class Ubuntu810and904Guest(Ubuntu):
     def __init__(self, tdl, initrd, config, auto):
         self.tdl = tdl
 
         if self.tdl.installtype != 'iso':
             raise Guest.OzException("Ubuntu installs must be done via iso")
-
-        self.ubuntuarch = get_ubuntu_arch(self.tdl.arch)
 
         self.preseed_file = auto
         if self.preseed_file is None:
@@ -53,17 +55,6 @@ class Ubuntu810and904Guest(Guest.CDGuest):
         Guest.CDGuest.__init__(self, self.tdl.name, "Ubuntu", self.tdl.update,
                                self.tdl.arch, 'iso', "virtio", None, None,
                                "virtio", config)
-
-    def generate_new_iso(self):
-        self.log.info("Generating new ISO")
-        make_ubuntu_iso(self.iso_contents, self.output_iso)
-
-    def generate_install_media(self, force_download):
-        self.get_original_iso(self.tdl.iso, force_download)
-        self.copy_iso()
-        self.modify_iso()
-        self.generate_new_iso()
-        self.cleanup_iso()
 
     def modify_iso(self):
         self.log.debug("Putting the preseed file in place")
@@ -108,14 +99,12 @@ class Ubuntu810and904Guest(Guest.CDGuest):
         f.writelines(lines)
         f.close()
 
-class Ubuntu910and1004Guest(Guest.CDGuest):
+class Ubuntu910and1004Guest(Ubuntu):
     def __init__(self, tdl, config, auto):
         self.tdl = tdl
 
         if self.tdl.installtype != 'iso':
             raise Guest.OzException("Ubuntu installs must be done via iso")
-
-        self.ubuntuarch = get_ubuntu_arch(self.tdl.arch)
 
         self.preseed_file = auto
         if self.preseed_file is None:
@@ -124,17 +113,6 @@ class Ubuntu910and1004Guest(Guest.CDGuest):
         Guest.CDGuest.__init__(self, self.tdl.name, "Ubuntu", self.tdl.update,
                                self.tdl.arch, 'iso', "virtio", None, None,
                                "virtio", config)
-
-    def generate_new_iso(self):
-        self.log.info("Generating new ISO")
-        make_ubuntu_iso(self.iso_contents, self.output_iso)
-
-    def generate_install_media(self, force_download):
-        self.get_original_iso(self.tdl.iso, force_download)
-        self.copy_iso()
-        self.modify_iso()
-        self.generate_new_iso()
-        self.cleanup_iso()
 
     def modify_iso(self):
         self.log.debug("Modifying ISO")
@@ -185,14 +163,12 @@ class Ubuntu910and1004Guest(Guest.CDGuest):
         f.writelines(lines)
         f.close()
 
-class Ubuntu710and8041Guest(Guest.CDGuest):
+class Ubuntu710and8041Guest(Ubuntu):
     def __init__(self, tdl, config, auto):
         self.tdl = tdl
 
         if self.tdl.installtype != 'iso':
             raise Guest.OzException("Ubuntu installs must be done via iso")
-
-        self.ubuntuarch = get_ubuntu_arch(self.tdl.arch)
 
         self.preseed_file = auto
         if self.preseed_file is None:
@@ -201,17 +177,6 @@ class Ubuntu710and8041Guest(Guest.CDGuest):
         Guest.CDGuest.__init__(self, self.tdl.name, "Ubuntu", self.tdl.update,
                                self.tdl.arch, 'iso', "rtl8139", None, None,
                                None, config)
-
-    def generate_new_iso(self):
-        self.log.info("Generating new ISO")
-        make_ubuntu_iso(self.iso_contents, self.output_iso)
-
-    def generate_install_media(self, force_download):
-        self.get_original_iso(self.tdl.iso, force_download)
-        self.copy_iso()
-        self.modify_iso()
-        self.generate_new_iso()
-        self.cleanup_iso()
 
     def modify_iso(self):
         self.log.debug("Putting the preseed file in place")
@@ -244,14 +209,12 @@ class Ubuntu710and8041Guest(Guest.CDGuest):
         f.writelines(lines)
         f.close()
 
-class Ubuntu610and704Guest(Guest.CDGuest):
+class Ubuntu610and704Guest(Ubuntu):
     def __init__(self, tdl, config):
         self.tdl = tdl
 
         if self.tdl.installtype != 'iso':
             raise Guest.OzException("Ubuntu installs must be done via iso")
-
-        self.ubuntuarch = get_ubuntu_arch(self.tdl.arch)
 
         self.preseed_file = auto
         if self.preseed_file is None:
@@ -260,17 +223,6 @@ class Ubuntu610and704Guest(Guest.CDGuest):
         Guest.CDGuest.__init__(self, self.tdl.name, "Ubuntu", self.tdl.update,
                                self.tdl.arch, 'iso', "rtl8139", None, None,
                                None, config)
-
-    def generate_new_iso(self):
-        self.log.info("Generating new ISO")
-        make_ubuntu_iso(self.iso_contents, self.output_iso)
-
-    def generate_install_media(self, force_download):
-        self.get_original_iso(self.tdl.iso, force_download)
-        self.copy_iso()
-        self.modify_iso()
-        self.generate_new_iso()
-        self.cleanup_iso()
 
     def modify_iso(self):
         self.log.debug("Putting the preseed file in place")
