@@ -73,17 +73,6 @@ class FedoraCoreGuest(RedHat.RedHatCDGuest):
         f.writelines(lines)
         f.close()
 
-    def generate_install_media(self, force_download):
-        self.log.info("Generating install media")
-        fetchurl = self.url
-        if self.tdl.installtype == 'url':
-            fetchurl += "/images/boot.iso"
-        self.get_original_iso(fetchurl, force_download)
-        self.copy_iso()
-        self.modify_iso()
-        self.generate_iso()
-        self.cleanup_iso()
-
 class FedoraCore4Guest(FedoraCoreGuest):
     def generate_diskimage(self):
         self.generate_blank_diskimage()

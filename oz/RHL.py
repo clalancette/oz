@@ -80,6 +80,8 @@ class RHL9Guest(Guest.CDGuest):
         self.log.debug("Generating new ISO")
         RedHat.generate_iso(self.output_iso, self.iso_contents)
 
+    # FIXME: we may be able to make RHL-9 a subclass of RedHat.RedHatCDGuest,
+    # and remove this function and get ICICLE generation for free
     def generate_install_media(self, force_download):
         self.get_original_iso(self.tdl.url + "/images/boot.iso", force_download)
         self.copy_iso()

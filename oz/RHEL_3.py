@@ -74,14 +74,6 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         f.writelines(lines)
         f.close()
 
-    def generate_install_media(self, force_download):
-        self.log.info("Generating install media")
-        self.get_original_iso(self.url + "/images/boot.iso", force_download)
-        self.copy_iso()
-        self.modify_iso()
-        self.generate_iso()
-        self.cleanup_iso()
-
 def get_class(tdl, config, auto):
     if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9"]:
         return RHEL3Guest(tdl, config, auto)

@@ -84,17 +84,6 @@ class FedoraGuest(RedHat.RedHatCDYumGuest):
         f.writelines(lines)
         f.close()
 
-    def generate_install_media(self, force_download):
-        self.log.info("Generating install media")
-        fetchurl = self.url
-        if self.tdl.installtype == 'url':
-            fetchurl += "/images/boot.iso"
-        self.get_original_iso(fetchurl, force_download)
-        self.copy_iso()
-        self.modify_iso()
-        self.generate_iso()
-        self.cleanup_iso()
-
 def get_class(tdl, config, auto):
     if tdl.update in ["10", "11", "12", "13", "14"]:
         return FedoraGuest(tdl, config, auto, "virtio", True, "virtio", True)

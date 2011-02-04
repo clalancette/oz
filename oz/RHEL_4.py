@@ -83,19 +83,6 @@ class RHEL4Guest(RedHat.RedHatCDGuest):
         if lines[3].strip() != "1,2,3,4,5":
             raise Guest.OzException("Only DVDs are supported for RHEL-4 ISO installs")
 
-    def generate_install_media(self, force_download):
-        self.log.info("Generating install media")
-        fetchurl = self.url
-        if self.tdl.installtype == 'url':
-            fetchurl += "/images/boot.iso"
-        self.get_original_iso(fetchurl, force_download)
-        self.copy_iso()
-        if self.tdl.installtype == 'iso':
-            self.check_dvd()
-        self.modify_iso()
-        self.generate_iso()
-        self.cleanup_iso()
-
 def get_class(tdl, config, auto):
     if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7"]:
         return RHEL4Guest(tdl, config, auto, "rtl8139", None)

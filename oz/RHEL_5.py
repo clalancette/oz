@@ -96,19 +96,6 @@ class RHEL5Guest(RedHat.RedHatCDYumGuest):
         if not re.match("RHEL/5\.[0-9] " + self.arch + " DVD", volume_identifier):
             raise Guest.OzException("Only DVDs are supported for RHEL-5 ISO installs")
 
-    def generate_install_media(self, force_download):
-        self.log.info("Generating install media")
-        fetchurl = self.url
-        if self.tdl.installtype == 'url':
-            fetchurl += "/images/boot.iso"
-        self.get_original_iso(fetchurl, force_download)
-        if self.tdl.installtype == 'iso':
-            self.check_dvd()
-        self.copy_iso()
-        self.modify_iso()
-        self.generate_iso()
-        self.cleanup_iso()
-
 def get_class(tdl, config, auto):
     if tdl.update in ["GOLD", "U1", "U2", "U3"]:
         return RHEL5Guest(tdl, config, auto, "rtl8139", None)

@@ -344,6 +344,19 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         if libvirt_dom is not None:
             libvirt_dom.destroy()
 
+    def generate_install_media(self, force_download):
+        self.log.info("Generating install media")
+        fetchurl = self.url
+        if self.tdl.installtype == 'url':
+            fetchurl += "/images/boot.iso"
+        self.get_original_iso(fetchurl, force_download)
+        self.copy_iso()
+        if hasattr(self, 'check_dvd') and self.tdl.installtype == 'iso':
+            self.check_dvd()
+        self.modify_iso()
+        self.generate_iso()
+        self.cleanup_iso()
+
 class RedHatCDYumGuest(RedHatCDGuest):
     def customize_repos(self, guestaddr):
         self.log.debug("Installing additional repository files")
