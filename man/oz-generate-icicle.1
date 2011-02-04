@@ -13,22 +13,17 @@ though it does not have to be used in conjunction.
 
 Note that oz-generate-icicle does the actual work using a combination
 of KVM and libvirt, so both of these must be available (and working)
-for oz-customize to have a chance to succeed.
+for oz-generate-icicle to have a chance to succeed.
 
 .SH OPTIONS
 .TP
 .B "\-c <config>"
 Get the configuration from config file \fBconfig\fR, instead of the
 default /etc/oz/oz.cfg.  If neither one exists, Oz will use sensible
-defaults.  The config file is in standard ini format with two
-sections named \fBpaths\fR and \fBlibvirt\fR.  There are two possible keys
-under \fBpaths\fR: \fBoutput_dir\fR describes where to store the
-images after they are built, and \fBdata_dir\fR describes where to
-cache install media and use temporary storage.  Both locations have to
-have a decent amount of free disk space in order for oz-customize to
-work properly.  There are two possible keys under \fBlibvirt\fR:
-\fBuri\fR describes the libvirt URI to use to do the guest
-installation, and \fBtype\fR defines what type of virtualization to use.
+defaults.  The config file is in standard ini format; for an
+explanation of the sections and keys, see the
+.B CONFIGURATION FILE
+section.
 .TP
 .B "\-d <loglevel>"
 Turn on debugging output to level \fBloglevel\fR.  The log levels are:
@@ -42,6 +37,37 @@ Turn on debugging output to level \fBloglevel\fR.  The log levels are:
 .TP
 .B "\-h"
 Print a short help message.
+
+.SH CONFIGURATION FILE
+The Oz configuration file is in standard INI format with several
+sections.  If any section or configuration key is missing, Oz will use
+a sensible default.  For true/false configuration keys, the values of
+"true", "True", "yes", or "Yes" can be used to turn the option on, and
+"false", "False", "no", or "No" can be used to turn the behavior off.
+The configuration file should have the following form:
+
+.sp
+.in +4n
+.nf
+[paths]
+output_dir = /var/lib/libvirt/images
+data_dir = /var/lib/oz
+
+[libvirt]
+uri = qemu:///system
+type = kvm
+.fi
+.in
+
+The \fBpaths\fR section defines the paths that Oz will use for storing data.
+The \fBoutput_dir\fR key describes where to store the images after they are
+built, and the \fBdata_dir\fR key describes where to cache install media and
+use temporary storage.  Both locations have to have a decent amount of
+free disk space in order for Oz to work properly.
+
+The \fBlibvirt\fR section allows some manipulation of how Oz uses libvirt.
+The \fBuri\fR key describes the libvirt URI to use to do the guest
+installation, and the \fBtype\fR key defines what type of virtualization to use.
 
 .SH SEE ALSO
 oz-install(1), oz-customize(1)
