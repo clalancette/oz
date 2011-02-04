@@ -830,6 +830,10 @@ class FDGuest(Guest):
         self.output_floppy = os.path.join(self.output_dir, self.name + "-oz.img")
         self.floppy_contents = os.path.join(self.data_dir, "floppycontent", self.name)
 
+        self.log.debug("Original floppy path: %s" % self.orig_floppy)
+        self.log.debug("Output floppy path: %s" % self.output_floppy)
+        self.log.debug("Floppy content path: %s" % self.floppy_contents)
+
     def get_original_floppy(self, floppyurl, force_download):
         return self.get_original_media(floppyurl, self.orig_floppy, force_download)
 
