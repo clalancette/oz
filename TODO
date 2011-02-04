@@ -27,9 +27,7 @@ provide.
 8.  Add the ability to do (optional) checksumming on the downloaded install
 media.
 9.  Write pydoc documentation for all of the classes and methods.
-10. Wrap the libssh2 library in a python wrapper and use that instead of
-using subprocess to call out to ssh/scp (https://github.com/wallix/pylibssh2).
-11. With windows from MSDN (at least 2000, maybe other versions too), the
+10. With windows from MSDN (at least 2000, maybe other versions too), the
 top-level doesn't really contain the bits you care about.  What happens is
 that there are 3 boot options on the CD: installer for Professional, Server, and
 Advanced Server.  The directory structure on the CD is something like:
@@ -46,12 +44,21 @@ then copy just that subdirectory.  You'll also need to extract the appropriate
 parts of eltorito so it boots automatically, and then you'll also need to set
 i386/txtsetup.sif [SetupData]: SetupSourcePath = "\".  See
 http://old.bink.nu/bootcd/
-12. Write a boxgrinder plugin.  This requires implementing a ruby class
+11. Write a boxgrinder plugin.  This requires implementing a ruby class
 for it, and implementing .after_init, .deliverables_exists?, .run, .deliverables.
-13. RHEL-3 U1 and U2 fail to install.  This is probably due to a bug in anaconda
+12. RHEL-3 U1 and U2 fail to install.  This is probably due to a bug in anaconda
 that prevents "method=" on the command-line to work, though I have not confirmed
 that.
-14. FedoraCore 1, 2, and 3 x86_64, fail to boot for some reason.
-15. FedoraCore 6 x86_64 takes *much* longer to install than we give it time for.
-16. RHEL-3 GOLD x86_64 fails to boot.
-17. RHEL-4 GOLD, U1, U2 x86_64 crashes during install.
+13. FedoraCore 1, 2, and 3 x86_64, fail to boot for some reason.
+14. FedoraCore 6 x86_64 takes *much* longer to install than we give it time for.
+15. RHEL-3 GOLD x86_64 fails to boot.
+16. RHEL-4 GOLD, U1, U2 x86_64 crashes during install.
+17. Debian/Ubuntu packages.
+18. Add the ability to cache JEOSs (with a configuration option to
+enable/disable this feature).
+19. Take a screen shot if some customization or generate-icicle steps time out.
+20. Try to do automatic detection of distro/version/architecture from the ISO
+that are provided to us.  That will make it so that a minimal TDL will only
+include the path to the ISO, and we can figure out the rest of the information.
+21. Add support for additional drivers during install (needed for Windows virtio
+support).
