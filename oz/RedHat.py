@@ -351,11 +351,13 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             fetchurl += "/images/boot.iso"
         self.get_original_iso(fetchurl, force_download)
         self.copy_iso()
-        if hasattr(self, 'check_dvd') and self.tdl.installtype == 'iso':
-            self.check_dvd()
-        self.modify_iso()
-        self.generate_iso()
-        self.cleanup_iso()
+        try:
+            if hasattr(self, 'check_dvd') and self.tdl.installtype == 'iso':
+                self.check_dvd()
+            self.modify_iso()
+            self.generate_iso()
+        finally:
+            self.cleanup_iso()
 
 class RedHatCDYumGuest(RedHatCDGuest):
     def customize_repos(self, guestaddr):
