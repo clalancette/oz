@@ -421,6 +421,7 @@ class Guest(object):
             # before fetching everything, make sure that we have enough
             # space on the filesystem to store the data we are about to download
             outdir = os.path.dirname(output)
+            self.mkdir_p(outdir)
             devdata = os.statvfs(outdir)
             if (devdata.f_bsize*devdata.f_bavail) < content_length:
                 raise OzException("Not enough room on %s for install media" % (outdir))
@@ -434,7 +435,6 @@ class Guest(object):
                     self.last_mb = current_mb
                     self.log.debug("%dkB of %dkB" % (down_current/1024, down_total/1024))
 
-            self.mkdir_p(os.path.dirname(output))
             self.outf = open(output, "w")
             def data(buf):
                 self.outf.write(buf)
