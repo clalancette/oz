@@ -683,6 +683,7 @@ class CDGuest(Guest):
             gfs.umount_all()
             gfs.kill_subprocess()
 
+            self.log.debug("Uncompressing tarball")
             subprocess_check_output(["tar", "-x", "-v", "-C", self.iso_contents,
                                      "-f", tarout])
         except:
