@@ -77,9 +77,11 @@ class OpenSUSEGuest(Guest.CDGuest):
         self.log.info("Generating install media")
         self.get_original_iso(self.tdl.iso, force_download)
         self.copy_iso()
-        self.modify_iso()
-        self.generate_new_iso()
-        self.cleanup_iso()
+        try:
+            self.modify_iso()
+            self.generate_new_iso()
+        finally:
+            self.cleanup_iso()
 
 def get_class(tdl, config, auto):
     if tdl.update in ["11.0", "11.1", "11.2", "11.3"]:
