@@ -82,7 +82,7 @@ class OpenSUSEGuest(Guest.CDGuest):
         self.cleanup_iso()
 
 def get_class(tdl, config, auto):
-    if tdl.update in ["11.1", "11.2", "11.3"]:
+    if tdl.update in ["11.0", "11.1", "11.2", "11.3"]:
         return OpenSUSEGuest(tdl, config, auto)
 
     raise Guest.OzException("Unsupported OpenSUSE update " + tdl.update)
