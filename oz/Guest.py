@@ -32,6 +32,7 @@ import socket
 import select
 import struct
 import numpy
+import tempfile
 
 def libvirt_error_handler(ctxt, err):
     pass
@@ -670,27 +671,46 @@ class CDGuest(Guest):
         self.log.debug("Mounting ISO")
         gfs.mount_options('ro', "/dev/sda", "/")
 
-        self.log.debug("Extracting tarball")
-        tarout = os.path.join(self.iso_contents, "data.tar")
+        self.log.debug("Checking if there is enough space on the filesystem")
         isostat = gfs.statvfs("/")
         outputstat = os.statvfs(self.iso_contents)
         if (outputstat.f_bsize*outputstat.f_bavail) < (isostat['blocks']*isostat['bsize']):
             raise OzException("Not enough room on %s to extract install media" % (self.iso_contents))
 
+        self.log.debug("Extracting ISO contents")
+        current = os.getcwd()
+        os.chdir(self.iso_contents)
+
         try:
-            gfs.tar_out("/", tarout)
+            rd,wr = os.pipe()
+
+            # NOTE: it is very, very important that we use temporary files for
+            # collected stdout and stderr here.  There is a nasty bug in python
+            # subprocess; if your process produces more than 64k of data on an
+            # fd that is using subprocess.PIPE, the whole thing will hang up.
+            # To avoid this, we use temporary file descriptors to capture the
+            # data
+            stdouttmp = tempfile.TemporaryFile()
+            stderrtmp = tempfile.TemporaryFile()
+
+            tar = subprocess.Popen(["tar", "-x", "-v"], stdin=rd,
+                                   stdout=stdouttmp, stderr=stderrtmp)
+            gfs.tar_out("/", "/dev/fd/%d" % wr)
+
+            os.close(rd)
+            os.close(wr)
+
+            # FIXME: we really should check tar.poll() here to get the
+            # return code, and print out stdout and stderr if we fail.  This
+            # will make debugging problems easier
+            stdouttmp.close()
+            stderrtmp.close()
+
             gfs.sync()
             gfs.umount_all()
             gfs.kill_subprocess()
-
-            self.log.debug("Uncompressing tarball")
-            subprocess_check_output(["tar", "-x", "-v", "-C", self.iso_contents,
-                                     "-f", tarout])
-        except:
-            shutil.rmtree(self.iso_contents)
-            raise
         finally:
-            os.unlink(tarout)
+            os.chdir(current)
 
     def geteltorito(self, cdfile, outfile):
         cdfile = open(cdfile, "r")
