@@ -76,7 +76,7 @@ class RHEL4Guest(RedHat.RedHatCDGuest):
         lines = f.readlines()
         f.close()
 
-        if not lines[1].startswith("Red Hat Enterprise Linux 4."):
+        if not lines[1].startswith("Red Hat Enterprise Linux 4"):
             raise Guest.OzException("Invalid .discinfo file on ISO")
         if lines[2].strip() != self.arch:
             raise Guest.OzException("Invalid .discinfo architecture on ISO")
