@@ -8,7 +8,7 @@ network --device eth0 --bootproto dhcp
 rootpw --iscrypted $1$0q7k23Sr$aKkhNCvyxvwmc5DoVi28k.
 firewall --disabled
 authconfig --enableshadow --enablemd5
-selinux --permissive
+selinux --enforcing
 timezone --utc America/New_York
 bootloader --location=mbr --append="console=tty0 console=ttyS0,115200"
 zerombr yes
@@ -24,10 +24,5 @@ reboot
 %packages
 @core
 @base
-kexec-tools
-device-mapper-multipath
--sysreport
-nc
-wget
 
 %post
