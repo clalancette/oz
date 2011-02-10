@@ -263,7 +263,7 @@ def get_class(tdl, config, auto):
     # figure out which is which and give the user some feedback when we
     # can't actually succeed
 
-    if tdl.update in ["9.10", "10.04.1"]:
+    if tdl.update in ["9.10", "10.04", "10.04.1"]:
         return Ubuntu910and1004Guest(tdl, config, auto)
     if tdl.update in ["8.10", "9.04"]:
         return Ubuntu810and904Guest(tdl, "/casper/initrd.gz", config, auto)
