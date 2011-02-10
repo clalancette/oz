@@ -41,72 +41,14 @@ class Ubuntu(Guest.CDGuest):
         finally:
             self.cleanup_iso()
 
-class Ubuntu810and904Guest(Ubuntu):
-    def __init__(self, tdl, initrd, config, auto):
+class Ubuntu810and904and910and1004Guest(Ubuntu):
+    def __init__(self, tdl, config, auto, initrd):
         self.tdl = tdl
 
         if self.tdl.installtype != 'iso':
             raise Guest.OzException("Ubuntu installs must be done via iso")
 
-        self.preseed_file = auto
-        if self.preseed_file is None:
-            self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
-
-        self.initrd = initrd
-
-        Guest.CDGuest.__init__(self, self.tdl.name, "Ubuntu", self.tdl.update,
-                               self.tdl.arch, 'iso', "virtio", None, None,
-                               "virtio", config)
-
-    def modify_iso(self):
-        self.log.debug("Putting the preseed file in place")
-
-        shutil.copy(self.preseed_file, os.path.join(self.iso_contents,
-                                                    "preseed",
-                                                    "customiso.seed"))
-
-        self.log.debug("Modifying text.cfg")
-        textcfg = os.path.join(self.iso_contents, "isolinux", "text.cfg")
-        f = open(textcfg, "r")
-        lines = f.readlines()
-        f.close()
-
-        for line in lines:
-            if re.match("default", line):
-                lines[lines.index(line)] = "default customiso\n"
-        lines.append("label customiso\n")
-        lines.append("  menu label ^Customiso\n")
-        lines.append("  kernel /casper/vmlinuz\n")
-        lines.append("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us boot=casper automatic-ubiquity noprompt initrd=" + self.initrd + " ramdisk_size=14984 --\n")
-
-        f = open(textcfg, "w")
-        f.writelines(lines)
-        f.close()
-
-        self.log.debug("Modifying isolinux.cfg")
-        isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
-        f = open(isolinuxcfg, "r")
-        lines = f.readlines()
-        f.close()
-
-        for line in lines:
-            if re.match("default", line):
-                lines[lines.index(line)] = "default customiso\n"
-            elif re.match("timeout", line):
-                lines[lines.index(line)] = "timeout 10\n"
-            elif re.match("gfxboot", line):
-                lines[lines.index(line)] = ""
-
-        f = open(isolinuxcfg, "w")
-        f.writelines(lines)
-        f.close()
-
-class Ubuntu910and1004Guest(Ubuntu):
-    def __init__(self, tdl, config, auto):
-        self.tdl = tdl
-
-        if self.tdl.installtype != 'iso':
-            raise Guest.OzException("Ubuntu installs must be done via iso")
+        self.casper_initrd = initrd
 
         self.preseed_file = auto
         if self.preseed_file is None:
@@ -137,10 +79,10 @@ class Ubuntu910and1004Guest(Ubuntu):
         lines.append("  menu label ^Customiso\n")
         if os.path.isdir(os.path.join(self.iso_contents, "casper")):
             lines.append("  kernel /casper/vmlinuz\n")
-            lines.append("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us boot=casper automatic-ubiquity noprompt initrd=/casper/initrd.lz ramdisk_size=14984 --\n")
+            lines.append("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us boot=casper automatic-ubiquity noprompt initrd=/casper/" + self.casper_initrd + " ramdisk_size=14984 --\n")
         else:
             lines.append("  kernel /install/vmlinuz\n")
-            lines.append("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US netcfg/choose_interface=auto priority=critical initrd=/install/initrd.gz --\n")
+            lines.append("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us netcfg/choose_interface=auto priority=critical initrd=/install/initrd.gz --\n")
 
         f = open(textcfg, "w")
         f.writelines(lines)
@@ -263,10 +205,10 @@ def get_class(tdl, config, auto):
     # figure out which is which and give the user some feedback when we
     # can't actually succeed
 
-    if tdl.update in ["9.10", "10.04", "10.04.1"]:
-        return Ubuntu910and1004Guest(tdl, config, auto)
     if tdl.update in ["8.10", "9.04"]:
-        return Ubuntu810and904Guest(tdl, "/casper/initrd.gz", config, auto)
+        return Ubuntu810and904and910and1004Guest(tdl, config, auto, "initrd.gz")
+    if tdl.update in ["9.10", "10.04", "10.04.1"]:
+        return Ubuntu810and904and910and1004Guest(tdl, config, auto, "initrd.lz")
     if tdl.update in ["7.10", "8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4"]:
         return Ubuntu710and8041Guest(tdl, config, auto)
     if tdl.update in ["6.10", "7.04"]:
