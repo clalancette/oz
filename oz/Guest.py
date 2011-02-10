@@ -207,7 +207,7 @@ class Guest(object):
     # this method is intended to be an optimization if the user wants to do
     # both customize and generate_icicle
     def customize_and_generate_icicle(self, libvirt_xml):
-        raise OzException("Customization and ICICLE generate for %s is not implemented" % (self.name))
+        raise OzException("Customization and ICICLE generate for %s%s is not implemented" % (self.distro, self.update))
 
     def targetDev(self, doc, devicetype, path, bus):
         install = doc.newChild(None, "disk", None)
