@@ -93,7 +93,7 @@ class RHEL5Guest(RedHat.RedHatCDYumGuest):
         if unused2 != 0x0:
             raise Guest.OzException("data in 2nd unused field")
 
-        if not re.match("RHEL/5\.[0-9] " + self.arch + " DVD", volume_identifier):
+        if not re.match("RHEL/5(\.[0-9])? " + self.arch + " DVD", volume_identifier):
             raise Guest.OzException("Only DVDs are supported for RHEL-5 ISO installs")
 
 def get_class(tdl, config, auto):
