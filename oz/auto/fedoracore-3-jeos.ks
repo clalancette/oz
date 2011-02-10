@@ -25,6 +25,5 @@ reboot
 %packages
 @base
 @core
-tzdata
 
 %post

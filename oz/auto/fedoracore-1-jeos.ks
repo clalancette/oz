@@ -22,16 +22,7 @@ logvol / --fstype ext3 --name=LogVol00 --vgname=VolGroup00 --size=1024 --grow
 reboot
 
 %packages
-@admin-tools
 @base
 @core
-@editors
-@text-internet
-comps-extras
-cracklib-dicts
-rmt
-tzdata
-nc
-wget
 
 %post
