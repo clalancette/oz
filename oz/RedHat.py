@@ -262,7 +262,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
         g_handle = self.guestfs_handle_setup(libvirt_xml)
 
-        # we have to do 3 things to make sure we can ssh into Fedora 13:
+        # we have to do 5 things to make sure we can ssh into RHEL/Fedora:
         # 1)  Upload our ssh key
         # 2)  Make sure sshd is running on boot
         # 3)  Make sure that port 22 is open in the firewall
