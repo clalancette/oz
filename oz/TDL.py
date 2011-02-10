@@ -26,9 +26,10 @@ def get_value(doc, xmlstring):
     return res[0].getContent()
 
 class Repository(object):
-    def __init__(self, name, url):
+    def __init__(self, name, url, signed):
         self.name = name
         self.url = url
+        self.signed = signed
 
 class TDL(object):
     def __init__(self, xmlstring):
@@ -109,6 +110,15 @@ class TDL(object):
             url = repo.prop('url')
             if url is None:
                 raise Guest.OzException("Repository without a url was given")
+            signstr = repo.prop('signed')
+            if signstr is None:
+                signstr = 'no'
+            if signstr.lower() == 'no' or signstr.lower() == 'false':
+                signed = False
+            elif signstr.lower() == 'yes' or signstr.lower() == 'true':
+                signed = True
+            else:
+                raise Guest.OzException("Repository signed property must be 'true' or 'false'")
             self.repositories.append(Repository(name, url))
 
     def __del__(self):

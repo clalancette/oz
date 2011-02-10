@@ -404,8 +404,10 @@ class RedHatCDYumGuest(RedHatCDGuest):
             f.write("name=%s\n" % repo.name)
             f.write("baseurl=%s\n" % repo.url)
             f.write("enabled=1\n")
-            # FIXME: need to allow gpg to be configured in TDL
-            f.write("gpgcheck=0\n")
+            if repo.signed:
+                f.write("gpgcheck=1\n")
+            else:
+                f.write("gpgcheck=0\n")
             f.close()
 
             self.guest_live_upload(guestaddr, localname,

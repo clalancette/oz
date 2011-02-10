@@ -362,7 +362,6 @@ class Guest(object):
 
         if count == 0:
             # if we timed out, then let's make sure to take a screenshot.
-            # FIXME: where should we put this screenshot?
             screenshot = self.name + "-" + str(time.time()) + ".png"
             self.capture_screenshot(libvirt_dom.XMLDesc(0), screenshot)
             raise OzException("Timed out waiting for install to finish")

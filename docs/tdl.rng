@@ -77,6 +77,11 @@
 		<attribute name='name'>
 		  <text/>
 		</attribute>
+		<optional>
+		  <attribute name='signed'>
+		    <text/>
+		  </attribute>
+		</optional>
 	      </element>
 	    </oneOrMore>
 	  </element>
