@@ -35,9 +35,11 @@ class Ubuntu(Guest.CDGuest):
     def generate_install_media(self, force_download):
         self.get_original_iso(self.tdl.iso, force_download)
         self.copy_iso()
-        self.modify_iso()
-        self.generate_new_iso()
-        self.cleanup_iso()
+        try:
+            self.modify_iso()
+            self.generate_new_iso()
+        finally:
+            self.cleanup_iso()
 
 class Ubuntu810and904Guest(Ubuntu):
     def __init__(self, tdl, initrd, config, auto):
