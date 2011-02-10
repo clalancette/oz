@@ -15,6 +15,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 import libxml2
+import base64
 
 import Guest
 
@@ -85,8 +86,20 @@ class TDL(object):
             name = afile.prop('name')
             if name is None:
                 raise Guest.OzException("File without a name was given")
-            # we allow empty content so that you can "touch" files
-            self.files[name] = afile.getContent().strip()
+            contenttype = afile.prop('type')
+            if contenttype is None:
+                contenttype = 'raw'
+
+            content = afile.getContent().strip()
+            if contenttype == 'raw':
+                self.files[name] = content
+            elif contenttype == 'base64':
+                if len(content) == 0:
+                    self.files[name] = ""
+                else:
+                    self.files[name] = base64.b64decode(content)
+            else:
+                raise Guest.OzException("File type for %s must be 'raw' or 'base64'" % (name))
 
         self.repositories = []
         for repo in self.doc.xpathEval('/template/repositories/repository'):

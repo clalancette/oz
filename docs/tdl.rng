@@ -56,6 +56,12 @@
 		<attribute name='name'>
 		  <text/>
 		</attribute>
+		<attribute name='type'>
+		  <choice>
+		    <value>raw</value>
+		    <value>base64</value>
+		  </choice>
+		</attribute>
 		<text/>
 	      </element>
 	    </oneOrMore>
