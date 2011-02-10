@@ -40,9 +40,6 @@ class FedoraGuest(RedHat.RedHatCDYumGuest):
         else:
             raise Guest.OzException("Fedora installs must be done via url or iso")
 
-        # FIXME: if doing an ISO install, we have to check that the ISO passed
-        # in is the DVD, not the CD (since we can't change disks midway)
-
         RedHat.RedHatCDYumGuest.__init__(self, self.tdl.name, "Fedora",
                                          self.tdl.update, self.tdl.arch,
                                          self.tdl.installtype, nicmodel, None,
