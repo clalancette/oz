@@ -413,6 +413,8 @@ class RedHatCDYumGuest(RedHatCDGuest):
             self.guest_live_upload(guestaddr, localname,
                                    "/etc/yum.repos.d/" + filename)
 
+            os.unlink(localname)
+
     def do_customize(self, guestaddr):
         self.customize_repos(guestaddr)
 
