@@ -119,7 +119,7 @@ class TDL(object):
                 signed = True
             else:
                 raise Guest.OzException("Repository signed property must be 'true' or 'false'")
-            self.repositories.append(Repository(name, url))
+            self.repositories.append(Repository(name, url, signed))
 
     def __del__(self):
         if self.doc is not None:
