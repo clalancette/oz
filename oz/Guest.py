@@ -671,49 +671,61 @@ class CDGuest(Guest):
         gfs.add_drive_opts(self.orig_iso, readonly=1, format='raw')
         self.log.debug("Launching guestfs")
         gfs.launch()
-        self.log.debug("Mounting ISO")
-        gfs.mount_options('ro', "/dev/sda", "/")
-
-        self.log.debug("Checking if there is enough space on the filesystem")
-        isostat = gfs.statvfs("/")
-        outputstat = os.statvfs(self.iso_contents)
-        if (outputstat.f_bsize*outputstat.f_bavail) < (isostat['blocks']*isostat['bsize']):
-            raise OzException("Not enough room on %s to extract install media" % (self.iso_contents))
-
-        self.log.debug("Extracting ISO contents")
-        current = os.getcwd()
-        os.chdir(self.iso_contents)
-
         try:
-            rd,wr = os.pipe()
+            self.log.debug("Mounting ISO")
+            gfs.mount_options('ro', "/dev/sda", "/")
 
-            # NOTE: it is very, very important that we use temporary files for
-            # collected stdout and stderr here.  There is a nasty bug in python
-            # subprocess; if your process produces more than 64k of data on an
-            # fd that is using subprocess.PIPE, the whole thing will hang up.
-            # To avoid this, we use temporary file descriptors to capture the
-            # data
-            stdouttmp = tempfile.TemporaryFile()
-            stderrtmp = tempfile.TemporaryFile()
+            self.log.debug("Checking if there is enough space on the filesystem")
+            isostat = gfs.statvfs("/")
+            outputstat = os.statvfs(self.iso_contents)
+            if (outputstat.f_bsize*outputstat.f_bavail) < (isostat['blocks']*isostat['bsize']):
+                raise OzException("Not enough room on %s to extract install media" % (self.iso_contents))
 
-            tar = subprocess.Popen(["tar", "-x", "-v"], stdin=rd,
-                                   stdout=stdouttmp, stderr=stderrtmp)
-            gfs.tar_out("/", "/dev/fd/%d" % wr)
+            self.log.debug("Extracting ISO contents")
+            current = os.getcwd()
+            os.chdir(self.iso_contents)
+            try:
+                rd,wr = os.pipe()
 
-            os.close(rd)
-            os.close(wr)
+                try:
+                    # NOTE: it is very, very important that we use temporary
+                    # files for collecting stdout and stderr here.  There is a
+                    # nasty bug in python subprocess; if your process produces
+                    # more than 64k of data on an fd that is using
+                    # subprocess.PIPE, the whole thing will hang. To avoid
+                    # this, we use temporary fds to capture the data
+                    stdouttmp = tempfile.TemporaryFile()
+                    stderrtmp = tempfile.TemporaryFile()
 
-            # FIXME: we really should check tar.poll() here to get the
-            # return code, and print out stdout and stderr if we fail.  This
-            # will make debugging problems easier
-            stdouttmp.close()
-            stderrtmp.close()
+                    try:
+                        tar = subprocess.Popen(["tar", "-x", "-v"], stdin=rd,
+                                               stdout=stdouttmp,
+                                               stderr=stderrtmp)
+                        try:
+                            gfs.tar_out("/", "/dev/fd/%d" % wr)
+                        except:
+                            # we need this here if gfs.tar_out throws an
+                            # exception.  In that case, we need to manually
+                            # kill off the tar process and re-raise the
+                            # exception, otherwise we hang forever
+                            tar.kill()
+                            raise
 
+                        # FIXME: we really should check tar.poll() here to get
+                        # the return code, and print out stdout and stderr if
+                        # we fail.  This will make debugging problems easier
+                    finally:
+                        stdouttmp.close()
+                        stderrtmp.close()
+                finally:
+                    os.close(rd)
+                    os.close(wr)
+            finally:
+                os.chdir(current)
+        finally:
             gfs.sync()
             gfs.umount_all()
             gfs.kill_subprocess()
-        finally:
-            os.chdir(current)
 
     def geteltorito(self, cdfile, outfile):
         cdfile = open(cdfile, "r")
