@@ -588,28 +588,32 @@ class Guest(object):
         self.log.info("Waiting for guest %s to boot" % (self.name))
 
         listen = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        listen.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        listen.bind((self.host_bridge_ip, self.listen_port))
-        listen.listen(1)
-        subprocess_check_output(["iptables", "-I", "INPUT", "1", "-p", "tcp",
-                                 "-m", "tcp", "-d", self.host_bridge_ip,
-                                 "--dport", str(self.listen_port),
-                                 "-j", "ACCEPT"])
 
         try:
-            addr = None
-            count = 300
-            while count > 0:
-                self.log.debug("Waiting for guest %s to boot, %d/300" % (self.name, count))
-                rlist, wlist, xlist = select.select([listen], [], [], 10)
-                if len(rlist) > 0:
-                    new_sock, addr = listen.accept()
-                    new_sock.close()
-                    listen.close()
-                    break
-                count -= 10
+            listen.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            listen.bind((self.host_bridge_ip, self.listen_port))
+            listen.listen(1)
+            subprocess_check_output(["iptables", "-I", "INPUT", "1",
+                                     "-p", "tcp", "-m", "tcp",
+                                     "-d", self.host_bridge_ip,
+                                     "--dport", str(self.listen_port),
+                                     "-j", "ACCEPT"])
+
+            try:
+                addr = None
+                count = 300
+                while count > 0:
+                    self.log.debug("Waiting for guest %s to boot, %d/300" % (self.name, count))
+                    rlist, wlist, xlist = select.select([listen], [], [], 10)
+                    if len(rlist) > 0:
+                        new_sock, addr = listen.accept()
+                        new_sock.close()
+                        break
+                    count -= 10
+            finally:
+                subprocess.call(["iptables", "-D", "INPUT", "1"])
         finally:
-            subprocess.call(["iptables", "-D", "INPUT", "1"])
+            listen.close()
 
         if addr is None:
             raise OzException("Timed out waiting for domain to boot")
