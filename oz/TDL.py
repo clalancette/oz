@@ -25,11 +25,27 @@ def get_value(doc, xmlstring):
         return None
     return res[0].getContent()
 
+def get_optional_value(doc, xmlstring, component):
+    res = doc.xpathEval(xmlstring)
+    if len(res) == 1:
+        return res[0].getContent()
+    elif len(res) == 0:
+        return None
+    else:
+        raise Guest.OzException("Expected 0 or 1 %s in TDL, saw %d" % (component, len(reponodes)))
+
 class Repository(object):
     def __init__(self, name, url, signed):
         self.name = name
         self.url = url
         self.signed = signed
+
+class Package(object):
+    def __init__(self, name, repo, filename, args):
+        self.name = name
+        self.repo = repo
+        self.filename = filename
+        self.args = args
 
 class TDL(object):
     def __init__(self, xmlstring):
@@ -77,10 +93,22 @@ class TDL(object):
 
         self.packages = []
         for package in self.doc.xpathEval('/template/packages/package'):
+            # package name
             name = package.prop('name')
             if name is None:
                 raise Guest.OzException("Package without a name was given")
-            self.packages.append(name)
+
+            # repository that the package lives in (optional)
+            repo = get_optional_value(package, 'repository',
+                                      "package repository section")
+
+            # filename of the package (optional)
+            filename = get_optional_value(package, 'file', "package filename")
+
+            # arguments to install package (optional)
+            args = get_optional_value(package, 'arguments', "package arguments")
+
+            self.packages.append(Package(name, repo, filename, args))
 
         self.files = {}
         for afile in self.doc.xpathEval('/template/files/file'):

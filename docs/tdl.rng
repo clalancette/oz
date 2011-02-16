@@ -45,6 +45,23 @@
 		<attribute name='name'>
 		  <text/>
 		</attribute>
+		<interleave>
+		  <optional>
+		    <element name='repository'>
+		      <text/>
+		    </element>
+		  </optional>
+		  <optional>
+		    <element name='file'>
+		      <text/>
+		    </element>
+		  </optional>
+		  <optional>
+		    <element name='arguments'>
+		      <text/>
+		    </element>
+		  </optional>
+		</interleave>
 	      </element>
 	    </oneOrMore>
 	  </element>
