@@ -130,24 +130,26 @@ class TDL(object):
             else:
                 raise Guest.OzException("File type for %s must be 'raw' or 'base64'" % (name))
 
-        self.repositories = []
+        self.repositories = {}
         for repo in self.doc.xpathEval('/template/repositories/repository'):
             name = repo.prop('name')
             if name is None:
                 raise Guest.OzException("Repository without a name was given")
-            url = repo.prop('url')
+            url = get_value(repo, 'url')
             if url is None:
                 raise Guest.OzException("Repository without a url was given")
-            signstr = repo.prop('signed')
+
+            signstr = get_value(repo, 'signed')
             if signstr is None:
                 signstr = 'no'
+
             if signstr.lower() == 'no' or signstr.lower() == 'false':
                 signed = False
             elif signstr.lower() == 'yes' or signstr.lower() == 'true':
                 signed = True
             else:
                 raise Guest.OzException("Repository signed property must be 'true' or 'false'")
-            self.repositories.append(Repository(name, url, signed))
+            self.repositories[name] = Repository(name, url, signed)
 
     def __del__(self):
         if self.doc is not None:

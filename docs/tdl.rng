@@ -88,17 +88,19 @@
 	  <element name='repositories'>
 	    <oneOrMore>
 	      <element name='repository'>
-		<attribute name='url'>
-		  <text/>
-		</attribute>
 		<attribute name='name'>
 		  <text/>
 		</attribute>
-		<optional>
-		  <attribute name='signed'>
+		<interleave>
+		  <element name='url'>
 		    <text/>
-		  </attribute>
-		</optional>
+		  </element>
+		  <optional>
+		    <element name='signed'>
+		      <text/>
+		    </element>
+		  </optional>
+		</interleave>
 	      </element>
 	    </oneOrMore>
 	  </element>

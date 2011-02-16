@@ -397,7 +397,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 class RedHatCDYumGuest(RedHatCDGuest):
     def customize_repos(self, guestaddr):
         self.log.debug("Installing additional repository files")
-        for repo in self.tdl.repositories:
+        for repo in self.tdl.repositories.values():
             filename = repo.name + ".repo"
             localname = os.path.join(self.icicle_tmp, filename)
             f = open(localname, 'w')
