@@ -117,7 +117,8 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         if g_handle.exists('/etc/sysconfig/iptables'):
             g_handle.rm('/etc/sysconfig/iptables')
         if g_handle.exists('/etc/sysconfig/iptables.icicle'):
-            g_handle.mv('/etc/sysconfig/iptables')
+            g_handle.mv('/etc/sysconfig/iptables.icicle',
+                        '/etc/sysconfig/iptables')
 
     def image_ssh_teardown_step_4(self, g_handle):
         self.log.debug("Teardown step 4")
