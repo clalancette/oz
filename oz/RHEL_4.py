@@ -86,6 +86,6 @@ class RHEL4Guest(RedHat.RedHatCDGuest):
 def get_class(tdl, config, auto):
     if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7"]:
         return RHEL4Guest(tdl, config, auto, "rtl8139", None)
-    if tdl.update in ["U8"]:
+    if tdl.update in ["U8", "U9"]:
         return RHEL4Guest(tdl, config, auto, "virtio", "virtio")
     raise Guest.OzException("Unsupported RHEL-4 update " + tdl.update)

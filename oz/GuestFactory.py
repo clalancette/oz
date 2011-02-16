@@ -47,7 +47,7 @@ def distrolist():
     print "   Fedora Core: 1, 2, 3, 4, 5, 6"
     print "   RHEL 2.1: GOLD, U2, U3, U4, U5, U6"
     print "   RHEL 3: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9"
-    print "   RHEL 4: GOLD, U1, U2, U3, U4, U5, U6, U7, U8"
+    print "   RHEL 4: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9"
     print "   RHEL 5: GOLD, U1, U2, U3, U4, U5, U6"
     print "   RHEL 6: 0"
     print "   Ubuntu: 6.10, 7.04, 7.10, 8.04.[1,2,3,4], 8.10, 9.04, 9.10, 10.04.1"
