@@ -589,6 +589,7 @@ class Guest(object):
 
         listen = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+        addr = None
         try:
             listen.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             listen.bind((self.host_bridge_ip, self.listen_port))
@@ -600,7 +601,6 @@ class Guest(object):
                                      "-j", "ACCEPT"])
 
             try:
-                addr = None
                 count = 300
                 while count > 0:
                     self.log.debug("Waiting for guest %s to boot, %d/300" % (self.name, count))
