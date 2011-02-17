@@ -57,19 +57,21 @@ for o, a in opts:
     if o in ("-c", "--config"):
         config_file = a
     elif o in ("-d", "--debug"):
-        if int(a) == 0:
+        try:
+            d_int = int(a)
+        except ValueError:
+            usage()
+        if d_int == 0:
             loglevel = logging.ERROR
-        elif int(a) == 1:
+        elif d_int == 1:
             loglevel = logging.WARNING
-        elif int(a) == 2:
+        elif d_int == 2:
             loglevel = logging.INFO
-        elif int(a) == 3:
+        elif d_int == 3:
             loglevel = logging.DEBUG
-        elif int(a) >= 4:
+        elif d_int >= 4:
             loglevel = logging.DEBUG
             logformat = logging.BASIC_FORMAT
-        else:
-            usage()
     elif o in ("-h", "--help"):
         usage()
     else:
