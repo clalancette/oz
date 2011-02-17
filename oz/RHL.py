@@ -22,7 +22,7 @@ import Guest
 import ozutil
 import RedHat
 
-class RHL9Guest(Guest.CDGuest):
+class RHL9Guest(RedHat.RedHatCDGuest):
     def __init__(self, tdl, config, auto):
         self.tdl = tdl
 
@@ -33,7 +33,9 @@ class RHL9Guest(Guest.CDGuest):
         if self.tdl.installtype != 'url':
             raise Guest.OzException("RHL installs must be done via url")
 
-        ozutil.deny_localhost(self.tdl.url)
+        self.url = self.tdl.url
+
+        ozutil.deny_localhost(self.url)
 
         if self.tdl.arch != "i386":
             raise Guest.OzException("Invalid arch " + self.tdl.arch + "for RHL guest")
@@ -52,7 +54,7 @@ class RHL9Guest(Guest.CDGuest):
 
         for line in lines:
             if re.match("^url", line):
-                lines[lines.index(line)] = "url --url " + self.tdl.url + "\n"
+                lines[lines.index(line)] = "url --url " + self.url + "\n"
 
         f = open(output_ks, "w")
         f.writelines(lines)
@@ -70,24 +72,11 @@ class RHL9Guest(Guest.CDGuest):
                 lines[lines.index(line)] = "default customiso\n"
         lines.append("label customiso\n")
         lines.append("  kernel vmlinuz\n")
-        lines.append("  append initrd=initrd.img ks=cdrom:/ks.cfg method=" + self.tdl.url + "\n")
+        lines.append("  append initrd=initrd.img ks=cdrom:/ks.cfg method=" + self.url + "\n")
 
         f = open(isolinuxcfg, "w")
         f.writelines(lines)
         f.close()
-
-    def generate_new_iso(self):
-        self.log.debug("Generating new ISO")
-        RedHat.generate_iso(self.output_iso, self.iso_contents)
-
-    # FIXME: we may be able to make RHL-9 a subclass of RedHat.RedHatCDGuest,
-    # and remove this function and get ICICLE generation for free
-    def generate_install_media(self, force_download):
-        self.get_original_iso(self.tdl.url + "/images/boot.iso", force_download)
-        self.copy_iso()
-        self.modify_iso()
-        self.generate_new_iso()
-        self.cleanup_iso()
 
 class RHL70and71and72and73and8Guest(Guest.FDGuest):
     def __init__(self, tdl, config, auto, nicmodel):
