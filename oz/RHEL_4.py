@@ -38,7 +38,7 @@ class RHEL4Guest(RedHat.RedHatCDGuest):
         else:
             raise Guest.OzException("RHEL-4 installs must be done via url or iso")
 
-        RedHat.RedHatCDGuest.__init__(self, self.tdl.name, "RHEL-4",
+        RedHat.RedHatCDGuest.__init__(self, self.tdl.name, self.tdl.distro,
                                       self.tdl.update, self.tdl.arch,
                                       self.tdl.installtype, nicmodel, None,
                                       None, diskbus, config)
@@ -72,20 +72,26 @@ class RHEL4Guest(RedHat.RedHatCDGuest):
         f.close()
 
     def check_dvd(self):
-        f = open(os.path.join(self.iso_contents, ".discinfo"), 'r')
-        lines = f.readlines()
-        f.close()
+        if self.tdl.distro == "RHEL-4":
+            f = open(os.path.join(self.iso_contents, ".discinfo"), 'r')
+            lines = f.readlines()
+            f.close()
 
-        if not lines[1].startswith("Red Hat Enterprise Linux 4"):
-            raise Guest.OzException("Invalid .discinfo file on ISO")
-        if lines[2].strip() != self.arch:
-            raise Guest.OzException("Invalid .discinfo architecture on ISO")
-        if lines[3].strip() != "1,2,3,4,5":
-            raise Guest.OzException("Only DVDs are supported for RHEL-4 ISO installs")
+            if not lines[1].startswith("Red Hat Enterprise Linux 4"):
+                raise Guest.OzException("Invalid .discinfo file on ISO")
+            if lines[2].strip() != self.arch:
+                raise Guest.OzException("Invalid .discinfo architecture on ISO")
+            if lines[3].strip() != "1,2,3,4,5":
+                raise Guest.OzException("Only DVDs are supported for RHEL-4 ISO installs")
+        else:
+            volume_identifier = self.get_primary_volume_descriptor(self.orig_iso)
+
+            if not re.match("CentOS 4(\.[0-9])?.*DVD$", volume_identifier):
+                raise Guest.OzException("Only DVDs are supported for CentOS-4 ISO installs")
 
 def get_class(tdl, config, auto):
     if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7"]:
         return RHEL4Guest(tdl, config, auto, "rtl8139", None)
     if tdl.update in ["U8", "U9"]:
         return RHEL4Guest(tdl, config, auto, "virtio", "virtio")
-    raise Guest.OzException("Unsupported RHEL-4 update " + tdl.update)
+    raise Guest.OzException("Unsupported " + tdl.distro + " update " + tdl.update)

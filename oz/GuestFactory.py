@@ -23,11 +23,11 @@ def guest_factory(tdl, config, auto):
         return FedoraCore.get_class(tdl, config, auto)
     elif tdl.distro == "RHEL-2.1":
         return RHEL_2_1.get_class(tdl, config, auto)
-    elif tdl.distro == "RHEL-3":
+    elif tdl.distro in ["RHEL-3", "CentOS-3"]:
         return RHEL_3.get_class(tdl, config, auto)
-    elif tdl.distro == "RHEL-4":
+    elif tdl.distro in ["RHEL-4", "CentOS-4"]:
         return RHEL_4.get_class(tdl, config, auto)
-    elif tdl.distro == "RHEL-5":
+    elif tdl.distro in ["RHEL-5", "CentOS-5"]:
         return RHEL_5.get_class(tdl, config, auto)
     elif tdl.distro == "RHEL-6":
         return RHEL_6.get_class(tdl, config, auto)
@@ -54,3 +54,6 @@ def distrolist():
     print "   Windows: 2000, XP, 2003, 7, 2008"
     print "   RHL: 7.0, 7.1, 7.2, 7.3, 8, 9"
     print "   OpenSUSE: 11.0, 11.1, 11.2, 11.3"
+    print "   CentOS 3: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9"
+    print "   CentOS 4: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9"
+    print "   CentOS 5: GOLD, U1, U2, U3, U4, U5"

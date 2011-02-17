@@ -727,7 +727,7 @@ class CDGuest(Guest):
             gfs.umount_all()
             gfs.kill_subprocess()
 
-    def geteltorito(self, cdfile, outfile):
+    def get_primary_volume_descriptor(self, cdfile):
         cdfile = open(cdfile, "r")
 
         # check out the primary volume descriptor to make sure it is sane
@@ -743,6 +743,13 @@ class CDGuest(Guest):
             raise OzException("data in unused field")
         if unused2 != 0x0:
             raise OzException("data in 2nd unused field")
+
+        return volume_identifier
+
+    def geteltorito(self, cdfile, outfile):
+        get_primary_volume_descriptor(cdfile)
+
+        cdfile = open(cdfile, "r")
 
         # the 17th sector contains the boot specification and the offset of the
         # boot sector

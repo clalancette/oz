@@ -39,7 +39,7 @@ class RHEL5Guest(RedHat.RedHatCDYumGuest):
         else:
             raise Guest.OzException("RHEL-5 installs must be done via url or iso")
 
-        RedHat.RedHatCDYumGuest.__init__(self, self.tdl.name, "RHEL-5",
+        RedHat.RedHatCDYumGuest.__init__(self, self.tdl.name, self.tdl.distro,
                                          self.tdl.update, self.tdl.arch,
                                          self.tdl.installtype, nicmodel, None,
                                          None, diskbus, config)
@@ -73,27 +73,14 @@ class RHEL5Guest(RedHat.RedHatCDYumGuest):
         f.close()
 
     def check_dvd(self):
-        # we use this function to check to make sure that the ISO we downloaded
-        # is the DVD ISO, not the CD one.
-        cdfile = open(self.orig_iso, 'r')
+        # FIXME: this is a quick hack to get CentOS-5 working for now.
+        # We really should look at the disks and try to do something better
+        if self.tdl.distro == "CentOS-5":
+            return
 
-        # the first 32768 bytes are unused by ISO 9660.  The 16th sector
-        # contains the primary volume descriptor
-        cdfile.seek(16*2048)
-        fmt = "=B5sBB32s32sQLL32sHHHH"
-        (desc_type, identifier, version, unused1, system_identifier, volume_identifier, unused2, space_size_le, space_size_be, unused3, set_size_le, set_size_be, seqnum_le, seqnum_be) = struct.unpack(fmt, cdfile.read(struct.calcsize(fmt)))
-        cdfile.close()
+        volume_identifier = self.get_primary_volume_descriptor(self.orig_iso)
 
-        if desc_type != 0x1:
-            raise Guest.OzException("Invalid primary volume descriptor")
-        if identifier != "CD001":
-            raise Guest.OzException("invalid CD isoIdentification")
-        if unused1 != 0x0:
-            raise Guest.OzException("data in unused field")
-        if unused2 != 0x0:
-            raise Guest.OzException("data in 2nd unused field")
-
-        if not re.match("RHEL/5(\.[0-9])? " + self.arch + " DVD", volume_identifier):
+        if not re.match("RHEL/5(\.[0-9])? " + self.tdl.arch + " DVD", volume_identifier):
             raise Guest.OzException("Only DVDs are supported for RHEL-5 ISO installs")
 
 def get_class(tdl, config, auto):
@@ -101,4 +88,4 @@ def get_class(tdl, config, auto):
         return RHEL5Guest(tdl, config, auto, "rtl8139", None)
     if tdl.update in ["U4", "U5", "U6"]:
         return RHEL5Guest(tdl, config, auto, "virtio", "virtio")
-    raise Guest.OzException("Unsupported RHEL-5 update " + tdl.update)
+    raise Guest.OzException("Unsupported " + tdl.distro + " update " + tdl.update)

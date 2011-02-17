@@ -30,14 +30,19 @@ class RHEL3Guest(RedHat.RedHatCDGuest):
         if self.ks_file is None:
             self.ks_file = ozutil.generate_full_auto_path("rhel-3-jeos.ks")
 
-        if self.tdl.installtype != 'url':
-            raise Guest.OzException("RHEL-3 installs must be done via url")
-
-        self.url = self.tdl.url
+        if self.tdl.installtype == 'url':
+            self.url = self.tdl.url
+            ozutil.deny_localhost(self.url)
+        elif self.tdl.installtype == 'iso':
+            if self.tdl.distro == "RHEL-3":
+                raise Guest.OzException("RHEL-3 installs must be done via url")
+            self.url = self.tdl.iso
+        else:
+            raise Guest.OzException("RHEL-3 installs must be done via url or iso")
 
         ozutil.deny_localhost(self.url)
 
-        RedHat.RedHatCDGuest.__init__(self, self.tdl.name, "RHEL-3",
+        RedHat.RedHatCDGuest.__init__(self, self.tdl.name, self.tdl.distro,
                                       self.tdl.update, self.tdl.arch, 'url',
                                       None, None, None, None, config)
         # this has to be *after* RedHatCDGuest.__init__ so that we override
@@ -49,7 +54,6 @@ ChallengeResponseAuthentication no
 X11Forwarding yes
 Subsystem	sftp	/usr/libexec/openssh/sftp-server
 """
-
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")
@@ -68,13 +72,25 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                 lines[lines.index(line)] = "default customiso\n"
         lines.append("label customiso\n")
         lines.append("  kernel vmlinuz\n")
-        lines.append("  append initrd=initrd.img ks=cdrom:/ks.cfg method=" + self.url + "\n")
+        initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method="
+        if self.tdl.installtype == "url":
+            initrdline += self.url + "\n"
+        else:
+            initrdline += "cdrom:/dev/cdrom\n"
+        lines.append(initrdline)
 
         f = open(isolinuxcfg, "w")
         f.writelines(lines)
         f.close()
 
+    def check_dvd(self):
+        # RHEL-3 can't possibly reach here, since we only allow URL installs
+        # there.  Therefore this is only to check CentOS-3 DVDs
+        volume_identifier = self.get_primary_volume_descriptor(self.orig_iso)
+        if not re.match("CentOS-3(\.[0-9])? " + self.tdl.arch + " DVD$", volume_identifier):
+            raise Guest.OzException("Only DVDs are supported for CentOS-3 ISO installs")
+
 def get_class(tdl, config, auto):
     if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9"]:
         return RHEL3Guest(tdl, config, auto)
-    raise Guest.OzException("Unsupported RHEL-3 update " + tdl.update)
+    raise Guest.OzException("Unsupported " + tdl.distro + " update " + tdl.update)
