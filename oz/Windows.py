@@ -91,15 +91,23 @@ class Windows2000andXPand2003(Guest.CDGuest):
         self.generate_new_iso()
         self.cleanup_iso()
 
-    def install(self):
+    def install(self, timeout=None):
         self.log.info("Running install for %s" % (self.name))
         xml = self.generate_xml("cdrom")
         dom = self.libvirt_conn.createXML(xml, 0)
-        self.wait_for_install_finish(dom, 1000)
+
+        if timeout is None:
+            self.wait_for_install_finish(dom, 1000)
+        else:
+            self.wait_for_install_finish(dom, timeout)
 
         xml = self.generate_xml("hd")
         dom = self.libvirt_conn.createXML(xml, 0)
-        self.wait_for_install_finish(dom, 3600)
+
+        if timeout is None:
+            self.wait_for_install_finish(dom, 3600)
+        else:
+            self.wait_for_install_finish(dom, timeout)
 
         return self.generate_xml("hd", want_install_disk=False)
 

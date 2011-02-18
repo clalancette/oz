@@ -43,6 +43,7 @@ def usage():
     print "  -g\t\tGenerate the ICICLE after installation"
     print "  -h\t\tPrint this help message"
     print "  -p\t\tCleanup old guests with the same name before installation"
+    print "  -t <timeout>\tUse a timeout of <timeout> for installation, rather than the default"
     print "  -u\t\tAfter installation, do the customization"
     print " Currently supported architectures are:"
     print "   i386, x86_64"
@@ -51,10 +52,10 @@ def usage():
     sys.exit(1)
 
 try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], 'a:c:d:fghpu',
+    opts, args = getopt.gnu_getopt(sys.argv[1:], 'a:c:d:fghpt:u',
                                    ['auto', 'config', 'debug', 'force-download',
                                     'generate-icicle', 'help', 'cleanup',
-                                    'customize'])
+                                    'timeout', 'customize'])
 except getopt.GetoptError, err:
     print str(err)
     usage()
@@ -67,6 +68,7 @@ generate_icicle = False
 customize = False
 cleanup = False
 auto = None
+timeout = None
 for o, a in opts:
     if o in ("-a", "--auto"):
         auto = a
@@ -96,6 +98,8 @@ for o, a in opts:
         usage()
     elif o in ("-p", "--cleanup"):
         cleanup = True
+    elif o in ("-t", "--timeout"):
+        timeout = int(a)
     elif o in ("-u", "--customize"):
         customize = True
     else:
@@ -130,7 +134,7 @@ guest.generate_install_media(force_download)
 try:
     guest.generate_diskimage()
     try:
-        libvirt_xml = guest.install()
+        libvirt_xml = guest.install(timeout)
 
         if customize and generate_icicle:
             print guest.customize_and_generate_icicle(libvirt_xml)

@@ -844,11 +844,15 @@ class CDGuest(Guest):
         out.write(eltoritodata)
         out.close()
 
-    def install(self):
+    def install(self, timeout=None):
         self.log.info("Running install for %s" % (self.name))
         xml = self.generate_xml("cdrom")
         dom = self.libvirt_conn.createXML(xml, 0)
-        self.wait_for_install_finish(dom, 1200)
+
+        if timeout is None:
+            self.wait_for_install_finish(dom, 1200)
+        else:
+            self.wait_for_install_finish(dom, timeout)
 
         return self.generate_xml("hd", want_install_disk=False)
 
@@ -884,11 +888,15 @@ class FDGuest(Guest):
         self.log.info("Copying floppy contents for modification")
         shutil.copyfile(self.orig_floppy, self.output_floppy)
 
-    def install(self):
+    def install(self, timeout=None):
         self.log.info("Running install for %s" % (self.name))
         xml = self.generate_xml("fd")
         dom = self.libvirt_conn.createXML(xml, 0)
-        self.wait_for_install_finish(dom, 1200)
+
+        if timeout is None:
+            self.wait_for_install_finish(dom, 1200)
+        else:
+            self.wait_for_install_finish(dom, timeout)
 
         return self.generate_xml("hd", want_install_disk=False)
 
