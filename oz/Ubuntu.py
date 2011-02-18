@@ -116,7 +116,7 @@ class Ubuntu710and8041Guest(Ubuntu):
 
         self.preseed_file = auto
         if self.preseed_file is None:
-            self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + update + "-jeos.preseed")
+            self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
 
         Guest.CDGuest.__init__(self, self.tdl.name, "Ubuntu", self.tdl.update,
                                self.tdl.arch, 'iso', "rtl8139", None, None,
@@ -162,7 +162,7 @@ class Ubuntu610and704Guest(Ubuntu):
 
         self.preseed_file = auto
         if self.preseed_file is None:
-            self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + update + "-jeos.preseed")
+            self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
 
         Guest.CDGuest.__init__(self, self.tdl.name, "Ubuntu", self.tdl.update,
                                self.tdl.arch, 'iso', "rtl8139", None, None,
