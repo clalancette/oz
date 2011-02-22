@@ -1,0 +1,25 @@
+<template>
+  <name>win2k8jeos</name>
+  <os>
+    <name>Windows</name>
+    <version>2008</version>
+    <arch>x86_64</arch>
+    <install type='iso'>
+      <iso>http://path/to/isos/win2k8.iso</iso>
+    </install>
+    <key></key>
+  </os>
+  <description>Windows 2008</description>
+  <repositories>
+    <repository name="Default">
+      <url>smb://workgroup\smbuser:username@smbserver\share</url>
+    </repository>
+  </repositories>
+  <packages>
+    <package name="Dot Net framework 4">
+      <repository>Default</repository>
+      <file>dotNetFx40_Full_x86_64.exe</file>
+      <arguments>/q</arguments>
+    </package>
+  </packages>
+</template>

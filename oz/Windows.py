@@ -20,6 +20,8 @@ import os
 import libxml2
 import shutil
 import parted
+import hivex
+import subprocess
 
 import oz.Guest
 import oz.ozutil
@@ -37,6 +39,16 @@ class Windows(oz.Guest.CDGuest):
 
     def generate_install_media(self, force_download=False):
         return self.iso_generate_install_media(self.url, force_download)
+
+class Samba:
+    def __init__(self):
+        self.user = None
+        self.password = None
+        self.server = None
+        self.path = None
+
+    def __str__(self):
+        return "server: %s, path: %s, user: %s, pw: %s" % (self.server, self.path, self.user, self.password)
 
 class Windows2000andXPand2003(Windows):
     def __init__(self, tdl, config, auto):
@@ -251,6 +263,179 @@ class Windows2008and7(Windows):
                 oz.ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
 
         return self.generate_xml("hd", None)
+
+    def guest_execute_command(self, guestaddr, command):
+        admin = "Administrator%" + self.get_password()
+        sub = subprocess.Popen(["winexe", "-U", admin, "//" + guestaddr,
+                                "--runas=" + admin, command],
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
+        result = sub.communicate()
+        retcode = sub.poll()
+
+        return (result[0], result[1], retcode)
+
+    def shutdown_guest(self, guestaddr, libvirt_dom):
+        if guestaddr is not None:
+            try:
+                self.guest_execute_command(guestaddr,
+                                           "cmd.exe /c shutdown /s /t 0")
+                if not self.wait_for_guest_shutdown(libvirt_dom):
+                    self.log.warn("Guest did not shutdown in time, going to kill")
+                else:
+                    libvirt_dom = None
+            except:
+                self.log.warn("Failed shutting down guest, forcibly killing")
+
+        if libvirt_dom is not None:
+            libvirt_dom.destroy()
+
+    def get_password(self):
+        doc = libxml2.parseFile(self.unattendfile)
+        xp = doc.xpathNewContext()
+        xp.xpathRegisterNs("ms", "urn:schemas-microsoft-com:unattend")
+
+        passnode = xp.xpathEval('/ms:unattend/ms:settings/ms:component/ms:UserAccounts/ms:AdministratorPassword/ms:Value')
+        if len(passnode) == 1:
+            password = passnode[0].getContent()
+        else:
+            self.log.warn("Could not find password from unattend file, using default")
+            password = 'ozrootpw'
+
+        doc.freeDoc()
+
+        return password
+
+    def collect_setup(self, libvirt_xml):
+        self.log.info("Collection Setup")
+
+        self.mkdir_p(self.icicle_tmp)
+
+        g_handle = self.guestfs_handle_setup(libvirt_xml)
+        try:
+            self.log.debug("Downloading ntuser.dat")
+            ntuser = os.path.join(self.icicle_tmp, "ntuser.dat")
+            path = g_handle.case_sensitive_path("/users/Administrator/ntuser.dat")
+            g_handle.download(path, ntuser)
+
+            self.log.debug("Modifying ntuser")
+            hive = hivex.Hivex(ntuser, write=True)
+            root = hive.root()
+            software = hive.node_get_child(root, "Software")
+            ms = hive.node_get_child(software, "Microsoft")
+            windows = hive.node_get_child(ms, "Windows")
+            currentversion = hive.node_get_child(windows, "CurrentVersion")
+            runonce = hive.node_get_child(currentversion, "RunOnce")
+
+            if runonce is None:
+                runonce = hive.node_add_child(currentversion, "RunOnce")
+
+            Key = "ReportIp".encode('utf-16le')
+            Value = "C:\\Windows\\System32\\WindowsPowershell\\v1.0\\powershell.exe -ExecutionPolicy RemoteSigned \"&{Start-Sleep 10;$socket=new-object System.Net.Sockets.TcpClient;$socket.Connect(\'" + self.host_bridge_ip + "\'," + str(self.listen_port) + ")}\""
+            Value = Value.encode('utf-16le')
+
+            hive.node_set_value(runonce, {'key': Key, 't': 1, 'value': Value})
+
+            hive.commit(None)
+
+            self.log.debug("Uploading modified ntuser")
+            g_handle.mv(path, path + ".icicle")
+            g_handle.upload(ntuser, path)
+
+            os.unlink(ntuser)
+        finally:
+            self.guestfs_handle_cleanup(g_handle)
+
+    def collect_teardown(self, libvirt_xml):
+        self.log.info("Collection Teardown")
+
+        g_handle = self.guestfs_handle_setup(libvirt_xml)
+
+        try:
+            path = g_handle.case_sensitive_path("/users/Administrator/ntuser.dat")
+            g_handle.rm(path)
+            g_handle.mv(path + ".icicle", path)
+        finally:
+            self.guestfs_handle_cleanup(g_handle)
+
+    def copy_package(self, guestaddr, package, samba):
+        self.log.info("Copying package %s" % package.name)
+        stdout, stderr, retcode = self.guest_execute_command(guestaddr,
+                                                             "cmd.exe /c net use \\\\" + samba.server + "\\" + samba.path + " " + samba.password + " /u:" + samba.user + " & xcopy \\\\" + samba.server + "\\" + samba.path + "\\" + package.filename + " c:\\temp\\ /S /I /Y")
+        if retcode != 0:
+            if stderr:
+                raise oz.OzException.OzException("Failed to copy package %s with error %s" % (package.filename, stderr))
+            else:
+                raise oz.OzException.OzException("Failed to copy package %s, unknown error" % (package.filename))
+
+    def delete_package(self, guestaddr, package):
+        stdout, stderr, retcode = self.guest_execute_command(guestaddr,
+                                                             "cmd.exe /c del c:\\temp\\" + package.name)
+
+    def install_package(self, guestaddr, package):
+        share = self.tdl.repositories[package.repo]
+
+        samba = Samba()
+
+        matches = re.match(r'(smb|cifs)://(.*@)?(.*)$', share.url)
+        if not matches:
+            raise oz.OzException.OzException("Failed to identify repository share, must have syntax of smb://workgroup:username@server")
+
+        userpw = matches.groups()[1]
+        serverpath = matches.groups()[2]
+
+        if userpw is not None:
+            split = re.match(r'(.*?)([:].*)?@$', userpw)
+
+            samba.user = split.groups()[0]
+
+            if split.groups()[1] is not None:
+                samba.password = split.groups()[1][1:]
+
+        if serverpath is not None:
+            split = re.match(r'(.*?)\\(.*)$', serverpath)
+
+            samba.server = split.groups()[0]
+            samba.path = split.groups()[1]
+
+        self.log.debug("Original path: %s" % (share.url))
+        self.log.debug("Samba %s" % (str(samba)))
+
+        self.copy_package(guestaddr, package, samba)
+
+        guestcmd = 'cmd.exe /c c:\\temp\\' + package.filename
+        if package.args is not None:
+            guestcmd += ' ' + package.args
+
+        self.log.debug("Issuing install command")
+
+        stdout, stderr, retcode = self.guest_execute_command(guestaddr,
+                                                             guestcmd)
+        # FIXME: check for errors here
+
+        self.delete_package(guestaddr, package)
+
+    def customize(self, libvirt_xml):
+        self.log.info("Customization")
+
+        if not self.tdl.packages:
+            self.log.info("No additional packages to install, skipping customization")
+            return
+
+        self.collect_setup(libvirt_xml)
+
+        try:
+            libvirt_dom = self.libvirt_conn.createXML(libvirt_xml, 0)
+            try:
+                guestaddr = None
+                guestaddr = self.wait_for_guest_boot()
+
+                for package in self.tdl.packages:
+                    self.install_package(guestaddr)
+            finally:
+                self.shutdown_guest(guestaddr, libvirt_dom)
+        finally:
+            self.collect_teardown(libvirt_xml)
 
 def get_class(tdl, config, auto):
     if tdl.update in ["2000", "XP", "2003"]:

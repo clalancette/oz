@@ -80,6 +80,11 @@
       <FirstLogonCommands>
 	<SynchronousCommand wcm:action="add">
 	  <Order>1</Order>
+	  <Description>Disable Automatic Updates</Description>
+	  <CommandLine>cmd /C cscript.exe scregedit.wsf /AU 1</CommandLine>
+	</SynchronousCommand>
+	<SynchronousCommand wcm:action="add">
+	  <Order>2</Order>
 	  <Description>Shutting down Windows</Description>
 	  <CommandLine>cmd /C shutdown /s /t 0</CommandLine>
 	</SynchronousCommand>

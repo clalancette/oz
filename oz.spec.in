@@ -10,7 +10,7 @@ URL: http://aeolusproject.org/oz.html
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 Requires: gvnc-tools
-Requires: python-libguestfs
+Requires: python-libguestfs >= 1.8
 Requires: libxml2-python
 Requires: libvirt-python
 # in theory, oz doesn't really require libvirtd to be local to operate
@@ -26,6 +26,8 @@ Requires: python-uuid
 Requires: openssh
 Requires: m2crypto
 Requires: pyparted
+Requires: python-hivex
+Requires: imagefactory-winexe
 
 BuildRequires: python
 
