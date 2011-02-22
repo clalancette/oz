@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<unattend xmlns="urn:schemas-microsoft-com:unattend">
+  <settings pass="oobeSystem">
+    <component xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+      <InputLocale>en-US</InputLocale>
+      <SystemLocale>en-US</SystemLocale>
+      <UILanguage>en-US</UILanguage>
+      <UILanguageFallback>en-US</UILanguageFallback>
+      <UserLocale>en-US</UserLocale>
+    </component>
+    <component xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+      <OOBE>
+        <HideEULAPage>true</HideEULAPage>
+        <NetworkLocation>Work</NetworkLocation>
+        <ProtectYourPC>3</ProtectYourPC>
+      </OOBE>
+      <FirstLogonCommands>
+	<SynchronousCommand wcm:action="add">
+          <Order>1</Order>
+	  <Description>Notify the host</Description>
+          <CommandLine>C:\Windows\System32\WindowsPowershell\v1.0\powershell.exe -ExecutionPolicy RemoteSigned -command Start-Sleep 5;$socket=new-object System.Net.Sockets.TcpClient;$socket.Connect('192.168.122.1',10535)</CommandLine>
+        </SynchronousCommand>
+	<SynchronousCommand wcm:action="add">
+          <Order>2</Order>
+	  <Description>Deleting sysprep file</Description>
+          <CommandLine>cmd /C del /q /f c:\Windows\Windows-2008-sysprep.xml</CommandLine>
+	</SynchronousCommand>
+	<SynchronousCommand wcm:action="add">
+          <Order>3</Order>
+	  <Description>Disable Automatic Updates</Description>
+          <CommandLine>cmd /C cscript.exe scregedit.wsf /AU 1</CommandLine>
+	</SynchronousCommand>
+	<SynchronousCommand wcm:action="add">
+          <Order>4</Order>
+	  <Description>Shutting down Windows</Description>
+          <CommandLine>cmd /C shutdown /s /t 0</CommandLine>
+	</SynchronousCommand>
+      </FirstLogonCommands>
+      <UserAccounts>
+        <AdministratorPassword>
+          <Value>ozrootpw</Value>
+          <PlainText>true</PlainText>
+        </AdministratorPassword>
+      </UserAccounts>
+      <AutoLogon>
+        <Password>
+          <Value>ozrootpw</Value>
+          <PlainText>true</PlainText>
+        </Password>
+        <Enabled>true</Enabled>
+        <LogonCount>1</LogonCount>
+        <Username>Administrator</Username>
+      </AutoLogon>
+      <RegisteredOwner/>
+      <TimeZone>Eastern Standard Time</TimeZone>
+    </component>
+  </settings>
+</unattend>

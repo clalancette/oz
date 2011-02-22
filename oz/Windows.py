@@ -275,21 +275,6 @@ class Windows2008and7(Windows):
 
         return (result[0], result[1], retcode)
 
-    def shutdown_guest(self, guestaddr, libvirt_dom):
-        if guestaddr is not None:
-            try:
-                self.guest_execute_command(guestaddr,
-                                           "cmd.exe /c shutdown /s /t 0")
-                if not self.wait_for_guest_shutdown(libvirt_dom):
-                    self.log.warn("Guest did not shutdown in time, going to kill")
-                else:
-                    libvirt_dom = None
-            except:
-                self.log.warn("Failed shutting down guest, forcibly killing")
-
-        if libvirt_dom is not None:
-            libvirt_dom.destroy()
-
     def get_password(self):
         doc = libxml2.parseFile(self.unattendfile)
         xp = doc.xpathNewContext()
@@ -305,6 +290,40 @@ class Windows2008and7(Windows):
         doc.freeDoc()
 
         return password
+
+    def sysprep_install_file(self, g_handle):
+        sysprepfile = oz.ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-sysprep.xml")
+
+        outfile = os.path.join(self.icicle_tmp, "sysprep.xml")
+
+        sysprepdoc = libxml2.parseFile(sysprepfile)
+        sysprepxp = sysprepdoc.xpathNewContext()
+        sysprepxp.xpathRegisterNs("ms", "urn:schemas-microsoft-com:unattend")
+
+        for component in sysprepxp.xpathEval('/ms:unattend/ms:settings/ms:component'):
+            component.setProp('processorArchitecture',
+                              self.get_windows_arch(self.tdl.arch))
+
+        command_notify = sysprepxp.xpathEval('/ms:unattend/ms:settings/ms:component/ms:FirstLogonCommands/ms:SynchronousCommand/ms:CommandLine')
+        command_notify[0].content = "C:\\Windows\\System32\\WindowsPowershell\\v1.0\\powershell.exe -ExecutionPolicy RemoteSigned -command Start-Sleep 5;$socket=new-object System.Net.Sockets.TcpClient;$socket.Connect(\'" + self.host_bridge_ip + "\'," + str(self.listen_port) + ")"
+        command_notify[0].setContent(command_notify[0].content)
+
+        command = sysprepxp.xpathEval('/ms:unattend/ms:settings/ms:component/ms:FirstLogonCommands/ms:SynchronousCommand/ms:CommandLine')
+        command[1].content = "cmd /C del /q /f c:\Windows\Windows-" + self.tdl.update + "-sysprep.xml"
+        command[1].setContent(command[1].content)
+
+        sysprep_os_password = sysprepxp.xpathEval('/ms:unattend/ms:settings/ms:component/ms:UserAccounts/ms:AdministratorPassword/ms:Value')
+        sysprep_os_password[0].setContent(self.get_password())
+
+        sysprep_autologon_os_password = sysprepxp.xpathEval('/ms:unattend/ms:settings/ms:component/ms:AutoLogon/ms:Password/ms:Value')
+        sysprep_autologon_os_password[0].setContent(self.get_password())
+
+        sysprepdoc.saveFile(outfile)
+
+        path = g_handle.case_sensitive_path("/Windows")
+        g_handle.upload(outfile, path + "/sysprep.xml")
+
+        os.unlink(outfile)
 
     def collect_setup(self, libvirt_xml):
         self.log.info("Collection Setup")
@@ -339,10 +358,11 @@ class Windows2008and7(Windows):
             hive.commit(None)
 
             self.log.debug("Uploading modified ntuser")
-            g_handle.mv(path, path + ".icicle")
             g_handle.upload(ntuser, path)
 
             os.unlink(ntuser)
+
+            self.sysprep_install_file(g_handle)
         finally:
             self.guestfs_handle_cleanup(g_handle)
 
@@ -352,9 +372,8 @@ class Windows2008and7(Windows):
         g_handle = self.guestfs_handle_setup(libvirt_xml)
 
         try:
-            path = g_handle.case_sensitive_path("/users/Administrator/ntuser.dat")
-            g_handle.rm(path)
-            g_handle.mv(path + ".icicle", path)
+            pass
+            # FIXME: we probably need to remove the sysprep file here
         finally:
             self.guestfs_handle_cleanup(g_handle)
 
@@ -427,13 +446,61 @@ class Windows2008and7(Windows):
         try:
             libvirt_dom = self.libvirt_conn.createXML(libvirt_xml, 0)
             try:
-                guestaddr = None
                 guestaddr = self.wait_for_guest_boot()
+            except:
+                libvirt_dom.destroy()
+                raise
 
+            try:
+                # first install all of the additional packages
                 for package in self.tdl.packages:
-                    self.install_package(guestaddr)
-            finally:
-                self.shutdown_guest(guestaddr, libvirt_dom)
+                    self.install_package(guestaddr, package)
+
+                # now sysprep the OS
+                self.log.info("Starting sysprep")
+
+                self.log.debug("Sysprep stage 1")
+                sysprep_out, sysprep_err, sysprep_ret = self.guest_execute_command(guestaddr, "C:\\windows\\system32\\sysprep\\sysprep /oobe /generalize /unattend:c:\\windows\\sysprep.xml")
+                if sysprep_ret != 0:
+                    raise oz.OzException.OzException("Failed initial sysprep: %s" % (sysprep_err))
+            except:
+                # if installing a package or the first sysprep step threw an
+                # error, the OS is still up, so we tell it to shutdown
+                self.guest_execute_command(guestaddr,
+                                           "cmd.exe /c shutdown /s /t 0")
+                if not self.wait_for_guest_shutdown(libvirt_dom):
+                    self.log.warn("Failed shutting down guest, forcibly killing")
+                    libvirt_dom.destroy()
+                raise
+
+            try:
+                # if the sysprep step was successful, the guest will shut
+                # down on its own.  Wait around here for that to happen
+                if not self.wait_for_guest_shutdown(libvirt_dom, count=600):
+                    raise oz.OzException.OzException("Guest did not shut down in time, initial sysprep failed")
+
+                self.log.debug("Sysprep stage 2")
+                libvirt_dom = self.libvirt_conn.createXML(libvirt_xml, 0)
+
+                # when we launch the guest the second time, sysprep will
+                # continue without input from us.  Just wait around for it
+                # to shutdown again
+                if not self.wait_for_guest_shutdown(libvirt_dom, count=600):
+                    raise oz.OzException.OzException("Guest did not shut down in time, sysprep stage 2 failed")
+
+                self.log.debug("Sysprep stage 3")
+                libvirt_dom = self.libvirt_conn.createXML(libvirt_xml, 0)
+
+                guestaddr = self.wait_for_guest_boot()
+                if not self.wait_for_guest_shutdown(libvirt_dom, count=600):
+                    raise oz.OzException.OzException("Guest did not shut down in time, sysprep stage 3 failed")
+            except:
+                # if the guest did not shutdown properly during the end of
+                # sysprep stage 1, sysprep stage 2, or sysprep stage 3,
+                # forcibly kill it here
+                if libvirt_dom:
+                    libvirt_dom.destroy()
+                raise
         finally:
             self.collect_teardown(libvirt_xml)
 
