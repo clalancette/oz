@@ -2,12 +2,12 @@
      - Ubuntu 5.04, 5.10, 6.06, and 10.10
      - Debian Etch, Lenny, Squeeze
      - SUSE Linux 10.0, 10.1
-     - openSUSE 10.2, 10.3, 11.0 (autoyast)
+     - openSUSE 10.2, 10.3 (autoyast)
      - OpenBSD (http://people.cs.uchicago.edu/~brendan/howtos/openbsd_install/)
      - NetBSD (anita)
      - FreeBSD
      - Dragonfly BSD
-     - Windows Vista, 2008, 7, 98, 95, ME
+     - Windows Vista, 98, 95, ME
      - RHL 5.2, 6.0, 6.1, 6.2 (only nfs installs work)
 2.  Add partition/disk size support to the TDL.
 3.  Add improved error logging to guest installation.  That is, if the guest
