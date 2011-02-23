@@ -3,10 +3,9 @@
   <os>
     <name>Fedora</name>
     <version>12</version>
-    <arch>x86_64</arch>
-    <install type='url'>
+    <arch>i386</arch>
+    <install type='foo'>
       <url>http://download.fedoraproject.org/pub/fedora/linux/releases/12/Fedora/x86_64/os/</url>
     </install>
   </os>
-  <description>Fedora 12</description>
 </template>

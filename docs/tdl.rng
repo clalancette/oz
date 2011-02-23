@@ -40,7 +40,7 @@
 	</optional>
 	<optional>
 	  <element name='packages'>
-	    <oneOrMore>
+	    <zeroOrMore>
 	      <element name='package'>
 		<attribute name='name'>
 		  <text/>
@@ -63,7 +63,7 @@
 		  </optional>
 		</interleave>
 	      </element>
-	    </oneOrMore>
+	    </zeroOrMore>
 	  </element>
 	</optional>
 	<optional>
@@ -86,7 +86,7 @@
 	</optional>
 	<optional>
 	  <element name='repositories'>
-	    <oneOrMore>
+	    <zeroOrMore>
 	      <element name='repository'>
 		<attribute name='name'>
 		  <text/>
@@ -102,7 +102,7 @@
 		  </optional>
 		</interleave>
 	      </element>
-	    </oneOrMore>
+	    </zeroOrMore>
 	  </element>
 	</optional>
       </interleave>

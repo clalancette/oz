@@ -8,4 +8,6 @@
       <url>http://download.fedoraproject.org/pub/fedora/linux/releases/12/Fedora/x86_64/os/</url>
     </install>
   </os>
+  <packages>
+  </packages>
 </template>

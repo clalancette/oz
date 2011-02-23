@@ -8,7 +8,5 @@
       <url>http://download.fedoraproject.org/pub/fedora/linux/releases/12/Fedora/x86_64/os/</url>
     </install>
   </os>
-  <packages>
-    <package name='foo'/>
-  </packages>
+  <description>My Fedora 12 JEOS image</description>
 </template>

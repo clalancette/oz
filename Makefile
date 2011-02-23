@@ -7,12 +7,6 @@ rpm: sdist
 srpm: sdist
 	rpmbuild -bs oz.spec --define "_sourcedir `pwd`/dist"
 
-validate:
-	@echo "Validating TDL"
-	@cd docs ; ./validate-tdl.sh
-	@echo "Validating ICICLE"
-	@cd docs ; ./validate-icicle.sh
-
 man2html:
 	@echo "Generating oz-install HTML page from man"
 	@groff -mandoc man/oz-install.1 -T html > man/oz-install.html
