@@ -194,7 +194,7 @@ class Guest(object):
 
     # the next 4 methods are intended to be overridden by the individual
     # OS backends; raise an error if they are called but not implemented
-    def generate_install_media(self, force_download):
+    def generate_install_media(self, force_download=False):
         raise OzException.OzException("Install media for %s%s is not implemented, install cannot continue" % (self.distro, self.update))
 
     def customize(self, libvirt_xml):

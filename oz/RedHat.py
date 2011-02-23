@@ -380,7 +380,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         if libvirt_dom is not None:
             libvirt_dom.destroy()
 
-    def generate_install_media(self, force_download):
+    def generate_install_media(self, force_download=False):
         self.log.info("Generating install media")
 
         if not force_download and os.access(self.modified_iso_cache, os.F_OK):

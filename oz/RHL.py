@@ -151,7 +151,7 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
                                        self.output_floppy, syslinux,
                                        "::SYSLINUX.CFG"])
 
-    def generate_install_media(self, force_download):
+    def generate_install_media(self, force_download=False):
         self.log.info("Generating install media")
 
         if not force_download and os.access(self.modified_floppy_cache,
@@ -159,9 +159,6 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
             self.log.info("Using cached modified media")
             shutil.copyfile(self.modified_floppy_cache, self.output_floppy)
             return
-
-        self.get_original_floppy(self.tdl.url + "/images/bootnet.img",
-                                 force_download)
 
         self.copy_floppy()
         try:
