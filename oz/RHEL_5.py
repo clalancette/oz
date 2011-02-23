@@ -22,6 +22,7 @@ import os
 import Guest
 import ozutil
 import RedHat
+import OzException
 
 class RHEL5Guest(RedHat.RedHatCDYumGuest):
     def __init__(self, tdl, config, auto, nicmodel, diskbus):
@@ -37,7 +38,7 @@ class RHEL5Guest(RedHat.RedHatCDYumGuest):
         elif self.tdl.installtype == 'iso':
             self.url = self.tdl.iso
         else:
-            raise Guest.OzException("RHEL-5 installs must be done via url or iso")
+            raise OzException.OzException("RHEL-5 installs must be done via url or iso")
 
         RedHat.RedHatCDYumGuest.__init__(self, self.tdl.name, self.tdl.distro,
                                          self.tdl.update, self.tdl.arch,
@@ -81,11 +82,11 @@ class RHEL5Guest(RedHat.RedHatCDYumGuest):
         volume_identifier = self.get_primary_volume_descriptor(self.orig_iso)
 
         if not re.match("RHEL/5(\.[0-9])? " + self.tdl.arch + " DVD", volume_identifier):
-            raise Guest.OzException("Only DVDs are supported for RHEL-5 ISO installs")
+            raise OzException.OzException("Only DVDs are supported for RHEL-5 ISO installs")
 
 def get_class(tdl, config, auto):
     if tdl.update in ["GOLD", "U1", "U2", "U3"]:
         return RHEL5Guest(tdl, config, auto, "rtl8139", None)
     if tdl.update in ["U4", "U5", "U6"]:
         return RHEL5Guest(tdl, config, auto, "virtio", "virtio")
-    raise Guest.OzException("Unsupported " + tdl.distro + " update " + tdl.update)
+    raise OzException.OzException("Unsupported " + tdl.distro + " update " + tdl.update)

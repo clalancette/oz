@@ -34,14 +34,10 @@ import struct
 import numpy
 import tempfile
 
+import OzException
+
 def libvirt_error_handler(ctxt, err):
     pass
-
-class OzException(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-    def __str__(self):
-        return self.msg
 
 # NOTE: python 2.7 already defines subprocess.capture_output, but I can't
 # depend on that yet.  So write my own
@@ -57,7 +53,7 @@ def subprocess_check_output(*popenargs, **kwargs):
     retcode = process.poll()
     if retcode:
         cmd = ' '.join(*popenargs)
-        raise OzException("'%s' failed(%d): %s" % (cmd, retcode, stderr))
+        raise OzException.OzException("'%s' failed(%d): %s" % (cmd, retcode, stderr))
     return (stdout, stderr, retcode)
 
 class Guest(object):
@@ -77,14 +73,14 @@ class Guest(object):
         elif value.lower() == 'false' or value.lower() == 'no':
             value = False
         else:
-            raise OzException("Configuration parameter '%s' must be True, Yes, False, or No" % (key))
+            raise OzException.OzException("Configuration parameter '%s' must be True, Yes, False, or No" % (key))
 
         return value
 
     def __init__(self, name, distro, update, arch, nicmodel, clockoffset,
                  mousetype, diskbus, config):
         if arch != "i386" and arch != "x86_64":
-            raise OzException("Unsupported guest arch " + arch)
+            raise OzException.OzException("Unsupported guest arch " + arch)
         self.log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
         self.uuid = uuid.uuid4()
         mac = [0x52, 0x54, 0x00, random.randint(0x00, 0xff),
@@ -125,11 +121,11 @@ class Guest(object):
                 doc = libxml2.parseMemory(xml, len(xml))
                 ip = doc.xpathEval('/network/ip')
                 if len(ip) != 1:
-                    raise OzException("Failed to find host IP address for virbr0")
+                    raise OzException.OzException("Failed to find host IP address for virbr0")
                 self.host_bridge_ip = ip[0].prop('address')
                 break
         if self.host_bridge_ip is None:
-            raise OzException("Default libvirt network (virbr0) does not exist, install cannot continue")
+            raise OzException.OzException("Default libvirt network (virbr0) does not exist, install cannot continue")
 
         self.nicmodel = nicmodel
         if self.nicmodel is None:
@@ -147,7 +143,7 @@ class Guest(object):
             self.disk_bus = "virtio"
             self.disk_dev = "vda"
         else:
-            raise OzException("Unknown diskbus type " + diskbus)
+            raise OzException.OzException("Unknown diskbus type " + diskbus)
 
         self.log.debug("Name: %s, UUID: %s" % (self.name, self.uuid))
         self.log.debug("MAC: %s, distro: %s" % (self.macaddr, self.distro))
@@ -180,34 +176,34 @@ class Guest(object):
 
         try:
             dom = self.libvirt_conn.lookupByName(self.name)
-            raise OzException("Domain with name %s already exists" % (self.name))
+            raise OzException.OzException("Domain with name %s already exists" % (self.name))
         except:
            pass
 
         try:
             dom = self.libvirt_conn.lookupByUUID(self.uuid)
-            raise OzException("Domain with UUID %s already exists" % (self.uuid))
+            raise OzException.OzException("Domain with UUID %s already exists" % (self.uuid))
         except:
             pass
 
         if os.access(self.diskimage, os.F_OK):
-            raise OzException("Diskimage %s already exists" % (self.diskimage))
+            raise OzException.OzException("Diskimage %s already exists" % (self.diskimage))
 
     # the next 4 methods are intended to be overridden by the individual
     # OS backends; raise an error if they are called but not implemented
     def generate_install_media(self, force_download):
-        raise OzException("Install media for %s%s is not implemented, install cannot continue" % (self.distro, self.update))
+        raise OzException.OzException("Install media for %s%s is not implemented, install cannot continue" % (self.distro, self.update))
 
     def customize(self, libvirt_xml):
-        raise OzException("Customization for %s%s is not implemented" % (self.distro, self.update))
+        raise OzException.OzException("Customization for %s%s is not implemented" % (self.distro, self.update))
 
     def generate_icicle(self, libvirt_xml):
-        raise OzException("ICICLE generation for %s%s is not implemented" % (self.distro, self.update))
+        raise OzException.OzException("ICICLE generation for %s%s is not implemented" % (self.distro, self.update))
 
     # this method is intended to be an optimization if the user wants to do
     # both customize and generate_icicle
     def customize_and_generate_icicle(self, libvirt_xml):
-        raise OzException("Customization and ICICLE generate for %s%s is not implemented" % (self.distro, self.update))
+        raise OzException.OzException("Customization and ICICLE generate for %s%s is not implemented" % (self.distro, self.update))
 
     def targetDev(self, doc, devicetype, path, bus):
         install = doc.newChild(None, "disk", None)
@@ -364,7 +360,7 @@ class Guest(object):
             # if we timed out, then let's make sure to take a screenshot.
             screenshot = self.name + "-" + str(time.time()) + ".png"
             self.capture_screenshot(libvirt_dom.XMLDesc(0), screenshot)
-            raise OzException("Timed out waiting for install to finish")
+            raise OzException.OzException("Timed out waiting for install to finish")
 
         self.log.info("Install of %s succeeded" % (self.name))
 
@@ -405,10 +401,10 @@ class Guest(object):
         response.close()
 
         if not info.has_key("Content-Length"):
-            raise OzException("Could not reach destination to fetch boot media")
+            raise OzException.OzException("Could not reach destination to fetch boot media")
         content_length = int(info["Content-Length"])
         if content_length == 0:
-            raise OzException("Install media of 0 size detected, something is wrong")
+            raise OzException.OzException("Install media of 0 size detected, something is wrong")
 
         original_available = False
         if not force_download and os.access(output, os.F_OK):
@@ -424,7 +420,7 @@ class Guest(object):
             self.mkdir_p(outdir)
             devdata = os.statvfs(outdir)
             if (devdata.f_bsize*devdata.f_bavail) < content_length:
-                raise OzException("Not enough room on %s for install media" % (outdir))
+                raise OzException.OzException("Not enough room on %s for install media" % (outdir))
             self.log.info("Fetching the original install media from %s" % (url))
             self.last_mb = -1
             def progress(down_total, down_current, up_total, up_current):
@@ -452,7 +448,7 @@ class Guest(object):
             if os.stat(output)[stat.ST_SIZE] == 0:
                 # if we see a zero-sized media after the download, we know
                 # something went wrong
-                raise OzException("Media of 0 size downloaded")
+                raise OzException.OzException("Media of 0 size downloaded")
 
     def capture_screenshot(self, xml, filename):
         doc = libxml2.parseMemory(xml, len(xml))
@@ -485,14 +481,14 @@ class Guest(object):
         input_doc = libxml2.parseMemory(libvirt_xml, len(libvirt_xml))
         namenode = input_doc.xpathEval('/domain/name')
         if len(namenode) != 1:
-            raise OzException("invalid libvirt XML with no name")
+            raise OzException.OzException("invalid libvirt XML with no name")
         input_name = namenode[0].getContent()
         disks = input_doc.xpathEval('/domain/devices/disk')
         if len(disks) != 1:
-            raise OzException("oz cannot handle a libvirt domain with more than 1 disk")
+            raise OzException.OzException("oz cannot handle a libvirt domain with more than 1 disk")
         source = disks[0].xpathEval('source')
         if len(source) != 1:
-            raise OzException("invalid <disk> entry without a source")
+            raise OzException.OzException("invalid <disk> entry without a source")
         input_disk = source[0].prop('file')
         driver = disks[0].xpathEval('driver')
         if len(driver) == 0:
@@ -500,7 +496,7 @@ class Guest(object):
         elif len(driver) != 1:
             input_disk_type = driver[0].prop('type')
         else:
-            raise OzException("invalid <disk> entry without a driver")
+            raise OzException.OzException("invalid <disk> entry without a driver")
 
         for domid in self.libvirt_conn.listDomainsID():
             self.log.debug("DomID: %d" % (domid))
@@ -510,9 +506,9 @@ class Guest(object):
             namenode = doc.xpathEval('/domain/name')
             if len(namenode) != 1:
                 # hm, odd, a domain without a name?
-                raise OzException("Saw a domain without a name, something weird is going on")
+                raise OzException.OzException("Saw a domain without a name, something weird is going on")
             if input_name == namenode[0].getContent():
-                raise OzException("Cannot setup ICICLE generation on a running guest")
+                raise OzException.OzException("Cannot setup ICICLE generation on a running guest")
             disks = doc.xpathEval('/domain/devices/disk')
             if len(disks) < 1:
                 # odd, a domain without a disk, but don't worry about it
@@ -524,7 +520,7 @@ class Guest(object):
                     # http://git.annexia.org/?p=libguestfs.git;a=blob;f=src/virt.c;h=2c6be3c6a2392ab8242d1f4cee9c0d1445844385;hb=HEAD#l169
                     filename = str(source.prop('file'))
                     if filename == input_disk:
-                        raise OzException("Cannot setup ICICLE generation on a running disk")
+                        raise OzException.OzException("Cannot setup ICICLE generation on a running disk")
 
 
         self.log.info("Setting up guestfs handle for %s" % (self.name))
@@ -544,7 +540,7 @@ class Guest(object):
         roots = g.inspect_os()
 
         if len(roots) == 0:
-            raise OzException("No operating systems found on the disk")
+            raise OzException.OzException("No operating systems found on the disk")
 
         self.log.debug("Getting mountpoints")
         for root in roots:
@@ -616,7 +612,7 @@ class Guest(object):
             listen.close()
 
         if addr is None:
-            raise OzException("Timed out waiting for domain to boot")
+            raise OzException.OzException("Timed out waiting for domain to boot")
 
         self.log.debug("IP address of guest is %s" % (addr[0]))
 
@@ -679,7 +675,7 @@ class CDGuest(Guest):
             isostat = gfs.statvfs("/")
             outputstat = os.statvfs(self.iso_contents)
             if (outputstat.f_bsize*outputstat.f_bavail) < (isostat['blocks']*isostat['bsize']):
-                raise OzException("Not enough room on %s to extract install media" % (self.iso_contents))
+                raise OzException.OzException("Not enough room on %s to extract install media" % (self.iso_contents))
 
             self.log.debug("Extracting ISO contents")
             current = os.getcwd()
@@ -736,13 +732,13 @@ class CDGuest(Guest):
         (desc_type, identifier, version, unused1, system_identifier, volume_identifier, unused2, space_size_le, space_size_be, unused3, set_size_le, set_size_be, seqnum_le, seqnum_be) = struct.unpack(fmt, cdfile.read(struct.calcsize(fmt)))
 
         if desc_type != 0x1:
-            raise OzException("Invalid primary volume descriptor")
+            raise OzException.OzException("Invalid primary volume descriptor")
         if identifier != "CD001":
-            raise OzException("invalid CD isoIdentification")
+            raise OzException.OzException("invalid CD isoIdentification")
         if unused1 != 0x0:
-            raise OzException("data in unused field")
+            raise OzException.OzException("data in unused field")
         if unused2 != 0x0:
-            raise OzException("data in 2nd unused field")
+            raise OzException.OzException("data in 2nd unused field")
 
         return volume_identifier
 
@@ -761,13 +757,13 @@ class CDGuest(Guest):
         fmt = "=B5sB23s41sI"
         (boot, isoIdent, version, toritoSpec, unused, bootP) = struct.unpack(fmt, cdfile.read(struct.calcsize(fmt)))
         if boot != 0x0:
-            raise OzException("invalid CD boot sector")
+            raise OzException.OzException("invalid CD boot sector")
         if version != 0x1:
-            raise OzException("invalid CD version")
+            raise OzException.OzException("invalid CD version")
         if isoIdent != "CD001":
-            raise OzException("invalid CD isoIdentification")
+            raise OzException.OzException("invalid CD isoIdentification")
         if toritoSpec != "EL TORITO SPECIFICATION":
-            raise OzException("invalid CD torito specification")
+            raise OzException.OzException("invalid CD torito specification")
 
         # OK, this looks like a bootable CD.  Seek to the boot sector, and
         # look for the header, 0x55, and 0xaa in the first 32 bytes
@@ -776,13 +772,13 @@ class CDGuest(Guest):
         bootdata = cdfile.read(struct.calcsize(fmt))
         (header, platform, unused, manu, unused2, five, aa) = struct.unpack(fmt, bootdata)
         if header != 0x1:
-            raise OzException("invalid CD boot sector header")
+            raise OzException.OzException("invalid CD boot sector header")
         if platform != 0x0 and platform != 0x1 and platform != 0x2:
-            raise OzException("invalid CD boot sector platform")
+            raise OzException.OzException("invalid CD boot sector platform")
         if unused != 0x0:
-            raise OzException("invalid CD unused boot sector field")
+            raise OzException.OzException("invalid CD unused boot sector field")
         if five != 0x55 or aa != 0xaa:
-            raise OzException("invalid CD boot sector footer")
+            raise OzException.OzException("invalid CD boot sector footer")
 
         def checksum(data):
             s = 0
@@ -793,7 +789,7 @@ class CDGuest(Guest):
 
         csum = checksum(bootdata)
         if csum != 0:
-            raise OzException("invalid CD checksum: expected 0, saw %d" % (csum))
+            raise OzException.OzException("invalid CD checksum: expected 0, saw %d" % (csum))
 
         # OK, everything so far has checked out.  Read the default/initial
         # boot entry
@@ -802,9 +798,9 @@ class CDGuest(Guest):
         (boot, media, loadsegment, systemtype, unused, scount, imgstart, unused2) = struct.unpack(fmt, cdfile.read(struct.calcsize(fmt)))
 
         if boot != 0x88:
-            raise OzException("invalid CD initial boot indicator")
+            raise OzException.OzException("invalid CD initial boot indicator")
         if unused != 0x0 or unused2 != 0x0:
-            raise OzException("invalid CD initial boot unused field")
+            raise OzException.OzException("invalid CD initial boot unused field")
 
         if media == 0 or media == 4:
             count = scount
@@ -818,7 +814,7 @@ class CDGuest(Guest):
             # 2.88MB floppy in sectors
             count = 2880*1024/512
         else:
-            raise OzException("invalid CD media type")
+            raise OzException.OzException("invalid CD media type")
 
         # finally, seek to "imgstart", and read "count" sectors, which
         # contains the boot image

@@ -21,6 +21,7 @@ import os
 import Guest
 import ozutil
 import RedHat
+import OzException
 
 class RHEL6Guest(RedHat.RedHatCDYumGuest):
     def __init__(self, tdl, config, auto):
@@ -36,7 +37,7 @@ class RHEL6Guest(RedHat.RedHatCDYumGuest):
         elif self.tdl.installtype == 'iso':
             self.url = self.tdl.iso
         else:
-            raise Guest.OzException("RHEL-6 installs must be done via url or iso")
+            raise OzException.OzException("RHEL-6 installs must be done via url or iso")
 
         RedHat.RedHatCDYumGuest.__init__(self, self.tdl.name, "RHEL-6",
                                          self.tdl.update, self.tdl.arch,
@@ -74,4 +75,4 @@ class RHEL6Guest(RedHat.RedHatCDYumGuest):
 def get_class(tdl, config, auto):
     if tdl.update in ["0"]:
         return RHEL6Guest(tdl, config, auto)
-    raise Guest.OzException("Unsupported RHEL-6 update " + tdl.update)
+    raise OzException.OzException("Unsupported RHEL-6 update " + tdl.update)

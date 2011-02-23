@@ -25,12 +25,7 @@ import RHL
 import Ubuntu
 import Windows
 import OpenSUSE
-
-class DistroException(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-    def __str__(self):
-        return self.msg
+import OzException
 
 def guest_factory(tdl, config, auto):
     if tdl.distro == "Fedora":
@@ -56,7 +51,7 @@ def guest_factory(tdl, config, auto):
     elif tdl.distro == "OpenSUSE":
         return OpenSUSE.get_class(tdl, config, auto)
 
-    raise DistroException("Invalid distribution " + tdl.distro)
+    raise OzException.OzException("Invalid distribution " + tdl.distro)
 
 def distrolist():
     print "   Fedora: 7, 8, 9, 10, 11, 12, 13, 14"

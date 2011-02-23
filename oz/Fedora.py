@@ -21,6 +21,7 @@ import os
 import Guest
 import ozutil
 import RedHat
+import OzException
 
 class FedoraGuest(RedHat.RedHatCDYumGuest):
     def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,
@@ -38,7 +39,7 @@ class FedoraGuest(RedHat.RedHatCDYumGuest):
         elif self.tdl.installtype == 'iso':
             self.url = self.tdl.iso
         else:
-            raise Guest.OzException("Fedora installs must be done via url or iso")
+            raise OzException.OzException("Fedora installs must be done via url or iso")
 
         RedHat.RedHatCDYumGuest.__init__(self, self.tdl.name, "Fedora",
                                          self.tdl.update, self.tdl.arch,
@@ -86,4 +87,4 @@ def get_class(tdl, config, auto):
         return FedoraGuest(tdl, config, auto, "virtio", True, "virtio", True)
     if tdl.update in ["7", "8", "9"]:
         return FedoraGuest(tdl, config, auto, "rtl8139", False, None, False)
-    raise Guest.OzException("Unsupported Fedora update " + tdl.update)
+    raise OzException.OzException("Unsupported Fedora update " + tdl.update)

@@ -21,13 +21,14 @@ import subprocess
 
 import Guest
 import ozutil
+import OzException
 
 class OpenSUSEGuest(Guest.CDGuest):
     def __init__(self, tdl, config, auto):
         self.tdl = tdl
 
         if self.tdl.installtype != 'iso':
-            raise Guest.OzException("OpenSUSE installs must be done via ISO")
+            raise OzException.OzException("OpenSUSE installs must be done via ISO")
 
         self.autoyast = auto
         if self.autoyast is None:
@@ -237,7 +238,7 @@ class OpenSUSEGuest(Guest.CDGuest):
         # part 2; check and setup sshd
         self.log.debug("Step 2: setup sshd")
         if not g_handle.exists('/etc/init.d/sshd') or not g_handle.exists('/usr/sbin/sshd'):
-            raise Guest.OzException("ssh not installed on the image, cannot continue")
+            raise OzException.OzException("ssh not installed on the image, cannot continue")
 
         runlevel = self.get_default_runlevel(g_handle)
         startuplink = '/etc/rc.d/rc' + runlevel + '.d/S04sshd'
@@ -271,7 +272,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         # part 3; make sure the guest announces itself
         self.log.debug("Step 3: Guest announcement")
         if not g_handle.exists('/etc/init.d/cron') or not g_handle.exists('/usr/sbin/cron'):
-            raise Guest.OzException("cron not installed on the image, cannot continue")
+            raise OzException.OzException("cron not installed on the image, cannot continue")
 
         iciclepath = ozutil.generate_full_guesttools_path('icicle-nc')
         g_handle.upload(iciclepath, '/root/icicle-nc')
@@ -330,4 +331,4 @@ def get_class(tdl, config, auto):
     if tdl.update in ["11.0", "11.1", "11.2", "11.3"]:
         return OpenSUSEGuest(tdl, config, auto)
 
-    raise Guest.OzException("Unsupported OpenSUSE update " + tdl.update)
+    raise OzException.OzException("Unsupported OpenSUSE update " + tdl.update)

@@ -21,6 +21,7 @@ import shutil
 
 import Guest
 import ozutil
+import OzException
 
 class RedHatCDGuest(Guest.CDGuest):
     def __init__(self, name, distro, update, arch, installtype, nicmodel,
@@ -191,7 +192,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         # part 2; check and setup sshd
         self.log.debug("Step 2: setup sshd")
         if not g_handle.exists('/etc/init.d/sshd') or not g_handle.exists('/usr/sbin/sshd'):
-            raise Guest.OzException("ssh not installed on the image, cannot continue")
+            raise OzException.OzException("ssh not installed on the image, cannot continue")
 
         startuplink = self.get_service_runlevel_link(g_handle, 'sshd')
         if g_handle.exists(startuplink):
@@ -219,7 +220,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         # part 4; make sure the guest announces itself
         self.log.debug("Step 4: Guest announcement")
         if not g_handle.exists('/etc/init.d/crond') or not g_handle.exists('/usr/sbin/crond'):
-            raise Guest.OzException("cron not installed on the image, cannot continue")
+            raise OzException.OzException("cron not installed on the image, cannot continue")
 
         iciclepath = ozutil.generate_full_guesttools_path('icicle-nc')
         g_handle.upload(iciclepath, '/root/icicle-nc')

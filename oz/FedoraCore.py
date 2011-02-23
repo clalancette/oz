@@ -21,6 +21,7 @@ import os
 import Guest
 import ozutil
 import RedHat
+import OzException
 
 class FedoraCoreGuest(RedHat.RedHatCDGuest):
     def __init__(self, tdl, config, auto):
@@ -35,7 +36,7 @@ class FedoraCoreGuest(RedHat.RedHatCDGuest):
         elif self.tdl.installtype == 'iso':
             self.url = self.tdl.iso
         else:
-            raise Guest.OzException("FedoraCore installs must be done via url or iso")
+            raise OzException.OzException("FedoraCore installs must be done via url or iso")
 
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)
@@ -82,4 +83,4 @@ def get_class(tdl, config, auto):
         return FedoraCoreGuest(tdl, config, auto)
     if tdl.update in ["4"]:
         return FedoraCore4Guest(tdl, config, auto)
-    raise Guest.OzException("Unsupported FedoraCore update " + tdl.update)
+    raise OzException.OzException("Unsupported FedoraCore update " + tdl.update)

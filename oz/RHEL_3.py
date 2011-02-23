@@ -21,6 +21,7 @@ import os
 import Guest
 import ozutil
 import RedHat
+import OzException
 
 class RHEL3Guest(RedHat.RedHatCDGuest):
     def __init__(self, tdl, config, auto):
@@ -35,10 +36,10 @@ class RHEL3Guest(RedHat.RedHatCDGuest):
             ozutil.deny_localhost(self.url)
         elif self.tdl.installtype == 'iso':
             if self.tdl.distro == "RHEL-3":
-                raise Guest.OzException("RHEL-3 installs must be done via url")
+                raise OzException.OzException("RHEL-3 installs must be done via url")
             self.url = self.tdl.iso
         else:
-            raise Guest.OzException("RHEL-3 installs must be done via url or iso")
+            raise OzException.OzException("RHEL-3 installs must be done via url or iso")
 
         ozutil.deny_localhost(self.url)
 
@@ -88,9 +89,9 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         # there.  Therefore this is only to check CentOS-3 DVDs
         volume_identifier = self.get_primary_volume_descriptor(self.orig_iso)
         if not re.match("CentOS-3(\.[0-9])? " + self.tdl.arch + " DVD$", volume_identifier):
-            raise Guest.OzException("Only DVDs are supported for CentOS-3 ISO installs")
+            raise OzException.OzException("Only DVDs are supported for CentOS-3 ISO installs")
 
 def get_class(tdl, config, auto):
     if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9"]:
         return RHEL3Guest(tdl, config, auto)
-    raise Guest.OzException("Unsupported " + tdl.distro + " update " + tdl.update)
+    raise OzException.OzException("Unsupported " + tdl.distro + " update " + tdl.update)

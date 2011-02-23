@@ -21,6 +21,7 @@ import os
 import Guest
 import ozutil
 import RedHat
+import OzException
 
 class RHEL4Guest(RedHat.RedHatCDGuest):
     def __init__(self, tdl, config, auto, nicmodel, diskbus):
@@ -36,7 +37,7 @@ class RHEL4Guest(RedHat.RedHatCDGuest):
         elif self.tdl.installtype == 'iso':
             self.url = self.tdl.iso
         else:
-            raise Guest.OzException("RHEL-4 installs must be done via url or iso")
+            raise OzException.OzException("RHEL-4 installs must be done via url or iso")
 
         RedHat.RedHatCDGuest.__init__(self, self.tdl.name, self.tdl.distro,
                                       self.tdl.update, self.tdl.arch,
@@ -78,20 +79,20 @@ class RHEL4Guest(RedHat.RedHatCDGuest):
             f.close()
 
             if not lines[1].startswith("Red Hat Enterprise Linux 4"):
-                raise Guest.OzException("Invalid .discinfo file on ISO")
+                raise OzException.OzException("Invalid .discinfo file on ISO")
             if lines[2].strip() != self.arch:
-                raise Guest.OzException("Invalid .discinfo architecture on ISO")
+                raise OzException.OzException("Invalid .discinfo architecture on ISO")
             if lines[3].strip() != "1,2,3,4,5":
-                raise Guest.OzException("Only DVDs are supported for RHEL-4 ISO installs")
+                raise OzException.OzException("Only DVDs are supported for RHEL-4 ISO installs")
         else:
             volume_identifier = self.get_primary_volume_descriptor(self.orig_iso)
 
             if not re.match("CentOS 4(\.[0-9])?.*DVD$", volume_identifier):
-                raise Guest.OzException("Only DVDs are supported for CentOS-4 ISO installs")
+                raise OzException.OzException("Only DVDs are supported for CentOS-4 ISO installs")
 
 def get_class(tdl, config, auto):
     if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7"]:
         return RHEL4Guest(tdl, config, auto, "rtl8139", None)
     if tdl.update in ["U8", "U9"]:
         return RHEL4Guest(tdl, config, auto, "virtio", "virtio")
-    raise Guest.OzException("Unsupported " + tdl.distro + " update " + tdl.update)
+    raise OzException.OzException("Unsupported " + tdl.distro + " update " + tdl.update)

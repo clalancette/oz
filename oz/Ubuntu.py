@@ -20,6 +20,7 @@ import os
 
 import Guest
 import ozutil
+import OzException
 
 class Ubuntu(Guest.CDGuest):
     def generate_new_iso(self):
@@ -46,7 +47,7 @@ class Ubuntu810and904and910and1004Guest(Ubuntu):
         self.tdl = tdl
 
         if self.tdl.installtype != 'iso':
-            raise Guest.OzException("Ubuntu installs must be done via iso")
+            raise OzException.OzException("Ubuntu installs must be done via iso")
 
         self.casper_initrd = initrd
 
@@ -112,7 +113,7 @@ class Ubuntu710and8041Guest(Ubuntu):
         self.tdl = tdl
 
         if self.tdl.installtype != 'iso':
-            raise Guest.OzException("Ubuntu installs must be done via iso")
+            raise OzException.OzException("Ubuntu installs must be done via iso")
 
         self.preseed_file = auto
         if self.preseed_file is None:
@@ -158,7 +159,7 @@ class Ubuntu610and704Guest(Ubuntu):
         self.tdl = tdl
 
         if self.tdl.installtype != 'iso':
-            raise Guest.OzException("Ubuntu installs must be done via iso")
+            raise OzException.OzException("Ubuntu installs must be done via iso")
 
         self.preseed_file = auto
         if self.preseed_file is None:
@@ -213,4 +214,4 @@ def get_class(tdl, config, auto):
         return Ubuntu710and8041Guest(tdl, config, auto)
     if tdl.update in ["6.10", "7.04"]:
         return Ubuntu610and704Guest(tdl, config, auto)
-    raise Guest.OzException("Unsupported Ubuntu update " + tdl.update)
+    raise OzException.OzException("Unsupported Ubuntu update " + tdl.update)

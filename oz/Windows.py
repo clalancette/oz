@@ -21,6 +21,7 @@ import libxml2
 
 import Guest
 import ozutil
+import OzException
 
 def get_windows_arch(tdl_arch):
     arch = tdl_arch
@@ -33,16 +34,16 @@ class Windows2000andXPand2003(Guest.CDGuest):
         self.tdl = tdl
 
         if self.tdl.update == "2000" and self.tdl.arch != "i386":
-            raise Guest.OzException("Windows 2000 only supports i386 architecture")
+            raise OzException.OzException("Windows 2000 only supports i386 architecture")
         if self.tdl.key is None:
-            raise Guest.OzException("A key is required when installing Windows 2000, XP, or 2003")
+            raise OzException.OzException("A key is required when installing Windows 2000, XP, or 2003")
 
         self.siffile = auto
         if self.siffile is None:
             self.siffile = ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif")
 
         if self.tdl.installtype != 'iso':
-            raise Guest.OzException("Windows installs must be done via iso")
+            raise OzException.OzException("Windows installs must be done via iso")
 
         self.winarch = get_windows_arch(self.tdl.arch)
 
@@ -116,14 +117,14 @@ class Windows2008and7(Guest.CDGuest):
         self.tdl = tdl
 
         if self.tdl.key is None:
-            raise Guest.OzException("A key is required when installing Windows 2000, XP, or 2003")
+            raise OzException.OzException("A key is required when installing Windows 2000, XP, or 2003")
 
         self.unattendfile = auto
         if self.unattendfile is None:
             self.unattendfile = ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.xml")
 
         if self.tdl.installtype != 'iso':
-            raise Guest.OzException("Windows installs must be done via iso")
+            raise OzException.OzException("Windows installs must be done via iso")
 
         self.winarch = get_windows_arch(self.tdl.arch)
 
@@ -192,4 +193,4 @@ def get_class(tdl, config, auto):
         return Windows2000andXPand2003(tdl, config, auto)
     if tdl.update in ["2008", "7"]:
         return Windows2008and7(tdl, config, auto)
-    raise Guest.OzException("Unsupported Windows update " + tdl.update)
+    raise OzException.OzException("Unsupported Windows update " + tdl.update)
