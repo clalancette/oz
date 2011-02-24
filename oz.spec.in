@@ -6,7 +6,7 @@ Version: @VERSION@
 Release: 1%{?dist}
 License: LGPLv2
 Group: Development
-URL: http://deltacloud.org
+URL: http://aeolusproject.org/oz.html
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 Requires: gvnc-tools
