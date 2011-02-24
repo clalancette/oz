@@ -14,6 +14,8 @@ man2html:
 	@groff -mandoc man/oz-customize.1 -T html > man/oz-customize.html
 	@echo "Generating oz-generate-icicle HTML page from man"
 	@groff -mandoc man/oz-generate-icicle.1 -T html > man/oz-generate-icicle.html
+	@echo "Generating oz-cleanup-cache HTML page from man"
+	@groff -mandoc man/oz-cleanup-cache.1 -T html > man/oz-cleanup-cache.html
 
 clean:
 	rm -rf MANIFEST build dist usr *~ oz.spec *.pyc oz/*~ oz/*.pyc examples/*~ oz/auto/*~ man/*~ docs/*~ man/*.html

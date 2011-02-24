@@ -5,7 +5,8 @@ import os
 VERSION = '0.1.0'
 
 datafiles = [('share/man/man1', ['man/oz-install.1', 'man/oz-customize.1',
-                                 'man/oz-generate-icicle.1'])
+                                 'man/oz-generate-icicle.1',
+                                 'man/oz-cleanup-cache.1'])
              ]
 
 class sdist(_sdist):
@@ -28,7 +29,8 @@ setup(name='oz',
       package_dir={'oz': 'oz'},
       package_data={'oz': ['auto/*', 'guesttools/*']},
       packages=['oz'],
-      scripts=['oz-install', 'oz-generate-icicle', 'oz-customize'],
+      scripts=['oz-install', 'oz-generate-icicle', 'oz-customize',
+               'oz-cleanup-cache'],
       cmdclass={'sdist': sdist},
       data_files = datafiles,
       )
