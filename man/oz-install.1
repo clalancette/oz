@@ -69,6 +69,11 @@ starting installation, Oz will abort.  If this option is used, then Oz
 will undefine the libvirt guest with the same name or UUID and delete
 the diskimage, so it should be used with caution.
 .TP
+.B "\-t"
+Use a timeout value of \fBtimeout\fR for installation, rather than the
+oz default.  This can be useful if you know you have slower storage
+and want to wait longer for the installation to timeout.
+.TP
 .B "\-u"
 Customize the image after installation.  This generally installs
 additional packages onto the disk image after installation.
