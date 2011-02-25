@@ -65,6 +65,7 @@ mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/oz
 %{_bindir}/oz-install
 %{_bindir}/oz-generate-icicle
 %{_bindir}/oz-customize
+%{_bindir}/oz-cleanup-cache
 %{python_sitelib}/oz-*.egg-info
 %{_mandir}/man1/*
 
