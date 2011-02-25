@@ -110,17 +110,17 @@ class Windows2000andXPand2003(Guest.CDGuest):
         dom = self.libvirt_conn.createXML(xml, 0)
 
         if timeout is None:
-            self.wait_for_install_finish(dom, 1000)
-        else:
-            self.wait_for_install_finish(dom, timeout)
+            timeout = 1000
+
+        self.wait_for_install_finish(dom, timeout)
 
         xml = self.generate_xml("hd")
         dom = self.libvirt_conn.createXML(xml, 0)
 
         if timeout is None:
-            self.wait_for_install_finish(dom, 3600)
-        else:
-            self.wait_for_install_finish(dom, timeout)
+            timeout = 3600
+
+        self.wait_for_install_finish(dom, timeout)
 
         return self.generate_xml("hd", want_install_disk=False)
 
@@ -196,19 +196,24 @@ class Windows2008and7(Guest.CDGuest):
         finally:
             self.cleanup_iso()
 
-    def install(self):
+    def install(self, timeout=None):
         self.log.info("Running install for %s" % (self.name))
         xml = self.generate_xml("cdrom")
         dom = self.libvirt_conn.createXML(xml, 0)
-        self.wait_for_install_finish(dom, 6000)
+
+        if timeout is None:
+            timeout = 6000
+
+        self.wait_for_install_finish(dom, timeout)
 
         xml = self.generate_xml("hd")
         dom = self.libvirt_conn.createXML(xml, 0)
-        self.wait_for_install_finish(dom, 6000)
+
+        self.wait_for_install_finish(dom, timeout)
 
         xml = self.generate_xml("hd")
         dom = self.libvirt_conn.createXML(xml, 0)
-        self.wait_for_install_finish(dom, 6000)
+        self.wait_for_install_finish(dom, timeout)
 
         return self.generate_xml("hd", want_install_disk=False)
 

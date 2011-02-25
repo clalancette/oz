@@ -853,9 +853,9 @@ class CDGuest(Guest):
         dom = self.libvirt_conn.createXML(xml, 0)
 
         if timeout is None:
-            self.wait_for_install_finish(dom, 1200)
-        else:
-            self.wait_for_install_finish(dom, timeout)
+            timeout = 1200
+
+        self.wait_for_install_finish(dom, timeout)
 
         return self.generate_xml("hd", want_install_disk=False)
 
@@ -900,9 +900,9 @@ class FDGuest(Guest):
         dom = self.libvirt_conn.createXML(xml, 0)
 
         if timeout is None:
-            self.wait_for_install_finish(dom, 1200)
-        else:
-            self.wait_for_install_finish(dom, timeout)
+            timeout = 1200
+
+        self.wait_for_install_finish(dom, timeout)
 
         return self.generate_xml("hd", want_install_disk=False)
 
