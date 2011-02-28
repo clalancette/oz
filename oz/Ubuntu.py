@@ -52,6 +52,48 @@ class Ubuntu(Guest.CDGuest):
         finally:
             self.cleanup_iso()
 
+class Ubuntu1010Guest(Ubuntu):
+    def __init__(self, tdl, config, auto):
+        self.tdl = tdl
+
+        if self.tdl.installtype != 'iso':
+            raise OzException.OzException("Ubuntu installs must be done via iso")
+
+        self.preseed_file = auto
+        if self.preseed_file is None:
+            self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
+
+        Guest.CDGuest.__init__(self, self.tdl.name, "Ubuntu", self.tdl.update,
+                               self.tdl.arch, 'iso', "virtio", None, None,
+                               "virtio", config)
+
+    def modify_iso(self):
+        self.log.debug("Modifying ISO")
+
+        self.log.debug("Copying preseed file")
+        shutil.copy(self.preseed_file, os.path.join(self.iso_contents,
+                                                    "preseed",
+                                                    "customiso.seed"))
+
+        self.log.debug("Modifying isolinux.cfg")
+        isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
+                                   "isolinux.cfg")
+        os.unlink(isolinuxcfg)
+        f = open(isolinuxcfg, 'w')
+        f.write("default customiso\n")
+        f.write("timeout 1\n")
+        f.write("prompt 0\n")
+        f.write("label customiso\n")
+        f.write("  menu label ^Customiso\n")
+        f.write("  menu default\n")
+        if os.path.isdir(os.path.join(self.iso_contents, "casper")):
+            f.write("  kernel /casper/vmlinuz\n")
+            f.write("  append file=/cdrom/preseed/customiso.seed boot=casper automatic-ubiquity initrd=/casper/initrd.lz\n")
+        else:
+            f.write("  kernel /install/vmlinuz\n")
+            f.write("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us netcfg/choose_interface=auto priority=critical initrd=/install/initrd.gz --\n")
+        f.close()
+
 class Ubuntu810and904and910and1004Guest(Ubuntu):
     def __init__(self, tdl, config, auto, initrd):
         self.tdl = tdl
@@ -216,6 +258,8 @@ def get_class(tdl, config, auto):
     # figure out which is which and give the user some feedback when we
     # can't actually succeed
 
+    if tdl.update in ["10.10"]:
+        return Ubuntu1010Guest(tdl, config, auto)
     if tdl.update in ["8.10", "9.04"]:
         return Ubuntu810and904and910and1004Guest(tdl, config, auto, "initrd.gz")
     if tdl.update in ["9.10", "10.04", "10.04.1"]:
