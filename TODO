@@ -1,5 +1,5 @@
 1.  More OS support:
-     - Ubuntu 5.04, 5.10, 6.06, and 10.10
+     - Ubuntu 5.04, 5.10, and 6.06
      - Debian Etch, Lenny, Squeeze
      - SUSE Linux 10.0, 10.1
      - openSUSE 10.2, 10.3 (autoyast)
@@ -14,7 +14,8 @@
 installation fails, we want to get detailed error information out of the
 installer to find out why.  Fedora/RHEL support doing remote syslog via
 network or virtio-serial, and I also believe anaconda will dump data to syslog
-during installation, so that is one avenue to pursue.
+during installation, so that is one avenue to pursue.  NOTE: anaconda
+virtio-serial support does not exist until F-14.  See http://fedoraproject.org/wiki/Anaconda/Logging
 4.  Instead of calling out to an external 'gvnccapture' command to collect
 a screenshot, we should instead write the thing in python using the gtk-vnc
 library.  Unfortunately I have not figured out how to do it in python yet,
@@ -55,3 +56,9 @@ that are provided to us.  That will make it so that a minimal TDL will only
 include the path to the ISO, and we can figure out the rest of the information.
 16. Add support for additional drivers during install (needed for Windows virtio
 support).
+17. Make "python setup.py bdist_rpm" work.  The problem is that bdist_rpm
+generates its own SPEC file based on the information in setup.py.  When it
+does this, it somehow messes up the %description (minor, probably a change to
+the setup macro), fails to create the /var/lib/oz subdirectories (which could
+be moved into setup.py as well), and also fails to find the gzipped man page
+files (which is what eventually causes the build to fail).
