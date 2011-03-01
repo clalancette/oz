@@ -22,7 +22,50 @@ import Guest
 import ozutil
 import OzException
 
-class Ubuntu(Guest.CDGuest):
+class UbuntuGuest(Guest.CDGuest):
+    def __init__(self, tdl, config, auto, initrd, nicmodel, diskbus):
+        self.tdl = tdl
+
+        self.casper_initrd = initrd
+
+        if self.tdl.installtype != 'iso':
+            raise OzException.OzException("Ubuntu installs must be done via iso")
+
+        self.preseed_file = auto
+        if self.preseed_file is None:
+            self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
+
+        Guest.CDGuest.__init__(self, self.tdl.name, "Ubuntu", self.tdl.update,
+                               self.tdl.arch, 'iso', nicmodel, None, None,
+                               diskbus, config)
+
+    def modify_iso(self):
+        self.log.debug("Modifying ISO")
+
+        self.log.debug("Copying preseed file")
+        shutil.copy(self.preseed_file, os.path.join(self.iso_contents,
+                                                    "preseed",
+                                                    "customiso.seed"))
+
+        self.log.debug("Modifying isolinux.cfg")
+        isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
+                                   "isolinux.cfg")
+        os.unlink(isolinuxcfg)
+        f = open(isolinuxcfg, 'w')
+        f.write("default customiso\n")
+        f.write("timeout 1\n")
+        f.write("prompt 0\n")
+        f.write("label customiso\n")
+        f.write("  menu label ^Customiso\n")
+        f.write("  menu default\n")
+        if os.path.isdir(os.path.join(self.iso_contents, "casper")):
+            f.write("  kernel /casper/vmlinuz\n")
+            f.write("  append file=/cdrom/preseed/customiso.seed boot=casper automatic-ubiquity noprompt initrd=/casper/" + self.casper_initrd + "\n")
+        else:
+            f.write("  kernel /install/vmlinuz\n")
+            f.write("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us netcfg/choose_interface=auto priority=critical initrd=/install/initrd.gz --\n")
+        f.close()
+
     def generate_new_iso(self):
         self.log.info("Generating new ISO")
         Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom", "-J",
@@ -52,7 +95,7 @@ class Ubuntu(Guest.CDGuest):
         finally:
             self.cleanup_iso()
 
-class Ubuntu1010Guest(Ubuntu):
+class Ubuntu610and704Guest(Guest.CDGuest):
     def __init__(self, tdl, config, auto):
         self.tdl = tdl
 
@@ -64,208 +107,81 @@ class Ubuntu1010Guest(Ubuntu):
             self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
 
         Guest.CDGuest.__init__(self, self.tdl.name, "Ubuntu", self.tdl.update,
-                               self.tdl.arch, 'iso', "virtio", None, None,
-                               "virtio", config)
+                               self.tdl.arch, 'iso', "rtl8139", None, None,
+                               None, config)
 
     def modify_iso(self):
-        self.log.debug("Modifying ISO")
+        self.log.debug("Putting the preseed file in place")
 
-        self.log.debug("Copying preseed file")
         shutil.copy(self.preseed_file, os.path.join(self.iso_contents,
                                                     "preseed",
                                                     "customiso.seed"))
 
         self.log.debug("Modifying isolinux.cfg")
-        isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
-                                   "isolinux.cfg")
-        os.unlink(isolinuxcfg)
-        f = open(isolinuxcfg, 'w')
-        f.write("default customiso\n")
-        f.write("timeout 1\n")
-        f.write("prompt 0\n")
-        f.write("label customiso\n")
-        f.write("  menu label ^Customiso\n")
-        f.write("  menu default\n")
-        if os.path.isdir(os.path.join(self.iso_contents, "casper")):
-            f.write("  kernel /casper/vmlinuz\n")
-            f.write("  append file=/cdrom/preseed/customiso.seed boot=casper automatic-ubiquity initrd=/casper/initrd.lz\n")
-        else:
-            f.write("  kernel /install/vmlinuz\n")
-            f.write("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us netcfg/choose_interface=auto priority=critical initrd=/install/initrd.gz --\n")
-        f.close()
-
-class Ubuntu810and904and910and1004Guest(Ubuntu):
-    def __init__(self, tdl, config, auto, initrd):
-        self.tdl = tdl
-
-        if self.tdl.installtype != 'iso':
-            raise OzException.OzException("Ubuntu installs must be done via iso")
-
-        self.casper_initrd = initrd
-
-        self.preseed_file = auto
-        if self.preseed_file is None:
-            self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
-
-        Guest.CDGuest.__init__(self, self.tdl.name, "Ubuntu", self.tdl.update,
-                               self.tdl.arch, 'iso', "virtio", None, None,
-                               "virtio", config)
-
-    def modify_iso(self):
-        self.log.debug("Modifying ISO")
-
-        self.log.debug("Copying preseed file")
-        shutil.copy(self.preseed_file, os.path.join(self.iso_contents,
-                                                    "preseed",
-                                                    "customiso.seed"))
-
-        self.log.debug("Modifying text.cfg")
-        textcfg = os.path.join(self.iso_contents, "isolinux", "text.cfg")
-        f = open(textcfg, "r")
+        isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
+        f = open(isolinuxcfg, "r")
         lines = f.readlines()
         f.close()
 
         for line in lines:
-            if re.match("default", line):
-                lines[lines.index(line)] = "default customiso\n"
-        lines.append("label customiso\n")
+            if re.match(" *TIMEOUT", line, re.IGNORECASE):
+                lines[lines.index(line)] = "TIMEOUT 1\n"
+            elif re.match(" *DEFAULT", line, re.IGNORECASE):
+                lines[lines.index(line)] = "DEFAULT customiso\n"
+            elif re.match(" *GFXBOOT", line, re.IGNORECASE):
+                lines[lines.index(line)] = ""
+            elif re.match("^APPEND", line, re.IGNORECASE):
+                lines[lines.index(line)] = ""
+        lines.append("LABEL customiso\n")
         lines.append("  menu label ^Customiso\n")
         if os.path.isdir(os.path.join(self.iso_contents, "casper")):
             lines.append("  kernel /casper/vmlinuz\n")
-            lines.append("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us boot=casper automatic-ubiquity noprompt initrd=/casper/" + self.casper_initrd + " ramdisk_size=14984 --\n")
+            lines.append("  append file=/cdrom/preseed/customiso.seed locale=en_US console-setup/ask_detect=false console-setup/layoutcode=us priority=critical ramdisk_size=141876 root=/dev/ram rw initrd=/casper/initrd.gz --\n")
         else:
             lines.append("  kernel /install/vmlinuz\n")
-            lines.append("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us netcfg/choose_interface=auto priority=critical initrd=/install/initrd.gz --\n")
-
-        f = open(textcfg, "w")
-        f.writelines(lines)
-        f.close()
-
-        self.log.debug("Modifying isolinux.cfg")
-        isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
-                                   "isolinux.cfg")
-        f = open(isolinuxcfg, "r")
-        lines = f.readlines()
-        f.close()
-
-        for line in lines:
-            if re.match("default", line):
-                lines[lines.index(line)] = "default customiso\n"
-            elif re.match("timeout", line):
-                lines[lines.index(line)] = "timeout 10\n"
-            elif re.match("gfxboot", line):
-                lines[lines.index(line)] = ""
+            lines.append("  append file=/cdrom/preseed/customiso.seed locale=en_US console-setup/ask_detect=false console-setup/layoutcode=us priority=critical ramdisk_size=141876 root=/dev/ram rw initrd=/install/initrd.gz --\n")
 
         f = open(isolinuxcfg, "w")
         f.writelines(lines)
         f.close()
 
-class Ubuntu710and8041Guest(Ubuntu):
-    def __init__(self, tdl, config, auto):
-        self.tdl = tdl
+    def generate_new_iso(self):
+        self.log.info("Generating new ISO")
+        Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom", "-J",
+                                       "-l", "-b", "isolinux/isolinux.bin",
+                                       "-c", "isolinux/boot.cat",
+                                       "-no-emul-boot", "-boot-load-size", "4",
+                                       "-cache-inodes", "-boot-info-table",
+                                       "-v", "-v", "-o", self.output_iso,
+                                       self.iso_contents])
 
-        if self.tdl.installtype != 'iso':
-            raise OzException.OzException("Ubuntu installs must be done via iso")
+    def generate_install_media(self, force_download=False):
+        self.log.info("Generating install media")
 
-        self.preseed_file = auto
-        if self.preseed_file is None:
-            self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
+        if not force_download and os.access(self.modified_iso_cache, os.F_OK):
+            self.log.info("Using cached modified media")
+            shutil.copyfile(self.modified_iso_cache, self.output_iso)
+            return
 
-        Guest.CDGuest.__init__(self, self.tdl.name, "Ubuntu", self.tdl.update,
-                               self.tdl.arch, 'iso', "rtl8139", None, None,
-                               None, config)
-
-    def modify_iso(self):
-        self.log.debug("Putting the preseed file in place")
-
-        shutil.copy(self.preseed_file, os.path.join(self.iso_contents,
-                                                    "preseed",
-                                                    "customiso.seed"))
-
-        self.log.debug("Modifying isolinux.cfg")
-        isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
-        f = open(isolinuxcfg, "r")
-        lines = f.readlines()
-        f.close()
-
-        for line in lines:
-            if re.match(" *TIMEOUT", line, re.IGNORECASE):
-                lines[lines.index(line)] = "TIMEOUT 1\n"
-            elif re.match(" *DEFAULT", line, re.IGNORECASE):
-                lines[lines.index(line)] = "DEFAULT customiso\n"
-            elif re.match(" *GFXBOOT", line, re.IGNORECASE):
-                lines[lines.index(line)] = ""
-            elif re.match("^APPEND", line, re.IGNORECASE):
-                lines[lines.index(line)] = ""
-        lines.append("LABEL customiso\n")
-        lines.append("  menu label ^Customiso\n")
-        lines.append("  kernel /casper/vmlinuz\n")
-        lines.append("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us boot=casper automatic-ubiquity noprompt initrd=/casper/initrd.gz --\n")
-
-        f = open(isolinuxcfg, "w")
-        f.writelines(lines)
-        f.close()
-
-class Ubuntu610and704Guest(Ubuntu):
-    def __init__(self, tdl, config):
-        self.tdl = tdl
-
-        if self.tdl.installtype != 'iso':
-            raise OzException.OzException("Ubuntu installs must be done via iso")
-
-        self.preseed_file = auto
-        if self.preseed_file is None:
-            self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
-
-        Guest.CDGuest.__init__(self, self.tdl.name, "Ubuntu", self.tdl.update,
-                               self.tdl.arch, 'iso', "rtl8139", None, None,
-                               None, config)
-
-    def modify_iso(self):
-        self.log.debug("Putting the preseed file in place")
-        shutil.copy(self.preseed_file, os.path.join(self.iso_contents,
-                                                    "preseed",
-                                                    "customiso.seed"))
-
-        self.log.debug("Modifying isolinux.cfg")
-        isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
-        f = open(isolinuxcfg, "r")
-        lines = f.readlines()
-        f.close()
-
-        for line in lines:
-            if re.match(" *TIMEOUT", line, re.IGNORECASE):
-                lines[lines.index(line)] = "TIMEOUT 1\n"
-            elif re.match(" *DEFAULT", line, re.IGNORECASE):
-                lines[lines.index(line)] = "DEFAULT customiso\n"
-            elif re.match(" *GFXBOOT", line, re.IGNORECASE):
-                lines[lines.index(line)] = ""
-            elif re.match("^APPEND", line, re.IGNORECASE):
-                lines[lines.index(line)] = ""
-        lines.append("LABEL customiso\n")
-        lines.append("  menu label ^Customiso\n")
-        lines.append("  kernel /install/vmlinuz\n")
-        lines.append("  append file=/cdrom/preseed/customiso.seed locale=en_US console-setup/ask_detect=false console-setup/layoutcode=us priority=critical ramdisk_size=141876 root=/dev/ram rw initrd=/install/initrd.gz --\n")
-
-        f = open(isolinuxcfg, "w")
-        f.writelines(lines)
-        f.close()
+        self.get_original_iso(self.tdl.iso, force_download)
+        self.copy_iso()
+        try:
+            self.modify_iso()
+            self.generate_new_iso()
+            if self.cache_modified_media:
+                self.log.info("Caching modified media for future use")
+                shutil.copyfile(self.output_iso, self.modified_iso_cache)
+        finally:
+            self.cleanup_iso()
 
 def get_class(tdl, config, auto):
-    # FIXME: there are certain types of Ubuntu ISOs that do, and do not work.
-    # For instance, for *some* Ubuntu releases, you must use the -alternate
-    # ISO, and for some you can use either -desktop or -alternate.  We should
-    # figure out which is which and give the user some feedback when we
-    # can't actually succeed
-
-    if tdl.update in ["10.10"]:
-        return Ubuntu1010Guest(tdl, config, auto)
-    if tdl.update in ["8.10", "9.04"]:
-        return Ubuntu810and904and910and1004Guest(tdl, config, auto, "initrd.gz")
-    if tdl.update in ["9.10", "10.04", "10.04.1"]:
-        return Ubuntu810and904and910and1004Guest(tdl, config, auto, "initrd.lz")
-    if tdl.update in ["7.10", "8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4"]:
-        return Ubuntu710and8041Guest(tdl, config, auto)
     if tdl.update in ["6.10", "7.04"]:
         return Ubuntu610and704Guest(tdl, config, auto)
+    if tdl.update in ["7.10"]:
+        return UbuntuGuest(tdl, config, auto, "initrd.gz", "rtl8139", None)
+    if tdl.update in ["8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4", "8.10",
+                      "9.04"]:
+        return UbuntuGuest(tdl, config, auto, "initrd.gz", "virtio", "virtio")
+    if tdl.update in ["9.10", "10.04", "10.04.1", "10.10"]:
+        return UbuntuGuest(tdl, config, auto, "initrd.lz", "virtio", "virtio")
     raise OzException.OzException("Unsupported Ubuntu update " + tdl.update)
