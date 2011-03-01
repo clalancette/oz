@@ -122,7 +122,7 @@ if os.access(config_file, os.F_OK):
 
 try:
     guest = oz.GuestFactory.guest_factory(tdl, config, auto)
-except oz.GuestFactory.DistroException:
+except oz.OzException.OzException:
     usage()
 
 if cleanup:
