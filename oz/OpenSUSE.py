@@ -17,7 +17,6 @@
 import re
 import shutil
 import os
-import subprocess
 
 import Guest
 import ozutil
@@ -238,8 +237,9 @@ class OpenSUSEGuest(Guest.CDGuest):
             os.remove(self.sshprivkey)
         if os.access(pubname, os.F_OK):
             os.remove(pubname)
-        subprocess.call(['ssh-keygen', '-q', '-t', 'rsa', '-b', '2048',
-                         '-N', '', '-f', self.sshprivkey])
+        Guest.subprocess_check_output(['ssh-keygen', '-q', '-t', 'rsa',
+                                       '-b', '2048', '-N', '',
+                                       '-f', self.sshprivkey])
 
         g_handle.upload(pubname, '/root/.ssh/authorized_keys')
 

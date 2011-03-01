@@ -14,7 +14,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-import subprocess
 import re
 import os
 import shutil
@@ -183,8 +182,9 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             os.remove(self.sshprivkey)
         if os.access(pubname, os.F_OK):
             os.remove(pubname)
-        subprocess.call(['ssh-keygen', '-q', '-t', 'rsa', '-b', '2048',
-                         '-N', '', '-f', self.sshprivkey])
+        Guest.subprocess_check_output(['ssh-keygen', '-q', '-t', 'rsa',
+                                       '-b', '2048', '-N', '',
+                                       '-f', self.sshprivkey])
 
         g_handle.upload(pubname, '/root/.ssh/authorized_keys')
 

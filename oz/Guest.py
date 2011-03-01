@@ -44,13 +44,32 @@ def libvirt_error_handler(ctxt, err):
 def subprocess_check_output(*popenargs, **kwargs):
     if 'stdout' in kwargs:
         raise ValueError('stdout argument not allowed, it will be overridden.')
+    if 'stderr' in kwargs:
+        raise ValueError('stderr argument not allowed, it will be overridden.')
 
     ozutil.executable_exists(popenargs[0][0])
 
-    process = subprocess.Popen(stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                               *popenargs, **kwargs)
-    stdout, stderr = process.communicate()
+    # NOTE: it is very, very important that we use temporary files for
+    # collecting stdout and stderr here.  There is a nasty bug in python
+    # subprocess; if your process produces more than 64k of data on an fd that
+    # is using subprocess.PIPE, the whole thing will hang. To avoid this, we
+    # use temporary fds to capture the data
+    stdouttmp = tempfile.TemporaryFile()
+    stderrtmp = tempfile.TemporaryFile()
+
+    process = subprocess.Popen(stdout=stdouttmp, stderr=stderrtmp, *popenargs,
+                               **kwargs)
+    process.communicate()
     retcode = process.poll()
+
+    stdouttmp.seek(0, 0)
+    stdout = stdouttmp.read()
+    stdouttmp.close()
+
+    stderrtmp.seek(0, 0)
+    stderr = stderrtmp.read()
+    stderrtmp.close()
+
     if retcode:
         cmd = ' '.join(*popenargs)
         raise OzException.OzException("'%s' failed(%d): %s" % (cmd, retcode, stderr))
@@ -484,12 +503,9 @@ class Guest(object):
 
         vnc = "localhost:%s" % (int(port) - 5900)
 
-        # we don't use subprocess_check_output here because if this fails,
-        # we don't want to raise an exception, just print an error
-        ret = subprocess.call(['gvnccapture', vnc, filename],
-                              stdout=open('/dev/null', 'w'),
-                              stderr=subprocess.STDOUT)
-        if ret != 0:
+        try:
+            subprocess_check_output(['gvnccapture', vnc, filename])
+        except:
             self.log.error("Failed to take screenshot")
 
     def guestfs_handle_setup(self, libvirt_xml):
@@ -622,7 +638,10 @@ class Guest(object):
                         break
                     count -= 10
             finally:
-                subprocess.call(["iptables", "-D", "INPUT", "1"])
+                try:
+                    subprocess_check_output(["iptables", "-D", "INPUT", "1"])
+                except:
+                    self.log.warn("Failed to delete iptables rule")
         finally:
             listen.close()
 
