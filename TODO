@@ -48,15 +48,13 @@ http://old.bink.nu/bootcd/
 11. Write a boxgrinder plugin.  This requires implementing a ruby class
 for it, and implementing .after_init, .deliverables_exists?, .run, .deliverables.
 12. Debian/Ubuntu packages.
-13. Add the ability to cache JEOSs (with a configuration option to
-enable/disable this feature).
-14. Take a screen shot if some customization or generate-icicle steps time out.
-15. Try to do automatic detection of distro/version/architecture from the ISO
+13. Take a screen shot if some customization or generate-icicle steps time out.
+14. Try to do automatic detection of distro/version/architecture from the ISO
 that are provided to us.  That will make it so that a minimal TDL will only
 include the path to the ISO, and we can figure out the rest of the information.
-16. Add support for additional drivers during install (needed for Windows virtio
+15. Add support for additional drivers during install (needed for Windows virtio
 support).
-17. Make "python setup.py bdist_rpm" work.  The problem is that bdist_rpm
+16. Make "python setup.py bdist_rpm" work.  The problem is that bdist_rpm
 generates its own SPEC file based on the information in setup.py.  When it
 does this, it somehow messes up the %description (minor, probably a change to
 the setup macro), fails to create the /var/lib/oz subdirectories (which could
