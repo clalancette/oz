@@ -120,10 +120,7 @@ config = ConfigParser.SafeConfigParser()
 if os.access(config_file, os.F_OK):
     config.read(config_file)
 
-try:
-    guest = oz.GuestFactory.guest_factory(tdl, config, auto)
-except oz.OzException.OzException:
-    usage()
+guest = oz.GuestFactory.guest_factory(tdl, config, auto)
 
 if cleanup:
     guest.cleanup_old_guest()

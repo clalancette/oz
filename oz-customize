@@ -95,10 +95,7 @@ config = ConfigParser.SafeConfigParser()
 if os.access(config_file, os.F_OK):
     config.read(config_file)
 
-try:
-    guest = oz.GuestFactory.guest_factory(tdl, config, None)
-except oz.OzException.OzException:
-    usage()
+guest = oz.GuestFactory.guest_factory(tdl, config, None)
 
 # Arbitrarily limit the size of the XML file that we will support to 5MB.
 # this should be plenty for a normal libvirt XML, and this should prevent us
