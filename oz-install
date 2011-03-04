@@ -122,7 +122,10 @@ if os.access(config_file, os.F_OK):
 
 try:
     guest = oz.GuestFactory.guest_factory(tdl, config, auto)
-except oz.OzException.OzException:
+except oz.OzException.OzException as message:
+    print ""
+    print "   Error installing: " + str(message)
+    print ""
     usage()
 
 if cleanup:

@@ -97,7 +97,10 @@ if os.access(config_file, os.F_OK):
 
 try:
     guest = oz.GuestFactory.guest_factory(tdl, config, None)
-except oz.OzException.OzException:
+except oz.OzException.OzException as message:
+    print ""
+    print "   Error generating: " + str(message)
+    print ""
     usage()
 
 # Arbitrarily limit the size of the XML file that we will support to 5MB.
