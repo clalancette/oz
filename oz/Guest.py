@@ -141,18 +141,29 @@ class Guest(object):
 
         # we have to make sure that the private libvirt bridge is available
         self.host_bridge_ip = None
+        self.bridge_name = None
         for netname in self.libvirt_conn.listNetworks():
             network = self.libvirt_conn.networkLookupByName(netname)
-            if network.bridgeName() == 'virbr0':
-                xml = network.XMLDesc(0)
-                doc = libxml2.parseMemory(xml, len(xml))
+
+            xml = network.XMLDesc(0)
+            doc = libxml2.parseMemory(xml, len(xml))
+
+            forward = doc.xpathEval('/network/forward')
+            if len(forward) != 1:
+                self.log.warn("Libvirt network without a forward element, skipping")
+                continue
+
+            if forward[0].prop('mode') == 'nat':
                 ip = doc.xpathEval('/network/ip')
                 if len(ip) != 1:
-                    raise OzException.OzException("Failed to find host IP address for virbr0")
+                    self.log.warn("Libvirt network without an IP, skipping")
+                    continue
                 self.host_bridge_ip = ip[0].prop('address')
+                self.bridge_name = network.bridgeName()
                 break
-        if self.host_bridge_ip is None:
-            raise OzException.OzException("Default libvirt network (virbr0) does not exist, install cannot continue")
+
+        if self.bridge_name is None or self.host_bridge_ip is None:
+            raise OzException.OzException("Could not find a viable libvirt NAT bridge, install cannot continue")
 
         self.nicmodel = nicmodel
         if self.nicmodel is None:
@@ -305,7 +316,7 @@ class Guest(object):
         interface = devices.newChild(None, "interface", None)
         interface.setProp("type", "bridge")
         interfaceSource = interface.newChild(None, "source", None)
-        interfaceSource.setProp("bridge", "virbr0")
+        interfaceSource.setProp("bridge", self.bridge_name)
         interfaceMac = interface.newChild(None, "mac", None)
         interfaceMac.setProp("address", self.macaddr)
         interfaceModel = interface.newChild(None, "model", None)
