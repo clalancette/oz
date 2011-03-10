@@ -535,7 +535,7 @@ class Guest(object):
         driver = disks[0].xpathEval('driver')
         if len(driver) == 0:
             input_disk_type = 'raw'
-        elif len(driver) != 1:
+        elif len(driver) == 1:
             input_disk_type = driver[0].prop('type')
         else:
             raise OzException.OzException("invalid <disk> entry without a driver")
