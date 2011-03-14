@@ -112,37 +112,47 @@ if os.geteuid() != 0:
 if len(args) != 1:
     usage()
 
-logging.basicConfig(level=loglevel, format=logformat)
+try:
+    logging.basicConfig(level=loglevel, format=logformat)
 
-tdl = oz.TDL.TDL(open(args[0], 'r').read())
+    tdl = oz.TDL.TDL(open(args[0], 'r').read())
 
-config = ConfigParser.SafeConfigParser()
-if os.access(config_file, os.F_OK):
-    config.read(config_file)
+    config = ConfigParser.SafeConfigParser()
+    if os.access(config_file, os.F_OK):
+        config.read(config_file)
 
-guest = oz.GuestFactory.guest_factory(tdl, config, auto)
+    guest = oz.GuestFactory.guest_factory(tdl, config, auto)
 
-if cleanup:
-    guest.cleanup_old_guest()
-else:
-    guest.check_for_guest_conflict()
+    if cleanup:
+        guest.cleanup_old_guest()
+    else:
+        guest.check_for_guest_conflict()
 
-libvirt_xml = guest.jeos(force_download)
-if libvirt_xml is None:
-    guest.generate_install_media(force_download)
-    try:
-        guest.generate_diskimage()
-        libvirt_xml = guest.install(timeout)
-    finally:
-        guest.cleanup_install()
+    libvirt_xml = guest.jeos(force_download)
+    if libvirt_xml is None:
+        guest.generate_install_media(force_download)
+        try:
+            guest.generate_diskimage()
+            libvirt_xml = guest.install(timeout)
+        finally:
+            guest.cleanup_install()
 
-if customize and generate_icicle:
-    print guest.customize_and_generate_icicle(libvirt_xml)
-elif customize:
-    guest.customize(libvirt_xml)
-elif generate_icicle:
-    print guest.generate_icicle(libvirt_xml)
+    if customize and generate_icicle:
+        print guest.customize_and_generate_icicle(libvirt_xml)
+    elif customize:
+        guest.customize(libvirt_xml)
+    elif generate_icicle:
+        print guest.generate_icicle(libvirt_xml)
 
-filename = guest.name + time.strftime("%b_%d_%Y-%H:%M:%S")
-open(filename, 'w').write(libvirt_xml)
-print "Libvirt XML was written to " + filename
+    filename = guest.name + time.strftime("%b_%d_%Y-%H:%M:%S")
+    open(filename, 'w').write(libvirt_xml)
+    print "Libvirt XML was written to " + filename
+except Exception as exc:
+    if loglevel > logging.DEBUG:
+        print ""
+        print "ERROR: %s" % (str(exc))
+        print ""
+        print "(use -d3 to get the full backtrace)"
+        print ""
+    else:
+        raise
