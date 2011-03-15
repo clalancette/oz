@@ -160,6 +160,8 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
             shutil.copyfile(self.modified_floppy_cache, self.output_floppy)
             return
 
+        self.get_original_floppy(self.url + "/images/bootnet.img",
+                                 force_download)
         self.copy_floppy()
         try:
             self.modify_floppy()
