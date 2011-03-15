@@ -134,6 +134,9 @@ try:
         try:
             guest.generate_diskimage()
             libvirt_xml = guest.install(timeout)
+        except:
+            guest.cleanup_old_guest()
+            raise
         finally:
             guest.cleanup_install()
 
