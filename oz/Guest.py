@@ -792,7 +792,7 @@ class CDGuest(Guest):
         return volume_identifier
 
     def geteltorito(self, cdfile, outfile):
-        get_primary_volume_descriptor(cdfile)
+        self.get_primary_volume_descriptor(cdfile)
 
         cdfile = open(cdfile, "r")
 
