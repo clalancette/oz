@@ -92,6 +92,8 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
 
         ozutil.deny_localhost(self.tdl.url)
 
+        self.url = self.tdl.url
+
         if self.tdl.arch != "i386":
             raise OzException.OzException("Invalid arch " + self.tdl.arch + "for RHL guest")
 
