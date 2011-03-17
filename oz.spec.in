@@ -13,6 +13,11 @@ Requires: gvnc-tools
 Requires: python-libguestfs
 Requires: libxml2-python
 Requires: libvirt-python
+# in theory, oz doesn't really require libvirtd to be local to operate
+# properly.  However, because of the libguestfs manipulations, in practice
+# it really does.  Make it depend on libvirt (so we get libvirtd) for now,
+# unless/until we are able to make it really be remote.
+Requires: libvirt
 Requires: python-pycurl
 Requires: genisoimage
 Requires: numpy
@@ -71,6 +76,9 @@ mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/oz
 
 
 %changelog
+* Wed Mar 16 2011 Chris Lalancette <clalance@redhat.com> - 0.2.0-1
+- Release 0.2.0.
+
 * Fri Feb  3 2011 Chris Lalancette <clalance@redhat.com> - 0.1.0-1
 - Initial public release of Oz.
 
