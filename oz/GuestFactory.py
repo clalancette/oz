@@ -25,6 +25,7 @@ import RHL
 import Ubuntu
 import Windows
 import OpenSUSE
+import Debian
 import OzException
 
 def guest_factory(tdl, config, auto):
@@ -50,6 +51,8 @@ def guest_factory(tdl, config, auto):
         return RHL.get_class(tdl, config, auto)
     elif tdl.distro == "OpenSUSE":
         return OpenSUSE.get_class(tdl, config, auto)
+    elif tdl.distro == "Debian":
+        return Debian.get_class(tdl, config, auto)
 
     raise OzException.OzException("Invalid distribution " + tdl.distro)
 
@@ -68,3 +71,4 @@ def distrolist():
     print "   CentOS 3: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9"
     print "   CentOS 4: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9"
     print "   CentOS 5: GOLD, U1, U2, U3, U4, U5"
+    print "   Debian: 6"
