@@ -82,7 +82,7 @@ class RHEL4Guest(RedHat.RedHatCDGuest):
                 raise OzException.OzException("Invalid .discinfo file on ISO")
             if lines[2].strip() != self.arch:
                 raise OzException.OzException("Invalid .discinfo architecture on ISO")
-            if lines[3].strip() != "1,2,3,4,5":
+            if not lines[3].strip().startswith("1,2,3,4"):
                 raise OzException.OzException("Only DVDs are supported for RHEL-4 ISO installs")
         else:
             volume_identifier = self.get_primary_volume_descriptor(self.orig_iso)
