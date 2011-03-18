@@ -19,20 +19,17 @@ import base64
 
 import OzException
 
-def get_value(doc, xmlstring):
-    res = doc.xpathEval(xmlstring)
-    if len(res) != 1:
-        return None
-    return res[0].getContent()
-
-def get_optional_value(doc, xmlstring, component):
+def get_value(doc, xmlstring, component, optional=False):
     res = doc.xpathEval(xmlstring)
     if len(res) == 1:
         return res[0].getContent()
     elif len(res) == 0:
-        return None
+        if optional:
+            return None
+        else:
+            raise OzException.OzException("Failed to find %s in TDL" % (component))
     else:
-        raise OzException.OzException("Expected 0 or 1 %s in TDL, saw %d" % (component, len(reponodes)))
+        raise OzException.OzException("Expected 0 or 1 %s in TDL, saw %d" % (component, len(res)))
 
 class Repository(object):
     def __init__(self, name, url, signed):
@@ -53,28 +50,22 @@ class TDL(object):
 
         self.doc = libxml2.parseDoc(xmlstring)
 
-        self.name = get_value(self.doc, '/template/name')
-        if self.name is None:
-            raise OzException.OzException("Failed to find name of template in TDL")
+        self.name = get_value(self.doc, '/template/name', 'template name')
 
-        self.distro = get_value(self.doc, '/template/os/name')
-        if self.distro is None:
-            raise OzException.OzException("Failed to find OS name in TDL")
+        self.distro = get_value(self.doc, '/template/os/name', 'OS name')
 
-        self.update = get_value(self.doc, '/template/os/version')
-        if self.update is None:
-            raise OzException.OzException("Failed to find OS version in TDL")
+        self.update = get_value(self.doc, '/template/os/version', 'OS version')
 
-        self.arch = get_value(self.doc, '/template/os/arch')
-        if self.arch is None:
-            raise OzException.OzException("Failed to find OS architecture in TDL")
+        self.arch = get_value(self.doc, '/template/os/arch', 'OS architecture')
         if self.arch != "i386" and self.arch != "x86_64":
             raise OzException.OzException("Architecture must be one of 'i386' or 'x86_64'")
 
-        self.key = get_value(self.doc, '/template/os/key')
+        self.key = get_value(self.doc, '/template/os/key', 'OS key',
+                             optional=True)
         # key is not required, so it is not fatal if it is None
 
-        self.description = get_value(self.doc, '/template/description')
+        self.description = get_value(self.doc, '/template/description',
+                                     'description', optional=True)
         # description is not required, so it is not fatal if it is None
 
         install = self.doc.xpathEval('/template/os/install')
@@ -84,13 +75,11 @@ class TDL(object):
         if self.installtype is None:
             raise OzException.OzException("Failed to find OS install type in TDL")
         if self.installtype == "url":
-            self.url = get_value(self.doc, '/template/os/install/url')
-            if self.url is None:
-                raise OzException.OzException("Failed to find OS install URL in TDL")
+            self.url = get_value(self.doc, '/template/os/install/url',
+                                 'OS install URL')
         elif self.installtype == "iso":
-            self.iso = get_value(self.doc, '/template/os/install/iso')
-            if self.iso is None:
-                raise OzException.OzException("Failed to find OS install ISO in TDL")
+            self.iso = get_value(self.doc, '/template/os/install/iso',
+                                 'OS install ISO')
         else:
             raise OzException.OzException("Unknown install type " + self.installtype + " in TDL")
 
@@ -102,14 +91,16 @@ class TDL(object):
                 raise OzException.OzException("Package without a name was given")
 
             # repository that the package lives in (optional)
-            repo = get_optional_value(package, 'repository',
-                                      "package repository section")
+            repo = get_value(package, 'repository',
+                             "package repository section", optional=True)
 
             # filename of the package (optional)
-            filename = get_optional_value(package, 'file', "package filename")
+            filename = get_value(package, 'file', "package filename",
+                                 optional=True)
 
             # arguments to install package (optional)
-            args = get_optional_value(package, 'arguments', "package arguments")
+            args = get_value(package, 'arguments', "package arguments",
+                             optional=True)
 
             self.packages.append(Package(name, repo, filename, args))
 
@@ -138,11 +129,9 @@ class TDL(object):
             name = repo.prop('name')
             if name is None:
                 raise OzException.OzException("Repository without a name was given")
-            url = get_value(repo, 'url')
-            if url is None:
-                raise OzException.OzException("Repository without a url was given")
+            url = get_value(repo, 'url', 'repository url')
 
-            signstr = get_value(repo, 'signed')
+            signstr = get_value(repo, 'signed', 'signed', optional=True)
             if signstr is None:
                 signstr = 'no'
 
