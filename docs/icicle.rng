@@ -17,6 +17,11 @@
 	    </element>
 	  </zeroOrMore>
 	</element>
+	<optional>
+	  <element name='description'>
+	    <text/>
+	  </element>
+	</optional>
       </interleave>
     </element>
   </define>

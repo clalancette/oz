@@ -199,7 +199,8 @@ class OpenSUSEGuest(Guest.CDGuest):
                 stdout, stderr, retcode = self.guest_execute_command(guestaddr,
                                                                      'rpm -qa')
 
-                icicle_output = self.output_icicle_xml(stdout.split("\n"))
+                icicle_output = self.output_icicle_xml(stdout.split("\n"),
+                                                       self.tdl.description)
             finally:
                 self.shutdown_guest(guestaddr, libvirt_dom)
 

@@ -74,6 +74,9 @@ class TDL(object):
         self.key = get_value(self.doc, '/template/os/key')
         # key is not required, so it is not fatal if it is None
 
+        self.description = get_value(self.doc, '/template/description')
+        # description is not required, so it is not fatal if it is None
+
         install = self.doc.xpathEval('/template/os/install')
         if len(install) != 1:
             raise OzException.OzException("Expected 1 OS install section in TDL, saw %d" % (len(install)))

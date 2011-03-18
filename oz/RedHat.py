@@ -319,7 +319,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         stdout, stderr, retcode = self.guest_execute_command(guestaddr,
                                                              'rpm -qa')
 
-        return self.output_icicle_xml(stdout.split("\n"))
+        return self.output_icicle_xml(stdout.split("\n"), self.tdl.description)
 
     def generate_icicle(self, libvirt_xml):
         self.log.info("Generating ICICLE")
