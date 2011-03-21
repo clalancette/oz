@@ -31,18 +31,15 @@ class RHL9Guest(RedHat.RedHatCDGuest):
         if self.ks_file is None:
             self.ks_file = ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks")
 
-        if self.tdl.installtype != 'url':
-            raise OzException.OzException("RHL installs must be done via url")
-
-        self.url = self.tdl.url
-
-        ozutil.deny_localhost(self.url)
+        self.url = self.check_url(self.tdl, iso=False, url=True)
 
         if self.tdl.arch != "i386":
             raise OzException.OzException("Invalid arch " + self.tdl.arch + "for RHL guest")
 
-        Guest.CDGuest.__init__(self, self.tdl.name, "RHL", "9", "i386", "url",
-                               "rtl8139", None, None, None, config)
+        Guest.CDGuest.__init__(self, self.tdl.name, self.tdl.distro,
+                               self.tdl.update, self.tdl.arch,
+                               self.tdl.installtype, "rtl8139", None, None,
+                               None, config)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")
@@ -87,18 +84,14 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
         if self.ks_file is None:
             self.ks_file = ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks")
 
-        if self.tdl.installtype != 'url':
-            raise OzException.OzException("RHL installs must be done via url")
-
-        ozutil.deny_localhost(self.tdl.url)
-
-        self.url = self.tdl.url
+        self.url = self.check_url(self.tdl, iso=False, url=True)
 
         if self.tdl.arch != "i386":
             raise OzException.OzException("Invalid arch " + self.tdl.arch + "for RHL guest")
 
-        Guest.FDGuest.__init__(self, self.tdl.name, "RHL", self.tdl.update,
-                               "i386", nicmodel, None, None, None, config)
+        Guest.FDGuest.__init__(self, self.tdl.name, self.tdl.distro,
+                               self.tdl.update, self.tdl.arch, nicmodel, None,
+                               None, None, config)
 
     def modify_floppy(self):
         self.mkdir_p(self.floppy_contents)
@@ -113,7 +106,7 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
 
         for line in lines:
             if re.match("^url", line):
-                lines[lines.index(line)] = "url --url " + self.tdl.url + "\n"
+                lines[lines.index(line)] = "url --url " + self.url + "\n"
 
         f = open(output_ks, "w")
         f.writelines(lines)
@@ -138,7 +131,7 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
                 lines[lines.index(line)] = "default customboot\n"
         lines.append("label customboot\n")
         lines.append("  kernel vmlinuz\n")
-        lines.append("  append initrd=initrd.img lang= devfs=nomount ramdisk_size=9216 ks=floppy method=" + self.tdl.url + "\n")
+        lines.append("  append initrd=initrd.img lang= devfs=nomount ramdisk_size=9216 ks=floppy method=" + self.url + "\n")
 
         f = open(syslinux, "w")
         f.writelines(lines)

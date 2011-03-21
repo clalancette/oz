@@ -32,6 +32,7 @@ import select
 import struct
 import numpy
 import tempfile
+import urlparse
 
 import ozutil
 import OzException
@@ -682,6 +683,30 @@ class Guest(object):
     def mkdir_p(self, path):
         if not os.access(path, os.F_OK):
             os.makedirs(path)
+
+    def check_url(self, tdl, iso=True, url=True):
+        if iso and tdl.installtype == 'iso':
+            url = tdl.iso
+        elif url and tdl.installtype == 'url':
+            url = tdl.url
+
+            # when doing URL installs, we can't allow localhost URLs (the URL
+            # will be embedded into the installer, so the install is guaranteed
+            # to fail with localhost URLs).  Disallow them here
+            p = urlparse.urlparse(url)
+            if p[1] in ["localhost", "localhost.localdomain", "127.0.0.1"]:
+                raise OzException.OzException("Can not use localhost for an URL based install")
+        else:
+            if iso and url:
+                raise OzException.OzException("%s installs must be done via url or iso" % (tdl.distro))
+            elif iso:
+                raise OzException.OzException("%s installs must be done via iso" % (tdl.distro))
+            elif url:
+                raise OzException.OzException("%s installs must be done via url" % (tdl.distro))
+            else:
+                raise OzException.OzException("Unknown error occured while determining install URL")
+
+        return url
 
 class CDGuest(Guest):
     def __init__(self, name, distro, update, arch, installtype, nicmodel,

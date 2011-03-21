@@ -26,16 +26,16 @@ class OpenSUSEGuest(Guest.CDGuest):
     def __init__(self, tdl, config, auto):
         self.tdl = tdl
 
-        if self.tdl.installtype != 'iso':
-            raise OzException.OzException("OpenSUSE installs must be done via ISO")
-
         self.autoyast = auto
         if self.autoyast is None:
             self.autoyast = ozutil.generate_full_auto_path("opensuse-" + self.tdl.update + "-jeos.xml")
 
-        Guest.CDGuest.__init__(self, self.tdl.name, "OpenSUSE",
-                               self.tdl.update, self.tdl.arch, 'iso',
-                               "virtio", None, None, "virtio", config)
+        self.url = self.check_url(self.tdl, iso=True, url=False)
+
+        Guest.CDGuest.__init__(self, self.tdl.name, self.tdl.distro,
+                               self.tdl.update, self.tdl.arch,
+                               self.tdl.installtype, "virtio", None, None,
+                               "virtio", config)
 
         self.sshprivkey = os.path.join(self.icicle_tmp, 'id_rsa-icicle-gen')
 
@@ -84,7 +84,7 @@ class OpenSUSEGuest(Guest.CDGuest):
             shutil.copyfile(self.modified_iso_cache, self.output_iso)
             return
 
-        self.get_original_iso(self.tdl.iso, force_download)
+        self.get_original_iso(self.url, force_download)
         self.copy_iso()
         try:
             self.modify_iso()

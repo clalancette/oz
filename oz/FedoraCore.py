@@ -29,18 +29,12 @@ class FedoraCoreGuest(RedHat.RedHatCDGuest):
         if self.ks_file is None:
             self.ks_file = ozutil.generate_full_auto_path("fedoracore-" + self.tdl.update + "-jeos.ks")
 
-        if self.tdl.installtype == 'url':
-            self.url = self.tdl.url
-            ozutil.deny_localhost(self.url)
-        elif self.tdl.installtype == 'iso':
-            self.url = self.tdl.iso
-        else:
-            raise OzException.OzException("FedoraCore installs must be done via url or iso")
+        self.url = self.check_url(self.tdl, iso=True, url=True)
 
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)
 
-        RedHat.RedHatCDGuest.__init__(self, self.tdl.name, "FedoraCore",
+        RedHat.RedHatCDGuest.__init__(self, self.tdl.name, self.tdl.distro,
                                       self.tdl.update, self.tdl.arch,
                                       self.tdl.installtype, 'rtl8139', None,
                                       None, None, config)

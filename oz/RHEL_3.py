@@ -30,21 +30,16 @@ class RHEL3Guest(RedHat.RedHatCDGuest):
         if self.ks_file is None:
             self.ks_file = ozutil.generate_full_auto_path("rhel-3-jeos.ks")
 
-        if self.tdl.installtype == 'url':
-            self.url = self.tdl.url
-            ozutil.deny_localhost(self.url)
-        elif self.tdl.installtype == 'iso':
-            if self.tdl.distro == "RHEL-3":
-                raise OzException.OzException("RHEL-3 installs must be done via url")
-            self.url = self.tdl.iso
-        else:
-            raise OzException.OzException("RHEL-3 installs must be done via url or iso")
+        iso_support = True
+        if self.tdl.distro == "RHEL-3":
+            iso_support = False
 
-        ozutil.deny_localhost(self.url)
+        self.url = self.check_url(self.tdl, iso=iso_support, url=True)
 
         RedHat.RedHatCDGuest.__init__(self, self.tdl.name, self.tdl.distro,
-                                      self.tdl.update, self.tdl.arch, 'url',
-                                      None, None, None, None, config)
+                                      self.tdl.update, self.tdl.arch,
+                                      self.tdl.installtype, None, None, None,
+                                      None, config)
         # this has to be *after* RedHatCDGuest.__init__ so that we override
         # the value that was set there
         self.sshd_config = \

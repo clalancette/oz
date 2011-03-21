@@ -43,13 +43,13 @@ class Windows2000andXPand2003(Guest.CDGuest):
         if self.siffile is None:
             self.siffile = ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif")
 
-        if self.tdl.installtype != 'iso':
-            raise OzException.OzException("Windows installs must be done via iso")
+        self.url = self.check_url(self.tdl, iso=True, url=False)
 
         self.winarch = get_windows_arch(self.tdl.arch)
 
-        Guest.CDGuest.__init__(self, self.tdl.name, "Windows", self.tdl.update,
-                               self.tdl.arch, 'iso', 'rtl8139', "localtime",
+        Guest.CDGuest.__init__(self, self.tdl.name, self.tdl.distro,
+                               self.tdl.update, self.tdl.arch,
+                               self.tdl.installtype, 'rtl8139', "localtime",
                                "usb", None, config)
 
     def generate_new_iso(self):
@@ -94,7 +94,7 @@ class Windows2000andXPand2003(Guest.CDGuest):
             shutil.copyfile(self.modified_iso_cache, self.output_iso)
             return
 
-        self.get_original_iso(self.tdl.iso, force_download)
+        self.get_original_iso(self.url, force_download)
         self.copy_iso()
         try:
             self.modify_iso()
@@ -141,13 +141,13 @@ class Windows2008and7(Guest.CDGuest):
         if self.unattendfile is None:
             self.unattendfile = ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.xml")
 
-        if self.tdl.installtype != 'iso':
-            raise OzException.OzException("Windows installs must be done via iso")
+        self.url = self.check_url(self.tdl, iso=True, url=False)
 
         self.winarch = get_windows_arch(self.tdl.arch)
 
-        Guest.CDGuest.__init__(self, self.tdl.name, "Windows", self.tdl.update,
-                               self.tdl.arch, 'iso', 'rtl8139', "localtime",
+        Guest.CDGuest.__init__(self, self.tdl.name, self.tdl.distro,
+                               self.tdl.update, self.tdl.arch,
+                               self.tdl.installtype, 'rtl8139', "localtime",
                                "usb", None, config)
 
     def generate_new_iso(self):
@@ -191,7 +191,7 @@ class Windows2008and7(Guest.CDGuest):
             shutil.copyfile(self.modified_iso_cache, self.output_iso)
             return
 
-        self.get_original_iso(self.tdl.iso, force_download)
+        self.get_original_iso(self.url, force_download)
         self.copy_iso()
         try:
             self.modify_iso()

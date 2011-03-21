@@ -14,7 +14,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-import urlparse
 import os
 
 def generate_full_auto_path(relative):
@@ -26,14 +25,6 @@ def generate_full_auto_path(relative):
 def generate_full_guesttools_path(relative):
     pkg_path = os.path.dirname(__file__)
     return os.path.abspath(os.path.join(pkg_path, "guesttools", relative))
-
-# kind of a funny function.  When we are using URL based installs, we can't
-# allow localhost URLs (since the URL is embedded into the installer, the
-# install is guaranteed to fail with localhost URLs)
-def deny_localhost(url):
-    p = urlparse.urlparse(url)
-    if p[1] == "localhost" or p[1] == "localhost.localdomain" or p[1] == "127.0.0.1":
-        raise Exception, "Can not use localhost for an URL based install"
 
 def executable_exists(program):
     def is_exe(fpath):

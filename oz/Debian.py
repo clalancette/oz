@@ -25,15 +25,15 @@ class DebianGuest(Guest.CDGuest):
     def __init__(self, tdl, config, auto):
         self.tdl = tdl
 
-        if self.tdl.installtype != 'iso':
-            raise OzException.OzException("Debian installs must be done via iso")
-
         self.preseed_file = auto
         if self.preseed_file is None:
             self.preseed_file = ozutil.generate_full_auto_path("debian-" + self.tdl.update + "-jeos.preseed")
 
-        Guest.CDGuest.__init__(self, self.tdl.name, "Debian", self.tdl.update,
-                               self.tdl.arch, 'iso', 'virtio', None, None,
+        self.url = self.check_url(self.tdl, iso=True, url=False)
+
+        Guest.CDGuest.__init__(self, self.tdl.name, self.tdl.distro,
+                               self.tdl.update, self.tdl.arch,
+                               self.tdl.installtype, 'virtio', None, None,
                                'virtio', config)
 
     def modify_iso(self):
@@ -78,7 +78,7 @@ class DebianGuest(Guest.CDGuest):
             shutil.copyfile(self.modified_iso_cache, self.output_iso)
             return
 
-        self.get_original_iso(self.tdl.iso, force_download)
+        self.get_original_iso(self.url, force_download)
         self.copy_iso()
         try:
             self.modify_iso()

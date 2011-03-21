@@ -28,15 +28,15 @@ class UbuntuGuest(Guest.CDGuest):
 
         self.casper_initrd = initrd
 
-        if self.tdl.installtype != 'iso':
-            raise OzException.OzException("Ubuntu installs must be done via iso")
-
         self.preseed_file = auto
         if self.preseed_file is None:
             self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
 
-        Guest.CDGuest.__init__(self, self.tdl.name, "Ubuntu", self.tdl.update,
-                               self.tdl.arch, 'iso', nicmodel, None, None,
+        self.url = self.check_url(self.tdl, iso=True, url=False)
+
+        Guest.CDGuest.__init__(self, self.tdl.name, self.tdl.distro,
+                               self.tdl.update, self.tdl.arch,
+                               self.tdl.installtype, nicmodel, None, None,
                                diskbus, config)
 
     def modify_iso(self):
@@ -84,7 +84,7 @@ class UbuntuGuest(Guest.CDGuest):
             shutil.copyfile(self.modified_iso_cache, self.output_iso)
             return
 
-        self.get_original_iso(self.tdl.iso, force_download)
+        self.get_original_iso(self.url, force_download)
         self.copy_iso()
         try:
             self.modify_iso()
@@ -99,15 +99,15 @@ class Ubuntu610and704Guest(Guest.CDGuest):
     def __init__(self, tdl, config, auto):
         self.tdl = tdl
 
-        if self.tdl.installtype != 'iso':
-            raise OzException.OzException("Ubuntu installs must be done via iso")
-
         self.preseed_file = auto
         if self.preseed_file is None:
             self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
 
-        Guest.CDGuest.__init__(self, self.tdl.name, "Ubuntu", self.tdl.update,
-                               self.tdl.arch, 'iso', "rtl8139", None, None,
+        self.url = self.check_url(self.tdl, iso=True, url=False)
+
+        Guest.CDGuest.__init__(self, self.tdl.name, self.tdl.distro,
+                               self.tdl.update, self.tdl.arch,
+                               self.tdl.installtype, "rtl8139", None, None,
                                None, config)
 
     def modify_iso(self):
@@ -163,7 +163,7 @@ class Ubuntu610and704Guest(Guest.CDGuest):
             shutil.copyfile(self.modified_iso_cache, self.output_iso)
             return
 
-        self.get_original_iso(self.tdl.iso, force_download)
+        self.get_original_iso(self.url, force_download)
         self.copy_iso()
         try:
             self.modify_iso()

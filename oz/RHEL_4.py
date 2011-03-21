@@ -30,13 +30,7 @@ class RHEL4Guest(RedHat.RedHatCDGuest):
         if self.ks_file is None:
             self.ks_file = ozutil.generate_full_auto_path("rhel-4-jeos.ks")
 
-        if self.tdl.installtype == 'url':
-            self.url = self.tdl.url
-            ozutil.deny_localhost(self.url)
-        elif self.tdl.installtype == 'iso':
-            self.url = self.tdl.iso
-        else:
-            raise OzException.OzException("RHEL-4 installs must be done via url or iso")
+        self.url = self.check_url(self.tdl, iso=True, url=True)
 
         RedHat.RedHatCDGuest.__init__(self, self.tdl.name, self.tdl.distro,
                                       self.tdl.update, self.tdl.arch,

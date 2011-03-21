@@ -32,15 +32,9 @@ class FedoraGuest(RedHat.RedHatCDYumGuest):
         self.haverepo = haverepo
         self.brokenisomethod = brokenisomethod
 
-        if self.tdl.installtype == 'url':
-            self.url = self.tdl.url
-            ozutil.deny_localhost(self.url)
-        elif self.tdl.installtype == 'iso':
-            self.url = self.tdl.iso
-        else:
-            raise OzException.OzException("Fedora installs must be done via url or iso")
+        self.url = self.check_url(self.tdl, iso=True, url=True)
 
-        RedHat.RedHatCDYumGuest.__init__(self, self.tdl.name, "Fedora",
+        RedHat.RedHatCDYumGuest.__init__(self, self.tdl.name, self.tdl.distro,
                                          self.tdl.update, self.tdl.arch,
                                          self.tdl.installtype, nicmodel, None,
                                          None, diskbus, config)

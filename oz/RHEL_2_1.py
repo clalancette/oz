@@ -32,16 +32,11 @@ class RHEL21Guest(Guest.FDGuest):
         if self.ks_file is None:
             self.ks_file = ozutil.generate_full_auto_path("rhel-2.1-jeos.ks")
 
-        if self.tdl.installtype != 'url':
-            raise OzException.OzException("RHEL-2.1 installs must be done via url or iso")
+        self.url = self.check_url(self.tdl, iso=False, url=True)
 
-        self.url = self.tdl.url
-
-        ozutil.deny_localhost(self.url)
-
-        Guest.FDGuest.__init__(self, self.tdl.name, "RHEL-2.1",
-                               self.tdl.update, "i386", "pcnet", None, None,
-                               None, config)
+        Guest.FDGuest.__init__(self, self.tdl.name, self.tdl.distro,
+                               self.tdl.update, self.tdl.arch, "pcnet", None,
+                               None, None, config)
 
     def modify_floppy(self):
         self.mkdir_p(self.floppy_contents)
