@@ -195,4 +195,4 @@ def get_class(tdl, config, auto):
     # Kernel panic: VFS: Unable to mount root fs on 08:21
     if tdl.update in ["7.0", "7.1"]:
         return RHL70and71and72and73and8Guest(tdl, config, auto, "ne2k_pci")
-    raise OzException.OzException("Unsupported RHL update " + update)
+    raise OzException.OzException("Unsupported RHL update " + tdl.update)
