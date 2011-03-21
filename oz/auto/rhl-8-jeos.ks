@@ -21,8 +21,3 @@ part swap --size 768 --grow --maxsize=1536 --ondisk=hda
 reboot
 
 %packages
-@ Administration Tools
-@ Editors
-@ Text-based Internet
-nc
-wget
