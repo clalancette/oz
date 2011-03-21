@@ -24,5 +24,8 @@ unittests:
 	@cd tests/tdl ; ./run.sh
 	@cd tests/factory ; ./run.sh
 
+pylint:
+	pylint --rcfile=pylint.conf oz
+
 clean:
 	rm -rf MANIFEST build dist usr *~ oz.spec *.pyc oz/*~ oz/*.pyc examples/*~ oz/auto/*~ man/*~ docs/*~ man/*.html tests/tdl/*~ tests/factory/*~
