@@ -197,10 +197,10 @@ class Guest(object):
             dom = self.libvirt_conn.lookupByName(self.name)
             try:
                 dom.destroy()
-            except:
+            except libvirt.libvirtError:
                 pass
             dom.undefine()
-        except:
+        except libvirt.libvirtError:
             pass
 
         if os.access(self.diskimage, os.F_OK):
@@ -213,15 +213,15 @@ class Guest(object):
         self.log.info("Checking for guest conflicts with %s" % (self.name))
 
         try:
-            dom = self.libvirt_conn.lookupByName(self.name)
+            self.libvirt_conn.lookupByName(self.name)
             raise OzException.OzException("Domain with name %s already exists" % (self.name))
-        except:
-           pass
+        except libvirt.libvirtError:
+            pass
 
         try:
-            dom = self.libvirt_conn.lookupByUUID(self.uuid)
+            self.libvirt_conn.lookupByUUID(self.uuid)
             raise OzException.OzException("Domain with UUID %s already exists" % (self.uuid))
-        except:
+        except libvirt.libvirtError:
             pass
 
         if os.access(self.diskimage, os.F_OK):
@@ -381,7 +381,7 @@ class Guest(object):
             if count % 10 == 0:
                 self.log.debug("Waiting for %s to finish installing, %d/%d" % (self.name, count, origcount))
             try:
-                info = libvirt_dom.info()
+                libvirt_dom.info()
             except libvirt.libvirtError, e:
                 self.log.debug("Libvirt Domain Info Failed:")
                 self.log.debug(" code is %d" % e.get_error_code())
