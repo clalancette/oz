@@ -74,7 +74,7 @@ class FedoraCoreGuest(RedHat.RedHatCDGuest):
         f.close()
 
 class FedoraCore4Guest(FedoraCoreGuest):
-    def generate_diskimage(self):
+    def generate_diskimage(self, size=10):
         self.generate_blank_diskimage()
 
 def get_class(tdl, config, auto):
