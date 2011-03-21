@@ -270,38 +270,38 @@ class Guest(object):
         domain.setProp("type", self.libvirt_type)
 
         # create name element
-        name = domain.newChild(None, "name", self.name)
+        domain.newChild(None, "name", self.name)
 
         # create memory elements
-        memory = domain.newChild(None, "memory", "1048576")
-        currentMemory = domain.newChild(None, "currentMemory", "1048576")
+        domain.newChild(None, "memory", "1048576")
+        domain.newChild(None, "currentMemory", "1048576")
 
         # create uuid
-        uuid = domain.newChild(None, "uuid", str(self.uuid))
+        domain.newChild(None, "uuid", str(self.uuid))
 
         # create clock offset
         clock = domain.newChild(None, "clock", None)
         clock.setProp("offset", self.clockoffset)
 
         # create vcpu
-        vcpu = domain.newChild(None, "vcpu", "1")
+        domain.newChild(None, "vcpu", "1")
 
         # create features
         features = domain.newChild(None, "features", None)
-        acpi = features.newChild(None, "acpi", None)
-        apic = features.newChild(None, "apic", None)
-        pae = features.newChild(None, "pae", None)
+        features.newChild(None, "acpi", None)
+        features.newChild(None, "apic", None)
+        features.newChild(None, "pae", None)
 
         # create os
         osNode = domain.newChild(None, "os", None)
-        ostype = osNode.newChild(None, "type", "hvm")
+        osNode.newChild(None, "type", "hvm")
         boot = osNode.newChild(None, "boot", None)
         boot.setProp("dev", bootdev)
 
         # create poweroff, reboot, crash
-        poweroff = domain.newChild(None, "on_poweroff", "destroy")
-        reboot = domain.newChild(None, "on_reboot", "destroy")
-        crash = domain.newChild(None, "on_crash", "destroy")
+        domain.newChild(None, "on_poweroff", "destroy")
+        domain.newChild(None, "on_reboot", "destroy")
+        domain.newChild(None, "on_crash", "destroy")
 
         # create devices
         devices = domain.newChild(None, "devices", None)
