@@ -219,7 +219,7 @@ class Guest(object):
             pass
 
         try:
-            self.libvirt_conn.lookupByUUID(self.uuid)
+            self.libvirt_conn.lookupByUUID(str(self.uuid))
             raise OzException.OzException("Domain with UUID %s already exists" % (self.uuid))
         except libvirt.libvirtError:
             pass
