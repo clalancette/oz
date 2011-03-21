@@ -18,6 +18,7 @@ import random
 import re
 import os
 import libxml2
+import shutil
 
 import Guest
 import ozutil
