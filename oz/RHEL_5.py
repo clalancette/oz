@@ -16,10 +16,8 @@
 
 import shutil
 import re
-import struct
 import os
 
-import Guest
 import ozutil
 import RedHat
 import OzException

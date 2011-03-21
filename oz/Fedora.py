@@ -18,7 +18,6 @@ import shutil
 import re
 import os
 
-import Guest
 import ozutil
 import RedHat
 import OzException
