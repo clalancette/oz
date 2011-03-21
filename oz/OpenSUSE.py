@@ -259,12 +259,12 @@ class OpenSUSEGuest(Guest.CDGuest):
 """PasswordAuthentication no
 UsePAM yes
 
-X11Forwarding yes 
+X11Forwarding yes
 
 Subsystem	sftp	/usr/lib64/ssh/sftp-server
 
-AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES 
-AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT 
+AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES
+AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT
 AcceptEnv LC_IDENTIFICATION LC_ALL
 """
         sshd_config_file = self.icicle_tmp + "/sshd_config"
@@ -337,7 +337,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
             self.guestfs_handle_cleanup(g_handle)
 
 def get_class(tdl, config, auto):
-    if tdl.update in ["11.0", "11.1", "11.2", "11.3"]:
+    if tdl.update in ["11.0", "11.1", "11.2", "11.3", "11.4"]:
         return OpenSUSEGuest(tdl, config, auto)
 
     raise OzException.OzException("Unsupported OpenSUSE update " + tdl.update)
