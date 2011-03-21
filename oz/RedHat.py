@@ -547,3 +547,81 @@ class RedHatCDYumGuest(RedHatCDGuest):
             self.collect_teardown(libvirt_xml)
 
         return icicle
+
+class RedHatFDGuest(Guest.FDGuest):
+    def __init__(self, tdl, config, auto, ks_name, nicmodel):
+        self.tdl = tdl
+        if self.tdl.arch != "i386":
+            raise OzException.OzException("Invalid arch " + self.tdl.arch + "for " + self.tdl.distro + " guest")
+
+        self.url = self.check_url(self.tdl, iso=False, url=True)
+
+        self.ks_file = auto
+        if self.ks_file is None:
+            self.ks_file = ozutil.generate_full_auto_path(ks_name)
+
+        Guest.FDGuest.__init__(self, self.tdl.name, self.tdl.distro,
+                               self.tdl.update, self.tdl.arch, nicmodel, None,
+                               None, None, config)
+
+    def modify_floppy(self):
+        self.mkdir_p(self.floppy_contents)
+
+        self.log.debug("Putting the kickstart in place")
+
+        output_ks = os.path.join(self.floppy_contents, "ks.cfg")
+        infile = open(self.ks_file, 'r')
+        outfile = open(output_ks, 'w')
+
+        for line in infile.xreadlines():
+            if re.match("^url", line):
+                outfile.write("url --url " + self.url + "\n")
+            else:
+                outfile.write(line)
+
+        infile.close()
+        outfile.close()
+
+        Guest.subprocess_check_output(["mcopy", "-i", self.output_floppy,
+                                       output_ks, "::KS.CFG"])
+
+        self.log.debug("Modifying the syslinux.cfg")
+
+        syslinux = os.path.join(self.floppy_contents, "SYSLINUX.CFG")
+        outfile = open(syslinux, "w")
+        outfile.write("default customboot\n")
+        outfile.write("prompt 1\n")
+        outfile.write("timeout 1\n")
+        outfile.write("label customboot\n")
+        outfile.write("  kernel vmlinuz\n")
+        outfile.write("  append initrd=initrd.img lang= devfs=nomount ramdisk_size=9216 ks=floppy method=" + self.url + "\n")
+        outfile.close()
+
+        # sometimes, syslinux.cfg on the floppy gets marked read-only.  Avoid
+        # problems with the subsequent mcopy by marking it read/write.
+        Guest.subprocess_check_output(["mattrib", "-r", "-i",
+                                       self.output_floppy, "::SYSLINUX.CFG"])
+
+        Guest.subprocess_check_output(["mcopy", "-n", "-o", "-i",
+                                       self.output_floppy, syslinux,
+                                       "::SYSLINUX.CFG"])
+
+    def generate_install_media(self, force_download=False):
+        self.log.info("Generating install media")
+
+        if not force_download and os.access(self.modified_floppy_cache,
+                                            os.F_OK):
+            self.log.info("Using cached modified media")
+            shutil.copyfile(self.modified_floppy_cache, self.output_floppy)
+            return
+
+        self.get_original_floppy(self.url + "/images/bootnet.img",
+                                 force_download)
+        self.copy_floppy()
+        try:
+            self.modify_floppy()
+            if self.cache_modified_media:
+                self.log.info("Caching modified media for future use")
+                shutil.copyfile(self.output_floppy, self.modified_floppy_cache)
+        finally:
+            self.cleanup_floppy()
