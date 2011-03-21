@@ -358,7 +358,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
     def customize_files(self, guestaddr):
         self.log.info("Uploading custom files")
-        for name,content in self.tdl.files.items():
+        for name, content in self.tdl.files.items():
             localname = os.path.join(self.icicle_tmp, "file")
             f = open(localname, 'w')
             f.write(content)

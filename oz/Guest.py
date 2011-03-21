@@ -732,7 +732,7 @@ class CDGuest(Guest):
             current = os.getcwd()
             os.chdir(self.iso_contents)
             try:
-                rd,wr = os.pipe()
+                rd, wr = os.pipe()
 
                 try:
                     # NOTE: it is very, very important that we use temporary
