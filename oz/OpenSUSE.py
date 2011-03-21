@@ -35,7 +35,7 @@ class OpenSUSEGuest(Guest.CDGuest):
 
         Guest.CDGuest.__init__(self, self.tdl.name, "OpenSUSE",
                                self.tdl.update, self.tdl.arch, 'iso',
-                               "rtl8139", None, None, None, config)
+                               "virtio", None, None, "virtio", config)
 
         self.sshprivkey = os.path.join(self.icicle_tmp, 'id_rsa-icicle-gen')
 
