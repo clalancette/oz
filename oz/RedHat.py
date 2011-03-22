@@ -19,14 +19,14 @@ import os
 import shutil
 import urllib2
 
-import Guest
-import ozutil
-import OzException
+import oz.Guest
+import oz.ozutil
+import oz.OzException
 
-class RedHatCDGuest(Guest.CDGuest):
+class RedHatCDGuest(oz.Guest.CDGuest):
     def __init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus, config):
-        Guest.CDGuest.__init__(self, tdl, nicmodel, clockoffset, mousetype,
-                               diskbus, config)
+        oz.Guest.CDGuest.__init__(self, tdl, nicmodel, clockoffset, mousetype,
+                                  diskbus, config)
         self.sshprivkey = os.path.join('/etc', 'oz', 'id_rsa-icicle-gen')
         self.sshd_config = \
 """SyslogFacility AUTHPRIV
@@ -45,13 +45,15 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
     def generate_new_iso(self):
         self.log.debug("Generating new ISO")
-        Guest.subprocess_check_output(["mkisofs", "-r", "-T", "-J", "-V",
-                                       "Custom", "-b", "isolinux/isolinux.bin",
-                                       "-c", "isolinux/boot.cat",
-                                       "-no-emul-boot", "-boot-load-size", "4",
-                                       "-boot-info-table", "-v", "-v",
-                                       "-o", self.output_iso,
-                                       self.iso_contents])
+        oz.Guest.subprocess_check_output(["mkisofs", "-r", "-T", "-J",
+                                          "-V", "Custom",
+                                          "-b", "isolinux/isolinux.bin",
+                                          "-c", "isolinux/boot.cat",
+                                          "-no-emul-boot",
+                                          "-boot-load-size", "4",
+                                          "-boot-info-table", "-v", "-v",
+                                          "-o", self.output_iso,
+                                          self.iso_contents])
 
     def get_default_runlevel(self, g_handle):
         runlevel = "3"
@@ -185,7 +187,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         # part 2; check and setup sshd
         self.log.debug("Step 2: setup sshd")
         if not g_handle.exists('/etc/init.d/sshd') or not g_handle.exists('/usr/sbin/sshd'):
-            raise OzException.OzException("ssh not installed on the image, cannot continue")
+            raise oz.OzException.OzException("ssh not installed on the image, cannot continue")
 
         startuplink = self.get_service_runlevel_link(g_handle, 'sshd')
         if g_handle.exists(startuplink):
@@ -213,9 +215,9 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         # part 4; make sure the guest announces itself
         self.log.debug("Step 4: Guest announcement")
         if not g_handle.exists('/etc/init.d/crond') or not g_handle.exists('/usr/sbin/crond'):
-            raise OzException.OzException("cron not installed on the image, cannot continue")
+            raise oz.OzException.OzException("cron not installed on the image, cannot continue")
 
-        iciclepath = ozutil.generate_full_guesttools_path('icicle-nc')
+        iciclepath = oz.ozutil.generate_full_guesttools_path('icicle-nc')
         g_handle.upload(iciclepath, '/root/icicle-nc')
         g_handle.chmod(0755, '/root/icicle-nc')
 
@@ -303,13 +305,13 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         # on long-running commands with no output
         # PasswordAuthentication=no prevents us from falling back to
         # keyboard-interactive password prompting
-        return Guest.subprocess_check_output(["ssh", "-i", self.sshprivkey,
-                                              "-o", "ServerAliveInterval=30",
-                                              "-o", "StrictHostKeyChecking=no",
-                                              "-o", "ConnectTimeout=5",
-                                              "-o", "UserKnownHostsFile=/dev/null",
-                                              "-o", "PasswordAuthentication=no",
-                                              "root@" + guestaddr, command])
+        return oz.Guest.subprocess_check_output(["ssh", "-i", self.sshprivkey,
+                                                 "-o", "ServerAliveInterval=30",
+                                                 "-o", "StrictHostKeyChecking=no",
+                                                 "-o", "ConnectTimeout=5",
+                                                 "-o", "UserKnownHostsFile=/dev/null",
+                                                 "-o", "PasswordAuthentication=no",
+                                                 "root@" + guestaddr, command])
 
     def do_icicle(self, guestaddr):
         stdout, stderr, retcode = self.guest_execute_command(guestaddr,
@@ -342,7 +344,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
     def guest_live_upload(self, guestaddr, file_to_upload, destination):
         self.guest_execute_command(guestaddr, "mkdir -p " + os.path.dirname(destination))
 
-        return Guest.subprocess_check_output(["scp", "-i", self.sshprivkey,
+        return oz.Guest.subprocess_check_output(["scp", "-i", self.sshprivkey,
                                               "-o", "StrictHostKeyChecking=no",
                                               "-o", "ConnectTimeout=5",
                                               "-o", "UserKnownHostsFile=/dev/null",
@@ -440,7 +442,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
                 break
 
             if count == 0:
-                raise OzException.OzException("%s URL installs cannot be done using servers that don't accept byte ranges.  Please try another mirror" % (tdl.distro))
+                raise oz.OzException.OzException("%s URL installs cannot be done using servers that don't accept byte ranges.  Please try another mirror" % (tdl.distro))
 
         return url
 
@@ -528,12 +530,12 @@ class RedHatCDYumGuest(RedHatCDGuest):
 
         return icicle
 
-class RedHatFDGuest(Guest.FDGuest):
+class RedHatFDGuest(oz.Guest.FDGuest):
     def __init__(self, tdl, config, auto, ks_name, nicmodel):
-        Guest.FDGuest.__init__(self, tdl, nicmodel, None, None, None, config)
+        oz.Guest.FDGuest.__init__(self, tdl, nicmodel, None, None, None, config)
 
         if self.tdl.arch != "i386":
-            raise OzException.OzException("Invalid arch " + self.tdl.arch + "for " + self.tdl.distro + " guest")
+            raise oz.OzException.OzException("Invalid arch " + self.tdl.arch + "for " + self.tdl.distro + " guest")
 
         self.url = self.check_url(self.tdl, iso=False, url=True)
 
@@ -541,7 +543,7 @@ class RedHatFDGuest(Guest.FDGuest):
 
         self.ks_file = auto
         if self.ks_file is None:
-            self.ks_file = ozutil.generate_full_auto_path(self.ks_name)
+            self.ks_file = oz.ozutil.generate_full_auto_path(self.ks_name)
 
     def modify_floppy(self):
         self.mkdir_p(self.floppy_contents)
@@ -550,7 +552,7 @@ class RedHatFDGuest(Guest.FDGuest):
 
         output_ks = os.path.join(self.floppy_contents, "ks.cfg")
 
-        if self.ks_file == ozutil.generate_full_auto_path(self.ks_name):
+        if self.ks_file == oz.ozutil.generate_full_auto_path(self.ks_name):
             def kssub(line):
                 if re.match("^url", line):
                     return "url --url " + self.url + "\n"
@@ -563,8 +565,8 @@ class RedHatFDGuest(Guest.FDGuest):
         else:
             shutil.copy(self.ks_file, output_ks)
 
-        Guest.subprocess_check_output(["mcopy", "-i", self.output_floppy,
-                                       output_ks, "::KS.CFG"])
+        oz.Guest.subprocess_check_output(["mcopy", "-i", self.output_floppy,
+                                          output_ks, "::KS.CFG"])
 
         self.log.debug("Modifying the syslinux.cfg")
 
@@ -580,12 +582,12 @@ class RedHatFDGuest(Guest.FDGuest):
 
         # sometimes, syslinux.cfg on the floppy gets marked read-only.  Avoid
         # problems with the subsequent mcopy by marking it read/write.
-        Guest.subprocess_check_output(["mattrib", "-r", "-i",
-                                       self.output_floppy, "::SYSLINUX.CFG"])
+        oz.Guest.subprocess_check_output(["mattrib", "-r", "-i",
+                                          self.output_floppy, "::SYSLINUX.CFG"])
 
-        Guest.subprocess_check_output(["mcopy", "-n", "-o", "-i",
-                                       self.output_floppy, syslinux,
-                                       "::SYSLINUX.CFG"])
+        oz.Guest.subprocess_check_output(["mcopy", "-n", "-o", "-i",
+                                          self.output_floppy, syslinux,
+                                          "::SYSLINUX.CFG"])
 
     def generate_install_media(self, force_download=False):
         self.log.info("Generating install media")

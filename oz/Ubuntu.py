@@ -18,19 +18,20 @@ import shutil
 import re
 import os
 
-import Guest
-import ozutil
-import OzException
+import oz.Guest
+import oz.ozutil
+import oz.OzException
 
-class UbuntuGuest(Guest.CDGuest):
+class UbuntuGuest(oz.Guest.CDGuest):
     def __init__(self, tdl, config, auto, initrd, nicmodel, diskbus):
-        Guest.CDGuest.__init__(self, tdl, nicmodel, None, None, diskbus, config)
+        oz.Guest.CDGuest.__init__(self, tdl, nicmodel, None, None, diskbus,
+                                  config)
 
         self.casper_initrd = initrd
 
         self.preseed_file = auto
         if self.preseed_file is None:
-            self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
+            self.preseed_file = oz.ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
 
         self.url = self.check_url(self.tdl, iso=True, url=False)
 
@@ -40,7 +41,7 @@ class UbuntuGuest(Guest.CDGuest):
         self.log.debug("Copying preseed file")
         outname = os.path.join(self.iso_contents, "preseed", "customiso.seed")
 
-        if self.preseed_file == ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed"):
+        if self.preseed_file == oz.ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed"):
 
             def preseed_sub(line):
                 if re.match('d-i passwd/root-password password', line):
@@ -75,7 +76,7 @@ class UbuntuGuest(Guest.CDGuest):
 
     def generate_new_iso(self):
         self.log.info("Generating new ISO")
-        Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom", "-J",
+        oz.Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom", "-J",
                                        "-l", "-b", "isolinux/isolinux.bin",
                                        "-c", "isolinux/boot.cat",
                                        "-no-emul-boot", "-boot-load-size", "4",
@@ -86,13 +87,14 @@ class UbuntuGuest(Guest.CDGuest):
     def generate_install_media(self, force_download=False):
         return self.iso_generate_install_media(self.url, force_download)
 
-class Ubuntu610and704Guest(Guest.CDGuest):
+class Ubuntu610and704Guest(oz.Guest.CDGuest):
     def __init__(self, tdl, config, auto):
-        Guest.CDGuest.__init__(self, tdl, "rtl8139", None, None, None, config)
+        oz.Guest.CDGuest.__init__(self, tdl, "rtl8139", None, None, None,
+                                  config)
 
         self.preseed_file = auto
         if self.preseed_file is None:
-            self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
+            self.preseed_file = oz.ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
 
         self.url = self.check_url(self.tdl, iso=True, url=False)
 
@@ -101,7 +103,7 @@ class Ubuntu610and704Guest(Guest.CDGuest):
 
         outname = os.path.join(self.iso_contents, "preseed", "customiso.seed")
 
-        if self.preseed_file == ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed"):
+        if self.preseed_file == oz.ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed"):
 
             def preseed_sub(line):
                 if re.match('d-i passwd/root-password password', line):
@@ -146,7 +148,7 @@ class Ubuntu610and704Guest(Guest.CDGuest):
 
     def generate_new_iso(self):
         self.log.info("Generating new ISO")
-        Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom", "-J",
+        oz.Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom", "-J",
                                        "-l", "-b", "isolinux/isolinux.bin",
                                        "-c", "isolinux/boot.cat",
                                        "-no-emul-boot", "-boot-load-size", "4",
@@ -167,4 +169,4 @@ def get_class(tdl, config, auto):
         return UbuntuGuest(tdl, config, auto, "initrd.gz", "virtio", "virtio")
     if tdl.update in ["9.10", "10.04", "10.04.1", "10.10"]:
         return UbuntuGuest(tdl, config, auto, "initrd.lz", "virtio", "virtio")
-    raise OzException.OzException("Unsupported Ubuntu update " + tdl.update)
+    raise oz.OzException.OzException("Unsupported Ubuntu update " + tdl.update)

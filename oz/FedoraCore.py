@@ -18,18 +18,18 @@ import shutil
 import re
 import os
 
-import ozutil
-import RedHat
-import OzException
+import oz.ozutil
+import oz.RedHat
+import oz.OzException
 
-class FedoraCoreGuest(RedHat.RedHatCDGuest):
+class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
     def __init__(self, tdl, config, auto):
-        RedHat.RedHatCDGuest.__init__(self, tdl, 'rtl8139', None, None, None,
-                                      config)
+        oz.RedHat.RedHatCDGuest.__init__(self, tdl, 'rtl8139', None, None, None,
+                                         config)
 
         self.ks_file = auto
         if self.ks_file is None:
-            self.ks_file = ozutil.generate_full_auto_path("fedoracore-" + self.tdl.update + "-jeos.ks")
+            self.ks_file = oz.ozutil.generate_full_auto_path("fedoracore-" + self.tdl.update + "-jeos.ks")
 
         self.url = self.check_url(self.tdl, iso=True, url=True)
 
@@ -78,4 +78,4 @@ def get_class(tdl, config, auto):
         return FedoraCoreGuest(tdl, config, auto)
     if tdl.update in ["4"]:
         return FedoraCore4Guest(tdl, config, auto)
-    raise OzException.OzException("Unsupported FedoraCore update " + tdl.update)
+    raise oz.OzException.OzException("Unsupported FedoraCore update " + tdl.update)

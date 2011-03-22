@@ -18,19 +18,19 @@
 Factory functions.
 """
 
-import Fedora
-import FedoraCore
-import RHEL_2_1
-import RHEL_3
-import RHEL_4
-import RHEL_5
-import RHEL_6
-import RHL
-import Ubuntu
-import Windows
-import OpenSUSE
-import Debian
-import OzException
+import oz.Fedora
+import oz.FedoraCore
+import oz.RHEL_2_1
+import oz.RHEL_3
+import oz.RHEL_4
+import oz.RHEL_5
+import oz.RHEL_6
+import oz.RHL
+import oz.Ubuntu
+import oz.Windows
+import oz.OpenSUSE
+import oz.Debian
+import oz.OzException
 
 def guest_factory(tdl, config, auto):
     """
@@ -46,31 +46,31 @@ def guest_factory(tdl, config, auto):
              a known-working unattended installation file.
     """
     if tdl.distro == "Fedora":
-        return Fedora.get_class(tdl, config, auto)
+        return oz.Fedora.get_class(tdl, config, auto)
     elif tdl.distro == "FedoraCore":
-        return FedoraCore.get_class(tdl, config, auto)
+        return oz.FedoraCore.get_class(tdl, config, auto)
     elif tdl.distro == "RHEL-2.1":
-        return RHEL_2_1.get_class(tdl, config, auto)
+        return oz.RHEL_2_1.get_class(tdl, config, auto)
     elif tdl.distro in ["RHEL-3", "CentOS-3"]:
-        return RHEL_3.get_class(tdl, config, auto)
+        return oz.RHEL_3.get_class(tdl, config, auto)
     elif tdl.distro in ["RHEL-4", "CentOS-4"]:
-        return RHEL_4.get_class(tdl, config, auto)
+        return oz.RHEL_4.get_class(tdl, config, auto)
     elif tdl.distro in ["RHEL-5", "CentOS-5"]:
-        return RHEL_5.get_class(tdl, config, auto)
+        return oz.RHEL_5.get_class(tdl, config, auto)
     elif tdl.distro == "RHEL-6":
-        return RHEL_6.get_class(tdl, config, auto)
+        return oz.RHEL_6.get_class(tdl, config, auto)
     elif tdl.distro == "Ubuntu":
-        return Ubuntu.get_class(tdl, config, auto)
+        return oz.Ubuntu.get_class(tdl, config, auto)
     elif tdl.distro == "Windows":
-        return Windows.get_class(tdl, config, auto)
+        return oz.Windows.get_class(tdl, config, auto)
     elif tdl.distro == "RHL":
-        return RHL.get_class(tdl, config, auto)
+        return oz.RHL.get_class(tdl, config, auto)
     elif tdl.distro == "OpenSUSE":
-        return OpenSUSE.get_class(tdl, config, auto)
+        return oz.OpenSUSE.get_class(tdl, config, auto)
     elif tdl.distro == "Debian":
-        return Debian.get_class(tdl, config, auto)
+        return oz.Debian.get_class(tdl, config, auto)
 
-    raise OzException.OzException("Invalid distribution " + tdl.distro)
+    raise oz.OzException.OzException("Invalid distribution " + tdl.distro)
 
 def distrolist():
     """

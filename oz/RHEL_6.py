@@ -18,18 +18,18 @@ import shutil
 import re
 import os
 
-import ozutil
-import RedHat
-import OzException
+import oz.ozutil
+import oz.RedHat
+import oz.OzException
 
-class RHEL6Guest(RedHat.RedHatCDYumGuest):
+class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
     def __init__(self, tdl, config, auto):
-        RedHat.RedHatCDYumGuest.__init__(self, tdl, "virtio", None, None,
-                                         "virtio", config)
+        oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, "virtio", None, None,
+                                            "virtio", config)
 
         self.ks_file = auto
         if self.ks_file is None:
-            self.ks_file = ozutil.generate_full_auto_path("rhel-6-jeos.ks")
+            self.ks_file = oz.ozutil.generate_full_auto_path("rhel-6-jeos.ks")
 
         self.url = self.check_anaconda_url(self.tdl, iso=True, url=True)
 
@@ -38,7 +38,7 @@ class RHEL6Guest(RedHat.RedHatCDYumGuest):
 
         outname = os.path.join(self.iso_contents, "ks.cfg")
 
-        if self.ks_file == ozutil.generate_full_auto_path("rhel-6-jeos.ks"):
+        if self.ks_file == oz.ozutil.generate_full_auto_path("rhel-6-jeos.ks"):
             def kssub(line):
                 if re.match("^rootpw", line):
                     return "rootpw " + self.rootpw + '\n'
@@ -76,4 +76,4 @@ class RHEL6Guest(RedHat.RedHatCDYumGuest):
 def get_class(tdl, config, auto):
     if tdl.update in ["0"]:
         return RHEL6Guest(tdl, config, auto)
-    raise OzException.OzException("Unsupported RHEL-6 update " + tdl.update)
+    raise oz.OzException.OzException("Unsupported RHEL-6 update " + tdl.update)

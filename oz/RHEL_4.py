@@ -18,18 +18,18 @@ import shutil
 import re
 import os
 
-import ozutil
-import RedHat
-import OzException
+import oz.ozutil
+import oz.RedHat
+import oz.OzException
 
-class RHEL4Guest(RedHat.RedHatCDGuest):
+class RHEL4Guest(oz.RedHat.RedHatCDGuest):
     def __init__(self, tdl, config, auto, nicmodel, diskbus):
-        RedHat.RedHatCDGuest.__init__(self, tdl, nicmodel, None, None, diskbus,
-                                      config)
+        oz.RedHat.RedHatCDGuest.__init__(self, tdl, nicmodel, None, None,
+                                         diskbus, config)
 
         self.ks_file = auto
         if self.ks_file is None:
-            self.ks_file = ozutil.generate_full_auto_path("rhel-4-jeos.ks")
+            self.ks_file = oz.ozutil.generate_full_auto_path("rhel-4-jeos.ks")
 
         self.url = self.check_url(self.tdl, iso=True, url=True)
 
@@ -38,7 +38,7 @@ class RHEL4Guest(RedHat.RedHatCDGuest):
 
         outname = os.path.join(self.iso_contents, "ks.cfg")
 
-        if self.ks_file == ozutil.generate_full_auto_path("rhel-4-jeos.ks"):
+        if self.ks_file == oz.ozutil.generate_full_auto_path("rhel-4-jeos.ks"):
             def kssub(line):
                 if re.match("^rootpw", line):
                     return "rootpw " + self.rootpw + '\n'
@@ -83,20 +83,20 @@ class RHEL4Guest(RedHat.RedHatCDGuest):
             f.close()
 
             if not lines[1].startswith("Red Hat Enterprise Linux 4"):
-                raise OzException.OzException("Invalid .discinfo file on ISO")
+                raise oz.OzException.OzException("Invalid .discinfo file on ISO")
             if lines[2].strip() != self.tdl.arch:
-                raise OzException.OzException("Invalid .discinfo architecture on ISO")
+                raise oz.OzException.OzException("Invalid .discinfo architecture on ISO")
             if not lines[3].strip().startswith("1,2,3,4"):
-                raise OzException.OzException("Only DVDs are supported for RHEL-4 ISO installs")
+                raise oz.OzException.OzException("Only DVDs are supported for RHEL-4 ISO installs")
         else:
             pvd = self.get_primary_volume_descriptor(self.orig_iso)
 
             if not re.match("CentOS 4(\.[0-9])?.*DVD", pvd.volume_identifier):
-                raise OzException.OzException("Only DVDs are supported for CentOS-4 ISO installs")
+                raise oz.OzException.OzException("Only DVDs are supported for CentOS-4 ISO installs")
 
 def get_class(tdl, config, auto):
     if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7"]:
         return RHEL4Guest(tdl, config, auto, "rtl8139", None)
     if tdl.update in ["U8", "U9"]:
         return RHEL4Guest(tdl, config, auto, "virtio", "virtio")
-    raise OzException.OzException("Unsupported " + tdl.distro + " update " + tdl.update)
+    raise oz.OzException.OzException("Unsupported " + tdl.distro + " update " + tdl.update)

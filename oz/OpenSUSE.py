@@ -19,18 +19,18 @@ import shutil
 import os
 import libxml2
 
-import Guest
-import ozutil
-import OzException
+import oz.Guest
+import oz.ozutil
+import oz.OzException
 
-class OpenSUSEGuest(Guest.CDGuest):
+class OpenSUSEGuest(oz.Guest.CDGuest):
     def __init__(self, tdl, config, auto):
-        Guest.CDGuest.__init__(self, tdl, "virtio", None, None, "virtio",
-                               config)
+        oz.Guest.CDGuest.__init__(self, tdl, "virtio", None, None, "virtio",
+                                  config)
 
         self.autoyast = auto
         if self.autoyast is None:
-            self.autoyast = ozutil.generate_full_auto_path("opensuse-" + self.tdl.update + "-jeos.xml")
+            self.autoyast = oz.ozutil.generate_full_auto_path("opensuse-" + self.tdl.update + "-jeos.xml")
 
         self.url = self.check_url(self.tdl, iso=True, url=False)
 
@@ -41,7 +41,7 @@ class OpenSUSEGuest(Guest.CDGuest):
 
         outname = os.path.join(self.iso_contents, "autoinst.xml")
 
-        if self.autoyast == ozutil.generate_full_auto_path("opensuse-" + self.tdl.update + "-jeos.xml"):
+        if self.autoyast == oz.ozutil.generate_full_auto_path("opensuse-" + self.tdl.update + "-jeos.xml"):
             doc = libxml2.parseFile(self.autoyast)
 
             xp = doc.xpathNewContext()
@@ -75,16 +75,16 @@ class OpenSUSEGuest(Guest.CDGuest):
 
     def generate_new_iso(self):
         self.log.info("Generating new ISO")
-        Guest.subprocess_check_output(["mkisofs", "-r", "-J", "-V", "Custom",
-                                       "-l", "-b",
-                                       "boot/" + self.tdl.arch + "/loader/isolinux.bin",
-                                       "-c", "boot/" + self.tdl.arch + "/loader/boot.cat",
-                                       "-no-emul-boot", "-boot-load-size", "4",
-                                       "-boot-info-table", "-graft-points",
-                                       "-iso-level", "4", "-pad",
-                                       "-allow-leading-dots",
-                                       "-o", self.output_iso,
-                                       self.iso_contents])
+        oz.Guest.subprocess_check_output(["mkisofs", "-r", "-J", "-V", "Custom",
+                                          "-b", "boot/" + self.tdl.arch + "/loader/isolinux.bin",
+                                          "-c", "boot/" + self.tdl.arch + "/loader/boot.cat",
+                                          "-no-emul-boot",
+                                          "-boot-load-size", "4",
+                                          "-boot-info-table", "-graft-points",
+                                          "-iso-level", "4", "-pad",
+                                          "-allow-leading-dots", "-l",
+                                          "-o", self.output_iso,
+                                          self.iso_contents])
 
     def generate_install_media(self, force_download=False):
         return self.iso_generate_install_media(self.url, force_download)
@@ -108,13 +108,13 @@ class OpenSUSEGuest(Guest.CDGuest):
         # on long-running commands with no output
         # PasswordAuthentication=no prevents us from falling back to
         # keyboard-interactive password prompting
-        return Guest.subprocess_check_output(["ssh", "-i", self.sshprivkey,
-                                              "-o", "ServerAliveInterval=30",
-                                              "-o", "StrictHostKeyChecking=no",
-                                              "-o", "ConnectTimeout=5",
-                                              "-o", "UserKnownHostsFile=/dev/null",
-                                              "-o", "PasswordAuthentication=no",
-                                              "root@" + guestaddr, command])
+        return oz.Guest.subprocess_check_output(["ssh", "-i", self.sshprivkey,
+                                                 "-o", "ServerAliveInterval=30",
+                                                 "-o", "StrictHostKeyChecking=no",
+                                                 "-o", "ConnectTimeout=5",
+                                                 "-o", "UserKnownHostsFile=/dev/null",
+                                                 "-o", "PasswordAuthentication=no",
+                                                 "root@" + guestaddr, command])
 
     def image_ssh_teardown_step_1(self, g_handle):
         self.log.debug("Teardown step 1")
@@ -238,7 +238,7 @@ class OpenSUSEGuest(Guest.CDGuest):
         # part 2; check and setup sshd
         self.log.debug("Step 2: setup sshd")
         if not g_handle.exists('/etc/init.d/sshd') or not g_handle.exists('/usr/sbin/sshd'):
-            raise OzException.OzException("ssh not installed on the image, cannot continue")
+            raise oz.OzException.OzException("ssh not installed on the image, cannot continue")
 
         runlevel = self.get_default_runlevel(g_handle)
         startuplink = '/etc/rc.d/rc' + runlevel + '.d/S04sshd'
@@ -272,9 +272,9 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         # part 3; make sure the guest announces itself
         self.log.debug("Step 3: Guest announcement")
         if not g_handle.exists('/etc/init.d/cron') or not g_handle.exists('/usr/sbin/cron'):
-            raise OzException.OzException("cron not installed on the image, cannot continue")
+            raise oz.OzException.OzException("cron not installed on the image, cannot continue")
 
-        iciclepath = ozutil.generate_full_guesttools_path('icicle-nc')
+        iciclepath = oz.ozutil.generate_full_guesttools_path('icicle-nc')
         g_handle.upload(iciclepath, '/root/icicle-nc')
         g_handle.chmod(0755, '/root/icicle-nc')
 
@@ -331,4 +331,4 @@ def get_class(tdl, config, auto):
     if tdl.update in ["11.0", "11.1", "11.2", "11.3", "11.4"]:
         return OpenSUSEGuest(tdl, config, auto)
 
-    raise OzException.OzException("Unsupported OpenSUSE update " + tdl.update)
+    raise oz.OzException.OzException("Unsupported OpenSUSE update " + tdl.update)

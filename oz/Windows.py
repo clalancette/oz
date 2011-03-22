@@ -20,17 +20,17 @@ import os
 import libxml2
 import shutil
 
-import Guest
-import ozutil
-import OzException
+import oz.Guest
+import oz.ozutil
+import oz.OzException
 
-class Windows(Guest.CDGuest):
+class Windows(oz.Guest.CDGuest):
     def __init__(self, tdl, config):
-        Guest.CDGuest.__init__(self, tdl, "rtl8139", "localtime", "usb", None,
-                               config)
+        oz.Guest.CDGuest.__init__(self, tdl, "rtl8139", "localtime", "usb",
+                                  None, config)
 
         if self.tdl.key is None:
-            raise OzException.OzException("A key is required when installing Windows")
+            raise oz.OzException.OzException("A key is required when installing Windows")
 
         self.url = self.check_url(self.tdl, iso=True, url=False)
 
@@ -48,22 +48,23 @@ class Windows2000andXPand2003(Windows):
         Windows.__init__(self, tdl, config)
 
         if self.tdl.update == "2000" and self.tdl.arch != "i386":
-            raise OzException.OzException("Windows 2000 only supports i386 architecture")
+            raise oz.OzException.OzException("Windows 2000 only supports i386 architecture")
 
         self.siffile = auto
         if self.siffile is None:
-            self.siffile = ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif")
+            self.siffile = oz.ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif")
 
     def generate_new_iso(self):
         self.log.debug("Generating new ISO")
-        Guest.subprocess_check_output(["mkisofs", "-b", "cdboot/boot.bin",
-                                       "-no-emul-boot", "-boot-load-seg",
-                                       "1984", "-boot-load-size", "4",
-                                       "-iso-level", "2", "-J", "-l", "-D",
-                                       "-N", "-joliet-long",
-                                       "-relaxed-filenames", "-v", "-v",
-                                       "-V", "Custom",
-                                       "-o", self.output_iso, self.iso_contents])
+        oz.Guest.subprocess_check_output(["mkisofs", "-b", "cdboot/boot.bin",
+                                          "-no-emul-boot", "-boot-load-seg",
+                                          "1984", "-boot-load-size", "4",
+                                          "-iso-level", "2", "-J", "-l", "-D",
+                                          "-N", "-joliet-long",
+                                          "-relaxed-filenames", "-v", "-v",
+                                          "-V", "Custom",
+                                          "-o", self.output_iso,
+                                          self.iso_contents])
 
     def modify_iso(self):
         self.log.debug("Modifying ISO")
@@ -76,7 +77,7 @@ class Windows2000andXPand2003(Windows):
                                self.get_windows_arch(self.tdl.arch),
                                "winnt.sif")
 
-        if self.siffile == ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif"):
+        if self.siffile == oz.ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif"):
             # if this is the oz default siffile, we modify certain parameters
             # to make installation succeed
             computername = "OZ" + str(random.randrange(1, 900000))
@@ -102,7 +103,7 @@ class Windows2000andXPand2003(Windows):
     def install(self, timeout=None, force=False):
         if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
             self.log.info("Found cached JEOS, using it")
-            ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
+            oz.ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
         else:
             self.log.info("Running install for %s" % (self.tdl.name))
 
@@ -121,7 +122,7 @@ class Windows2000andXPand2003(Windows):
             if self.cache_jeos:
                 self.log.info("Caching JEOS")
                 self.mkdir_p(self.jeos_cache_dir)
-                ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
+                oz.ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
 
         return self.generate_xml("hd", None)
 
@@ -131,19 +132,20 @@ class Windows2008and7(Windows):
 
         self.unattendfile = auto
         if self.unattendfile is None:
-            self.unattendfile = ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.xml")
+            self.unattendfile = oz.ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.xml")
 
     def generate_new_iso(self):
         self.log.debug("Generating new ISO")
         # NOTE: Windows 2008 is very picky about which arguments to mkisofs
         # will generate a bootable CD, so modify these at your own risk
-        Guest.subprocess_check_output(["mkisofs", "-b", "cdboot/boot.bin",
-                                       "-no-emul-boot", "-c", "BOOT.CAT",
-                                       "-iso-level", "2", "-J", "-l", "-D",
-                                       "-N", "-joliet-long",
-                                       "-relaxed-filenames", "-v", "-v",
-                                       "-V", "Custom", "-udf",
-                                       "-o", self.output_iso, self.iso_contents])
+        oz.Guest.subprocess_check_output(["mkisofs", "-b", "cdboot/boot.bin",
+                                          "-no-emul-boot", "-c", "BOOT.CAT",
+                                          "-iso-level", "2", "-J", "-l", "-D",
+                                          "-N", "-joliet-long",
+                                          "-relaxed-filenames", "-v", "-v",
+                                          "-V", "Custom", "-udf",
+                                          "-o", self.output_iso,
+                                          self.iso_contents])
 
     def modify_iso(self):
         self.log.debug("Modifying ISO")
@@ -154,7 +156,7 @@ class Windows2008and7(Windows):
 
         outname = os.path.join(self.iso_contents, "autounattend.xml")
 
-        if self.unattendfile == ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.xml"):
+        if self.unattendfile == oz.ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.xml"):
             # if this is the oz default unattend file, we modify certain
             # parameters to make installation succeed
             doc = libxml2.parseFile(self.unattendfile)
@@ -184,7 +186,7 @@ class Windows2008and7(Windows):
     def install(self, timeout=None, force=False):
         if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
             self.log.info("Found cached JEOS, using it")
-            ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
+            oz.ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
         else:
             self.log.info("Running install for %s" % (self.tdl.name))
 
@@ -206,7 +208,7 @@ class Windows2008and7(Windows):
             if self.cache_jeos:
                 self.log.info("Caching JEOS")
                 self.mkdir_p(self.jeos_cache_dir)
-                ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
+                oz.ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
 
         return self.generate_xml("hd", None)
 
@@ -215,4 +217,4 @@ def get_class(tdl, config, auto):
         return Windows2000andXPand2003(tdl, config, auto)
     if tdl.update in ["2008", "7"]:
         return Windows2008and7(tdl, config, auto)
-    raise OzException.OzException("Unsupported Windows update " + tdl.update)
+    raise oz.OzException.OzException("Unsupported Windows update " + tdl.update)

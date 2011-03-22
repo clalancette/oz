@@ -18,30 +18,30 @@ import re
 import os
 import shutil
 
-import ozutil
-import RedHat
-import OzException
+import oz.ozutil
+import oz.RedHat
+import oz.OzException
 
-class RHL9Guest(RedHat.RedHatCDGuest):
+class RHL9Guest(oz.RedHat.RedHatCDGuest):
     def __init__(self, tdl, config, auto):
-        RedHat.RedHatCDGuest.__init__(self, tdl, "rtl8139", None, None, None,
-                                      config)
+        oz.RedHat.RedHatCDGuest.__init__(self, tdl, "rtl8139", None, None, None,
+                                         config)
 
         self.ks_file = auto
         if self.ks_file is None:
-            self.ks_file = ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks")
+            self.ks_file = oz.ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks")
 
         self.url = self.check_url(self.tdl, iso=False, url=True)
 
         if self.tdl.arch != "i386":
-            raise OzException.OzException("Invalid arch " + self.tdl.arch + "for RHL guest")
+            raise oz.OzException.OzException("Invalid arch " + self.tdl.arch + "for RHL guest")
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")
 
         output_ks = os.path.join(self.iso_contents, "ks.cfg")
 
-        if self.ks_file == ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks"):
+        if self.ks_file == oz.ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks"):
             def kssub(line):
                 if re.match("^url", line):
                     return "url --url " + self.url + "\n"
@@ -73,11 +73,11 @@ class RHL9Guest(RedHat.RedHatCDGuest):
         f.writelines(lines)
         f.close()
 
-class RHL70and71and72and73and8Guest(RedHat.RedHatFDGuest):
+class RHL70and71and72and73and8Guest(oz.RedHat.RedHatFDGuest):
     def __init__(self, tdl, config, auto, nicmodel):
-        RedHat.RedHatFDGuest.__init__(self, tdl, config, auto,
-                                      "rhl-" + tdl.update + "-jeos.ks",
-                                      nicmodel)
+        oz.RedHat.RedHatFDGuest.__init__(self, tdl, config, auto,
+                                         "rhl-" + tdl.update + "-jeos.ks",
+                                         nicmodel)
 
 def get_class(tdl, config, auto):
     if tdl.update in ["9"]:
@@ -101,4 +101,4 @@ def get_class(tdl, config, auto):
     # Kernel panic: VFS: Unable to mount root fs on 08:21
     if tdl.update in ["7.0", "7.1"]:
         return RHL70and71and72and73and8Guest(tdl, config, auto, "ne2k_pci")
-    raise OzException.OzException("Unsupported RHL update " + tdl.update)
+    raise oz.OzException.OzException("Unsupported RHL update " + tdl.update)

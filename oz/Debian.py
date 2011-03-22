@@ -17,18 +17,18 @@
 import shutil
 import os
 
-import Guest
-import ozutil
-import OzException
+import oz.Guest
+import oz.ozutil
+import oz.OzException
 
-class DebianGuest(Guest.CDGuest):
+class DebianGuest(oz.Guest.CDGuest):
     def __init__(self, tdl, config, auto):
-        Guest.CDGuest.__init__(self, tdl, 'virtio', None, None, 'virtio',
-                               config)
+        oz.Guest.CDGuest.__init__(self, tdl, 'virtio', None, None, 'virtio',
+                                  config)
 
         self.preseed_file = auto
         if self.preseed_file is None:
-            self.preseed_file = ozutil.generate_full_auto_path("debian-" + self.tdl.update + "-jeos.preseed")
+            self.preseed_file = oz.ozutil.generate_full_auto_path("debian-" + self.tdl.update + "-jeos.preseed")
 
         self.url = self.check_url(self.tdl, iso=True, url=False)
 
@@ -58,13 +58,14 @@ class DebianGuest(Guest.CDGuest):
 
     def generate_new_iso(self):
         self.log.info("Generating new ISO")
-        Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom", "-J",
-                                       "-l", "-b", "isolinux/isolinux.bin",
-                                       "-c", "isolinux/boot.cat",
-                                       "-no-emul-boot", "-boot-load-size", "4",
-                                       "-cache-inodes", "-boot-info-table",
-                                       "-v", "-v", "-o", self.output_iso,
-                                       self.iso_contents])
+        oz.Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom", "-J",
+                                          "-l", "-b", "isolinux/isolinux.bin",
+                                          "-c", "isolinux/boot.cat",
+                                          "-no-emul-boot",
+                                          "-boot-load-size", "4",
+                                          "-cache-inodes", "-boot-info-table",
+                                          "-v", "-v", "-o", self.output_iso,
+                                          self.iso_contents])
 
     def generate_install_media(self, force_download=False):
         return self.iso_generate_install_media(self.url, force_download)
@@ -72,4 +73,4 @@ class DebianGuest(Guest.CDGuest):
 def get_class(tdl, config, auto):
     if tdl.update in ["5", "6"]:
         return DebianGuest(tdl, config, auto)
-    raise OzException.OzException("Unsupported Debian update " + tdl.update)
+    raise oz.OzException.OzException("Unsupported Debian update " + tdl.update)

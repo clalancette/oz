@@ -18,18 +18,18 @@ import shutil
 import re
 import os
 
-import ozutil
-import RedHat
-import OzException
+import oz.ozutil
+import oz.RedHat
+import oz.OzException
 
-class RHEL5Guest(RedHat.RedHatCDYumGuest):
+class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
     def __init__(self, tdl, config, auto, nicmodel, diskbus):
-        RedHat.RedHatCDYumGuest.__init__(self, tdl, nicmodel, None, None,
-                                         diskbus, config)
+        oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, nicmodel, None, None,
+                                            diskbus, config)
 
         self.ks_file = auto
         if self.ks_file is None:
-            self.ks_file = ozutil.generate_full_auto_path("rhel-5-jeos.ks")
+            self.ks_file = oz.ozutil.generate_full_auto_path("rhel-5-jeos.ks")
 
         self.url = self.check_anaconda_url(self.tdl, iso=True, url=True)
 
@@ -38,7 +38,7 @@ class RHEL5Guest(RedHat.RedHatCDYumGuest):
 
         outname = os.path.join(self.iso_contents, "ks.cfg")
 
-        if self.ks_file == ozutil.generate_full_auto_path("rhel-5-jeos.ks"):
+        if self.ks_file == oz.ozutil.generate_full_auto_path("rhel-5-jeos.ks"):
             def kssub(line):
                 if re.match("^rootpw", line):
                     return "rootpw " + self.rootpw + '\n'
@@ -85,11 +85,11 @@ class RHEL5Guest(RedHat.RedHatCDYumGuest):
 
         if not re.match("RHEL/5(\.[0-9])? " + self.tdl.arch + " DVD",
                         pvd.volume_identifier):
-            raise OzException.OzException("Only DVDs are supported for RHEL-5 ISO installs")
+            raise oz.OzException.OzException("Only DVDs are supported for RHEL-5 ISO installs")
 
 def get_class(tdl, config, auto):
     if tdl.update in ["GOLD", "U1", "U2", "U3"]:
         return RHEL5Guest(tdl, config, auto, "rtl8139", None)
     if tdl.update in ["U4", "U5", "U6"]:
         return RHEL5Guest(tdl, config, auto, "virtio", "virtio")
-    raise OzException.OzException("Unsupported " + tdl.distro + " update " + tdl.update)
+    raise oz.OzException.OzException("Unsupported " + tdl.distro + " update " + tdl.update)

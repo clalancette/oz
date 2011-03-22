@@ -18,17 +18,18 @@ import shutil
 import re
 import os
 
-import ozutil
-import RedHat
-import OzException
+import oz.ozutil
+import oz.RedHat
+import oz.OzException
 
-class RHEL3Guest(RedHat.RedHatCDGuest):
+class RHEL3Guest(oz.RedHat.RedHatCDGuest):
     def __init__(self, tdl, config, auto):
-        RedHat.RedHatCDGuest.__init__(self, tdl, None, None, None, None, config)
+        oz.RedHat.RedHatCDGuest.__init__(self, tdl, None, None, None, None,
+                                         config)
 
         self.ks_file = auto
         if self.ks_file is None:
-            self.ks_file = ozutil.generate_full_auto_path("rhel-3-jeos.ks")
+            self.ks_file = oz.ozutil.generate_full_auto_path("rhel-3-jeos.ks")
 
         iso_support = True
         if self.tdl.distro == "RHEL-3":
@@ -50,7 +51,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
         outname = os.path.join(self.iso_contents, "ks.cfg")
 
-        if self.ks_file == ozutil.generate_full_auto_path("rhel-3-jeos.ks"):
+        if self.ks_file == oz.ozutil.generate_full_auto_path("rhel-3-jeos.ks"):
             def kssub(line):
                 if re.match("^rootpw", line):
                     return "rootpw " + self.rootpw + '\n'
@@ -94,9 +95,9 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         pvd = self.get_primary_volume_descriptor(self.orig_iso)
         if not re.match("CentOS-3(\.[0-9])? " + self.tdl.arch + " DVD$",
                         pvd.volume_identifier):
-            raise OzException.OzException("Only DVDs are supported for CentOS-3 ISO installs")
+            raise oz.OzException.OzException("Only DVDs are supported for CentOS-3 ISO installs")
 
 def get_class(tdl, config, auto):
     if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9"]:
         return RHEL3Guest(tdl, config, auto)
-    raise OzException.OzException("Unsupported " + tdl.distro + " update " + tdl.update)
+    raise oz.OzException.OzException("Unsupported " + tdl.distro + " update " + tdl.update)

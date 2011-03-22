@@ -21,7 +21,7 @@ Template Description Language (TDL)
 import libxml2
 import base64
 
-import OzException
+import oz.OzException
 
 def get_value(doc, xmlstring, component, optional=False):
     """
@@ -46,9 +46,9 @@ def get_value(doc, xmlstring, component, optional=False):
         if optional:
             return None
         else:
-            raise OzException.OzException("Failed to find %s in TDL" % (component))
+            raise oz.OzException.OzException("Failed to find %s in TDL" % (component))
     else:
-        raise OzException.OzException("Expected 0 or 1 %s in TDL, saw %d" % (component, len(res)))
+        raise oz.OzException.OzException("Expected 0 or 1 %s in TDL, saw %d" % (component, len(res)))
 
 class Repository(object):
     """
@@ -97,7 +97,7 @@ def string_to_bool(instr, component):
         return False
     if lower == 'yes' or lower == 'true':
         return True
-    raise OzException.OzException("%s property must be 'true', 'yes', 'false', or' no'" % (component))
+    raise oz.OzException.OzException("%s property must be 'true', 'yes', 'false', or' no'" % (component))
 
 class TDL(object):
     """
@@ -138,7 +138,7 @@ class TDL(object):
 
         self.arch = get_value(self.doc, '/template/os/arch', 'OS architecture')
         if self.arch != "i386" and self.arch != "x86_64":
-            raise OzException.OzException("Architecture must be one of 'i386' or 'x86_64'")
+            raise oz.OzException.OzException("Architecture must be one of 'i386' or 'x86_64'")
 
         self.key = get_value(self.doc, '/template/os/key', 'OS key',
                              optional=True)
@@ -150,10 +150,10 @@ class TDL(object):
 
         install = self.doc.xpathEval('/template/os/install')
         if len(install) != 1:
-            raise OzException.OzException("Expected 1 OS install section in TDL, saw %d" % (len(install)))
+            raise oz.OzException.OzException("Expected 1 OS install section in TDL, saw %d" % (len(install)))
         self.installtype = install[0].prop('type')
         if self.installtype is None:
-            raise OzException.OzException("Failed to find OS install type in TDL")
+            raise oz.OzException.OzException("Failed to find OS install type in TDL")
         if self.installtype == "url":
             self.url = get_value(self.doc, '/template/os/install/url',
                                  'OS install URL')
@@ -161,7 +161,7 @@ class TDL(object):
             self.iso = get_value(self.doc, '/template/os/install/iso',
                                  'OS install ISO')
         else:
-            raise OzException.OzException("Unknown install type " + self.installtype + " in TDL")
+            raise oz.OzException.OzException("Unknown install type " + self.installtype + " in TDL")
 
         self.rootpw = get_value(self.doc, '/template/os/rootpw',
                                 "root/Administrator password", optional=True)
@@ -171,7 +171,7 @@ class TDL(object):
             # package name
             name = package.prop('name')
             if name is None:
-                raise OzException.OzException("Package without a name was given")
+                raise oz.OzException.OzException("Package without a name was given")
 
             # repository that the package lives in (optional)
             repo = get_value(package, 'repository',
@@ -191,7 +191,7 @@ class TDL(object):
         for afile in self.doc.xpathEval('/template/files/file'):
             name = afile.prop('name')
             if name is None:
-                raise OzException.OzException("File without a name was given")
+                raise oz.OzException.OzException("File without a name was given")
             contenttype = afile.prop('type')
             if contenttype is None:
                 contenttype = 'raw'
@@ -205,13 +205,13 @@ class TDL(object):
                 else:
                     self.files[name] = base64.b64decode(content)
             else:
-                raise OzException.OzException("File type for %s must be 'raw' or 'base64'" % (name))
+                raise oz.OzException.OzException("File type for %s must be 'raw' or 'base64'" % (name))
 
         self.repositories = {}
         for repo in self.doc.xpathEval('/template/repositories/repository'):
             name = repo.prop('name')
             if name is None:
-                raise OzException.OzException("Repository without a name was given")
+                raise oz.OzException.OzException("Repository without a name was given")
             url = get_value(repo, 'url', 'repository url')
 
             signstr = get_value(repo, 'signed', 'signed', optional=True)

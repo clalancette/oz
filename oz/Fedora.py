@@ -18,19 +18,19 @@ import shutil
 import re
 import os
 
-import ozutil
-import RedHat
-import OzException
+import oz.ozutil
+import oz.RedHat
+import oz.OzException
 
-class FedoraGuest(RedHat.RedHatCDYumGuest):
+class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
     def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,
                  brokenisomethod):
-        RedHat.RedHatCDYumGuest.__init__(self, tdl, nicmodel, None, None,
-                                         diskbus, config)
+        oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, nicmodel, None, None,
+                                            diskbus, config)
 
         self.ks_file = auto
         if self.ks_file is None:
-            self.ks_file = ozutil.generate_full_auto_path("fedora-" + self.tdl.update + "-jeos.ks")
+            self.ks_file = oz.ozutil.generate_full_auto_path("fedora-" + self.tdl.update + "-jeos.ks")
         self.haverepo = haverepo
         self.brokenisomethod = brokenisomethod
 
@@ -41,7 +41,7 @@ class FedoraGuest(RedHat.RedHatCDYumGuest):
 
         outname = os.path.join(self.iso_contents, "ks.cfg")
 
-        if self.ks_file == ozutil.generate_full_auto_path("fedora-" + self.tdl.update + "-jeos.ks"):
+        if self.ks_file == oz.ozutil.generate_full_auto_path("fedora-" + self.tdl.update + "-jeos.ks"):
             def kssub(line):
                 if re.match("^rootpw", line):
                     return "rootpw " + self.rootpw + '\n'
@@ -89,4 +89,4 @@ def get_class(tdl, config, auto):
         return FedoraGuest(tdl, config, auto, "virtio", True, "virtio", True)
     if tdl.update in ["7", "8", "9"]:
         return FedoraGuest(tdl, config, auto, "rtl8139", False, None, False)
-    raise OzException.OzException("Unsupported Fedora update " + tdl.update)
+    raise oz.OzException.OzException("Unsupported Fedora update " + tdl.update)
