@@ -29,8 +29,9 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
         self.haverepo = haverepo
         self.brokenisomethod = brokenisomethod
 
-    def modify_iso(self):
-        self.copy_kickstart(self.auto, "fedora-" + self.tdl.update + "-jeos.ks")
+    def _modify_iso(self):
+        self._copy_kickstart(self.auto,
+                             "fedora-" + self.tdl.update + "-jeos.ks")
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
         if self.tdl.installtype == "url":
@@ -45,7 +46,7 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
             if not self.brokenisomethod:
                 initrdline += " method=cdrom:/dev/cdrom"
             initrdline += "\n"
-        self.modify_isolinux(initrdline)
+        self._modify_isolinux(initrdline)
 
     def generate_diskimage(self, size=10, force=False):
         createpart = False
@@ -57,7 +58,7 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
             # To avoid that message, just create a partition table that spans
             # the entire disk
             createpart = True
-        return self.internal_generate_diskimage(size, force, createpart)
+        return self._internal_generate_diskimage(size, force, createpart)
 
 def get_class(tdl, config, auto):
     if tdl.update in ["10", "11", "12", "13", "14", "15"]:

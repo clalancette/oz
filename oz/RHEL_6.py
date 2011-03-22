@@ -25,15 +25,15 @@ class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
 
         self.auto = auto
 
-    def modify_iso(self):
-        self.copy_kickstart(self.auto, "rhel-6-jeos.ks")
+    def _modify_iso(self):
+        self._copy_kickstart(self.auto, "rhel-6-jeos.ks")
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
         if self.tdl.installtype == "url":
             initrdline += " repo=" + self.url + "\n"
         else:
             initrdline += "\n"
-        self.modify_isolinux(initrdline)
+        self._modify_isolinux(initrdline)
 
 def get_class(tdl, config, auto):
     if tdl.update in ["0", "1"]:

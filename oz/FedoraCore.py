@@ -28,16 +28,16 @@ class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)
 
-    def modify_iso(self):
-        self.copy_kickstart(self.auto,
-                            "fedoracore-" + self.tdl.update + "-jeos.ks")
+    def _modify_iso(self):
+        self._copy_kickstart(self.auto,
+                             "fedoracore-" + self.tdl.update + "-jeos.ks")
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method="
         if self.tdl.installtype == "url":
             initrdline += self.url + "\n"
         else:
             initrdline += "cdrom:/dev/cdrom\n"
-        self.modify_isolinux(initrdline)
+        self._modify_isolinux(initrdline)
 
 def get_class(tdl, config, auto):
     if tdl.update in ["1", "2", "3", "4", "5", "6"]:

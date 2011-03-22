@@ -32,13 +32,13 @@ class RHL9Guest(oz.RedHat.RedHatCDGuest):
         if self.tdl.arch != "i386":
             raise oz.OzException.OzException("Invalid arch " + self.tdl.arch + "for RHL guest")
 
-    def modify_iso(self):
+    def _modify_iso(self):
         self.log.debug("Putting the kickstart in place")
 
         outname = os.path.join(self.iso_contents, "ks.cfg")
 
         if self.auto is None:
-            def kssub(line):
+            def _kssub(line):
                 # because we need to do this URL substitution here, we can't use
                 # the generic "copy_kickstart()" method
                 if re.match("^url", line):
@@ -48,14 +48,14 @@ class RHL9Guest(oz.RedHat.RedHatCDGuest):
                 else:
                     return line
 
-            self.copy_modify_file(oz.ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks"),
-                                  outname,
-                                  kssub)
+            self._copy_modify_file(oz.ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks"),
+                                    outname,
+                                    _kssub)
         else:
             shutil.copy(self.auto, outname)
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method=" + self.url + "\n"
-        self.modify_isolinux(initrdline)
+        self._modify_isolinux(initrdline)
 
 class RHL70and71and72and73and8Guest(oz.RedHat.RedHatFDGuest):
     def __init__(self, tdl, config, auto, nicmodel):

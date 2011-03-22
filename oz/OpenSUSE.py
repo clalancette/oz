@@ -32,11 +32,11 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         if self.autoyast is None:
             self.autoyast = oz.ozutil.generate_full_auto_path("opensuse-" + self.tdl.update + "-jeos.xml")
 
-        self.url = self.check_url(self.tdl, iso=True, url=False)
+        self.url = self._check_url(self.tdl, iso=True, url=False)
 
         self.sshprivkey = os.path.join('/etc', 'oz', 'id_rsa-icicle-gen')
 
-    def modify_iso(self):
+    def _modify_iso(self):
         self.log.debug("Putting the autoyast in place")
 
         outname = os.path.join(self.iso_contents, "autoinst.xml")
@@ -73,7 +73,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         f.writelines(lines)
         f.close()
 
-    def generate_new_iso(self):
+    def _generate_new_iso(self):
         self.log.info("Generating new ISO")
         oz.Guest.subprocess_check_output(["mkisofs", "-r", "-J", "-V", "Custom",
                                           "-b", "boot/" + self.tdl.arch + "/loader/isolinux.bin",
@@ -87,16 +87,16 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
                                           self.iso_contents])
 
     def generate_install_media(self, force_download=False):
-        return self.iso_generate_install_media(self.url, force_download)
+        return self._iso_generate_install_media(self.url, force_download)
 
     def install(self, timeout=None, force=False):
-        return self.do_install(timeout, force, 1)
+        return self._do_install(timeout, force, 1)
 
-    def shutdown_guest(self, guestaddr, libvirt_dom):
+    def _shutdown_guest(self, guestaddr, libvirt_dom):
         if guestaddr is not None:
             try:
                 self.guest_execute_command(guestaddr, 'shutdown -h now')
-                if not self.wait_for_guest_shutdown(libvirt_dom):
+                if not self._wait_for_guest_shutdown(libvirt_dom):
                     self.log.warn("Guest did not shutdown in time, going to kill")
                 else:
                     libvirt_dom = None
@@ -119,7 +119,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
                                                  "-o", "PasswordAuthentication=no",
                                                  "root@" + guestaddr, command])
 
-    def image_ssh_teardown_step_1(self, g_handle):
+    def _image_ssh_teardown_step_1(self, g_handle):
         self.log.debug("Teardown step 1")
         # reset the authorized keys
         self.log.debug("Resetting authorized_keys")
@@ -129,7 +129,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
             g_handle.mv('/root/.ssh/authorized_keys.icicle',
                         '/root/.ssh/authorized_keys')
 
-    def image_ssh_teardown_step_2(self, g_handle):
+    def _image_ssh_teardown_step_2(self, g_handle):
         self.log.debug("Teardown step 2")
         # remove custom sshd_config
         self.log.debug("Resetting sshd_config")
@@ -146,7 +146,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
             g_handle.mv("/etc/init.d/after.local.icicle",
                         "/etc/init.d/after.local")
 
-    def image_ssh_teardown_step_3(self, g_handle):
+    def _image_ssh_teardown_step_3(self, g_handle):
         self.log.debug("Teardown step 3")
         # remove announce cronjob
         self.log.debug("Resetting announcement to host")
@@ -160,38 +160,39 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
 
         # reset the service link
         self.log.debug("Resetting cron service")
-        runlevel = self.get_default_runlevel(g_handle)
+        runlevel = self._get_default_runlevel(g_handle)
         startuplink = '/etc/rc.d/rc' + runlevel + ".d/S06cron"
         if g_handle.exists(startuplink):
             g_handle.rm(startuplink)
         if g_handle.exists(startuplink + ".icicle"):
             g_handle.mv(startuplink + ".icicle", startuplink)
 
-    def collect_teardown(self, libvirt_xml):
+    def _collect_teardown(self, libvirt_xml):
         self.log.info("Collection Teardown")
 
-        g_handle = self.guestfs_handle_setup(libvirt_xml)
+        g_handle = self._guestfs_handle_setup(libvirt_xml)
 
         try:
-            self.image_ssh_teardown_step_1(g_handle)
+            self._image_ssh_teardown_step_1(g_handle)
 
-            self.image_ssh_teardown_step_2(g_handle)
+            self._image_ssh_teardown_step_2(g_handle)
 
-            self.image_ssh_teardown_step_3(g_handle)
+            self._image_ssh_teardown_step_3(g_handle)
         finally:
-            self.guestfs_handle_cleanup(g_handle)
+            self._guestfs_handle_cleanup(g_handle)
             shutil.rmtree(self.icicle_tmp)
 
-    def do_icicle(self, guestaddr):
+    def _do_icicle(self, guestaddr):
         stdout, stderr, retcode = self.guest_execute_command(guestaddr,
                                                              'rpm -qa')
 
-        return self.output_icicle_xml(stdout.split("\n"), self.tdl.description)
+        return self._output_icicle_xml(stdout.split("\n"),
+                                       self.tdl.description)
 
     def generate_icicle(self, libvirt_xml):
         self.log.info("Generating ICICLE")
 
-        self.collect_setup(libvirt_xml)
+        self._collect_setup(libvirt_xml)
 
         icicle_output = ''
         libvirt_dom = None
@@ -200,17 +201,17 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
 
             try:
                 guestaddr = None
-                guestaddr = self.wait_for_guest_boot(libvirt_dom)
-                icicle_output = self.do_icicle(guestaddr)
+                guestaddr = self._wait_for_guest_boot(libvirt_dom)
+                icicle_output = self._do_icicle(guestaddr)
             finally:
-                self.shutdown_guest(guestaddr, libvirt_dom)
+                self._shutdown_guest(guestaddr, libvirt_dom)
 
         finally:
-            self.collect_teardown(libvirt_xml)
+            self._collect_teardown(libvirt_xml)
 
         return icicle_output
 
-    def get_default_runlevel(self, g_handle):
+    def _get_default_runlevel(self, g_handle):
         runlevel = "3"
         if g_handle.exists('/etc/inittab'):
             lines = g_handle.cat('/etc/inittab').split("\n")
@@ -224,7 +225,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
 
         return runlevel
 
-    def image_ssh_setup_step_1(self, g_handle):
+    def _image_ssh_setup_step_1(self, g_handle):
         # part 1; upload the keys
         self.log.debug("Step 1: Uploading ssh keys")
         if not g_handle.exists('/root/.ssh'):
@@ -234,11 +235,11 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
             g_handle.mv('/root/.ssh/authorized_keys',
                         '/root/.ssh/authorized_keys.icicle')
 
-        self.generate_openssh_key(self.sshprivkey)
+        self._generate_openssh_key(self.sshprivkey)
 
         g_handle.upload(self.sshprivkey + ".pub", '/root/.ssh/authorized_keys')
 
-    def image_ssh_setup_step_2(self, g_handle):
+    def _image_ssh_setup_step_2(self, g_handle):
         # part 2; check and setup sshd
         self.log.debug("Step 2: setup sshd")
         if not g_handle.exists('/etc/init.d/sshd') or not g_handle.exists('/usr/sbin/sshd'):
@@ -278,7 +279,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         g_handle.upload(sshd_config_file, '/etc/ssh/sshd_config')
         os.unlink(sshd_config_file)
 
-    def image_ssh_setup_step_3(self, g_handle):
+    def _image_ssh_setup_step_3(self, g_handle):
         # part 3; make sure the guest announces itself
         self.log.debug("Step 3: Guest announcement")
         if not g_handle.exists('/etc/init.d/cron') or not g_handle.exists('/usr/sbin/cron'):
@@ -295,7 +296,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
 
         g_handle.upload(announcefile, '/etc/cron.d/announce')
 
-        runlevel = self.get_default_runlevel(g_handle)
+        runlevel = self._get_default_runlevel(g_handle)
         startuplink = '/etc/rc.d/rc' + runlevel + ".d/S06cron"
         if g_handle.exists(startuplink):
             g_handle.mv(startuplink, startuplink + ".icicle")
@@ -303,12 +304,12 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
 
         os.unlink(announcefile)
 
-    def collect_setup(self, libvirt_xml):
+    def _collect_setup(self, libvirt_xml):
         self.log.info("Collection Setup")
 
         self.mkdir_p(self.icicle_tmp)
 
-        g_handle = self.guestfs_handle_setup(libvirt_xml)
+        g_handle = self._guestfs_handle_setup(libvirt_xml)
 
         # we have to do 3 things to make sure we can ssh into OpenSUSE:
         # 1)  Upload our ssh key
@@ -317,35 +318,35 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
 
         try:
             try:
-                self.image_ssh_setup_step_1(g_handle)
+                self._image_ssh_setup_step_1(g_handle)
 
                 try:
-                    self.image_ssh_setup_step_2(g_handle)
+                    self._image_ssh_setup_step_2(g_handle)
 
                     try:
-                        self.image_ssh_setup_step_3(g_handle)
+                        self._image_ssh_setup_step_3(g_handle)
                     except:
-                        self.image_ssh_teardown_step_3(g_handle)
+                        self._image_ssh_teardown_step_3(g_handle)
                         raise
                 except:
-                    self.image_ssh_teardown_step_2(g_handle)
+                    self._image_ssh_teardown_step_2(g_handle)
                     raise
             except:
-                self.image_ssh_teardown_step_1(g_handle)
+                self._image_ssh_teardown_step_1(g_handle)
                 raise
 
         finally:
-            self.guestfs_handle_cleanup(g_handle)
+            self._guestfs_handle_cleanup(g_handle)
 
-    def customize_repos(self, guestaddr):
+    def _customize_repos(self, guestaddr):
         self.log.debug("Installing additional repository files")
         for repo in self.tdl.repositories.values():
             self.guest_execute_command(guestaddr,
                                        "zypper addrepo %s %s" % (repo.url,
                                                                  repo.name))
 
-    def do_customize(self, guestaddr):
-        self.customize_repos(guestaddr)
+    def _do_customize(self, guestaddr):
+        self._customize_repos(guestaddr)
 
         self.log.debug("Installing custom packages")
         packstr = ''
@@ -381,7 +382,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
             self.log.info("No additional packages or files to install, skipping customization")
             return
 
-        self.collect_setup(libvirt_xml)
+        self._collect_setup(libvirt_xml)
 
         libvirt_dom = None
         try:
@@ -389,18 +390,18 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
 
             try:
                 guestaddr = None
-                guestaddr = self.wait_for_guest_boot(libvirt_dom)
+                guestaddr = self._wait_for_guest_boot(libvirt_dom)
 
-                self.do_customize(guestaddr)
+                self._do_customize(guestaddr)
             finally:
-                self.shutdown_guest(guestaddr, libvirt_dom)
+                self._shutdown_guest(guestaddr, libvirt_dom)
         finally:
-            self.collect_teardown(libvirt_xml)
+            self._collect_teardown(libvirt_xml)
 
     def customize_and_generate_icicle(self, libvirt_xml):
         self.log.info("Customizing and generating ICICLE")
 
-        self.collect_setup(libvirt_xml)
+        self._collect_setup(libvirt_xml)
 
         libvirt_dom = None
         try:
@@ -408,16 +409,16 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
 
             try:
                 guestaddr = None
-                guestaddr = self.wait_for_guest_boot(libvirt_dom)
+                guestaddr = self._wait_for_guest_boot(libvirt_dom)
 
                 if self.tdl.packages or self.tdl.files:
-                    self.do_customize(guestaddr)
+                    self._do_customize(guestaddr)
 
-                icicle = self.do_icicle(guestaddr)
+                icicle = self._do_icicle(guestaddr)
             finally:
-                self.shutdown_guest(guestaddr, libvirt_dom)
+                self._shutdown_guest(guestaddr, libvirt_dom)
         finally:
-            self.collect_teardown(libvirt_xml)
+            self._collect_teardown(libvirt_xml)
 
         return icicle
 

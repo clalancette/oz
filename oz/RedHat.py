@@ -45,9 +45,9 @@ X11Forwarding yes
 Subsystem	sftp	/usr/libexec/openssh/sftp-server
 """
 
-        self.url = self.check_url(self.tdl, iso=iso_allowed, url=url_allowed)
+        self.url = self._check_url(self.tdl, iso=iso_allowed, url=url_allowed)
 
-    def generate_new_iso(self):
+    def _generate_new_iso(self):
         self.log.debug("Generating new ISO")
         oz.Guest.subprocess_check_output(["mkisofs", "-r", "-T", "-J",
                                           "-V", "Custom",
@@ -59,12 +59,12 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                                           "-o", self.output_iso,
                                           self.iso_contents])
 
-    def check_iso_tree(self):
+    def _check_iso_tree(self):
         kernel = os.path.join(self.iso_contents, "isolinux", "vmlinuz")
         if not os.path.exists(kernel):
             raise oz.OzException.OzException("Fedora/Red Hat installs can only be done using a boot.iso (netinst) or DVD image (LiveCDs are not supported)")
 
-    def modify_isolinux(self, initrdline):
+    def _modify_isolinux(self, initrdline):
         self.log.debug("Modifying isolinux.cfg")
         isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
                                    "isolinux.cfg")
@@ -78,23 +78,23 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         f.write(initrdline)
         f.close()
 
-    def copy_kickstart(self, auto, stock):
+    def _copy_kickstart(self, auto, stock):
         self.log.debug("Putting the kickstart in place")
         outname = os.path.join(self.iso_contents, "ks.cfg")
 
         if auto is None:
-            def kssub(line):
+            def _kssub(line):
                 if re.match("^rootpw", line):
                     return "rootpw " + self.rootpw + '\n'
                 else:
                     return line
 
-            self.copy_modify_file(oz.ozutil.generate_full_auto_path(stock),
-                                  outname, kssub)
+            self._copy_modify_file(oz.ozutil.generate_full_auto_path(stock),
+                                   outname, _kssub)
         else:
             shutil.copy(auto, outname)
 
-    def get_default_runlevel(self, g_handle):
+    def _get_default_runlevel(self, g_handle):
         runlevel = "3"
         if g_handle.exists('/etc/inittab'):
             lines = g_handle.cat('/etc/inittab').split("\n")
@@ -108,8 +108,8 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
         return runlevel
 
-    def get_service_runlevel_link(self, g_handle, service):
-        runlevel = self.get_default_runlevel(g_handle)
+    def _get_service_runlevel_link(self, g_handle, service):
+        runlevel = self._get_default_runlevel(g_handle)
 
         lines = g_handle.cat('/etc/init.d/' + service).split("\n")
         startlevel = "99"
@@ -123,7 +123,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
         return "/etc/rc.d/rc" + runlevel + ".d/S" + startlevel + service
 
-    def image_ssh_teardown_step_1(self, g_handle):
+    def _image_ssh_teardown_step_1(self, g_handle):
         self.log.debug("Teardown step 1")
         # reset the authorized keys
         self.log.debug("Resetting authorized_keys")
@@ -133,7 +133,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         if g_handle.exists('/root/.ssh.icicle'):
             g_handle.mv('/root/.ssh.icicle', '/root/.ssh')
 
-    def image_ssh_teardown_step_2(self, g_handle):
+    def _image_ssh_teardown_step_2(self, g_handle):
         self.log.debug("Teardown step 2")
         # remove custom sshd_config
         self.log.debug("Resetting sshd_config")
@@ -144,13 +144,13 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
         # reset the service link
         self.log.debug("Resetting sshd service")
-        startuplink = self.get_service_runlevel_link(g_handle, 'sshd')
+        startuplink = self._get_service_runlevel_link(g_handle, 'sshd')
         if g_handle.exists(startuplink):
             g_handle.rm(startuplink)
         if g_handle.exists(startuplink + ".icicle"):
             g_handle.mv(startuplink + ".icicle", startuplink)
 
-    def image_ssh_teardown_step_3(self, g_handle):
+    def _image_ssh_teardown_step_3(self, g_handle):
         self.log.debug("Teardown step 3")
         # reset iptables
         self.log.debug("Resetting iptables rules")
@@ -160,7 +160,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             g_handle.mv('/etc/sysconfig/iptables.icicle',
                         '/etc/sysconfig/iptables')
 
-    def image_ssh_teardown_step_4(self, g_handle):
+    def _image_ssh_teardown_step_4(self, g_handle):
         self.log.debug("Teardown step 4")
         # remove announce cronjob
         self.log.debug("Resetting announcement to host")
@@ -178,13 +178,13 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             if not self.crond_was_active:
                 g_handle.rm('/etc/systemd/system/multi-user.target.wants/crond.service')
         else:
-            startuplink = self.get_service_runlevel_link(g_handle, 'crond')
+            startuplink = self._get_service_runlevel_link(g_handle, 'crond')
             if g_handle.exists(startuplink):
-               g_handle.rm(startuplink)
+                g_handle.rm(startuplink)
             if g_handle.exists(startuplink + ".icicle"):
                 g_handle.mv(startuplink + ".icicle", startuplink)
 
-    def image_ssh_teardown_step_5(self, g_handle):
+    def _image_ssh_teardown_step_5(self, g_handle):
         self.log.debug("Teardown step 5")
         if g_handle.exists('/etc/selinux/config'):
             g_handle.rm('/etc/selinux/config')
@@ -192,26 +192,26 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         if g_handle.exists('/etc/selinux/config.icicle'):
             g_handle.mv('/etc/selinux/config.icicle', '/etc/selinux/config')
 
-    def collect_teardown(self, libvirt_xml):
+    def _collect_teardown(self, libvirt_xml):
         self.log.info("Collection Teardown")
 
-        g_handle = self.guestfs_handle_setup(libvirt_xml)
+        g_handle = self._guestfs_handle_setup(libvirt_xml)
 
         try:
-            self.image_ssh_teardown_step_1(g_handle)
+            self._image_ssh_teardown_step_1(g_handle)
 
-            self.image_ssh_teardown_step_2(g_handle)
+            self._image_ssh_teardown_step_2(g_handle)
 
-            self.image_ssh_teardown_step_3(g_handle)
+            self._image_ssh_teardown_step_3(g_handle)
 
-            self.image_ssh_teardown_step_4(g_handle)
+            self._image_ssh_teardown_step_4(g_handle)
 
-            self.image_ssh_teardown_step_5(g_handle)
+            self._image_ssh_teardown_step_5(g_handle)
         finally:
-            self.guestfs_handle_cleanup(g_handle)
+            self._guestfs_handle_cleanup(g_handle)
             shutil.rmtree(self.icicle_tmp)
 
-    def image_ssh_setup_step_1(self, g_handle):
+    def _image_ssh_setup_step_1(self, g_handle):
         # part 1; upload the keys
         self.log.debug("Step 1: Uploading ssh keys")
         if g_handle.exists('/root/.ssh'):
@@ -222,17 +222,17 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             g_handle.mv('/root/.ssh/authorized_keys',
                         '/root/.ssh/authorized_keys.icicle')
 
-        self.generate_openssh_key(self.sshprivkey)
+        self._generate_openssh_key(self.sshprivkey)
 
         g_handle.upload(self.sshprivkey + ".pub", '/root/.ssh/authorized_keys')
 
-    def image_ssh_setup_step_2(self, g_handle):
+    def _image_ssh_setup_step_2(self, g_handle):
         # part 2; check and setup sshd
         self.log.debug("Step 2: setup sshd")
         if not g_handle.exists('/etc/init.d/sshd') or not g_handle.exists('/usr/sbin/sshd'):
             raise oz.OzException.OzException("ssh not installed on the image, cannot continue")
 
-        startuplink = self.get_service_runlevel_link(g_handle, 'sshd')
+        startuplink = self._get_service_runlevel_link(g_handle, 'sshd')
         if g_handle.exists(startuplink):
             g_handle.mv(startuplink, startuplink + ".icicle")
         g_handle.ln_sf('/etc/init.d/sshd', startuplink)
@@ -247,7 +247,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         g_handle.upload(sshd_config_file, '/etc/ssh/sshd_config')
         os.unlink(sshd_config_file)
 
-    def image_ssh_setup_step_3(self, g_handle):
+    def _image_ssh_setup_step_3(self, g_handle):
         # part 3; open up iptables
         self.log.debug("Step 3: Open up the firewall")
         if g_handle.exists('/etc/sysconfig/iptables'):
@@ -255,7 +255,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                         '/etc/sysconfig/iptables.icicle')
         # implicit else; if there is no iptables file, the firewall is open
 
-    def image_ssh_setup_step_4(self, g_handle):
+    def _image_ssh_setup_step_4(self, g_handle):
         # part 4; make sure the guest announces itself
         self.log.debug("Step 4: Guest announcement")
         if not g_handle.exists('/usr/sbin/crond'):
@@ -279,14 +279,14 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                 g_handle.ln_sf('/lib/systemd/system/crond.service',
                                '/etc/systemd/system/multi-user.target.wants/crond.service')
         else:
-            startuplink = self.get_service_runlevel_link(g_handle, 'crond')
+            startuplink = self._get_service_runlevel_link(g_handle, 'crond')
             if g_handle.exists(startuplink):
                 g_handle.mv(startuplink, startuplink + ".icicle")
             g_handle.ln_sf('/etc/init.d/crond', startuplink)
 
         os.unlink(announcefile)
 
-    def image_ssh_setup_step_5(self, g_handle):
+    def _image_ssh_setup_step_5(self, g_handle):
         # part 5; set SELinux to permissive mode so we don't have to deal with
         # incorrect contexts
         self.log.debug("Step 5: Set SELinux to permissive mode")
@@ -303,12 +303,12 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
         os.unlink(selinuxfile)
 
-    def collect_setup(self, libvirt_xml):
+    def _collect_setup(self, libvirt_xml):
         self.log.info("Collection Setup")
 
         self.mkdir_p(self.icicle_tmp)
 
-        g_handle = self.guestfs_handle_setup(libvirt_xml)
+        g_handle = self._guestfs_handle_setup(libvirt_xml)
 
         # we have to do 5 things to make sure we can ssh into RHEL/Fedora:
         # 1)  Upload our ssh key
@@ -319,37 +319,37 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
         try:
             try:
-                self.image_ssh_setup_step_1(g_handle)
+                self._image_ssh_setup_step_1(g_handle)
 
                 try:
-                    self.image_ssh_setup_step_2(g_handle)
+                    self._image_ssh_setup_step_2(g_handle)
 
                     try:
-                        self.image_ssh_setup_step_3(g_handle)
+                        self._image_ssh_setup_step_3(g_handle)
 
                         try:
-                            self.image_ssh_setup_step_4(g_handle)
+                            self._image_ssh_setup_step_4(g_handle)
 
                             try:
-                                self.image_ssh_setup_step_5(g_handle)
+                                self._image_ssh_setup_step_5(g_handle)
                             except:
-                                self.image_ssh_teardown_step_5(g_handle)
+                                self._image_ssh_teardown_step_5(g_handle)
                                 raise
                         except:
-                            self.image_ssh_teardown_step_4(g_handle)
+                            self._image_ssh_teardown_step_4(g_handle)
                             raise
                     except:
-                        self.image_ssh_teardown_step_3(g_handle)
+                        self._image_ssh_teardown_step_3(g_handle)
                         raise
                 except:
-                    self.image_ssh_teardown_step_2(g_handle)
+                    self._image_ssh_teardown_step_2(g_handle)
                     raise
             except:
-                self.image_ssh_teardown_step_1(g_handle)
+                self._image_ssh_teardown_step_1(g_handle)
                 raise
 
         finally:
-            self.guestfs_handle_cleanup(g_handle)
+            self._guestfs_handle_cleanup(g_handle)
 
     def guest_execute_command(self, guestaddr, command, timeout=10):
         # ServerAliveInterval protects against NAT firewall timeouts
@@ -364,16 +364,17 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                                                  "-o", "PasswordAuthentication=no",
                                                  "root@" + guestaddr, command])
 
-    def do_icicle(self, guestaddr):
+    def _do_icicle(self, guestaddr):
         stdout, stderr, retcode = self.guest_execute_command(guestaddr,
                                                              'rpm -qa')
 
-        return self.output_icicle_xml(stdout.split("\n"), self.tdl.description)
+        return self._output_icicle_xml(stdout.split("\n"),
+                                       self.tdl.description)
 
     def generate_icicle(self, libvirt_xml):
         self.log.info("Generating ICICLE")
 
-        self.collect_setup(libvirt_xml)
+        self._collect_setup(libvirt_xml)
 
         icicle_output = ''
         libvirt_dom = None
@@ -382,13 +383,13 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
             try:
                 guestaddr = None
-                guestaddr = self.wait_for_guest_boot(libvirt_dom)
-                icicle_output = self.do_icicle(guestaddr)
+                guestaddr = self._wait_for_guest_boot(libvirt_dom)
+                icicle_output = self._do_icicle(guestaddr)
             finally:
-                self.shutdown_guest(guestaddr, libvirt_dom)
+                self._shutdown_guest(guestaddr, libvirt_dom)
 
         finally:
-            self.collect_teardown(libvirt_xml)
+            self._collect_teardown(libvirt_xml)
 
         return icicle_output
 
@@ -407,7 +408,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                                                  file_to_upload,
                                                  "root@" + guestaddr + ":" + destination])
 
-    def customize_files(self, guestaddr):
+    def _customize_files(self, guestaddr):
         self.log.info("Uploading custom files")
         for name, content in self.tdl.files.items():
             localname = os.path.join(self.icicle_tmp, "file")
@@ -417,11 +418,11 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             self.guest_live_upload(guestaddr, localname, name)
             os.unlink(localname)
 
-    def shutdown_guest(self, guestaddr, libvirt_dom):
+    def _shutdown_guest(self, guestaddr, libvirt_dom):
         if guestaddr is not None:
             try:
                 self.guest_execute_command(guestaddr, 'shutdown -h now')
-                if not self.wait_for_guest_shutdown(libvirt_dom):
+                if not self._wait_for_guest_shutdown(libvirt_dom):
                     self.log.warn("Guest did not shutdown in time, going to kill")
                 else:
                     libvirt_dom = None
@@ -436,11 +437,11 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         if self.tdl.installtype == 'url':
             fetchurl += "/images/boot.iso"
 
-        return self.iso_generate_install_media(fetchurl, force_download)
+        return self._iso_generate_install_media(fetchurl, force_download)
 
 class RedHatCDYumGuest(RedHatCDGuest):
-    def check_url(self, tdl, iso=True, url=True):
-        url = RedHatCDGuest.check_url(self, tdl, iso, url)
+    def _check_url(self, tdl, iso=True, url=True):
+        url = RedHatCDGuest._check_url(self, tdl, iso, url)
 
         if self.tdl.installtype == 'url':
             # The HTTP/1.1 specification allows for servers that don't support
@@ -503,7 +504,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
 
         return url
 
-    def customize_repos(self, guestaddr):
+    def _customize_repos(self, guestaddr):
         self.log.debug("Installing additional repository files")
         for repo in self.tdl.repositories.values():
             filename = repo.name + ".repo"
@@ -524,8 +525,8 @@ class RedHatCDYumGuest(RedHatCDGuest):
 
             os.unlink(localname)
 
-    def do_customize(self, guestaddr):
-        self.customize_repos(guestaddr)
+    def _do_customize(self, guestaddr):
+        self._customize_repos(guestaddr)
 
         self.log.debug("Installing custom packages")
         packstr = ''
@@ -536,7 +537,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
             self.guest_execute_command(guestaddr,
                                        'yum -y install %s' % (packstr))
 
-        self.customize_files(guestaddr)
+        self._customize_files(guestaddr)
 
         self.log.debug("Running custom commands")
         for name, content in self.tdl.commands.items():
@@ -552,7 +553,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
             self.log.info("No additional packages, files or commands to install, skipping customization")
             return
 
-        self.collect_setup(libvirt_xml)
+        self._collect_setup(libvirt_xml)
 
         libvirt_dom = None
         try:
@@ -560,34 +561,34 @@ class RedHatCDYumGuest(RedHatCDGuest):
 
             try:
                 guestaddr = None
-                guestaddr = self.wait_for_guest_boot(libvirt_dom)
+                guestaddr = self._wait_for_guest_boot(libvirt_dom)
 
-                self.do_customize(guestaddr)
+                self._do_customize(guestaddr)
             finally:
-                self.shutdown_guest(guestaddr, libvirt_dom)
+                self._shutdown_guest(guestaddr, libvirt_dom)
         finally:
-            self.collect_teardown(libvirt_xml)
+            self._collect_teardown(libvirt_xml)
 
     def customize_and_generate_icicle(self, libvirt_xml):
         self.log.info("Customizing and generating ICICLE")
 
-        self.collect_setup(libvirt_xml)
+        self._collect_setup(libvirt_xml)
 
         libvirt_dom = None
         try:
             libvirt_dom = self.libvirt_conn.createXML(libvirt_xml, 0)
 
             try:
-                guestaddr = self.wait_for_guest_boot(libvirt_dom)
+                guestaddr = self._wait_for_guest_boot(libvirt_dom)
 
                 if self.tdl.packages or self.tdl.files:
-                    self.do_customize(guestaddr)
+                    self._do_customize(guestaddr)
 
-                icicle = self.do_icicle(guestaddr)
+                icicle = self._do_icicle(guestaddr)
             finally:
-                self.shutdown_guest(guestaddr, libvirt_dom)
+                self._shutdown_guest(guestaddr, libvirt_dom)
         finally:
-            self.collect_teardown(libvirt_xml)
+            self._collect_teardown(libvirt_xml)
 
         return icicle
 
@@ -598,7 +599,7 @@ class RedHatFDGuest(oz.Guest.FDGuest):
         if self.tdl.arch != "i386":
             raise oz.OzException.OzException("Invalid arch " + self.tdl.arch + "for " + self.tdl.distro + " guest")
 
-        self.url = self.check_url(self.tdl, iso=False, url=True)
+        self.url = self._check_url(self.tdl, iso=False, url=True)
 
         self.ks_name = ks_name
 
@@ -606,7 +607,7 @@ class RedHatFDGuest(oz.Guest.FDGuest):
         if self.ks_file is None:
             self.ks_file = oz.ozutil.generate_full_auto_path(self.ks_name)
 
-    def modify_floppy(self):
+    def _modify_floppy(self):
         self.mkdir_p(self.floppy_contents)
 
         self.log.debug("Putting the kickstart in place")
@@ -614,7 +615,7 @@ class RedHatFDGuest(oz.Guest.FDGuest):
         output_ks = os.path.join(self.floppy_contents, "ks.cfg")
 
         if self.ks_file == oz.ozutil.generate_full_auto_path(self.ks_name):
-            def kssub(line):
+            def _kssub(line):
                 if re.match("^url", line):
                     return "url --url " + self.url + "\n"
                 elif re.match("^rootpw", line):
@@ -622,7 +623,7 @@ class RedHatFDGuest(oz.Guest.FDGuest):
                 else:
                     return line
 
-            self.copy_modify_file(self.ks_file, output_ks, kssub)
+            self._copy_modify_file(self.ks_file, output_ks, _kssub)
         else:
             shutil.copy(self.ks_file, output_ks)
 
@@ -663,13 +664,13 @@ class RedHatFDGuest(oz.Guest.FDGuest):
                 shutil.copyfile(self.modified_floppy_cache, self.output_floppy)
                 return
 
-        self.get_original_floppy(self.url + "/images/bootnet.img",
-                                 force_download)
-        self.copy_floppy()
+        self._get_original_floppy(self.url + "/images/bootnet.img",
+                                  force_download)
+        self._copy_floppy()
         try:
-            self.modify_floppy()
+            self._modify_floppy()
             if self.cache_modified_media:
                 self.log.info("Caching modified media for future use")
                 shutil.copyfile(self.output_floppy, self.modified_floppy_cache)
         finally:
-            self.cleanup_floppy()
+            self._cleanup_floppy()

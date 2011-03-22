@@ -77,15 +77,15 @@ def subprocess_check_output(*popenargs, **kwargs):
     return (stdout, stderr, retcode)
 
 class Guest(object):
-    def get_conf(self, config, section, key, default):
+    def _get_conf(self, config, section, key, default):
         if config is not None and config.has_section(section) \
                 and config.has_option(section, key):
             return config.get(section, key)
         else:
             return default
 
-    def get_boolean_conf(self, config, section, key, default):
-        value = self.get_conf(config, section, key, None)
+    def _get_boolean_conf(self, config, section, key, default):
+        value = self._get_conf(config, section, key, None)
         if value is None:
             return default
 
@@ -95,7 +95,7 @@ class Guest(object):
 
         return retval
 
-    def discover_libvirt_type(self):
+    def _discover_libvirt_type(self):
         if self.libvirt_type is None:
             try:
                 stdout, stderr, retcode = subprocess_check_output(['virt-what'])
@@ -123,7 +123,7 @@ class Guest(object):
 
         self.log.debug("Libvirt type is %s" % (self.libvirt_type))
 
-    def discover_libvirt_bridge(self):
+    def _discover_libvirt_bridge(self):
         if self.bridge_name is not None:
             # if the bridge name was specified in the config file, just detect
             # the IP address here
@@ -156,13 +156,13 @@ class Guest(object):
         self.log.debug("libvirt bridge name is %s, host_bridge_ip is %s" % (self.bridge_name, self.host_bridge_ip))
 
     def connect_to_libvirt(self):
-        def libvirt_error_handler(ctxt, err):
+        def _libvirt_error_handler(ctxt, err):
             pass
 
-        libvirt.registerErrorHandler(libvirt_error_handler, 'context')
+        libvirt.registerErrorHandler(_libvirt_error_handler, 'context')
         self.libvirt_conn = libvirt.open(self.libvirt_uri)
-        self.discover_libvirt_bridge()
-        self.discover_libvirt_type()
+        self._discover_libvirt_bridge()
+        self._discover_libvirt_type()
 
     def __init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus, config):
         self.tdl = tdl
@@ -178,27 +178,28 @@ class Guest(object):
         self.macaddr = oz.ozutil.generate_macaddress()
 
         # configuration from 'paths' section
-        self.output_dir = self.get_conf(config, 'paths', 'output_dir',
-                                        '/var/lib/libvirt/images')
-        self.data_dir = self.get_conf(config, 'paths', 'data_dir',
-                                      '/var/lib/oz')
-        self.screenshot_dir = self.get_conf(config, 'paths', 'screenshot_dir',
-                                            '.')
+        self.output_dir = self._get_conf(config, 'paths', 'output_dir',
+                                         '/var/lib/libvirt/images')
+        self.data_dir = self._get_conf(config, 'paths', 'data_dir',
+                                       '/var/lib/oz')
+        self.screenshot_dir = self._get_conf(config, 'paths', 'screenshot_dir',
+                                             '.')
 
         # configuration from 'libvirt' section
-        self.libvirt_uri = self.get_conf(config, 'libvirt', 'uri',
-                                         'qemu:///system')
-        self.libvirt_type = self.get_conf(config, 'libvirt', 'type', None)
-        self.bridge_name = self.get_conf(config, 'libvirt', 'bridge_name', None)
+        self.libvirt_uri = self._get_conf(config, 'libvirt', 'uri',
+                                          'qemu:///system')
+        self.libvirt_type = self._get_conf(config, 'libvirt', 'type', None)
+        self.bridge_name = self._get_conf(config, 'libvirt', 'bridge_name',
+                                          None)
 
         # configuration from 'cache' section
-        self.cache_original_media = self.get_boolean_conf(config, 'cache',
-                                                          'original_media',
-                                                          True)
-        self.cache_modified_media = self.get_boolean_conf(config, 'cache',
-                                                          'modified_media',
-                                                          False)
-        self.cache_jeos = self.get_boolean_conf(config, 'cache', 'jeos', False)
+        self.cache_original_media = self._get_boolean_conf(config, 'cache',
+                                                           'original_media',
+                                                           True)
+        self.cache_modified_media = self._get_boolean_conf(config, 'cache',
+                                                           'modified_media',
+                                                           False)
+        self.cache_jeos = self._get_boolean_conf(config, 'cache', 'jeos', False)
 
         self.jeos_cache_dir = os.path.join(self.data_dir, "jeos")
         self.jeos_filename = os.path.join(self.jeos_cache_dir,
@@ -292,13 +293,13 @@ class Guest(object):
     def customize_and_generate_icicle(self, libvirt_xml):
         raise oz.OzException.OzException("Customization and ICICLE generate for %s%s is not implemented" % (self.tdl.distro, self.tdl.update))
 
-    class InstallDev(object):
+    class _InstallDev(object):
         def __init__(self, devicetype, path, bus):
             self.devicetype = devicetype
             self.path = path
             self.bus = bus
 
-    def generate_xml(self, bootdev, installdev):
+    def _generate_xml(self, bootdev, installdev):
         self.log.info("Generate XML for guest %s with bootdev %s" % (self.tdl.name, bootdev))
 
         # create XML document
@@ -397,8 +398,8 @@ class Guest(object):
 
         return xml
 
-    def internal_generate_diskimage(self, size=10, force=False,
-                                    create_partition=False):
+    def _internal_generate_diskimage(self, size=10, force=False,
+                                     create_partition=False):
         if not force and os.access(self.jeos_filename, os.F_OK):
             # if we found a cached JEOS, we don't need to do anything here;
             # we'll copy the JEOS itself later on
@@ -423,10 +424,10 @@ class Guest(object):
             disk.commit()
 
     def generate_diskimage(self, size=10, force=False):
-        return self.internal_generate_diskimage(size, force, False)
+        return self._internal_generate_diskimage(size, force, False)
 
-    def wait_for_install_finish(self, libvirt_dom, count,
-                                inactivity_timeout=300):
+    def _wait_for_install_finish(self, libvirt_dom, count,
+                                 inactivity_timeout=300):
         # first find the disk device we are installing to; this will be
         # monitored for activity during the installation
         domxml = libvirt_dom.XMLDesc(0)
@@ -465,7 +466,7 @@ class Guest(object):
             # if we saw no disk activity in the countdown window, we presume the
             # install has hung.  Fail here
             if inactivity_countdown == 0:
-                self.capture_screenshot(libvirt_dom.XMLDesc(0))
+                self._capture_screenshot(libvirt_dom.XMLDesc(0))
                 raise oz.OzException.OzException("No disk activity in %d seconds, failing" % (inactivity_timeout))
 
             if (rd_req + wr_req) == last_disk_activity:
@@ -482,12 +483,12 @@ class Guest(object):
 
         if count == 0:
             # if we timed out, then let's make sure to take a screenshot.
-            self.capture_screenshot(libvirt_dom.XMLDesc(0))
+            self._capture_screenshot(libvirt_dom.XMLDesc(0))
             raise oz.OzException.OzException("Timed out waiting for install to finish")
 
         self.log.info("Install of %s succeeded" % (self.tdl.name))
 
-    def wait_for_guest_shutdown(self, libvirt_dom, count=60):
+    def _wait_for_guest_shutdown(self, libvirt_dom, count=60):
         origcount = count
         while count > 0:
             if count % 10 == 0:
@@ -515,9 +516,9 @@ class Guest(object):
 
         return count != 0
 
-    def download_file(self, from_url, to, show_progress):
+    def _download_file(self, from_url, to, show_progress):
         self.last_mb = -1
-        def progress(down_total, down_current, up_total, up_current):
+        def _progress(down_total, down_current, up_total, up_current):
             if down_total == 0:
                 return
             current_mb = int(down_current) / 10485760
@@ -527,21 +528,21 @@ class Guest(object):
                                                  down_total/1024))
 
         self.outf = open(to, "w")
-        def data(buf):
+        def _data(buf):
             self.outf.write(buf)
 
         c = pycurl.Curl()
         c.setopt(c.URL, from_url)
         c.setopt(c.CONNECTTIMEOUT, 5)
-        c.setopt(c.WRITEFUNCTION, data)
+        c.setopt(c.WRITEFUNCTION, _data)
         if show_progress:
             c.setopt(c.NOPROGRESS, 0)
-            c.setopt(c.PROGRESSFUNCTION, progress)
+            c.setopt(c.PROGRESSFUNCTION, _progress)
         c.perform()
         c.close()
         self.outf.close()
 
-    def get_csums(self, original_url, output):
+    def _get_csums(self, original_url, output):
         outdir = os.path.dirname(output)
         self.mkdir_p(outdir)
 
@@ -552,19 +553,19 @@ class Guest(object):
 
         if self.tdl.iso_md5_url:
             self.log.debug("Checksum requested, fetching MD5 file")
-            self.download_file(self.tdl.iso_md5_url, csumname, False)
+            self._download_file(self.tdl.iso_md5_url, csumname, False)
             upstream_sum = oz.ozutil.get_md5sum_from_file(csumname,
                                                           originalname)
             local_sum = hashlib.md5()
         elif self.tdl.iso_sha1_url:
             self.log.debug("Checksum requested, fetching SHA1 file")
-            self.download_file(self.tdl.iso_sha1_url, csumname, False)
+            self._download_file(self.tdl.iso_sha1_url, csumname, False)
             upstream_sum = oz.ozutil.get_sha1sum_from_file(csumname,
                                                            originalname)
             local_sum = hashlib.sha1()
         else:
             self.log.debug("Checksum requested, fetching SHA256 file")
-            self.download_file(self.tdl.iso_sha256_url, csumname, False)
+            self._download_file(self.tdl.iso_sha256_url, csumname, False)
             upstream_sum = oz.ozutil.get_sha256sum_from_file(csumname,
                                                              originalname)
             local_sum = hashlib.sha256()
@@ -582,7 +583,7 @@ class Guest(object):
 
         return local_sum.hexdigest(), upstream_sum
 
-    def get_original_media(self, url, output, force_download):
+    def _get_original_media(self, url, output, force_download):
         self.log.info("Fetching the original media")
 
         response = urllib2.urlopen(url)
@@ -599,7 +600,7 @@ class Guest(object):
         if not force_download and os.access(output, os.F_OK):
             if content_length == os.stat(output)[stat.ST_SIZE]:
                 if self.tdl.iso_md5_url or self.tdl.iso_sha1_url or self.tdl.iso_sha256_url:
-                    local_sum, upstream_sum = self.get_csums(url, output)
+                    local_sum, upstream_sum = self._get_csums(url, output)
                     if local_sum == upstream_sum:
                         self.log.info("Original install media available and matches checksum, using cached version")
                         return
@@ -619,7 +620,7 @@ class Guest(object):
         if (devdata.f_bsize*devdata.f_bavail) < content_length:
             raise oz.OzException.OzException("Not enough room on %s for install media" % (outdir))
         self.log.info("Fetching the original install media from %s" % (url))
-        self.download_file(url, output, True)
+        self._download_file(url, output, True)
 
         filesize = os.stat(output)[stat.ST_SIZE]
 
@@ -629,13 +630,13 @@ class Guest(object):
             raise oz.OzException.OzException("Expected to download %d bytes, downloaded %d" % (content_length, filesize))
 
         if self.tdl.iso_md5_url or self.tdl.iso_sha1_url or self.tdl.iso_sha256_url:
-            local_sum, upstream_sum = self.get_csums(url, output)
+            local_sum, upstream_sum = self._get_csums(url, output)
             if local_sum != upstream_sum:
                 raise oz.OzException.OzException("Checksum for downloaded file does not match!")
             else:
                 self.log.debug("Checksum matches")
 
-    def capture_screenshot(self, xml):
+    def _capture_screenshot(self, xml):
         screenshot = os.path.join(self.screenshot_dir,
                                   self.tdl.name + "-" + str(time.time()) + ".png")
 
@@ -662,7 +663,7 @@ class Guest(object):
         except:
             self.log.error("Failed to take screenshot")
 
-    def guestfs_handle_setup(self, libvirt_xml):
+    def _guestfs_handle_setup(self, libvirt_xml):
         input_doc = libxml2.parseDoc(libvirt_xml)
         namenode = input_doc.xpathEval('/domain/name')
         if len(namenode) != 1:
@@ -741,20 +742,20 @@ class Guest(object):
             # and the example code that comes from the libguestfs.org python
             # example page.
             mps = g.inspect_get_mountpoints(root)
-            def compare(a, b):
+            def _compare(a, b):
                 if len(a[0]) > len(b[0]):
                     return 1
                 elif len(a[0]) == len(b[0]):
                     return 0
                 else:
                     return -1
-            mps.sort(compare)
+            mps.sort(_compare)
             for mp_dev in mps:
                 g.mount_options('', mp_dev[1], mp_dev[0])
 
         return g
 
-    def guestfs_handle_cleanup(self, g_handle):
+    def _guestfs_handle_cleanup(self, g_handle):
         self.log.info("Cleaning up guestfs handle for %s" % (self.tdl.name))
         self.log.debug("Syncing")
         g_handle.sync()
@@ -765,7 +766,7 @@ class Guest(object):
         self.log.debug("Killing guestfs subprocess")
         g_handle.kill_subprocess()
 
-    def wait_for_guest_boot(self, libvirt_dom):
+    def _wait_for_guest_boot(self, libvirt_dom):
         self.log.info("Waiting for guest %s to boot" % (self.tdl.name))
 
         listen = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -823,7 +824,7 @@ class Guest(object):
 
         return addr[0]
 
-    def output_icicle_xml(self, lines, description):
+    def _output_icicle_xml(self, lines, description):
         doc = libxml2.newDoc("1.0")
         icicle = doc.newChild(None, "icicle", None)
         if description is not None:
@@ -843,7 +844,7 @@ class Guest(object):
         if not os.access(path, os.F_OK):
             os.makedirs(path)
 
-    def check_url(self, tdl, iso=True, url=True):
+    def _check_url(self, tdl, iso=True, url=True):
         if iso and tdl.installtype == 'iso':
             url = tdl.iso
         elif url and tdl.installtype == 'url':
@@ -867,7 +868,7 @@ class Guest(object):
 
         return url
 
-    def generate_openssh_key(self, privname):
+    def _generate_openssh_key(self, privname):
         self.log.info("Generating new openssh key")
         pubname = privname + ".pub"
         if os.access(privname, os.F_OK) and not os.access(pubname, os.F_OK):
@@ -881,12 +882,12 @@ class Guest(object):
         # when we get here, either both the private and public key exist, or
         # neither exist.  If they don't exist, generate them
         if not os.access(privname, os.F_OK) and not os.access(pubname, os.F_OK):
-            def null_callback(p, n, out):
+            def _null_callback(p, n, out):
                 pass
 
             pubname = privname + '.pub'
 
-            key = M2Crypto.RSA.gen_key(2048, 65537, null_callback)
+            key = M2Crypto.RSA.gen_key(2048, 65537, _null_callback)
 
             # this is the binary public key, in ssh "BN" (BigNumber) MPI format.
             # The ssh BN MPI format consists of 4 bytes that describe the length
@@ -909,7 +910,7 @@ class Guest(object):
             open(pubname, 'w').write(keystring)
             os.chmod(pubname, 0644)
 
-    def copy_modify_file(self, inname, outname, subfunc):
+    def _copy_modify_file(self, inname, outname, subfunc):
         infile = open(inname, 'r')
         outfile = open(outname, 'w')
 
@@ -920,7 +921,7 @@ class Guest(object):
         outfile.close()
 
 class CDGuest(Guest):
-    class PrimaryVolumeDescriptor(object):
+    class _PrimaryVolumeDescriptor(object):
         def __init__(self, version, sysid, volid, space_size, set_size, seqnum):
             self.version = version
             self.system_identifier = sysid
@@ -947,10 +948,10 @@ class CDGuest(Guest):
         self.log.debug("Output ISO path: %s" % self.output_iso)
         self.log.debug("ISO content path: %s" % self.iso_contents)
 
-    def get_original_iso(self, isourl, force_download):
-        self.get_original_media(isourl, self.orig_iso, force_download)
+    def _get_original_iso(self, isourl, force_download):
+        self._get_original_media(isourl, self.orig_iso, force_download)
 
-    def copy_iso(self):
+    def _copy_iso(self):
         self.log.info("Copying ISO contents for modification")
         if os.access(self.iso_contents, os.F_OK):
             shutil.rmtree(self.iso_contents)
@@ -1018,7 +1019,7 @@ class CDGuest(Guest):
             gfs.umount_all()
             gfs.kill_subprocess()
 
-    def get_primary_volume_descriptor(self, cdfile):
+    def _get_primary_volume_descriptor(self, cdfile):
         cdfile = open(cdfile, "r")
 
         # check out the primary volume descriptor to make sure it is sane
@@ -1036,12 +1037,12 @@ class CDGuest(Guest):
         if unused2 != 0x0:
             raise oz.OzException.OzException("data in 2nd unused field")
 
-        return self.PrimaryVolumeDescriptor(version, system_identifier,
-                                            volume_identifier, space_size_le,
-                                            set_size_le, seqnum_le)
+        return self._PrimaryVolumeDescriptor(version, system_identifier,
+                                             volume_identifier, space_size_le,
+                                             set_size_le, seqnum_le)
 
-    def geteltorito(self, cdfile, outfile):
-        self.get_primary_volume_descriptor(cdfile)
+    def _geteltorito(self, cdfile, outfile):
+        self._get_primary_volume_descriptor(cdfile)
 
         cdfile = open(cdfile, "r")
 
@@ -1080,14 +1081,14 @@ class CDGuest(Guest):
         if five != 0x55 or aa != 0xaa:
             raise oz.OzException.OzException("invalid CD boot sector footer")
 
-        def checksum(data):
+        def _checksum(data):
             s = 0
             for i in range(0, len(data), 2):
                 w = ord(data[i]) + (ord(data[i+1]) << 8)
                 s = numpy.uint16(numpy.uint16(s) + numpy.uint16(w))
             return s
 
-        csum = checksum(bootdata)
+        csum = _checksum(bootdata)
         if csum != 0:
             raise oz.OzException.OzException("invalid CD checksum: expected 0, saw %d" % (csum))
 
@@ -1140,58 +1141,58 @@ class CDGuest(Guest):
         out.write(eltoritodata)
         out.close()
 
-    def do_install(self, timeout=None, force=False, reboots=0):
+    def _do_install(self, timeout=None, force=False, reboots=0):
         if not force and os.access(self.jeos_filename, os.F_OK):
             self.log.info("Found cached JEOS, using it")
             oz.ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
         else:
             self.log.info("Running install for %s" % (self.tdl.name))
 
-            cddev = self.InstallDev("cdrom", self.output_iso, "hdc")
+            cddev = self._InstallDev("cdrom", self.output_iso, "hdc")
 
             if timeout is None:
                 timeout = 1200
 
-            dom = self.libvirt_conn.createXML(self.generate_xml("cdrom", cddev),
-                                              0)
-            self.wait_for_install_finish(dom, timeout)
+            dom = self.libvirt_conn.createXML(self._generate_xml("cdrom",
+                                                                 cddev), 0)
+            self._wait_for_install_finish(dom, timeout)
 
             for i in range(0, reboots):
-                dom = self.libvirt_conn.createXML(self.generate_xml("hd",
-                                                                    cddev), 0)
-                self.wait_for_install_finish(dom, timeout)
+                dom = self.libvirt_conn.createXML(self._generate_xml("hd",
+                                                                     cddev), 0)
+                self._wait_for_install_finish(dom, timeout)
 
             if self.cache_jeos:
                 self.log.info("Caching JEOS")
                 self.mkdir_p(self.jeos_cache_dir)
                 oz.ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
 
-        return self.generate_xml("hd", None)
+        return self._generate_xml("hd", None)
 
     def install(self, timeout=None, force=False):
-        return self.do_install(timeout, force, 0)
+        return self._do_install(timeout, force, 0)
 
-    def check_pvd(self):
+    def _check_pvd(self):
         # base method to check the media.  In the common case, do nothing;
         # subclasses that need to check the media will override this.
         pass
 
-    def check_iso_tree(self):
+    def _check_iso_tree(self):
         # base method to check the ISO tree.  In the common case, do nothing;
         # subclasses that need to check the tree will override this.
         pass
 
-    def modify_iso(self):
+    def _modify_iso(self):
         # base method to modify the ISO.  Subclasses are expected to override
         # this
         raise oz.OzException.OzException("Internal error, subclass didn't override modify_iso")
 
-    def generate_new_iso(self):
+    def _generate_new_iso(self):
         # base method to generate the new ISO.  Subclasses are expected to
         # override this
         raise oz.OzException.OzException("Internal error, subclass didn't override generate_new_iso")
 
-    def iso_generate_install_media(self, url, force_download):
+    def _iso_generate_install_media(self, url, force_download):
         self.log.info("Generating install media")
 
         if not force_download:
@@ -1204,20 +1205,20 @@ class CDGuest(Guest):
                 shutil.copyfile(self.modified_iso_cache, self.output_iso)
                 return
 
-        self.get_original_iso(url, force_download)
-        self.check_pvd()
-        self.copy_iso()
-        self.check_iso_tree()
+        self._get_original_iso(url, force_download)
+        self._check_pvd()
+        self._copy_iso()
+        self._check_iso_tree()
         try:
-            self.modify_iso()
-            self.generate_new_iso()
+            self._modify_iso()
+            self._generate_new_iso()
             if self.cache_modified_media:
                 self.log.info("Caching modified media for future use")
                 shutil.copyfile(self.output_iso, self.modified_iso_cache)
         finally:
-            self.cleanup_iso()
+            self._cleanup_iso()
 
-    def cleanup_iso(self):
+    def _cleanup_iso(self):
         self.log.info("Cleaning up old ISO data")
         shutil.rmtree(self.iso_contents)
 
@@ -1252,10 +1253,10 @@ class FDGuest(Guest):
         self.log.debug("Output floppy path: %s" % self.output_floppy)
         self.log.debug("Floppy content path: %s" % self.floppy_contents)
 
-    def get_original_floppy(self, floppyurl, force_download):
-        self.get_original_media(floppyurl, self.orig_floppy, force_download)
+    def _get_original_floppy(self, floppyurl, force_download):
+        self._get_original_media(floppyurl, self.orig_floppy, force_download)
 
-    def copy_floppy(self):
+    def _copy_floppy(self):
         self.log.info("Copying floppy contents for modification")
         shutil.copyfile(self.orig_floppy, self.output_floppy)
 
@@ -1266,22 +1267,23 @@ class FDGuest(Guest):
         else:
             self.log.info("Running install for %s" % (self.tdl.name))
 
-            fddev = self.InstallDev("floppy", self.output_floppy, "fda")
+            fddev = self._InstallDev("floppy", self.output_floppy, "fda")
 
             if timeout is None:
                 timeout = 1200
 
-            dom = self.libvirt_conn.createXML(self.generate_xml("fd", fddev), 0)
-            self.wait_for_install_finish(dom, timeout)
+            dom = self.libvirt_conn.createXML(self._generate_xml("fd", fddev),
+                                              0)
+            self._wait_for_install_finish(dom, timeout)
 
             if self.cache_jeos:
                 self.log.info("Caching JEOS")
                 self.mkdir_p(self.jeos_cache_dir)
                 oz.ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
 
-        return self.generate_xml("hd", None)
+        return self._generate_xml("hd", None)
 
-    def cleanup_floppy(self):
+    def _cleanup_floppy(self):
         self.log.info("Cleaning up floppy data")
         shutil.rmtree(self.floppy_contents)
 

@@ -30,9 +30,9 @@ class DebianGuest(oz.Guest.CDGuest):
         if self.preseed_file is None:
             self.preseed_file = oz.ozutil.generate_full_auto_path("debian-" + self.tdl.update + "-jeos.preseed")
 
-        self.url = self.check_url(self.tdl, iso=True, url=False)
+        self.url = self._check_url(self.tdl, iso=True, url=False)
 
-    def modify_iso(self):
+    def _modify_iso(self):
         self.log.debug("Modifying ISO")
 
         self.log.debug("Copying preseed file")
@@ -62,7 +62,7 @@ class DebianGuest(oz.Guest.CDGuest):
         f.write("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us netcfg/choose_interface=auto priority=critical initrd=" + installdir + "/initrd.gz --\n")
         f.close()
 
-    def generate_new_iso(self):
+    def _generate_new_iso(self):
         self.log.info("Generating new ISO")
         oz.Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom", "-J",
                                           "-l", "-b", "isolinux/isolinux.bin",
@@ -74,7 +74,7 @@ class DebianGuest(oz.Guest.CDGuest):
                                           self.iso_contents])
 
     def generate_install_media(self, force_download=False):
-        return self.iso_generate_install_media(self.url, force_download)
+        return self._iso_generate_install_media(self.url, force_download)
 
 def get_class(tdl, config, auto):
     if tdl.update in ["5", "6"]:

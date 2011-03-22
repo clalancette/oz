@@ -32,10 +32,10 @@ class Windows(oz.Guest.CDGuest):
         if self.tdl.key is None:
             raise oz.OzException.OzException("A key is required when installing Windows")
 
-        self.url = self.check_url(self.tdl, iso=True, url=False)
+        self.url = self._check_url(self.tdl, iso=True, url=False)
 
     def generate_install_media(self, force_download=False):
-        return self.iso_generate_install_media(self.url, force_download)
+        return self._iso_generate_install_media(self.url, force_download)
 
 class Windows2000andXPand2003(Windows):
     def __init__(self, tdl, config, auto):
@@ -48,7 +48,7 @@ class Windows2000andXPand2003(Windows):
         if self.siffile is None:
             self.siffile = oz.ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif")
 
-    def generate_new_iso(self):
+    def _generate_new_iso(self):
         self.log.debug("Generating new ISO")
         oz.Guest.subprocess_check_output(["mkisofs", "-b", "cdboot/boot.bin",
                                           "-no-emul-boot", "-boot-load-seg",
@@ -72,23 +72,23 @@ class Windows2000andXPand2003(Windows):
             # To avoid that message, create a partition table that spans
             # the entire disk
             createpart = True
-        return self.internal_generate_diskimage(size, force, createpart)
+        return self._internal_generate_diskimage(size, force, createpart)
 
-    def get_windows_arch(self, tdl_arch):
+    def _get_windows_arch(self, tdl_arch):
         arch = tdl_arch
         if arch == "x86_64":
             arch = "amd64"
         return arch
 
-    def modify_iso(self):
+    def _modify_iso(self):
         self.log.debug("Modifying ISO")
 
         os.mkdir(os.path.join(self.iso_contents, "cdboot"))
-        self.geteltorito(self.orig_iso, os.path.join(self.iso_contents,
-                                                     "cdboot", "boot.bin"))
+        self._geteltorito(self.orig_iso, os.path.join(self.iso_contents,
+                                                      "cdboot", "boot.bin"))
 
         outname = os.path.join(self.iso_contents,
-                               self.get_windows_arch(self.tdl.arch),
+                               self._get_windows_arch(self.tdl.arch),
                                "winnt.sif")
 
         if self.siffile == oz.ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif"):
@@ -96,7 +96,7 @@ class Windows2000andXPand2003(Windows):
             # to make installation succeed
             computername = "OZ" + str(random.randrange(1, 900000))
 
-            def sifsub(line):
+            def _sifsub(line):
                 if re.match(" *ProductKey", line):
                     return "    ProductKey=" + self.tdl.key + "\n"
                 elif re.match(" *ProductID", line):
@@ -108,7 +108,7 @@ class Windows2000andXPand2003(Windows):
                 else:
                     return line
 
-            self.copy_modify_file(self.siffile, outname, sifsub)
+            self._copy_modify_file(self.siffile, outname, _sifsub)
         else:
             # if the user provided their own siffile, do not override their
             # choices; the user gets to keep both pieces if something breaks
@@ -118,7 +118,7 @@ class Windows2000andXPand2003(Windows):
         internal_timeout = timeout
         if internal_timeout is None:
             internal_timeout = 3600
-        return self.do_install(internal_timeout, force, 1)
+        return self._do_install(internal_timeout, force, 1)
 
 class Windows2008and7(Windows):
     def __init__(self, tdl, config, auto):
@@ -128,7 +128,7 @@ class Windows2008and7(Windows):
         if self.unattendfile is None:
             self.unattendfile = oz.ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.xml")
 
-    def generate_new_iso(self):
+    def _generate_new_iso(self):
         self.log.debug("Generating new ISO")
         # NOTE: Windows 2008 is very picky about which arguments to mkisofs
         # will generate a bootable CD, so modify these at your own risk
@@ -141,18 +141,18 @@ class Windows2008and7(Windows):
                                           "-o", self.output_iso,
                                           self.iso_contents])
 
-    def get_windows_arch(self, tdl_arch):
+    def _get_windows_arch(self, tdl_arch):
         arch = "x86"
         if tdl_arch == "x86_64":
             arch = "amd64"
         return arch
 
-    def modify_iso(self):
+    def _modify_iso(self):
         self.log.debug("Modifying ISO")
 
         os.mkdir(os.path.join(self.iso_contents, "cdboot"))
-        self.geteltorito(self.orig_iso, os.path.join(self.iso_contents,
-                                                     "cdboot", "boot.bin"))
+        self._geteltorito(self.orig_iso, os.path.join(self.iso_contents,
+                                                       "cdboot", "boot.bin"))
 
         outname = os.path.join(self.iso_contents, "autounattend.xml")
 
@@ -165,7 +165,7 @@ class Windows2008and7(Windows):
 
             for component in xp.xpathEval('/ms:unattend/ms:settings/ms:component'):
                 component.setProp('processorArchitecture',
-                                  self.get_windows_arch(self.tdl.arch))
+                                  self._get_windows_arch(self.tdl.arch))
 
             keys = xp.xpathEval('/ms:unattend/ms:settings/ms:component/ms:ProductKey')
             keys[0].setContent(self.tdl.key)
@@ -187,7 +187,7 @@ class Windows2008and7(Windows):
         internal_timeout = timeout
         if internal_timeout is None:
             internal_timeout = 6000
-        return self.do_install(internal_timeout, force, 2)
+        return self._do_install(internal_timeout, force, 2)
 
 def get_class(tdl, config, auto):
     if tdl.update in ["2000", "XP", "2003"]:

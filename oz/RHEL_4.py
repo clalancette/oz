@@ -27,18 +27,18 @@ class RHEL4Guest(oz.RedHat.RedHatCDGuest):
 
         self.auto = auto
 
-    def modify_iso(self):
-        self.copy_kickstart(self.auto, "rhel-4-jeos.ks")
+    def _modify_iso(self):
+        self._copy_kickstart(self.auto, "rhel-4-jeos.ks")
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method="
         if self.tdl.installtype == "url":
             initrdline += self.url + "\n"
         else:
             initrdline += "cdrom:/dev/cdrom\n"
-        self.modify_isolinux(initrdline)
+        self._modify_isolinux(initrdline)
 
-    def check_pvd(self):
-        pvd = self.get_primary_volume_descriptor(self.orig_iso)
+    def _check_pvd(self):
+        pvd = self._get_primary_volume_descriptor(self.orig_iso)
 
         # all of the below should have "LINUX" as their system_identifier,
         # so check it here
