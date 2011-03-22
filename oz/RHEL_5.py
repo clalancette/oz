@@ -49,7 +49,8 @@ class RHEL5Guest(RedHat.RedHatCDYumGuest):
         shutil.copy(self.ks_file, os.path.join(self.iso_contents, "ks.cfg"))
 
         self.log.debug("Modifying the boot options")
-        isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
+        isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
+                                   "isolinux.cfg")
         f = open(isolinuxcfg, "r")
         lines = f.readlines()
         f.close()
