@@ -14,6 +14,10 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+"""
+Ubuntu installation
+"""
+
 import shutil
 import re
 import os
@@ -23,6 +27,9 @@ import oz.ozutil
 import oz.OzException
 
 class UbuntuGuest(oz.Guest.CDGuest):
+    """
+    Class for Ubuntu 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, and 10.10 installation.
+    """
     def __init__(self, tdl, config, auto, initrd, nicmodel, diskbus):
         oz.Guest.CDGuest.__init__(self, tdl, nicmodel, None, None, diskbus,
                                   config)
@@ -41,6 +48,9 @@ class UbuntuGuest(oz.Guest.CDGuest):
                 raise oz.OzException.OzException("Ubuntu %s installs can only be done using the alternate or server CDs" % (self.tdl.update))
 
     def _modify_iso(self):
+        """
+        Method to make the boot ISO auto-boot with appropriate parameters.
+        """
         self.log.debug("Modifying ISO")
 
         self.log.debug("Copying preseed file")
@@ -49,6 +59,10 @@ class UbuntuGuest(oz.Guest.CDGuest):
         if self.preseed_file == oz.ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed"):
 
             def _preseed_sub(line):
+                """
+                Method that is called back from __copy_modify_file() to
+                modify preseed files as appropriate for Ubuntu.
+                """
                 if re.match('d-i passwd/root-password password', line):
                     return 'd-i passwd/root-password password ' + self.rootpw + '\n'
                 elif re.match('d-i passwd/root-password-again password', line):
@@ -82,6 +96,9 @@ class UbuntuGuest(oz.Guest.CDGuest):
         f.close()
 
     def _generate_new_iso(self):
+        """
+        Method to create a new ISO based on the modified CD/DVD.
+        """
         self.log.info("Generating new ISO")
         oz.Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom", "-J",
                                           "-l", "-b", "isolinux/isolinux.bin",
@@ -93,15 +110,28 @@ class UbuntuGuest(oz.Guest.CDGuest):
                                           self.iso_contents])
 
     def generate_install_media(self, force_download=False):
+        """
+        Method to generate the install media for Ubuntu operating
+        systems.  If force_download is False (the default), then the
+        original media will only be fetched if it is not cached locally.  If
+        force_download is True, then the original media will be downloaded
+        regardless of whether it is cached locally.
+        """
         return self._iso_generate_install_media(self.url, force_download)
 
     def install(self, timeout=None, force=False):
+        """
+        Method to run the operating system installation.
+        """
         if self.tdl.update in ["6.06", "6.06.1", "6.06.2", "6.10", "7.04"]:
             if not timeout:
                 timeout = 3000
         return self._do_install(timeout, force, 0)
 
 def get_class(tdl, config, auto):
+    """
+    Factory method for Ubuntu installs.
+    """
     if tdl.update in ["6.06", "6.06.1", "6.06.2", "6.10", "7.04", "7.10"]:
         return UbuntuGuest(tdl, config, auto, "initrd.gz", "rtl8139", None)
     if tdl.update in ["8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4", "8.10",

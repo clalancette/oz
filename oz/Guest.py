@@ -14,6 +14,10 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+"""
+Main class for guest installation
+"""
+
 import uuid
 import libvirt
 import os
@@ -42,6 +46,9 @@ import oz.ozutil
 import oz.OzException
 
 def subprocess_check_output(*popenargs, **kwargs):
+    """
+    Function to call a subprocess and gather the output.
+    """
     if 'stdout' in kwargs:
         raise ValueError('stdout argument not allowed, it will be overridden.')
     if 'stderr' in kwargs:
@@ -77,7 +84,13 @@ def subprocess_check_output(*popenargs, **kwargs):
     return (stdout, stderr, retcode)
 
 class Guest(object):
+    """
+    Main class for guest installation.
+    """
     def _get_conf(self, config, section, key, default):
+        """
+        Method to retrieve config parameters out of the config file.
+        """
         if config is not None and config.has_section(section) \
                 and config.has_option(section, key):
             return config.get(section, key)
@@ -85,6 +98,9 @@ class Guest(object):
             return default
 
     def _get_boolean_conf(self, config, section, key, default):
+        """
+        Method to retrieve boolean config parameters out of the config file.
+        """
         value = self._get_conf(config, section, key, None)
         if value is None:
             return default
@@ -96,6 +112,10 @@ class Guest(object):
         return retval
 
     def _discover_libvirt_type(self):
+        """
+        Internal method to discover the libvirt type (qemu, kvm, etc) that
+        we should use, if not specified by the user.
+        """
         if self.libvirt_type is None:
             try:
                 stdout, stderr, retcode = subprocess_check_output(['virt-what'])
@@ -124,6 +144,9 @@ class Guest(object):
         self.log.debug("Libvirt type is %s" % (self.libvirt_type))
 
     def _discover_libvirt_bridge(self):
+        """
+        Internal method to discover a libvirt bridge (if necessary).
+        """
         if self.bridge_name is not None:
             # if the bridge name was specified in the config file, just detect
             # the IP address here
@@ -156,7 +179,14 @@ class Guest(object):
         self.log.debug("libvirt bridge name is %s, host_bridge_ip is %s" % (self.bridge_name, self.host_bridge_ip))
 
     def connect_to_libvirt(self):
+        """
+        Method to connect to libvirt and detect various things about the
+        environment.
+        """
         def _libvirt_error_handler(ctxt, err):
+            """
+            Error callback to suppress libvirt printing to stderr by default.
+            """
             pass
 
         libvirt.registerErrorHandler(_libvirt_error_handler, 'context')
@@ -242,6 +272,10 @@ class Guest(object):
         self.log.debug("icicletmp: %s, listen_port: %d" % (self.icicle_tmp, self.listen_port))
 
     def cleanup_old_guest(self):
+        """
+        Method to completely clean up an old guest, including deleting the
+        disk file.  Use with caution!
+        """
         self.log.info("Cleaning up guest named %s" % (self.tdl.name))
         try:
             dom = self.libvirt_conn.lookupByName(self.tdl.name)
@@ -257,9 +291,11 @@ class Guest(object):
             os.unlink(self.diskimage)
 
     def check_for_guest_conflict(self):
-        # this method checks if anything we are going to do will conflict
-        # with what already exists.  In particular, if a guest with the same
-        # name, UUID, or diskimage already exists, we'll raise an exception
+        """
+        Method to check if any of our future actions will conflict with an
+        already existing guest.  In particular, if a guest with the same
+        name, UUID, or diskimage already exists, this throws an exception.
+        """
         self.log.info("Checking for guest conflicts with %s" % (self.tdl.name))
 
         try:
@@ -279,27 +315,53 @@ class Guest(object):
 
     # the next 4 methods are intended to be overridden by the individual
     # OS backends; raise an error if they are called but not implemented
+
     def generate_install_media(self, force_download=False):
+        """
+        Base method for generating the install media for operating system
+        installation.  This is expected to be overridden by all subclasses.
+        """
         raise oz.OzException.OzException("Install media for %s%s is not implemented, install cannot continue" % (self.tdl.distro, self.tdl.update))
 
     def customize(self, libvirt_xml):
+        """
+        Base method for customizing the operating system.  This is expected
+        to be overridden by subclasses that support customization.
+        """
         raise oz.OzException.OzException("Customization for %s%s is not implemented" % (self.tdl.distro, self.tdl.update))
 
     def generate_icicle(self, libvirt_xml):
+        """
+        Base method for generating the ICICLE manifest from the operating
+        system.  This is expect to be overridden by subclasses that support
+        ICICLE generation.
+        """
         raise oz.OzException.OzException("ICICLE generation for %s%s is not implemented" % (self.tdl.distro, self.tdl.update))
 
     # this method is intended to be an optimization if the user wants to do
     # both customize and generate_icicle
     def customize_and_generate_icicle(self, libvirt_xml):
+        """
+        Base method for doing operating system customization and ICICLE
+        generation.  This is an optimization over doing the two steps
+        separately for those classes that support customization and ICICLE
+        generation.
+        """
         raise oz.OzException.OzException("Customization and ICICLE generate for %s%s is not implemented" % (self.tdl.distro, self.tdl.update))
 
     class _InstallDev(object):
+        """
+        Class to hold information about an installation device.
+        """
         def __init__(self, devicetype, path, bus):
             self.devicetype = devicetype
             self.path = path
             self.bus = bus
 
     def _generate_xml(self, bootdev, installdev):
+        """
+        Method to generate libvirt XML useful for installation.
+        """
         self.log.info("Generate XML for guest %s with bootdev %s" % (self.tdl.name, bootdev))
 
         # create XML document
@@ -400,6 +462,9 @@ class Guest(object):
 
     def _internal_generate_diskimage(self, size=10, force=False,
                                      create_partition=False):
+        """
+        Internal method to generate a diskimage.
+        """
         if not force and os.access(self.jeos_filename, os.F_OK):
             # if we found a cached JEOS, we don't need to do anything here;
             # we'll copy the JEOS itself later on
@@ -424,10 +489,25 @@ class Guest(object):
             disk.commit()
 
     def generate_diskimage(self, size=10, force=False):
+        """
+        Method to generate a diskimage.  By default, a blank diskimage of
+        10GB will be created; the caller can override this with the size
+        parameter, specified in GB.  If force is False (the default), then
+        a diskimage will not be created if a cached JEOS is found.  If
+        force is True, a diskimage will be created regardless of whether a
+        cached JEOS exists.  See the oz-install man page for more information
+        about JEOS caching.
+        """
         return self._internal_generate_diskimage(size, force, False)
 
     def _wait_for_install_finish(self, libvirt_dom, count,
                                  inactivity_timeout=300):
+        """
+        Method to wait for an installation to finish.  This will wait around
+        until either the VM has gone away (at which point it is assumed the
+        install was successful), or until the timeout is reached (at which
+        point it is assumed the install failed and raise an exception).
+        """
         # first find the disk device we are installing to; this will be
         # monitored for activity during the installation
         domxml = libvirt_dom.XMLDesc(0)
@@ -489,6 +569,10 @@ class Guest(object):
         self.log.info("Install of %s succeeded" % (self.tdl.name))
 
     def _wait_for_guest_shutdown(self, libvirt_dom, count=60):
+        """
+        Method to wait around for orderly shutdown of a running guest.  Returns
+        True if the guest shutdown in the specified time, False otherwise.
+        """
         origcount = count
         while count > 0:
             if count % 10 == 0:
@@ -517,8 +601,15 @@ class Guest(object):
         return count != 0
 
     def _download_file(self, from_url, to, show_progress):
+        """
+        Internal method to download a file from from_url to file to.
+        """
         self.last_mb = -1
         def _progress(down_total, down_current, up_total, up_current):
+            """
+            Method that is called back from the pycurl perform() method to
+            update the progress information.
+            """
             if down_total == 0:
                 return
             current_mb = int(down_current) / 10485760
@@ -529,6 +620,10 @@ class Guest(object):
 
         self.outf = open(to, "w")
         def _data(buf):
+            """
+            Method that is called back from the pycurl perform() method to
+            actually write data to disk.
+            """
             self.outf.write(buf)
 
         c = pycurl.Curl()
@@ -543,6 +638,10 @@ class Guest(object):
         self.outf.close()
 
     def _get_csums(self, original_url, output):
+        """
+        Internal method to fetch the checksum file and compute the checksum
+        on the downloaded data.
+        """
         outdir = os.path.dirname(output)
         self.mkdir_p(outdir)
 
@@ -584,6 +683,10 @@ class Guest(object):
         return local_sum.hexdigest(), upstream_sum
 
     def _get_original_media(self, url, output, force_download):
+        """
+        Method to fetch the original media from url.  If the media is already
+        cached locally, the cached copy will be used instead.
+        """
         self.log.info("Fetching the original media")
 
         response = urllib2.urlopen(url)
@@ -637,6 +740,9 @@ class Guest(object):
                 self.log.debug("Checksum matches")
 
     def _capture_screenshot(self, xml):
+        """
+        Method to capture a screenshot of the VM.
+        """
         screenshot = os.path.join(self.screenshot_dir,
                                   self.tdl.name + "-" + str(time.time()) + ".png")
 
@@ -664,6 +770,9 @@ class Guest(object):
             self.log.error("Failed to take screenshot")
 
     def _guestfs_handle_setup(self, libvirt_xml):
+        """
+        Method to setup a guestfs handle to the guest disks.
+        """
         input_doc = libxml2.parseDoc(libvirt_xml)
         namenode = input_doc.xpathEval('/domain/name')
         if len(namenode) != 1:
@@ -743,6 +852,9 @@ class Guest(object):
             # example page.
             mps = g.inspect_get_mountpoints(root)
             def _compare(a, b):
+                """
+                Method to sort disks by length.
+                """
                 if len(a[0]) > len(b[0]):
                     return 1
                 elif len(a[0]) == len(b[0]):
@@ -756,6 +868,9 @@ class Guest(object):
         return g
 
     def _guestfs_handle_cleanup(self, g_handle):
+        """
+        Method to cleanup a handle previously setup by __guestfs_handle_setup.
+        """
         self.log.info("Cleaning up guestfs handle for %s" % (self.tdl.name))
         self.log.debug("Syncing")
         g_handle.sync()
@@ -767,6 +882,12 @@ class Guest(object):
         g_handle.kill_subprocess()
 
     def _wait_for_guest_boot(self, libvirt_dom):
+        """
+        Method to wait around for a guest to boot.  Orderly guests will boot
+        up and announce their presence via a TCP message; if that happens within
+        the timeout, this method returns the IP address of the guest.  If that
+        doesn't happen an exception is raised.
+        """
         self.log.info("Waiting for guest %s to boot" % (self.tdl.name))
 
         listen = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -825,6 +946,9 @@ class Guest(object):
         return addr[0]
 
     def _output_icicle_xml(self, lines, description):
+        """
+        Generate ICICLE XML based on the data supplied.
+        """
         doc = libxml2.newDoc("1.0")
         icicle = doc.newChild(None, "icicle", None)
         if description is not None:
@@ -841,10 +965,17 @@ class Guest(object):
         return doc.serialize(None, 1)
 
     def mkdir_p(self, path):
+        """
+        Create a directory and all of its parents.
+        """
         if not os.access(path, os.F_OK):
             os.makedirs(path)
 
     def _check_url(self, tdl, iso=True, url=True):
+        """
+        Method to check that a TDL URL meets the requirements for a particular
+        operating system.
+        """
         if iso and tdl.installtype == 'iso':
             url = tdl.iso
         elif url and tdl.installtype == 'url':
@@ -869,6 +1000,9 @@ class Guest(object):
         return url
 
     def _generate_openssh_key(self, privname):
+        """
+        Method to generate an OpenSSH compatible public/private keypair.
+        """
         self.log.info("Generating new openssh key")
         pubname = privname + ".pub"
         if os.access(privname, os.F_OK) and not os.access(pubname, os.F_OK):
@@ -883,6 +1017,9 @@ class Guest(object):
         # neither exist.  If they don't exist, generate them
         if not os.access(privname, os.F_OK) and not os.access(pubname, os.F_OK):
             def _null_callback(p, n, out):
+                """
+                Method to silence the default M2Crypto.RSA.gen_key output.
+                """
                 pass
 
             pubname = privname + '.pub'
@@ -911,6 +1048,12 @@ class Guest(object):
             os.chmod(pubname, 0644)
 
     def _copy_modify_file(self, inname, outname, subfunc):
+        """
+        Method to copy a file from inname to outname, passing each line
+        through subfunc first.  subfunc is expected to be a method that
+        takes a single argument in (the next line), and returns a string
+        to be written to the output file after modification (if any).
+        """
         infile = open(inname, 'r')
         outfile = open(outname, 'w')
 
@@ -921,7 +1064,13 @@ class Guest(object):
         outfile.close()
 
 class CDGuest(Guest):
+    """
+    Class for guest installation via ISO.
+    """
     class _PrimaryVolumeDescriptor(object):
+        """
+        Class to hold information about a CD's Primary Volume Descriptor.
+        """
         def __init__(self, version, sysid, volid, space_size, set_size, seqnum):
             self.version = version
             self.system_identifier = sysid
@@ -949,9 +1098,15 @@ class CDGuest(Guest):
         self.log.debug("ISO content path: %s" % self.iso_contents)
 
     def _get_original_iso(self, isourl, force_download):
+        """
+        Method to fetch the original ISO for an operating system.
+        """
         self._get_original_media(isourl, self.orig_iso, force_download)
 
     def _copy_iso(self):
+        """
+        Method to copy the data out of an ISO onto the local filesystem.
+        """
         self.log.info("Copying ISO contents for modification")
         if os.access(self.iso_contents, os.F_OK):
             shutil.rmtree(self.iso_contents)
@@ -1020,6 +1175,9 @@ class CDGuest(Guest):
             gfs.kill_subprocess()
 
     def _get_primary_volume_descriptor(self, cdfile):
+        """
+        Method to extract the primary volume descriptor from a CD.
+        """
         cdfile = open(cdfile, "r")
 
         # check out the primary volume descriptor to make sure it is sane
@@ -1042,6 +1200,10 @@ class CDGuest(Guest):
                                              set_size_le, seqnum_le)
 
     def _geteltorito(self, cdfile, outfile):
+        """
+        Method to extract the El-Torito boot sector off of a CD and write it
+        to a file.
+        """
         self._get_primary_volume_descriptor(cdfile)
 
         cdfile = open(cdfile, "r")
@@ -1082,6 +1244,9 @@ class CDGuest(Guest):
             raise oz.OzException.OzException("invalid CD boot sector footer")
 
         def _checksum(data):
+            """
+            Method to compute the 1's complement checksum on the ISO.
+            """
             s = 0
             for i in range(0, len(data), 2):
                 w = ord(data[i]) + (ord(data[i+1]) << 8)
@@ -1142,6 +1307,9 @@ class CDGuest(Guest):
         out.close()
 
     def _do_install(self, timeout=None, force=False, reboots=0):
+        """
+        Internal method to actually run the installation.
+        """
         if not force and os.access(self.jeos_filename, os.F_OK):
             self.log.info("Found cached JEOS, using it")
             oz.ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
@@ -1170,29 +1338,43 @@ class CDGuest(Guest):
         return self._generate_xml("hd", None)
 
     def install(self, timeout=None, force=False):
+        """
+        Method to run the operating system installation.
+        """
         return self._do_install(timeout, force, 0)
 
     def _check_pvd(self):
-        # base method to check the media.  In the common case, do nothing;
-        # subclasses that need to check the media will override this.
+        """
+        Base method to check the Primary Volume Descriptor on the ISO.  In the
+        common case, do nothing; subclasses that need to check the media will
+        override this.
+        """
         pass
 
     def _check_iso_tree(self):
-        # base method to check the ISO tree.  In the common case, do nothing;
-        # subclasses that need to check the tree will override this.
+        """
+        Base method to check the exploded ISO tree.  In the common case, do
+        nothing; subclasses that need to check the tree will override this.
+        """
         pass
 
     def _modify_iso(self):
-        # base method to modify the ISO.  Subclasses are expected to override
-        # this
+        """
+        Base method to modify the ISO.  Subclasses are expected to override this
+        """
         raise oz.OzException.OzException("Internal error, subclass didn't override modify_iso")
 
     def _generate_new_iso(self):
-        # base method to generate the new ISO.  Subclasses are expected to
-        # override this
+        """
+        Base method to generate the new ISO.  Subclasses are expected to
+        override this
+        """
         raise oz.OzException.OzException("Internal error, subclass didn't override generate_new_iso")
 
     def _iso_generate_install_media(self, url, force_download):
+        """
+        Method to generate the modified media necessary for unattended installs.
+        """
         self.log.info("Generating install media")
 
         if not force_download:
@@ -1219,10 +1401,16 @@ class CDGuest(Guest):
             self._cleanup_iso()
 
     def _cleanup_iso(self):
+        """
+        Method to cleanup the local ISO contents.
+        """
         self.log.info("Cleaning up old ISO data")
         shutil.rmtree(self.iso_contents)
 
     def cleanup_install(self):
+        """
+        Method to cleanup any transient install data.
+        """
         self.log.info("Cleaning up after install")
         # the modified ISO may not exist if we did a JEOS copy instead of a
         # full install
@@ -1236,6 +1424,9 @@ class CDGuest(Guest):
             os.unlink(self.orig_iso)
 
 class FDGuest(Guest):
+    """
+    Class for guest installation via floppy disk.
+    """
     def __init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus, config):
         Guest.__init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus,
                        config)
@@ -1254,13 +1445,22 @@ class FDGuest(Guest):
         self.log.debug("Floppy content path: %s" % self.floppy_contents)
 
     def _get_original_floppy(self, floppyurl, force_download):
+        """
+        Method to download the original floppy if necessary.
+        """
         self._get_original_media(floppyurl, self.orig_floppy, force_download)
 
     def _copy_floppy(self):
+        """
+        Method to copy the floppy contents for modification.
+        """
         self.log.info("Copying floppy contents for modification")
         shutil.copyfile(self.orig_floppy, self.output_floppy)
 
     def install(self, timeout=None, force=False):
+        """
+        Method to run the operating system installation.
+        """
         if not force and os.access(self.jeos_filename, os.F_OK):
             self.log.info("Found cached JEOS, using it")
             oz.ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
@@ -1284,10 +1484,16 @@ class FDGuest(Guest):
         return self._generate_xml("hd", None)
 
     def _cleanup_floppy(self):
+        """
+        Method to cleanup the temporary floppy data.
+        """
         self.log.info("Cleaning up floppy data")
         shutil.rmtree(self.floppy_contents)
 
     def cleanup_install(self):
+        """
+        Method to cleanup the installation floppies.
+        """
         self.log.info("Cleaning up after install")
         os.unlink(self.output_floppy)
         self.log.debug("Removed modified floppy")

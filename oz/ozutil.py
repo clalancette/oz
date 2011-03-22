@@ -47,6 +47,9 @@ def executable_exists(program):
     If not, an exception is raised.
     """
     def is_exe(fpath):
+        """
+        Helper method to check if a file exists and is executable
+        """
         return os.path.exists(fpath) and os.access(fpath, os.X_OK)
 
     fpath, fname = os.path.split(program)
@@ -98,6 +101,9 @@ def copyfile_sparse(src, dest):
     os.close(dest_fd)
 
 def bsd_split(line, digest_type):
+    """
+    Function to split a BSD-style checksum line into a filename and checksum.
+    """
     current = len(digest_type)
 
     if line[current] == ' ':
@@ -132,6 +138,9 @@ def bsd_split(line, digest_type):
     return line, filename
 
 def sum_split(line, digest_bits):
+    """
+    Function to split a normal Linux checksum line into a filename and checksum.
+    """
     digest_hex_bytes = digest_bits / 4
     min_digest_line_length = digest_hex_bytes + 2 + 1 # length of hex message digest + blank and binary indicator (2 bytes) + minimum file length (1 byte)
 
@@ -181,6 +190,9 @@ def sum_split(line, digest_bits):
     return hex_digest, filename
 
 def get_sum_from_file(sumfile, file_to_find, digest_bits, digest_type):
+    """
+    Function to get a checksum digest out of a checksum file given a filename.
+    """
     retval = None
 
     f = open(sumfile, 'r')
@@ -218,12 +230,21 @@ def get_sum_from_file(sumfile, file_to_find, digest_bits, digest_type):
     return retval
 
 def get_md5sum_from_file(sumfile, file_to_find):
+    """
+    Function to get an MD5 checksum out of a checksum file given a filename.
+    """
     return get_sum_from_file(sumfile, file_to_find, 128, "MD5")
 
 def get_sha1sum_from_file(sumfile, file_to_find):
+    """
+    Function to get a SHA1 checksum out of a checksum file given a filename.
+    """
     return get_sum_from_file(sumfile, file_to_find, 160, "SHA1")
 
 def get_sha256sum_from_file(sumfile, file_to_find):
+    """
+    Function to get a SHA256 checksum out of a checksum file given a filename.
+    """
     return get_sum_from_file(sumfile, file_to_find, 256, "SHA256")
 
 def string_to_bool(instr):

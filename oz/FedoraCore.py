@@ -14,11 +14,18 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+"""
+Fedora Core installation
+"""
+
 import oz.ozutil
 import oz.RedHat
 import oz.OzException
 
 class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
+    """
+    Class for Fedora Core 1, 2, 3, 5, and 6 installation.
+    """
     def __init__(self, tdl, config, auto):
         oz.RedHat.RedHatCDGuest.__init__(self, tdl, 'rtl8139', None, config,
                                          True, True)
@@ -29,6 +36,9 @@ class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
         # in is the DVD, not the CD (since we can't change disks midway)
 
     def _modify_iso(self):
+        """
+        Method to modify the ISO for autoinstallation.
+        """
         self._copy_kickstart(self.auto,
                              "fedoracore-" + self.tdl.update + "-jeos.ks")
 
@@ -40,6 +50,9 @@ class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
         self._modify_isolinux(initrdline)
 
 def get_class(tdl, config, auto):
+    """
+    Factory method for Fedora Core installs.
+    """
     if tdl.update in ["1", "2", "3", "4", "5", "6"]:
         return FedoraCoreGuest(tdl, config, auto)
     raise oz.OzException.OzException("Unsupported FedoraCore update " + tdl.update)

@@ -14,11 +14,18 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+"""
+RHEL-6 installation
+"""
+
 import oz.ozutil
 import oz.RedHat
 import oz.OzException
 
 class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
+    """
+    Class for RHEL-6 installation.
+    """
     def __init__(self, tdl, config, auto):
         oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, "virtio", "virtio",
                                             config, True, True)
@@ -26,6 +33,9 @@ class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
         self.auto = auto
 
     def _modify_iso(self):
+        """
+        Method to modify the ISO for autoinstallation.
+        """
         self._copy_kickstart(self.auto, "rhel-6-jeos.ks")
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
@@ -36,6 +46,9 @@ class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
         self._modify_isolinux(initrdline)
 
 def get_class(tdl, config, auto):
+    """
+    Factory method for RHEL-6 installs.
+    """
     if tdl.update in ["0", "1"]:
         return RHEL6Guest(tdl, config, auto)
     raise oz.OzException.OzException("Unsupported " + tdl.distro + " update " + tdl.update)

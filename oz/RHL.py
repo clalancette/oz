@@ -14,6 +14,10 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+"""
+RHL installation
+"""
+
 import re
 import os
 import shutil
@@ -23,6 +27,9 @@ import oz.RedHat
 import oz.OzException
 
 class RHL9Guest(oz.RedHat.RedHatCDGuest):
+    """
+    Class for RHL-9 installation.
+    """
     def __init__(self, tdl, config, auto):
         oz.RedHat.RedHatCDGuest.__init__(self, tdl, "rtl8139", None, config,
                                          False, True)
@@ -33,12 +40,19 @@ class RHL9Guest(oz.RedHat.RedHatCDGuest):
             raise oz.OzException.OzException("Invalid arch " + self.tdl.arch + "for RHL guest")
 
     def _modify_iso(self):
+        """
+        Method to modify the ISO for autoinstallation.
+        """
         self.log.debug("Putting the kickstart in place")
 
         outname = os.path.join(self.iso_contents, "ks.cfg")
 
         if self.auto is None:
             def _kssub(line):
+                """
+                Method that is called back from __copy_modify_file() to
+                modify kickstart files as appropriate for RHL-9.
+                """
                 # because we need to do this URL substitution here, we can't use
                 # the generic "copy_kickstart()" method
                 if re.match("^url", line):
@@ -58,12 +72,18 @@ class RHL9Guest(oz.RedHat.RedHatCDGuest):
         self._modify_isolinux(initrdline)
 
 class RHL70and71and72and73and8Guest(oz.RedHat.RedHatFDGuest):
+    """
+    Class for RHL 7.0, 7.1, 7.2, and 8 installation.
+    """
     def __init__(self, tdl, config, auto, nicmodel):
         oz.RedHat.RedHatFDGuest.__init__(self, tdl, config, auto,
                                          "rhl-" + tdl.update + "-jeos.ks",
                                          nicmodel)
 
 def get_class(tdl, config, auto):
+    """
+    Factory method for RHL installs.
+    """
     if tdl.update in ["9"]:
         return RHL9Guest(tdl, config, auto)
     if tdl.update in ["7.2", "7.3", "8"]:

@@ -14,6 +14,10 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+"""
+RHEL-3 installation
+"""
+
 import re
 
 import oz.ozutil
@@ -21,6 +25,9 @@ import oz.RedHat
 import oz.OzException
 
 class RHEL3Guest(oz.RedHat.RedHatCDGuest):
+    """
+    Class for RHEL-3 installation.
+    """
     def __init__(self, tdl, config, auto):
         iso_support = True
         if tdl.distro == "RHEL-3":
@@ -41,6 +48,9 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 """
 
     def _modify_iso(self):
+        """
+        Method to make the boot ISO auto-boot with appropriate parameters.
+        """
         self._copy_kickstart(self.auto, "rhel-3-jeos.ks")
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method="
@@ -51,6 +61,9 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         self._modify_isolinux(initrdline)
 
     def _check_pvd(self):
+        """
+        Method to ensure the the boot ISO for an ISO install is a DVD
+        """
         pvd = self._get_primary_volume_descriptor(self.orig_iso)
 
         if pvd.system_identifier != "LINUX                           ":
@@ -70,6 +83,9 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             # information.  We just pass through here, doing nothing
 
 def get_class(tdl, config, auto):
+    """
+    Factory method for RHEL-3 installs.
+    """
     if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9"]:
         return RHEL3Guest(tdl, config, auto)
     raise oz.OzException.OzException("Unsupported " + tdl.distro + " update " + tdl.update)

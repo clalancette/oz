@@ -14,6 +14,10 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+"""
+RHEL-5 installation
+"""
+
 import re
 
 import oz.ozutil
@@ -21,6 +25,9 @@ import oz.RedHat
 import oz.OzException
 
 class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
+    """
+    Class for RHEL-5 installation.
+    """
     def __init__(self, tdl, config, auto, nicmodel, diskbus):
         oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, nicmodel, diskbus,
                                             config, True, True)
@@ -28,6 +35,9 @@ class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
         self.auto = auto
 
     def _modify_iso(self):
+        """
+        Method to make the boot ISO auto-boot with appropriate parameters.
+        """
         self._copy_kickstart(self.auto, "rhel-5-jeos.ks")
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method="
@@ -38,6 +48,11 @@ class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
         self._modify_isolinux(initrdline)
 
     def _check_pvd(self):
+        """
+        Method to ensure that boot ISO is a DVD (we cannot use boot CDs to
+        install RHEL-5/CentOS-5 since it requires a switch during install,
+        which we cannot detect).
+        """
         pvd = self._get_primary_volume_descriptor(self.orig_iso)
 
         # all of the below should have "LINUX" as their system_identifier,
@@ -68,6 +83,9 @@ class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
                     raise oz.OzException.OzException("Invalid boot.iso for CentOS-5 URL install")
 
 def get_class(tdl, config, auto):
+    """
+    Factory method for RHEL-5 installs.
+    """
     if tdl.update in ["GOLD", "U1", "U2", "U3"]:
         return RHEL5Guest(tdl, config, auto, "rtl8139", None)
     if tdl.update in ["U4", "U5", "U6"]:

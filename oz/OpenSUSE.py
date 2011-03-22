@@ -14,6 +14,10 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+"""
+OpenSUSE installation
+"""
+
 import re
 import shutil
 import os
@@ -24,6 +28,9 @@ import oz.ozutil
 import oz.OzException
 
 class OpenSUSEGuest(oz.Guest.CDGuest):
+    """
+    Class for OpenSUSE installation.
+    """
     def __init__(self, tdl, config, auto):
         oz.Guest.CDGuest.__init__(self, tdl, "virtio", None, None, "virtio",
                                   config)
@@ -37,6 +44,9 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         self.sshprivkey = os.path.join('/etc', 'oz', 'id_rsa-icicle-gen')
 
     def _modify_iso(self):
+        """
+        Method to make the boot ISO auto-boot with appropriate parameters.
+        """
         self.log.debug("Putting the autoyast in place")
 
         outname = os.path.join(self.iso_contents, "autoinst.xml")
@@ -74,6 +84,9 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         f.close()
 
     def _generate_new_iso(self):
+        """
+        Method to create a new ISO based on the modified CD/DVD.
+        """
         self.log.info("Generating new ISO")
         oz.Guest.subprocess_check_output(["mkisofs", "-r", "-J", "-V", "Custom",
                                           "-b", "boot/" + self.tdl.arch + "/loader/isolinux.bin",
@@ -87,12 +100,25 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
                                           self.iso_contents])
 
     def generate_install_media(self, force_download=False):
+        """
+        Method to generate the install media for OpenSUSE operating
+        systems.  If force_download is False (the default), then the
+        original media will only be fetched if it is not cached locally.  If
+        force_download is True, then the original media will be downloaded
+        regardless of whether it is cached locally.
+        """
         return self._iso_generate_install_media(self.url, force_download)
 
     def install(self, timeout=None, force=False):
+        """
+        Method to run the operating system installation.
+        """
         return self._do_install(timeout, force, 1)
 
     def _shutdown_guest(self, guestaddr, libvirt_dom):
+        """
+        Method to shutdown the guest (gracefully at first, then with prejudice).
+        """
         if guestaddr is not None:
             try:
                 self.guest_execute_command(guestaddr, 'shutdown -h now')
@@ -107,6 +133,9 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
             libvirt_dom.destroy()
 
     def guest_execute_command(self, guestaddr, command, timeout=10):
+        """
+        Method to execute a command on the guest and return the output.
+        """
         # ServerAliveInterval protects against NAT firewall timeouts
         # on long-running commands with no output
         # PasswordAuthentication=no prevents us from falling back to
@@ -120,6 +149,9 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
                                                  "root@" + guestaddr, command])
 
     def _image_ssh_teardown_step_1(self, g_handle):
+        """
+        First step to undo __image_ssh_setup (remove authorized keys).
+        """
         self.log.debug("Teardown step 1")
         # reset the authorized keys
         self.log.debug("Resetting authorized_keys")
@@ -130,6 +162,9 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
                         '/root/.ssh/authorized_keys')
 
     def _image_ssh_teardown_step_2(self, g_handle):
+        """
+        Second step to undo __image_ssh_setup (remove custom sshd_config).
+        """
         self.log.debug("Teardown step 2")
         # remove custom sshd_config
         self.log.debug("Resetting sshd_config")
@@ -147,6 +182,9 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
                         "/etc/init.d/after.local")
 
     def _image_ssh_teardown_step_3(self, g_handle):
+        """
+        Third step to undo __image_ssh_setup (remove guest announcement).
+        """
         self.log.debug("Teardown step 3")
         # remove announce cronjob
         self.log.debug("Resetting announcement to host")
@@ -168,6 +206,9 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
             g_handle.mv(startuplink + ".icicle", startuplink)
 
     def _collect_teardown(self, libvirt_xml):
+        """
+        Method to reverse the changes done in __collect_setup.
+        """
         self.log.info("Collection Teardown")
 
         g_handle = self._guestfs_handle_setup(libvirt_xml)
@@ -183,6 +224,9 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
             shutil.rmtree(self.icicle_tmp)
 
     def _do_icicle(self, guestaddr):
+        """
+        Method to collect the package information and generate the ICICLE XML.
+        """
         stdout, stderr, retcode = self.guest_execute_command(guestaddr,
                                                              'rpm -qa')
 
@@ -190,6 +234,11 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
                                        self.tdl.description)
 
     def generate_icicle(self, libvirt_xml):
+        """
+        Method to generate the ICICLE from an operating system after
+        installation.  The ICICLE contains information about packages and
+        other configuration on the diskimage.
+        """
         self.log.info("Generating ICICLE")
 
         self._collect_setup(libvirt_xml)
@@ -212,6 +261,9 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         return icicle_output
 
     def _get_default_runlevel(self, g_handle):
+        """
+        Method to determine the default runlevel based on the /etc/inittab.
+        """
         runlevel = "3"
         if g_handle.exists('/etc/inittab'):
             lines = g_handle.cat('/etc/inittab').split("\n")
@@ -226,6 +278,9 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         return runlevel
 
     def _image_ssh_setup_step_1(self, g_handle):
+        """
+        First step for allowing remote access (generate and upload ssh keys).
+        """
         # part 1; upload the keys
         self.log.debug("Step 1: Uploading ssh keys")
         if not g_handle.exists('/root/.ssh'):
@@ -240,6 +295,9 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         g_handle.upload(self.sshprivkey + ".pub", '/root/.ssh/authorized_keys')
 
     def _image_ssh_setup_step_2(self, g_handle):
+        """
+        Second step for allowing remote access (ensure sshd is running).
+        """
         # part 2; check and setup sshd
         self.log.debug("Step 2: setup sshd")
         if not g_handle.exists('/etc/init.d/sshd') or not g_handle.exists('/usr/sbin/sshd'):
@@ -280,6 +338,10 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         os.unlink(sshd_config_file)
 
     def _image_ssh_setup_step_3(self, g_handle):
+        """
+        Third step for allowing remote access (make the guest announce itself
+        on bootup).
+        """
         # part 3; make sure the guest announces itself
         self.log.debug("Step 3: Guest announcement")
         if not g_handle.exists('/etc/init.d/cron') or not g_handle.exists('/usr/sbin/cron'):
@@ -305,6 +367,9 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         os.unlink(announcefile)
 
     def _collect_setup(self, libvirt_xml):
+        """
+        Setup the guest for remote access.
+        """
         self.log.info("Collection Setup")
 
         self.mkdir_p(self.icicle_tmp)
@@ -339,6 +404,9 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
             self._guestfs_handle_cleanup(g_handle)
 
     def _customize_repos(self, guestaddr):
+        """
+        Method to add user-provided repositories to the guest.
+        """
         self.log.debug("Installing additional repository files")
         for repo in self.tdl.repositories.values():
             self.guest_execute_command(guestaddr,
@@ -346,6 +414,9 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
                                                                  repo.name))
 
     def _do_customize(self, guestaddr):
+        """
+        Method to customize by installing additional packages and files.
+        """
         self._customize_repos(guestaddr)
 
         self.log.debug("Installing custom packages")
@@ -376,6 +447,9 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         self.guest_execute_command(guestaddr, 'sync')
 
     def customize(self, libvirt_xml):
+        """
+        Method to customize the operating system after installation.
+        """
         self.log.info("Customizing image")
 
         if not self.tdl.packages and not self.tdl.files:
@@ -399,6 +473,11 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
             self._collect_teardown(libvirt_xml)
 
     def customize_and_generate_icicle(self, libvirt_xml):
+        """
+        Method to customize and generate the ICICLE for an operating system
+        after installation.  This is equivalent to calling customize() and
+        generate_icicle() back-to-back, but is faster.
+        """
         self.log.info("Customizing and generating ICICLE")
 
         self._collect_setup(libvirt_xml)
@@ -423,6 +502,9 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         return icicle
 
 def get_class(tdl, config, auto):
+    """
+    Factory method for OpenSUSE installs.
+    """
     if tdl.update in ["11.0", "11.1", "11.2", "11.3", "11.4"]:
         return OpenSUSEGuest(tdl, config, auto)
 

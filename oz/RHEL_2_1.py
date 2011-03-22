@@ -14,15 +14,25 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+"""
+RHEL-2.1 installation
+"""
+
 import oz.RedHat
 import oz.OzException
 
 class RHEL21Guest(oz.RedHat.RedHatFDGuest):
+    """
+    Class for RHEL-2.1 installation.
+    """
     def __init__(self, tdl, config, auto):
         oz.RedHat.RedHatFDGuest.__init__(self, tdl, config, auto,
                                          "rhel-2.1-jeos.ks", "pcnet")
 
 def get_class(tdl, config, auto):
+    """
+    Factory method for RHEL-2.1 installs.
+    """
     if tdl.update in ["GOLD", "U2", "U3", "U4", "U5", "U6"]:
         return RHEL21Guest(tdl, config, auto)
     raise oz.OzException.OzException("Unsupported RHEL-2.1 update " + tdl.update)

@@ -14,6 +14,10 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+"""
+Windows installation
+"""
+
 import random
 import re
 import os
@@ -25,6 +29,9 @@ import oz.ozutil
 import oz.OzException
 
 class Windows(oz.Guest.CDGuest):
+    """
+    Shared Windows base class.
+    """
     def __init__(self, tdl, config):
         oz.Guest.CDGuest.__init__(self, tdl, "rtl8139", "localtime", "usb",
                                   None, config)
@@ -35,9 +42,19 @@ class Windows(oz.Guest.CDGuest):
         self.url = self._check_url(self.tdl, iso=True, url=False)
 
     def generate_install_media(self, force_download=False):
+        """
+        Method to generate the install media for Windows operating
+        systems.  If force_download is False (the default), then the
+        original media will only be fetched if it is not cached locally.  If
+        force_download is True, then the original media will be downloaded
+        regardless of whether it is cached locally.
+        """
         return self._iso_generate_install_media(self.url, force_download)
 
 class Windows2000andXPand2003(Windows):
+    """
+    Class for Windows 2000, XP, and 2003 installation.
+    """
     def __init__(self, tdl, config, auto):
         Windows.__init__(self, tdl, config)
 
@@ -49,6 +66,9 @@ class Windows2000andXPand2003(Windows):
             self.siffile = oz.ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif")
 
     def _generate_new_iso(self):
+        """
+        Method to create a new ISO based on the modified CD/DVD.
+        """
         self.log.debug("Generating new ISO")
         oz.Guest.subprocess_check_output(["mkisofs", "-b", "cdboot/boot.bin",
                                           "-no-emul-boot", "-boot-load-seg",
@@ -61,6 +81,15 @@ class Windows2000andXPand2003(Windows):
                                           self.iso_contents])
 
     def generate_diskimage(self, size=10, force=False):
+        """
+        Method to generate a diskimage.  By default, a blank diskimage of
+        10GB will be created; the caller can override this with the size
+        parameter, specified in GB.  If force is False (the default), then
+        a diskimage will not be created if a cached JEOS is found.  If
+        force is True, a diskimage will be created regardless of whether a
+        cached JEOS exists.  See the oz-install man page for more
+        information about JEOS caching.
+        """
         createpart = False
         if self.tdl.update == "2000":
             # If given a blank diskimage, windows 2000 stops very early in
@@ -75,12 +104,19 @@ class Windows2000andXPand2003(Windows):
         return self._internal_generate_diskimage(size, force, createpart)
 
     def _get_windows_arch(self, tdl_arch):
+        """
+        Convert a TDL arch (i386 or x86_64) to a Windows 2000/XP/2003 compatible
+        arch (i386 or amd64).
+        """
         arch = tdl_arch
         if arch == "x86_64":
             arch = "amd64"
         return arch
 
     def _modify_iso(self):
+        """
+        Method to make the boot ISO auto-boot with appropriate parameters.
+        """
         self.log.debug("Modifying ISO")
 
         os.mkdir(os.path.join(self.iso_contents, "cdboot"))
@@ -97,6 +133,10 @@ class Windows2000andXPand2003(Windows):
             computername = "OZ" + str(random.randrange(1, 900000))
 
             def _sifsub(line):
+                """
+                Method that is called back from __copy_modify_file() to
+                modify sif files as appropriate for Windows 2000/XP/2003.
+                """
                 if re.match(" *ProductKey", line):
                     return "    ProductKey=" + self.tdl.key + "\n"
                 elif re.match(" *ProductID", line):
@@ -115,12 +155,18 @@ class Windows2000andXPand2003(Windows):
             shutil.copy(self.siffile, outname)
 
     def install(self, timeout=None, force=False):
+        """
+        Method to run the operating system installation.
+        """
         internal_timeout = timeout
         if internal_timeout is None:
             internal_timeout = 3600
         return self._do_install(internal_timeout, force, 1)
 
 class Windows2008and7(Windows):
+    """
+    Class for Windows 2008 and 7 installation.
+    """
     def __init__(self, tdl, config, auto):
         Windows.__init__(self, tdl, config)
 
@@ -129,6 +175,9 @@ class Windows2008and7(Windows):
             self.unattendfile = oz.ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.xml")
 
     def _generate_new_iso(self):
+        """
+        Method to create a new ISO based on the modified CD/DVD.
+        """
         self.log.debug("Generating new ISO")
         # NOTE: Windows 2008 is very picky about which arguments to mkisofs
         # will generate a bootable CD, so modify these at your own risk
@@ -142,12 +191,19 @@ class Windows2008and7(Windows):
                                           self.iso_contents])
 
     def _get_windows_arch(self, tdl_arch):
+        """
+        Convert a TDL arch (i386 or x86_64) to a Windows 2008/7 compatible
+        arch (x86 or amd64).
+        """
         arch = "x86"
         if tdl_arch == "x86_64":
             arch = "amd64"
         return arch
 
     def _modify_iso(self):
+        """
+        Method to make the boot ISO auto-boot with appropriate parameters.
+        """
         self.log.debug("Modifying ISO")
 
         os.mkdir(os.path.join(self.iso_contents, "cdboot"))
@@ -190,6 +246,9 @@ class Windows2008and7(Windows):
         return self._do_install(internal_timeout, force, 2)
 
 def get_class(tdl, config, auto):
+    """
+    Factory method for Windows installs.
+    """
     if tdl.update in ["2000", "XP", "2003"]:
         return Windows2000andXPand2003(tdl, config, auto)
     if tdl.update in ["2008", "7"]:

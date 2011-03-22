@@ -14,6 +14,10 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+"""
+RHEL-4 installation
+"""
+
 import re
 
 import oz.ozutil
@@ -21,6 +25,9 @@ import oz.RedHat
 import oz.OzException
 
 class RHEL4Guest(oz.RedHat.RedHatCDGuest):
+    """
+    Class for RHEL-4 installation.
+    """
     def __init__(self, tdl, config, auto, nicmodel, diskbus):
         oz.RedHat.RedHatCDGuest.__init__(self, tdl, nicmodel, diskbus, config,
                                          True, True)
@@ -28,6 +35,9 @@ class RHEL4Guest(oz.RedHat.RedHatCDGuest):
         self.auto = auto
 
     def _modify_iso(self):
+        """
+        Method to make the boot ISO auto-boot with appropriate parameters.
+        """
         self._copy_kickstart(self.auto, "rhel-4-jeos.ks")
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method="
@@ -38,6 +48,11 @@ class RHEL4Guest(oz.RedHat.RedHatCDGuest):
         self._modify_isolinux(initrdline)
 
     def _check_pvd(self):
+        """
+        Method to ensure that boot ISO is a DVD (we cannot use boot CDs to
+        install RHEL-4/CentOS-4 since it requires a switch during install,
+        which we cannot detect).
+        """
         pvd = self._get_primary_volume_descriptor(self.orig_iso)
 
         # all of the below should have "LINUX" as their system_identifier,
@@ -66,6 +81,9 @@ class RHEL4Guest(oz.RedHat.RedHatCDGuest):
                     raise oz.OzException.OzException("Invalid boot.iso for CentOS-4 URL install")
 
 def get_class(tdl, config, auto):
+    """
+    Factory method for RHEL-4 installs.
+    """
     if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7"]:
         return RHEL4Guest(tdl, config, auto, "rtl8139", None)
     if tdl.update in ["U8", "U9"]:

@@ -14,11 +14,18 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+"""
+Fedora installation
+"""
+
 import oz.ozutil
 import oz.RedHat
 import oz.OzException
 
 class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
+    """
+    Class for Fedora 7, 8, 9, 10, 11, 12, 13, and 14 installation.
+    """
     def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,
                  brokenisomethod):
         oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, nicmodel, diskbus,
@@ -30,6 +37,9 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
         self.brokenisomethod = brokenisomethod
 
     def _modify_iso(self):
+        """
+        Method to modify the ISO for autoinstallation.
+        """
         self._copy_kickstart(self.auto,
                              "fedora-" + self.tdl.update + "-jeos.ks")
 
@@ -49,6 +59,15 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
         self._modify_isolinux(initrdline)
 
     def generate_diskimage(self, size=10, force=False):
+        """
+        Method to generate a diskimage.  By default, a blank diskimage of
+        10GB will be created; the caller can override this with the size
+        parameter, specified in GB.  If force is False (the default), then
+        a diskimage will not be created if a cached JEOS is found.  If
+        force is True, a diskimage will be created regardless of whether a
+        cached JEOS exists.  See the oz-install man page for more
+        information about JEOS caching.
+        """
         createpart = False
         if self.tdl.update in ["11", "12"]:
             # If given a blank diskimage, Fedora 11/12 stops very early in
@@ -61,6 +80,9 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
         return self._internal_generate_diskimage(size, force, createpart)
 
 def get_class(tdl, config, auto):
+    """
+    Factory method for Fedora installs.
+    """
     if tdl.update in ["10", "11", "12", "13", "14", "15"]:
         return FedoraGuest(tdl, config, auto, "virtio", True, "virtio", True)
     if tdl.update in ["7", "8", "9"]:

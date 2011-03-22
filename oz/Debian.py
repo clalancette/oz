@@ -14,6 +14,10 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+"""
+Debian installation
+"""
+
 import shutil
 import os
 
@@ -22,6 +26,9 @@ import oz.ozutil
 import oz.OzException
 
 class DebianGuest(oz.Guest.CDGuest):
+    """
+    Class for Debian installation.
+    """
     def __init__(self, tdl, config, auto):
         oz.Guest.CDGuest.__init__(self, tdl, 'virtio', None, None, 'virtio',
                                   config)
@@ -33,6 +40,9 @@ class DebianGuest(oz.Guest.CDGuest):
         self.url = self._check_url(self.tdl, iso=True, url=False)
 
     def _modify_iso(self):
+        """
+        Method to make the boot ISO auto-boot with appropriate parameters.
+        """
         self.log.debug("Modifying ISO")
 
         self.log.debug("Copying preseed file")
@@ -63,6 +73,9 @@ class DebianGuest(oz.Guest.CDGuest):
         f.close()
 
     def _generate_new_iso(self):
+        """
+        Method to create a new ISO based on the modified CD/DVD.
+        """
         self.log.info("Generating new ISO")
         oz.Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom", "-J",
                                           "-l", "-b", "isolinux/isolinux.bin",
@@ -74,9 +87,19 @@ class DebianGuest(oz.Guest.CDGuest):
                                           self.iso_contents])
 
     def generate_install_media(self, force_download=False):
+        """
+        Method to generate the install media for Debian based operating
+        systems.  If force_download is False (the default), then the
+        original media will only be fetched if it is not cached locally.  If
+        force_download is True, then the original media will be downloaded
+        regardless of whether it is cached locally.
+        """
         return self._iso_generate_install_media(self.url, force_download)
 
 def get_class(tdl, config, auto):
+    """
+    Factory method for Debian installs.
+    """
     if tdl.update in ["5", "6"]:
         return DebianGuest(tdl, config, auto)
     raise oz.OzException.OzException("Unsupported Debian update " + tdl.update)
