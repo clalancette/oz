@@ -307,13 +307,10 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             self.guestfs_handle_cleanup(g_handle)
 
     def guest_execute_command(self, guestaddr, command):
-        dummyknownhosts = os.path.join(self.icicle_tmp, "ssh_known_hosts")
-        if os.access(dummyknownhosts, os.F_OK):
-            os.unlink(dummyknownhosts)
         return Guest.subprocess_check_output(["ssh", "-i", self.sshprivkey,
                                               "-o", "StrictHostKeyChecking=no",
                                               "-o", "ConnectTimeout=5",
-                                              "-o", "UserKnownHostsFile=" + dummyknownhosts,
+                                              "-o", "UserKnownHostsFile=/dev/null",
                                               "root@" + guestaddr, command])
 
     def do_icicle(self, guestaddr):
@@ -347,13 +344,10 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
     def guest_live_upload(self, guestaddr, file_to_upload, destination):
         self.guest_execute_command(guestaddr, "mkdir -p " + os.path.dirname(destination))
 
-        dummyknownhosts = os.path.join(self.icicle_tmp, "ssh_known_hosts")
-        if os.access(dummyknownhosts, os.F_OK):
-            os.unlink(dummyknownhosts)
         return Guest.subprocess_check_output(["scp", "-i", self.sshprivkey,
                                               "-o", "StrictHostKeyChecking=no",
                                               "-o", "ConnectTimeout=5",
-                                              "-o", "UserKnownHostsFile=" + dummyknownhosts,
+                                              "-o", "UserKnownHostsFile=/dev/null",
                                               file_to_upload,
                                               "root@" + guestaddr + ":" + destination])
 

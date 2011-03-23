@@ -110,13 +110,10 @@ class OpenSUSEGuest(Guest.CDGuest):
             libvirt_dom.destroy()
 
     def guest_execute_command(self, guestaddr, command):
-        dummyknownhosts = os.path.join(self.icicle_tmp, "ssh_known_hosts")
-        if os.access(dummyknownhosts, os.F_OK):
-            os.unlink(dummyknownhosts)
         return Guest.subprocess_check_output(["ssh", "-i", self.sshprivkey,
                                               "-o", "StrictHostKeyChecking=no",
                                               "-o", "ConnectTimeout=5",
-                                              "-o", "UserKnownHostsFile=" + dummyknownhosts,
+                                              "-o", "UserKnownHostsFile=/dev/null",
                                               "root@" + guestaddr, command])
 
     def image_ssh_teardown_step_1(self, g_handle):
