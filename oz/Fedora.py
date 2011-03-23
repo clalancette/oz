@@ -32,7 +32,7 @@ class FedoraGuest(RedHat.RedHatCDYumGuest):
         self.haverepo = haverepo
         self.brokenisomethod = brokenisomethod
 
-        self.url = self.check_url(self.tdl, iso=True, url=True)
+        self.url = self.check_anaconda_url(self.tdl, iso=True, url=True)
 
         RedHat.RedHatCDYumGuest.__init__(self, self.tdl.name, self.tdl.distro,
                                          self.tdl.update, self.tdl.arch,

@@ -30,7 +30,7 @@ class RHEL6Guest(RedHat.RedHatCDYumGuest):
         if self.ks_file is None:
             self.ks_file = ozutil.generate_full_auto_path("rhel-6-jeos.ks")
 
-        self.url = self.check_url(self.tdl, iso=True, url=True)
+        self.url = self.check_anaconda_url(self.tdl, iso=True, url=True)
 
         RedHat.RedHatCDYumGuest.__init__(self, self.tdl.name, self.tdl.distro,
                                          self.tdl.update, self.tdl.arch,

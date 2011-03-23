@@ -17,6 +17,7 @@
 import re
 import os
 import shutil
+import urllib2
 
 import Guest
 import ozutil
@@ -406,6 +407,40 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             self.cleanup_iso()
 
 class RedHatCDYumGuest(RedHatCDGuest):
+    def check_anaconda_url(self, tdl, iso=True, url=True):
+        url = self.check_url(tdl, iso, url)
+
+        # The HTTP/1.1 specification allows for servers that don't support
+        # byte ranges; if the client requests it and the server doesn't support
+        # it, it is supposed to return a header that looks like:
+        #
+        #   Accept-Ranges: none
+        #
+        # You can see this in action by editing httpd.conf:
+        #
+        #   ...
+        #   LoadModule headers_module
+        #   ...
+        #   Header set Accept-Ranges "none"
+        #
+        # and then trying to fetch a file with wget:
+        #
+        #   wget --header="Range: bytes=5-10" http://path/to/my/file
+        #
+        # Unfortunately, anaconda does not honor this server header, and
+        # blindly requests a byte range anyway.  When this happens, the server
+        # throws a "403 Forbidden", and the URL install fails.  To try and
+        # avoid this situation, check up-front if the server denies Ranges,
+        # and fail the install.
+        if self.tdl.installtype == 'url':
+            response = urllib2.urlopen(url)
+            info = response.info()
+            response.close()
+            if 'Accept-Ranges' in info and info['Accept-Ranges'] == "none":
+                raise OzException.OzException("%s URL installs cannot be done using servers that don't accept byte ranges.  Please try another mirror" % (tdl.distro))
+
+        return url
+
     def customize_repos(self, guestaddr):
         self.log.debug("Installing additional repository files")
         for repo in self.tdl.repositories.values():
