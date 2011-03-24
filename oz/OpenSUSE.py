@@ -24,6 +24,10 @@ import OzException
 
 class OpenSUSEGuest(Guest.CDGuest):
     def __init__(self, tdl, config, auto):
+        Guest.CDGuest.__init__(self, tdl.name, tdl.distro, tdl.update, tdl.arch,
+                               tdl.installtype, "virtio", None, None, "virtio",
+                               config)
+
         self.tdl = tdl
 
         self.autoyast = auto
@@ -31,11 +35,6 @@ class OpenSUSEGuest(Guest.CDGuest):
             self.autoyast = ozutil.generate_full_auto_path("opensuse-" + self.tdl.update + "-jeos.xml")
 
         self.url = self.check_url(self.tdl, iso=True, url=False)
-
-        Guest.CDGuest.__init__(self, self.tdl.name, self.tdl.distro,
-                               self.tdl.update, self.tdl.arch,
-                               self.tdl.installtype, "virtio", None, None,
-                               "virtio", config)
 
         self.sshprivkey = os.path.join(self.icicle_tmp, 'id_rsa-icicle-gen')
 

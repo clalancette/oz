@@ -24,6 +24,9 @@ import OzException
 
 class RHEL21Guest(Guest.FDGuest):
     def __init__(self, tdl, config, auto):
+        Guest.FDGuest.__init__(self, tdl.name, tdl.distro, tdl.update,
+                               tdl.arch, "pcnet", None, None, None, config)
+
         self.tdl = tdl
         if self.tdl.arch != "i386":
             raise OzException.OzException("Invalid arch " + self.tdl.arch + "for RHEL-2.1 guest")
@@ -33,10 +36,6 @@ class RHEL21Guest(Guest.FDGuest):
             self.ks_file = ozutil.generate_full_auto_path("rhel-2.1-jeos.ks")
 
         self.url = self.check_url(self.tdl, iso=False, url=True)
-
-        Guest.FDGuest.__init__(self, self.tdl.name, self.tdl.distro,
-                               self.tdl.update, self.tdl.arch, "pcnet", None,
-                               None, None, config)
 
     def modify_floppy(self):
         self.mkdir_p(self.floppy_contents)

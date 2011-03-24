@@ -25,6 +25,10 @@ import OzException
 
 class RHL9Guest(RedHat.RedHatCDGuest):
     def __init__(self, tdl, config, auto):
+        Guest.CDGuest.__init__(self, tdl.name, tdl.distro, tdl.update, tdl.arch,
+                               tdl.installtype, "rtl8139", None, None, None,
+                               config)
+
         self.tdl = tdl
 
         self.ks_file = auto
@@ -35,11 +39,6 @@ class RHL9Guest(RedHat.RedHatCDGuest):
 
         if self.tdl.arch != "i386":
             raise OzException.OzException("Invalid arch " + self.tdl.arch + "for RHL guest")
-
-        Guest.CDGuest.__init__(self, self.tdl.name, self.tdl.distro,
-                               self.tdl.update, self.tdl.arch,
-                               self.tdl.installtype, "rtl8139", None, None,
-                               None, config)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")
@@ -78,6 +77,9 @@ class RHL9Guest(RedHat.RedHatCDGuest):
 
 class RHL70and71and72and73and8Guest(Guest.FDGuest):
     def __init__(self, tdl, config, auto, nicmodel):
+        Guest.FDGuest.__init__(self, tdl.name, tdl.distro, tdl.update, tdl.arch,
+                               nicmodel, None, None, None, config)
+
         self.tdl = tdl
 
         self.ks_file = auto
@@ -88,10 +90,6 @@ class RHL70and71and72and73and8Guest(Guest.FDGuest):
 
         if self.tdl.arch != "i386":
             raise OzException.OzException("Invalid arch " + self.tdl.arch + "for RHL guest")
-
-        Guest.FDGuest.__init__(self, self.tdl.name, self.tdl.distro,
-                               self.tdl.update, self.tdl.arch, nicmodel, None,
-                               None, None, config)
 
     def modify_floppy(self):
         self.mkdir_p(self.floppy_contents)

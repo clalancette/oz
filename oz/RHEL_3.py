@@ -24,6 +24,10 @@ import OzException
 
 class RHEL3Guest(RedHat.RedHatCDGuest):
     def __init__(self, tdl, config, auto):
+        RedHat.RedHatCDGuest.__init__(self, tdl.name, tdl.distro, tdl.update,
+                                      tdl.arch, tdl.installtype, None, None,
+                                      None, None, config)
+
         self.tdl = tdl
 
         self.ks_file = auto
@@ -36,12 +40,7 @@ class RHEL3Guest(RedHat.RedHatCDGuest):
 
         self.url = self.check_url(self.tdl, iso=iso_support, url=True)
 
-        RedHat.RedHatCDGuest.__init__(self, self.tdl.name, self.tdl.distro,
-                                      self.tdl.update, self.tdl.arch,
-                                      self.tdl.installtype, None, None, None,
-                                      None, config)
-        # this has to be *after* RedHatCDGuest.__init__ so that we override
-        # the value that was set there
+        # override the sshd_config value set in RedHatCDGuest.__init__
         self.sshd_config = \
 """SyslogFacility AUTHPRIV
 PasswordAuthentication yes

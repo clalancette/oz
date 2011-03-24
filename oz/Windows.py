@@ -32,6 +32,10 @@ def get_windows_arch(tdl_arch):
 
 class Windows2000andXPand2003(Guest.CDGuest):
     def __init__(self, tdl, config, auto):
+        Guest.CDGuest.__init__(self, tdl.name, tdl.distro, tdl.update, tdl.arch,
+                               tdl.installtype, 'rtl8139', "localtime", "usb",
+                               None, config)
+
         self.tdl = tdl
 
         if self.tdl.update == "2000" and self.tdl.arch != "i386":
@@ -46,11 +50,6 @@ class Windows2000andXPand2003(Guest.CDGuest):
         self.url = self.check_url(self.tdl, iso=True, url=False)
 
         self.winarch = get_windows_arch(self.tdl.arch)
-
-        Guest.CDGuest.__init__(self, self.tdl.name, self.tdl.distro,
-                               self.tdl.update, self.tdl.arch,
-                               self.tdl.installtype, 'rtl8139', "localtime",
-                               "usb", None, config)
 
     def generate_new_iso(self):
         self.log.debug("Generating new ISO")
@@ -132,6 +131,10 @@ class Windows2000andXPand2003(Guest.CDGuest):
 
 class Windows2008and7(Guest.CDGuest):
     def __init__(self, tdl, config, auto):
+        Guest.CDGuest.__init__(self, tdl.name, tdl.distro, tdl.update, tdl.arch,
+                               tdl.installtype, 'rtl8139', "localtime", "usb",
+                               None, config)
+
         self.tdl = tdl
 
         if self.tdl.key is None:
@@ -144,11 +147,6 @@ class Windows2008and7(Guest.CDGuest):
         self.url = self.check_url(self.tdl, iso=True, url=False)
 
         self.winarch = get_windows_arch(self.tdl.arch)
-
-        Guest.CDGuest.__init__(self, self.tdl.name, self.tdl.distro,
-                               self.tdl.update, self.tdl.arch,
-                               self.tdl.installtype, 'rtl8139', "localtime",
-                               "usb", None, config)
 
     def generate_new_iso(self):
         self.log.debug("Generating new ISO")

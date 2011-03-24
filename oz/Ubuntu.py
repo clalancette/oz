@@ -24,6 +24,10 @@ import OzException
 
 class UbuntuGuest(Guest.CDGuest):
     def __init__(self, tdl, config, auto, initrd, nicmodel, diskbus):
+        Guest.CDGuest.__init__(self, tdl.name, tdl.distro, tdl.update, tdl.arch,
+                               tdl.installtype, nicmodel, None, None, diskbus,
+                               config)
+
         self.tdl = tdl
 
         self.casper_initrd = initrd
@@ -33,11 +37,6 @@ class UbuntuGuest(Guest.CDGuest):
             self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
 
         self.url = self.check_url(self.tdl, iso=True, url=False)
-
-        Guest.CDGuest.__init__(self, self.tdl.name, self.tdl.distro,
-                               self.tdl.update, self.tdl.arch,
-                               self.tdl.installtype, nicmodel, None, None,
-                               diskbus, config)
 
     def modify_iso(self):
         self.log.debug("Modifying ISO")
@@ -97,6 +96,10 @@ class UbuntuGuest(Guest.CDGuest):
 
 class Ubuntu610and704Guest(Guest.CDGuest):
     def __init__(self, tdl, config, auto):
+        Guest.CDGuest.__init__(self, tdl.name, tdl.distro, tdl.update, tdl.arch,
+                               tdl.installtype, "rtl8139", None, None, None,
+                               config)
+
         self.tdl = tdl
 
         self.preseed_file = auto
@@ -104,11 +107,6 @@ class Ubuntu610and704Guest(Guest.CDGuest):
             self.preseed_file = ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
 
         self.url = self.check_url(self.tdl, iso=True, url=False)
-
-        Guest.CDGuest.__init__(self, self.tdl.name, self.tdl.distro,
-                               self.tdl.update, self.tdl.arch,
-                               self.tdl.installtype, "rtl8139", None, None,
-                               None, config)
 
     def modify_iso(self):
         self.log.debug("Putting the preseed file in place")

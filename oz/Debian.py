@@ -23,6 +23,10 @@ import OzException
 
 class DebianGuest(Guest.CDGuest):
     def __init__(self, tdl, config, auto):
+        Guest.CDGuest.__init__(self, tdl.name, tdl.distro, tdl.update, tdl.arch,
+                               tdl.installtype, 'virtio', None, None, 'virtio',
+                               config)
+
         self.tdl = tdl
 
         self.preseed_file = auto
@@ -30,11 +34,6 @@ class DebianGuest(Guest.CDGuest):
             self.preseed_file = ozutil.generate_full_auto_path("debian-" + self.tdl.update + "-jeos.preseed")
 
         self.url = self.check_url(self.tdl, iso=True, url=False)
-
-        Guest.CDGuest.__init__(self, self.tdl.name, self.tdl.distro,
-                               self.tdl.update, self.tdl.arch,
-                               self.tdl.installtype, 'virtio', None, None,
-                               'virtio', config)
 
     def modify_iso(self):
         self.log.debug("Modifying ISO")

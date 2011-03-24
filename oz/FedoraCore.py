@@ -24,6 +24,10 @@ import OzException
 
 class FedoraCoreGuest(RedHat.RedHatCDGuest):
     def __init__(self, tdl, config, auto):
+        RedHat.RedHatCDGuest.__init__(self, tdl.name, tdl.distro, tdl.update,
+                                      tdl.arch, tdl.installtype, 'rtl8139',
+                                      None, None, None, config)
+
         self.tdl = tdl
         self.ks_file = auto
         if self.ks_file is None:
@@ -33,11 +37,6 @@ class FedoraCoreGuest(RedHat.RedHatCDGuest):
 
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)
-
-        RedHat.RedHatCDGuest.__init__(self, self.tdl.name, self.tdl.distro,
-                                      self.tdl.update, self.tdl.arch,
-                                      self.tdl.installtype, 'rtl8139', None,
-                                      None, None, config)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")

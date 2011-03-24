@@ -25,6 +25,10 @@ import OzException
 class FedoraGuest(RedHat.RedHatCDYumGuest):
     def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,
                  brokenisomethod):
+        RedHat.RedHatCDYumGuest.__init__(self, tdl.name, tdl.distro, tdl.update,
+                                         tdl.arch, tdl.installtype, nicmodel,
+                                         None, None, diskbus, config)
+
         self.tdl = tdl
         self.ks_file = auto
         if self.ks_file is None:
@@ -33,11 +37,6 @@ class FedoraGuest(RedHat.RedHatCDYumGuest):
         self.brokenisomethod = brokenisomethod
 
         self.url = self.check_anaconda_url(self.tdl, iso=True, url=True)
-
-        RedHat.RedHatCDYumGuest.__init__(self, self.tdl.name, self.tdl.distro,
-                                         self.tdl.update, self.tdl.arch,
-                                         self.tdl.installtype, nicmodel, None,
-                                         None, diskbus, config)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")

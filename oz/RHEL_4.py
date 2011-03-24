@@ -24,6 +24,10 @@ import OzException
 
 class RHEL4Guest(RedHat.RedHatCDGuest):
     def __init__(self, tdl, config, auto, nicmodel, diskbus):
+        RedHat.RedHatCDGuest.__init__(self, tdl.name, tdl.distro, tdl.update,
+                                      tdl.arch, tdl.installtype, nicmodel, None,
+                                      None, diskbus, config)
+
         self.tdl = tdl
 
         self.ks_file = auto
@@ -31,11 +35,6 @@ class RHEL4Guest(RedHat.RedHatCDGuest):
             self.ks_file = ozutil.generate_full_auto_path("rhel-4-jeos.ks")
 
         self.url = self.check_url(self.tdl, iso=True, url=True)
-
-        RedHat.RedHatCDGuest.__init__(self, self.tdl.name, self.tdl.distro,
-                                      self.tdl.update, self.tdl.arch,
-                                      self.tdl.installtype, nicmodel, None,
-                                      None, diskbus, config)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")
