@@ -25,9 +25,10 @@ import OzException
 
 class RHL9Guest(RedHat.RedHatCDGuest):
     def __init__(self, tdl, config, auto):
-        Guest.CDGuest.__init__(self, tdl.name, tdl.distro, tdl.update, tdl.arch,
-                               tdl.installtype, "rtl8139", None, None, None,
-                               config)
+        RedHat.RedHatCDGuest.__init__(self, self.tdl.name, self.tdl.distro,
+                                      self.tdl.update, self.tdl.arch,
+                                      self.tdl.installtype, "rtl8139", None,
+                                      None, None, config)
 
         self.tdl = tdl
 
