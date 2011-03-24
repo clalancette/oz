@@ -404,33 +404,60 @@ class RedHatCDYumGuest(RedHatCDGuest):
     def check_anaconda_url(self, tdl, iso=True, url=True):
         url = self.check_url(tdl, iso, url)
 
-        # The HTTP/1.1 specification allows for servers that don't support
-        # byte ranges; if the client requests it and the server doesn't support
-        # it, it is supposed to return a header that looks like:
-        #
-        #   Accept-Ranges: none
-        #
-        # You can see this in action by editing httpd.conf:
-        #
-        #   ...
-        #   LoadModule headers_module
-        #   ...
-        #   Header set Accept-Ranges "none"
-        #
-        # and then trying to fetch a file with wget:
-        #
-        #   wget --header="Range: bytes=5-10" http://path/to/my/file
-        #
-        # Unfortunately, anaconda does not honor this server header, and
-        # blindly requests a byte range anyway.  When this happens, the server
-        # throws a "403 Forbidden", and the URL install fails.  To try and
-        # avoid this situation, check up-front if the server denies Ranges,
-        # and fail the install.
         if self.tdl.installtype == 'url':
-            response = urllib2.urlopen(url)
-            info = response.info()
-            response.close()
-            if 'Accept-Ranges' in info and info['Accept-Ranges'] == "none":
+            # The HTTP/1.1 specification allows for servers that don't support
+            # byte ranges; if the client requests it and the server doesn't
+            # support it, it is supposed to return a header that looks like:
+            #
+            #   Accept-Ranges: none
+            #
+            # You can see this in action by editing httpd.conf:
+            #
+            #   ...
+            #   LoadModule headers_module
+            #   ...
+            #   Header set Accept-Ranges "none"
+            #
+            # and then trying to fetch a file with wget:
+            #
+            #   wget --header="Range: bytes=5-10" http://path/to/my/file
+            #
+            # Unfortunately, anaconda does not honor this server header, and
+            # blindly requests a byte range anyway.  When this happens, the
+            # server throws a "403 Forbidden", and the URL install fails.
+            #
+            # There is the additional problem of mirror lists.  If we take
+            # the original URL that was given to us, and it happens to be
+            # a redirect, then what can happen is that each individual package
+            # during the install can come from a different mirror (some of
+            # which may not support the byte ranges).  To avoid both of these
+            # problems, resolve the (possible) redirect to a real mirror, and
+            # check if we hit a server that doesn't support ranges.  If we do
+            # hit one of these, try up to 5 times to redirect to a different
+            # mirror.  If after this we still cannot find a server that
+            # supports byte ranges, fail.
+            count = 5
+            while count > 0:
+                response = urllib2.urlopen(url)
+                info = response.info()
+                new_url = response.geturl()
+                response.close()
+
+                if 'Accept-Ranges' in info and info['Accept-Ranges'] == "none":
+                    if url == new_url:
+                        # optimization; if the URL we resolved to is exactly
+                        # the same as what we started with, this is *not*
+                        # a redirect, and we should fail immediately
+                        count = 0
+                        break
+
+                    count -= 1
+                    continue
+
+                url = new_url
+                break
+
+            if count == 0:
                 raise OzException.OzException("%s URL installs cannot be done using servers that don't accept byte ranges.  Please try another mirror" % (tdl.distro))
 
         return url
