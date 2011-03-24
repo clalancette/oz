@@ -33,15 +33,11 @@ import struct
 import numpy
 import tempfile
 import urlparse
+import fcntl
 
 import ozutil
 import OzException
 
-def libvirt_error_handler(ctxt, err):
-    pass
-
-# NOTE: python 2.7 already defines subprocess.capture_output, but I can't
-# depend on that yet.  So write my own
 def subprocess_check_output(*popenargs, **kwargs):
     if 'stdout' in kwargs:
         raise ValueError('stdout argument not allowed, it will be overridden.')
@@ -97,52 +93,30 @@ class Guest(object):
 
         return value
 
-    def __init__(self, name, distro, update, arch, nicmodel, clockoffset,
-                 mousetype, diskbus, config):
-        if arch != "i386" and arch != "x86_64":
-            raise OzException.OzException("Unsupported guest arch " + arch)
-        self.log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
-        self.uuid = uuid.uuid4()
-        mac = [0x52, 0x54, 0x00, random.randint(0x00, 0xff),
-               random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
-        self.macaddr = ':'.join(map(lambda x:"%02x" % x, mac))
-        self.distro = distro
-        self.update = update
-        self.arch = arch
-        self.name = name
+    def connect_to_libvirt(self):
+        def libvirt_error_handler(ctxt, err):
+            pass
+        def get_ip_address(ifname):
+            SIOCGIFADDR = 0x8915
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            ipaddr = socket.inet_ntoa(fcntl.ioctl(s.fileno(), SIOCGIFADDR,
+                                                  struct.pack('256s',
+                                                              ifname[:15]))[20:24])
 
-        self.output_dir = self.get_conf(config, 'paths', 'output_dir',
-                                        '/var/lib/libvirt/images')
+            s.close()
 
-        self.data_dir = self.get_conf(config, 'paths', 'data_dir',
-                                      '/var/lib/oz')
+            return ipaddr
 
-        self.libvirt_uri = self.get_conf(config, 'libvirt', 'uri',
-                                         'qemu:///system')
-
-        self.libvirt_type = self.get_conf(config, 'libvirt', 'type', 'kvm')
-
-        self.cache_original_media = self.get_boolean_conf(config, 'cache',
-                                                          'original_media',
-                                                          True)
-        self.cache_modified_media = self.get_boolean_conf(config, 'cache',
-                                                          'modified_media',
-                                                          False)
-
-        self.cache_jeos = self.get_boolean_conf(config, 'cache', 'jeos', False)
-        self.jeos_cache_dir = os.path.join(self.data_dir, "jeos")
-        self.jeos_filename = os.path.join(self.jeos_cache_dir,
-                                          self.distro + self.update + self.arch + ".dsk")
-
-        self.diskimage = os.path.join(self.output_dir, self.name + ".dsk")
-        self.icicle_tmp = os.path.join(self.data_dir, "icicletmp", self.name)
-        self.listen_port = random.randrange(1024, 65535)
         libvirt.registerErrorHandler(libvirt_error_handler, 'context')
         self.libvirt_conn = libvirt.open(self.libvirt_uri)
 
-        # we have to make sure that the private libvirt bridge is available
-        self.host_bridge_ip = None
-        self.bridge_name = None
+        if self.bridge_name is not None:
+            # if the bridge name was specified in the config file, just detect
+            # the IP address here
+            self.host_bridge_ip = get_ip_address(self.bridge_name)
+            return
+
+        # otherwise, try to detect a private libvirt bridge
         for netname in self.libvirt_conn.listNetworks():
             network = self.libvirt_conn.networkLookupByName(netname)
 
@@ -165,6 +139,51 @@ class Guest(object):
 
         if self.bridge_name is None or self.host_bridge_ip is None:
             raise OzException.OzException("Could not find a viable libvirt NAT bridge, install cannot continue")
+
+    def __init__(self, name, distro, update, arch, nicmodel, clockoffset,
+                 mousetype, diskbus, config):
+        if arch != "i386" and arch != "x86_64":
+            raise OzException.OzException("Unsupported guest arch " + arch)
+        self.log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
+        self.uuid = uuid.uuid4()
+        mac = [0x52, 0x54, 0x00, random.randint(0x00, 0xff),
+               random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
+        self.macaddr = ':'.join(map(lambda x:"%02x" % x, mac))
+        self.distro = distro
+        self.update = update
+        self.arch = arch
+        self.name = name
+
+        # configuration from 'paths' section
+        self.output_dir = self.get_conf(config, 'paths', 'output_dir',
+                                        '/var/lib/libvirt/images')
+        self.data_dir = self.get_conf(config, 'paths', 'data_dir',
+                                      '/var/lib/oz')
+
+        # configuration from 'libvirt' section
+        self.libvirt_uri = self.get_conf(config, 'libvirt', 'uri',
+                                         'qemu:///system')
+        self.libvirt_type = self.get_conf(config, 'libvirt', 'type', 'kvm')
+        self.bridge_name = self.get_conf(config, 'libvirt', 'bridge_name', None)
+
+        # configuration from 'cache' section
+        self.cache_original_media = self.get_boolean_conf(config, 'cache',
+                                                          'original_media',
+                                                          True)
+        self.cache_modified_media = self.get_boolean_conf(config, 'cache',
+                                                          'modified_media',
+                                                          False)
+        self.cache_jeos = self.get_boolean_conf(config, 'cache', 'jeos', False)
+
+        self.jeos_cache_dir = os.path.join(self.data_dir, "jeos")
+        self.jeos_filename = os.path.join(self.jeos_cache_dir,
+                                          self.distro + self.update + self.arch + ".dsk")
+
+        self.diskimage = os.path.join(self.output_dir, self.name + ".dsk")
+        self.icicle_tmp = os.path.join(self.data_dir, "icicletmp", self.name)
+        self.listen_port = random.randrange(1024, 65535)
+
+        self.connect_to_libvirt()
 
         self.nicmodel = nicmodel
         if self.nicmodel is None:
