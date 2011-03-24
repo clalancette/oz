@@ -443,6 +443,8 @@ class RedHatCDYumGuest(RedHatCDGuest):
                 new_url = response.geturl()
                 response.close()
 
+                self.log.debug("Original URL %s resolved to %s" % (url, new_url))
+
                 if 'Accept-Ranges' in info and info['Accept-Ranges'] == "none":
                     if url == new_url:
                         # optimization; if the URL we resolved to is exactly
