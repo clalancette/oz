@@ -159,6 +159,8 @@ class Guest(object):
                                         '/var/lib/libvirt/images')
         self.data_dir = self.get_conf(config, 'paths', 'data_dir',
                                       '/var/lib/oz')
+        self.screenshot_dir = self.get_conf(config, 'paths', 'screenshot_dir',
+                                            '.')
 
         # configuration from 'libvirt' section
         self.libvirt_uri = self.get_conf(config, 'libvirt', 'uri',
@@ -423,7 +425,8 @@ class Guest(object):
 
         if count == 0:
             # if we timed out, then let's make sure to take a screenshot.
-            screenshot = self.name + "-" + str(time.time()) + ".png"
+            screenshot = os.path.join(self.screenshot_dir,
+                                      self.name + "-" + str(time.time()) + ".png")
             self.capture_screenshot(libvirt_dom.XMLDesc(0), screenshot)
             raise OzException.OzException("Timed out waiting for install to finish")
 
