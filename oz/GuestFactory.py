@@ -71,4 +71,4 @@ def distrolist():
     print "   CentOS 3: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9"
     print "   CentOS 4: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9"
     print "   CentOS 5: GOLD, U1, U2, U3, U4, U5"
-    print "   Debian: 6"
+    print "   Debian: 5, 6"

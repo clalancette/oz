@@ -89,6 +89,6 @@ class DebianGuest(Guest.CDGuest):
             self.cleanup_iso()
 
 def get_class(tdl, config, auto):
-    if tdl.update == "6":
+    if tdl.update in ["5", "6"]:
         return DebianGuest(tdl, config, auto)
     raise OzException.OzException("Unsupported Debian update " + tdl.update)
