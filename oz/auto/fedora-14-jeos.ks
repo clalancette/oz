@@ -9,7 +9,7 @@ firewall --disabled
 authconfig --enableshadow --enablemd5
 selinux --enforcing
 timezone --utc America/New_York
-bootloader --location=mbr --append="console=tty0 console=ttyS0,115200"
+bootloader --location=mbr
 zerombr
 clearpart --all --drives=vda
 
