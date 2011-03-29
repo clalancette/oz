@@ -88,11 +88,11 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         self.log.debug("Teardown step 1")
         # reset the authorized keys
         self.log.debug("Resetting authorized_keys")
-        if g_handle.exists('/root/.ssh/authorized_keys'):
-            g_handle.rm('/root/.ssh/authorized_keys')
-        if g_handle.exists('/root/.ssh/authorized_keys.icicle'):
-            g_handle.mv('/root/.ssh/authorized_keys.icicle',
-                        '/root/.ssh/authorized_keys')
+        if g_handle.exists('/root/.ssh'):
+            g_handle.rm_rf('/root/.ssh')
+
+        if g_handle.exists('/root/.ssh.icicle'):
+            g_handle.mv('/root/.ssh.icicle', '/root/.ssh')
 
     def image_ssh_teardown_step_2(self, g_handle):
         self.log.debug("Teardown step 2")
@@ -171,8 +171,9 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
     def image_ssh_setup_step_1(self, g_handle):
         # part 1; upload the keys
         self.log.debug("Step 1: Uploading ssh keys")
-        if not g_handle.exists('/root/.ssh'):
-            g_handle.mkdir('/root/.ssh')
+        if g_handle.exists('/root/.ssh'):
+            g_handle.mv('/root/.ssh', '/root/.ssh.icicle')
+        g_handle.mkdir('/root/.ssh')
 
         if g_handle.exists('/root/.ssh/authorized_keys'):
             g_handle.mv('/root/.ssh/authorized_keys',
