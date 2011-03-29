@@ -105,7 +105,7 @@ try:
         raise Exception, "libvirt XML file is too big!"
 
     print guest.generate_icicle(open(libvirt_xml_file, 'r').read())
-except Exception as exc:
+except Exception, exc:
     if loglevel > logging.DEBUG:
         print ""
         print "ERROR: %s" % (str(exc))

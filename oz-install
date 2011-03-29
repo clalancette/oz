@@ -132,11 +132,12 @@ try:
     if libvirt_xml is None:
         guest.generate_install_media(force_download)
         try:
-            guest.generate_diskimage()
-            libvirt_xml = guest.install(timeout)
-        except:
-            guest.cleanup_old_guest()
-            raise
+            try:
+                guest.generate_diskimage()
+                libvirt_xml = guest.install(timeout)
+            except:
+                guest.cleanup_old_guest()
+                raise
         finally:
             guest.cleanup_install()
 
@@ -150,7 +151,7 @@ try:
     filename = guest.name + time.strftime("%b_%d_%Y-%H:%M:%S")
     open(filename, 'w').write(libvirt_xml)
     print "Libvirt XML was written to " + filename
-except Exception as exc:
+except Exception, exc:
     if loglevel > logging.DEBUG:
         print ""
         print "ERROR: %s" % (str(exc))

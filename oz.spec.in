@@ -19,9 +19,10 @@ Requires: libvirt-python
 # unless/until we are able to make it really be remote.
 Requires: libvirt
 Requires: python-pycurl
-Requires: genisoimage
+Requires: mkisofs
 Requires: numpy
 Requires: mtools
+Requires: python-uuid
 
 %description
 Oz is a set of libraries and utilities for doing automated guest OS
