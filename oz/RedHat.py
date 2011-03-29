@@ -29,7 +29,7 @@ class RedHatCDGuest(Guest.CDGuest):
         Guest.CDGuest.__init__(self, name, distro, update, arch, installtype,
                                nicmodel, clockoffset, mousetype, diskbus,
                                config)
-        self.sshprivkey = os.path.join(self.icicle_tmp, 'id_rsa-icicle-gen')
+        self.sshprivkey = os.path.join('/etc', 'oz', 'id_rsa-icicle-gen')
         self.sshd_config = \
 """SyslogFacility AUTHPRIV
 PasswordAuthentication yes
@@ -179,16 +179,9 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             g_handle.mv('/root/.ssh/authorized_keys',
                         '/root/.ssh/authorized_keys.icicle')
 
-        pubname = self.sshprivkey + ".pub"
-        if os.access(self.sshprivkey, os.F_OK):
-            os.remove(self.sshprivkey)
-        if os.access(pubname, os.F_OK):
-            os.remove(pubname)
-        Guest.subprocess_check_output(['ssh-keygen', '-q', '-t', 'rsa',
-                                       '-b', '2048', '-N', '',
-                                       '-f', self.sshprivkey])
+        self.generate_openssh_key(self.sshprivkey)
 
-        g_handle.upload(pubname, '/root/.ssh/authorized_keys')
+        g_handle.upload(self.sshprivkey + ".pub", '/root/.ssh/authorized_keys')
 
     def image_ssh_setup_step_2(self, g_handle):
         # part 2; check and setup sshd
