@@ -23,8 +23,6 @@ Requires: mkisofs
 Requires: numpy
 Requires: mtools
 Requires: python-uuid
-Requires: python-crypto
-Requires: python-paramiko
 Requires: openssh
 
 %description

@@ -34,10 +34,6 @@ import numpy
 import tempfile
 import urlparse
 import fcntl
-import paramiko
-import Crypto.Random
-import Crypto.PublicKey
-import base64
 
 import ozutil
 import OzException
@@ -747,50 +743,9 @@ class Guest(object):
         # when we get here, either both the private and public key exist, or
         # neither exist.  If they don't exist, generate them
         if not os.access(privname, os.F_OK) and not os.access(pubname, os.F_OK):
-            # in this case, both the public and private keys are missing;
-            # generate them
-            # FIXME: for reasons I don't quite understand, this sometimes
-            # segfaults.
-            rng = Crypto.Random.new().read
-            RSAKey = Crypto.PublicKey.RSA.generate(2048, rng)
-
-            # write the private key out
-            open(privname, 'w').write(RSAKey.exportKey())
-            os.chmod(privname, 0600)
-
-            # we can only get the public key in 'PEM' format.  So here, we do a
-            # hand conversion of it to the style that OpenSSH expects
-            pub = RSAKey.publickey()
-
-            # Create public key.
-            ssh_rsa = '00000007'
-            for c in 'ssh-rsa':
-                ssh_rsa += '%02x' % (ord(c), )
-
-            # Exponent.
-            exponent = '%x' % (pub.key.e, )
-            if len(exponent) % 2:
-                exponent = '0' + exponent
-
-            ssh_rsa += '%08x' % (len(exponent) / 2, )
-            ssh_rsa += exponent
-
-            modulus = '%x' % (pub.key.n, )
-            if len(modulus) % 2:
-                modulus = '0' + modulus
-
-            if modulus[0] in '89abcdef':
-                modulus = '00' + modulus
-
-            ssh_rsa += '%08x' % (len(modulus) / 2, )
-            ssh_rsa += modulus
-
-            ssh_rsa_ = ''
-            for i in range(0, len(ssh_rsa), 2):
-                ssh_rsa_ += chr(int(ssh_rsa[i:i + 2], 16))
-
-            open(pubname, 'w').write('ssh-rsa %s' % (base64.b64encode(ssh_rsa_)))
-            os.chmod(pubname, 0644)
+            subprocess_check_output(['ssh-keygen', '-q', '-t', 'rsa',
+                                     '-b', '2048', '-N', '',
+                                     '-f', privname])
 
 class CDGuest(Guest):
     def __init__(self, name, distro, update, arch, installtype, nicmodel,
