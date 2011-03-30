@@ -84,6 +84,9 @@ fi
 
 
 %changelog
+* Wed Mar 30 2011 Chris Lalancette <clalance@redhat.com> - 0.3.0-1
+- Release 0.3.0.
+
 * Wed Mar 16 2011 Chris Lalancette <clalance@redhat.com> - 0.2.0-1
 - Release 0.2.0.
 

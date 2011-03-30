@@ -2,7 +2,7 @@ from distutils.core import setup, Extension
 from distutils.command.sdist import sdist as _sdist
 import os
 
-VERSION = '0.2.0'
+VERSION = '0.3.0'
 
 datafiles = [('share/man/man1', ['man/oz-install.1', 'man/oz-customize.1',
                                  'man/oz-generate-icicle.1',
