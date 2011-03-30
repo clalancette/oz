@@ -41,10 +41,12 @@ The configuration file should have the following form:
 [paths]
 output_dir = /var/lib/libvirt/images
 data_dir = /var/lib/oz
+screenshot_dir = .
 
 [libvirt]
 uri = qemu:///system
 type = kvm
+bridge_name = virbr0
 
 [cache]
 original_media = yes
@@ -56,12 +58,16 @@ jeos = no
 The \fBpaths\fR section defines the paths that Oz will use for storing data.
 The \fBoutput_dir\fR key describes where to store the images after they are
 built, and the \fBdata_dir\fR key describes where to cache install media and
-use temporary storage.  Both locations have to have a decent amount of
+use temporary storage.  Both locations must have a decent amount of
 free disk space in order for Oz to work properly.
+The \fBscreenshot_dir\fR key describes where to store screenshots of
+failed installs.
 
 The \fBlibvirt\fR section allows some manipulation of how Oz uses libvirt.
 The \fBuri\fR key describes the libvirt URI to use to do the guest
-installation, and the \fBtype\fR key defines what type of virtualization to use.
+installation.  The \fBtype\fR key defines what type of virtualization
+to use.  The \fBbridge_name\fR key defines which bridge Oz should
+place the guests that it launches on.
 
 The \fBcache\fR section allows some manipulation of how Oz caches
 data.  The caching of data in Oz is a tradeoff between installation
