@@ -34,6 +34,8 @@ import numpy
 import tempfile
 import urlparse
 import fcntl
+import M2Crypto
+import base64
 
 import ozutil
 import OzException
@@ -731,6 +733,7 @@ class Guest(object):
         return url
 
     def generate_openssh_key(self, privname):
+        self.log.info("Generating new openssh key")
         pubname = privname + ".pub"
         if os.access(privname, os.F_OK) and not os.access(pubname, os.F_OK):
             # hm, private key exists but not public?  We have to regenerate
@@ -743,9 +746,33 @@ class Guest(object):
         # when we get here, either both the private and public key exist, or
         # neither exist.  If they don't exist, generate them
         if not os.access(privname, os.F_OK) and not os.access(pubname, os.F_OK):
-            subprocess_check_output(['ssh-keygen', '-q', '-t', 'rsa',
-                                     '-b', '2048', '-N', '',
-                                     '-f', privname])
+            def null_callback(p, n, out):
+                pass
+
+            pubname = privname + '.pub'
+
+            key = M2Crypto.RSA.gen_key(2048, 65537, null_callback)
+
+            # this is the binary public key, in ssh "BN" (BigNumber) MPI format.
+            # The ssh BN MPI format consists of 4 bytes that describe the length
+            # of the following data, followed by the data itself in big-endian
+            # format.  The start of the string is 0x0007, which represent the 7
+            # bytes following that make up 'ssh-rsa'.  The key exponent and
+            # modulus as fetched out of M2Crypto are already in MPI format, so
+            # we can just use them as-is.  We then have to base64 encode the
+            # result, add a little header information, and then we have a
+            # full public key.
+            pubkey = '\x00\x00\x00\x07' + 'ssh-rsa' + key.e + key.n
+
+            username = os.getlogin()
+            hostname = os.uname()[1]
+            keystring = 'ssh-rsa %s %s@%s\n' % (base64.b64encode(pubkey),
+                                                username, hostname)
+
+            key.save_key(privname, cipher=None)
+            os.chmod(privname, 0600)
+            open(pubname, 'w').write(keystring)
+            os.chmod(pubname, 0644)
 
 class CDGuest(Guest):
     def __init__(self, name, distro, update, arch, installtype, nicmodel,

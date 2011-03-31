@@ -24,6 +24,7 @@ Requires: numpy
 Requires: mtools
 Requires: python-uuid
 Requires: openssh
+Requires: m2crypto
 
 %description
 Oz is a set of libraries and utilities for doing automated guest OS
