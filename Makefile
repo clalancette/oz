@@ -1,6 +1,9 @@
 sdist:
 	python setup.py sdist
 
+signed-rpm: sdist
+	rpmbuild -ba oz.spec --sign --define "_sourcedir `pwd`/dist"
+
 rpm: sdist
 	rpmbuild -ba oz.spec --define "_sourcedir `pwd`/dist"
 
