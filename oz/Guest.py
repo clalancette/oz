@@ -116,31 +116,32 @@ class Guest(object):
             # if the bridge name was specified in the config file, just detect
             # the IP address here
             self.host_bridge_ip = get_ip_address(self.bridge_name)
-            return
+        else:
+            # otherwise, try to detect a private libvirt bridge
+            for netname in self.libvirt_conn.listNetworks():
+                network = self.libvirt_conn.networkLookupByName(netname)
 
-        # otherwise, try to detect a private libvirt bridge
-        for netname in self.libvirt_conn.listNetworks():
-            network = self.libvirt_conn.networkLookupByName(netname)
+                xml = network.XMLDesc(0)
+                doc = libxml2.parseMemory(xml, len(xml))
 
-            xml = network.XMLDesc(0)
-            doc = libxml2.parseMemory(xml, len(xml))
-
-            forward = doc.xpathEval('/network/forward')
-            if len(forward) != 1:
-                self.log.warn("Libvirt network without a forward element, skipping")
-                continue
-
-            if forward[0].prop('mode') == 'nat':
-                ip = doc.xpathEval('/network/ip')
-                if len(ip) != 1:
-                    self.log.warn("Libvirt network without an IP, skipping")
+                forward = doc.xpathEval('/network/forward')
+                if len(forward) != 1:
+                    self.log.warn("Libvirt network without a forward element, skipping")
                     continue
-                self.host_bridge_ip = ip[0].prop('address')
-                self.bridge_name = network.bridgeName()
-                break
+
+                if forward[0].prop('mode') == 'nat':
+                    ip = doc.xpathEval('/network/ip')
+                    if len(ip) != 1:
+                        self.log.warn("Libvirt network without an IP, skipping")
+                        continue
+                    self.host_bridge_ip = ip[0].prop('address')
+                    self.bridge_name = network.bridgeName()
+                    break
 
         if self.bridge_name is None or self.host_bridge_ip is None:
             raise OzException.OzException("Could not find a viable libvirt NAT bridge, install cannot continue")
+
+        self.log.debug("libvirt bridge name is %s, host_bridge_ip is %s" % (self.bridge_name, self.host_bridge_ip))
 
     def __init__(self, name, distro, update, arch, nicmodel, clockoffset,
                  mousetype, diskbus, config):
@@ -210,10 +211,9 @@ class Guest(object):
         self.log.debug("Name: %s, UUID: %s" % (self.name, self.uuid))
         self.log.debug("MAC: %s, distro: %s" % (self.macaddr, self.distro))
         self.log.debug("update: %s, arch: %s, diskimage: %s" % (self.update, self.arch, self.diskimage))
-        self.log.debug("host IP: %s, nicmodel: %s, clockoffset: %s" % (self.host_bridge_ip, self.nicmodel, self.clockoffset))
+        self.log.debug("nicmodel: %s, clockoffset: %s" % (self.nicmodel, self.clockoffset))
         self.log.debug("mousetype: %s, disk_bus: %s, disk_dev: %s" % (self.mousetype, self.disk_bus, self.disk_dev))
         self.log.debug("icicletmp: %s, listen_port: %d" % (self.icicle_tmp, self.listen_port))
-        self.log.debug("Cache original media?: %s" % (self.cache_original_media))
 
     def cleanup_old_guest(self):
         self.log.info("Cleaning up guest named %s" % (self.name))
