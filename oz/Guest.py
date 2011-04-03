@@ -399,13 +399,26 @@ class Guest(object):
         f.write("\x00")
         f.close()
 
-    def wait_for_install_finish(self, libvirt_dom, count):
+    def wait_for_install_finish(self, libvirt_dom, count, inactivity_timeout=300):
+        # first find the disk device we are installing to; this will be
+        # monitored for activity during the installation
+        domxml = libvirt_dom.XMLDesc(0)
+        doc = libxml2.parseMemory(domxml, len(domxml))
+        disktarget = doc.xpathEval("/domain/devices/disk[@device='disk']/target")
+        if len(disktarget) < 1:
+            raise OzException.OzException("Could not find disk target")
+        diskdev = disktarget[0].prop('dev')
+        if diskdev is None:
+            raise OzException.OzException("Could not find disk target device")
+
+        last_disk_activity = 0
+        inactivity_countdown = inactivity_timeout
         origcount = count
         while count > 0:
             if count % 10 == 0:
                 self.log.debug("Waiting for %s to finish installing, %d/%d" % (self.name, count, origcount))
             try:
-                libvirt_dom.info()
+                rd_req, rd_bytes, wr_req, wr_bytes, errs = libvirt_dom.blockStats(diskdev)
             except libvirt.libvirtError, e:
                 self.log.debug("Libvirt Domain Info Failed:")
                 self.log.debug(" code is %d" % e.get_error_code())
@@ -422,14 +435,27 @@ class Guest(object):
                 else:
                     raise
 
+            # if we saw no disk activity in the countdown window, we presume the
+            # install has hung.  Fail here
+            if inactivity_countdown == 0:
+                self.capture_screenshot(libvirt_dom.XMLDesc(0))
+                raise OzException.OzException("No disk activity in %d seconds, failing" % (inactivity_timeout))
+
+            if (rd_req + wr_req) == last_disk_activity:
+                # if we saw no read or write requests since the last iteration,
+                # decrement our activity timer
+                inactivity_countdown -= 1
+            else:
+                # if we did see some activity, then we can reset the timer
+                inactivity_countdown = inactivity_timeout
+
+            last_disk_activity = rd_req + wr_req
             count -= 1
             time.sleep(1)
 
         if count == 0:
             # if we timed out, then let's make sure to take a screenshot.
-            screenshot = os.path.join(self.screenshot_dir,
-                                      self.name + "-" + str(time.time()) + ".png")
-            self.capture_screenshot(libvirt_dom.XMLDesc(0), screenshot)
+            self.capture_screenshot(libvirt_dom.XMLDesc(0))
             raise OzException.OzException("Timed out waiting for install to finish")
 
         self.log.info("Install of %s succeeded" % (self.name))
@@ -520,7 +546,10 @@ class Guest(object):
                 # something went wrong
                 raise OzException.OzException("Media of 0 size downloaded")
 
-    def capture_screenshot(self, xml, filename):
+    def capture_screenshot(self, xml):
+        screenshot = os.path.join(self.screenshot_dir,
+                                  self.name + "-" + str(time.time()) + ".png")
+
         doc = libxml2.parseMemory(xml, len(xml))
         graphics = doc.xpathEval('/domain/devices/graphics')
         if len(graphics) != 1:
@@ -540,7 +569,7 @@ class Guest(object):
         vnc = "localhost:%s" % (int(port) - 5900)
 
         try:
-            subprocess_check_output(['gvnccapture', vnc, filename])
+            subprocess_check_output(['gvnccapture', vnc, screenshot])
         except:
             self.log.error("Failed to take screenshot")
 
