@@ -26,6 +26,8 @@ Requires: python-uuid
 Requires: openssh
 Requires: m2crypto
 
+BuildRequires: python
+
 %description
 Oz is a set of libraries and utilities for doing automated guest OS
 installations, with minimal input from the user.
