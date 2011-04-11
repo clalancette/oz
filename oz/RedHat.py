@@ -301,7 +301,10 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             self.guestfs_handle_cleanup(g_handle)
 
     def guest_execute_command(self, guestaddr, command):
+        # ServerAliveInterval protects against NAT firewall timeouts
+        # on long-running commands with no output
         return Guest.subprocess_check_output(["ssh", "-i", self.sshprivkey,
+                                              "-o", "ServerAliveInterval=30",
                                               "-o", "StrictHostKeyChecking=no",
                                               "-o", "ConnectTimeout=5",
                                               "-o", "UserKnownHostsFile=/dev/null",
