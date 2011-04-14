@@ -63,6 +63,8 @@ class Windows2000andXPand2003(Guest.CDGuest):
                                        "-o", self.output_iso, self.iso_contents])
 
     def modify_iso(self):
+        self.log.debug("Modifying ISO")
+
         os.mkdir(os.path.join(self.iso_contents, "cdboot"))
         self.geteltorito(self.orig_iso, os.path.join(self.iso_contents,
                                                      "cdboot", "boot.bin"))
@@ -167,6 +169,8 @@ class Windows2008and7(Guest.CDGuest):
                                        "-o", self.output_iso, self.iso_contents])
 
     def modify_iso(self):
+        self.log.debug("Modifying ISO")
+
         os.mkdir(os.path.join(self.iso_contents, "cdboot"))
         self.geteltorito(self.orig_iso, os.path.join(self.iso_contents,
                                                      "cdboot", "boot.bin"))
