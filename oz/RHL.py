@@ -43,13 +43,16 @@ class RHL9Guest(RedHat.RedHatCDGuest):
 
         output_ks = os.path.join(self.iso_contents, "ks.cfg")
 
-        def kssub(line):
-            if re.match("^url", line):
-                return "url --url " + self.url + "\n"
-            else:
-                return line
+        if self.ks_file == ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks"):
+            def kssub(line):
+                if re.match("^url", line):
+                    return "url --url " + self.url + "\n"
+                else:
+                    return line
 
-        self.copy_modify_file(self.ks_file, output_ks, kssub)
+            self.copy_modify_file(self.ks_file, output_ks, kssub)
+        else:
+            shutil.copy(self.ks_file, output_ks)
 
         self.log.debug("Modifying the boot options")
         isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
