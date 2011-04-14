@@ -535,9 +535,11 @@ class RedHatFDGuest(Guest.FDGuest):
 
         self.url = self.check_url(self.tdl, iso=False, url=True)
 
+        self.ks_name = ks_name
+
         self.ks_file = auto
         if self.ks_file is None:
-            self.ks_file = ozutil.generate_full_auto_path(ks_name)
+            self.ks_file = ozutil.generate_full_auto_path(self.ks_name)
 
         Guest.FDGuest.__init__(self, self.tdl.name, self.tdl.distro,
                                self.tdl.update, self.tdl.arch, nicmodel, None,
@@ -550,13 +552,16 @@ class RedHatFDGuest(Guest.FDGuest):
 
         output_ks = os.path.join(self.floppy_contents, "ks.cfg")
 
-        def kssub(line):
-            if re.match("^url", line):
-                return "url --url " + self.url + "\n"
-            else:
-                return line
+        if self.ks_file == ozutil.generate_full_auto_path(self.ks_name):
+            def kssub(line):
+                if re.match("^url", line):
+                    return "url --url " + self.url + "\n"
+                else:
+                    return line
 
-        self.copy_modify_file(self.ks_file, output_ks, kssub)
+            self.copy_modify_file(self.ks_file, output_ks, kssub)
+        else:
+            shutil.copy(self.ks_file, output_ks)
 
         Guest.subprocess_check_output(["mcopy", "-i", self.output_floppy,
                                        output_ks, "::KS.CFG"])
