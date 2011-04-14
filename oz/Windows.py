@@ -119,15 +119,12 @@ class Windows2000andXPand2003(Guest.CDGuest):
         dom = self.libvirt_conn.createXML(xml, 0)
 
         if timeout is None:
-            timeout = 1000
+            timeout = 3600
 
         self.wait_for_install_finish(dom, timeout)
 
         xml = self.generate_xml("hd")
         dom = self.libvirt_conn.createXML(xml, 0)
-
-        if timeout is None:
-            timeout = 3600
 
         self.wait_for_install_finish(dom, timeout)
 
