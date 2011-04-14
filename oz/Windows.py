@@ -184,10 +184,6 @@ class Windows2008and7(Guest.CDGuest):
                 component.setProp('processorArchitecture', self.winarch)
 
             keys = xp.xpathEval('/ms:unattend/ms:settings/ms:component/ms:ProductKey')
-
-            if len(keys[0].content) == 0:
-                keys[0].freeNode()
-
             keys[0].setContent(self.tdl.key)
 
             doc.saveFile(outname)
