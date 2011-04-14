@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!-- A Relax NG schema for the TDL (template description language) format -->
-<grammar xmlns="http://relaxng.org/ns/structure/1.0">
+<grammar xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
   <start>
     <ref name='template'/>
   </start>
@@ -97,7 +97,7 @@
 		  </element>
 		  <optional>
 		    <element name='signed'>
-		      <text/>
+		      <ref name='bool'/>
 		    </element>
 		  </optional>
 		</interleave>
@@ -125,6 +125,23 @@
     <element name='iso'>
       <text/>
     </element>
+  </define>
+
+  <define name='bool'>
+    <choice>
+      <data type="string">
+	<param name="pattern">[Tt][Rr][Uu][Ee]</param>
+      </data>
+      <data type="string">
+	<param name="pattern">[Ff][Aa][Ll][Ss][Ee]</param>
+      </data>
+      <data type="string">
+	<param name="pattern">[Yy][Ee][Ss]</param>
+      </data>
+      <data type="string">
+	<param name="pattern">[Nn][Oo]</param>
+      </data>
+    </choice>
   </define>
 
 </grammar>
