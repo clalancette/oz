@@ -69,22 +69,22 @@ class Windows2000andXPand2003(Guest.CDGuest):
 
         computername = "OZ" + str(random.randrange(1, 900000))
 
-        f = open(self.siffile, "r")
-        lines = f.readlines()
-        f.close()
+        infile = open(self.siffile, 'r')
+        outfile = open(os.path.join(self.iso_contents, self.winarch,
+                                    "winnt.sif"), 'w')
 
-        for index, line in enumerate(lines):
+        for line in infile.xreadlines():
             if re.match(" *ProductKey", line):
-                lines[index] = "    ProductKey=" + self.tdl.key + "\n"
+                outfile.write("    ProductKey=" + self.tdl.key + "\n")
             elif re.match(" *ProductID", line):
-                lines[index] = "    ProductID=" + self.tdl.key + "\n"
+                outfile.write("    ProductID=" + self.tdl.key + "\n")
             elif re.match(" *ComputerName", line):
-                lines[index] = "    ComputerName=" + computername + "\n"
+                outfile.write("    ComputerName=" + computername + "\n")
+            else:
+                outfile.write(line)
 
-        f = open(os.path.join(self.iso_contents, self.winarch, "winnt.sif"),
-                 "w")
-        f.writelines(lines)
-        f.close()
+        infile.close()
+        outfile.close()
 
     def generate_install_media(self, force_download=False):
         self.log.info("Generating install media")
