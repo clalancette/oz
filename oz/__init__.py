@@ -22,7 +22,7 @@ tdl_xml = \"\"\"
     <version>13</version>
     <arch>x86_64</arch>
     <install type='url'>
-      <url>http://download.fedoraproject.org/pub/fedora/linux/releases/13/Fedor
+      <url>http://download.fedoraproject.org/pub/fedora/linux/releases/13/Fedora/x86_64/os/</url>
     </install>
   </os>
   <description>Fedora 13</description>
