@@ -43,18 +43,17 @@ class RHL9Guest(RedHat.RedHatCDGuest):
         self.log.debug("Putting the kickstart in place")
 
         output_ks = os.path.join(self.iso_contents, "ks.cfg")
-        shutil.copyfile(self.ks_file, output_ks)
-        f = open(output_ks, "r")
-        lines = f.readlines()
-        f.close()
+        infile = open(self.ks_file, 'r')
+        outfile = open(output_ks, 'w')
 
-        for index, line in enumerate(lines):
+        for line in infile.xreadlines():
             if re.match("^url", line):
-                lines[index] = "url --url " + self.url + "\n"
+                outfile.write("url --url " + self.url + "\n")
+            else:
+                outfile.write(line)
 
-        f = open(output_ks, "w")
-        f.writelines(lines)
-        f.close()
+        infile.close()
+        outfile.close()
 
         self.log.debug("Modifying the boot options")
         isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
