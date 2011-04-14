@@ -171,21 +171,31 @@ class Windows2008and7(Guest.CDGuest):
         self.geteltorito(self.orig_iso, os.path.join(self.iso_contents,
                                                      "cdboot", "boot.bin"))
 
-        doc = libxml2.parseFile(self.unattendfile)
-        xp = doc.xpathNewContext()
-        xp.xpathRegisterNs("ms", "urn:schemas-microsoft-com:unattend")
+        outname = os.path.join(self.iso_contents, "autounattend.xml")
 
-        for component in xp.xpathEval('/ms:unattend/ms:settings/ms:component'):
-            component.setProp('processorArchitecture', self.winarch)
+        if self.unattendfile == ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.xml"):
+            # if this is the oz default unattend file, we modify certain
+            # parameters to make installation succeed
+            doc = libxml2.parseFile(self.unattendfile)
+            xp = doc.xpathNewContext()
+            xp.xpathRegisterNs("ms", "urn:schemas-microsoft-com:unattend")
 
-        keys = xp.xpathEval('/ms:unattend/ms:settings/ms:component/ms:ProductKey')
+            for component in xp.xpathEval('/ms:unattend/ms:settings/ms:component'):
+                component.setProp('processorArchitecture', self.winarch)
 
-        if len(keys[0].content) == 0:
-            keys[0].freeNode()
+            keys = xp.xpathEval('/ms:unattend/ms:settings/ms:component/ms:ProductKey')
 
-        keys[0].setContent(self.tdl.key)
+            if len(keys[0].content) == 0:
+                keys[0].freeNode()
 
-        doc.saveFile(os.path.join(self.iso_contents, "autounattend.xml"))
+            keys[0].setContent(self.tdl.key)
+
+            doc.saveFile(outname)
+        else:
+            # if the user provided their own unattend file, do not override
+            # their choices; the user gets to keep both pieces if something
+            # breaks
+            shutil.copy(self.unattendfile, outname)
 
     def generate_install_media(self, force_download=False):
         self.log.info("Generating install media")
