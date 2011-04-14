@@ -549,17 +549,14 @@ class RedHatFDGuest(Guest.FDGuest):
         self.log.debug("Putting the kickstart in place")
 
         output_ks = os.path.join(self.floppy_contents, "ks.cfg")
-        infile = open(self.ks_file, 'r')
-        outfile = open(output_ks, 'w')
 
-        for line in infile.xreadlines():
+        def kssub(line):
             if re.match("^url", line):
-                outfile.write("url --url " + self.url + "\n")
+                return "url --url " + self.url + "\n"
             else:
-                outfile.write(line)
+                return line
 
-        infile.close()
-        outfile.close()
+        self.copy_modify_file(self.ks_file, output_ks, kssub)
 
         Guest.subprocess_check_output(["mcopy", "-i", self.output_floppy,
                                        output_ks, "::KS.CFG"])

@@ -803,6 +803,16 @@ class Guest(object):
             open(pubname, 'w').write(keystring)
             os.chmod(pubname, 0644)
 
+    def copy_modify_file(self, inname, outname, subfunc):
+        infile = open(inname, 'r')
+        outfile = open(outname, 'w')
+
+        for line in infile.xreadlines():
+            outfile.write(subfunc(line))
+
+        infile.close()
+        outfile.close()
+
 class CDGuest(Guest):
     def __init__(self, name, distro, update, arch, installtype, nicmodel,
                  clockoffset, mousetype, diskbus, config):

@@ -76,21 +76,17 @@ class Windows2000andXPand2003(Guest.CDGuest):
             # to make installation succeed
             computername = "OZ" + str(random.randrange(1, 900000))
 
-            infile = open(self.siffile, 'r')
-            outfile = open(outname, 'w')
-
-            for line in infile.xreadlines():
+            def sifsub(line):
                 if re.match(" *ProductKey", line):
-                    outfile.write("    ProductKey=" + self.tdl.key + "\n")
+                    return "    ProductKey=" + self.tdl.key + "\n"
                 elif re.match(" *ProductID", line):
-                    outfile.write("    ProductID=" + self.tdl.key + "\n")
+                    return "    ProductID=" + self.tdl.key + "\n"
                 elif re.match(" *ComputerName", line):
-                    outfile.write("    ComputerName=" + computername + "\n")
+                    return "    ComputerName=" + computername + "\n"
                 else:
-                    outfile.write(line)
+                    return line
 
-            infile.close()
-            outfile.close()
+            self.copy_modify_file(self.siffile, outname, sifsub)
         else:
             # if the user provided their own siffile, do not override their
             # choices; the user gets to keep both pieces if something breaks
