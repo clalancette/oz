@@ -44,6 +44,14 @@ class Package(object):
         self.filename = filename
         self.args = args
 
+def string_to_bool(instr, component):
+    lower = instr.lower()
+    if lower == 'no' or lower == 'false':
+        return False
+    if lower == 'yes' or lower == 'true':
+        return True
+    raise OzException.OzException("%s property must be 'true', 'yes', 'false', or' no'" % (component))
+
 class TDL(object):
     def __init__(self, xmlstring):
         self.doc = None
@@ -135,12 +143,8 @@ class TDL(object):
             if signstr is None:
                 signstr = 'no'
 
-            if signstr.lower() == 'no' or signstr.lower() == 'false':
-                signed = False
-            elif signstr.lower() == 'yes' or signstr.lower() == 'true':
-                signed = True
-            else:
-                raise OzException.OzException("Repository signed property must be 'true' or 'false'")
+            signed = string_to_bool(signstr, "Repository signed")
+
             self.repositories[name] = Repository(name, url, signed)
 
     def __del__(self):
