@@ -44,15 +44,16 @@ class FedoraGuest(RedHat.RedHatCDYumGuest):
         shutil.copy(self.ks_file, os.path.join(self.iso_contents, "ks.cfg"))
 
         self.log.debug("Modifying the boot options")
-        isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
+        isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
+                                   "isolinux.cfg")
         f = open(isolinuxcfg, "r")
         lines = f.readlines()
         f.close()
-        for line in lines:
+        for index, line in enumerate(lines):
             if re.match("timeout", line):
-                lines[lines.index(line)] = "timeout 1\n"
+                lines[index] = "timeout 1\n"
             elif re.match("default", line):
-                lines[lines.index(line)] = "default customiso\n"
+                lines[index] = "default customiso\n"
         lines.append("label customiso\n")
         lines.append("  kernel vmlinuz\n")
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"

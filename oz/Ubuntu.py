@@ -116,20 +116,21 @@ class Ubuntu610and704Guest(Guest.CDGuest):
                                                     "customiso.seed"))
 
         self.log.debug("Modifying isolinux.cfg")
-        isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
+        isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
+                                   "isolinux.cfg")
         f = open(isolinuxcfg, "r")
         lines = f.readlines()
         f.close()
 
-        for line in lines:
+        for index, line in enumerate(lines):
             if re.match(" *TIMEOUT", line, re.IGNORECASE):
-                lines[lines.index(line)] = "TIMEOUT 1\n"
+                lines[index] = "TIMEOUT 1\n"
             elif re.match(" *DEFAULT", line, re.IGNORECASE):
-                lines[lines.index(line)] = "DEFAULT customiso\n"
+                lines[index] = "DEFAULT customiso\n"
             elif re.match(" *GFXBOOT", line, re.IGNORECASE):
-                lines[lines.index(line)] = ""
+                lines[index] = ""
             elif re.match("^APPEND", line, re.IGNORECASE):
-                lines[lines.index(line)] = ""
+                lines[index] = ""
         lines.append("LABEL customiso\n")
         lines.append("  menu label ^Customiso\n")
         if os.path.isdir(os.path.join(self.iso_contents, "casper")):

@@ -60,11 +60,11 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         f = open(isolinuxcfg, "r")
         lines = f.readlines()
         f.close()
-        for line in lines:
+        for index, line in enumerate(lines):
             if re.match("timeout", line):
-                lines[lines.index(line)] = "timeout 1\n"
+                lines[index] = "timeout 1\n"
             elif re.match("default", line):
-                lines[lines.index(line)] = "default customiso\n"
+                lines[index] = "default customiso\n"
         lines.append("label customiso\n")
         lines.append("  kernel vmlinuz\n")
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method="

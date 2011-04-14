@@ -48,24 +48,25 @@ class RHL9Guest(RedHat.RedHatCDGuest):
         lines = f.readlines()
         f.close()
 
-        for line in lines:
+        for index, line in enumerate(lines):
             if re.match("^url", line):
-                lines[lines.index(line)] = "url --url " + self.url + "\n"
+                lines[index] = "url --url " + self.url + "\n"
 
         f = open(output_ks, "w")
         f.writelines(lines)
         f.close()
 
         self.log.debug("Modifying the boot options")
-        isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
+        isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
+                                   "isolinux.cfg")
         f = open(isolinuxcfg, "r")
         lines = f.readlines()
         f.close()
-        for line in lines:
+        for index, line in enumerate(lines):
             if re.match("timeout", line):
-                lines[lines.index(line)] = "timeout 1\n"
+                lines[index] = "timeout 1\n"
             elif re.match("default", line):
-                lines[lines.index(line)] = "default customiso\n"
+                lines[index] = "default customiso\n"
         lines.append("label customiso\n")
         lines.append("  kernel vmlinuz\n")
         lines.append("  append initrd=initrd.img ks=cdrom:/ks.cfg method=" + self.url + "\n")

@@ -73,15 +73,16 @@ class Windows2000andXPand2003(Guest.CDGuest):
         lines = f.readlines()
         f.close()
 
-        for line in lines:
+        for index, line in enumerate(lines):
             if re.match(" *ProductKey", line):
-                lines[lines.index(line)] = "    ProductKey=" + self.tdl.key + "\n"
+                lines[index] = "    ProductKey=" + self.tdl.key + "\n"
             elif re.match(" *ProductID", line):
-                lines[lines.index(line)] = "    ProductID=" + self.tdl.key + "\n"
+                lines[index] = "    ProductID=" + self.tdl.key + "\n"
             elif re.match(" *ComputerName", line):
-                lines[lines.index(line)] = "    ComputerName=" + computername + "\n"
+                lines[index] = "    ComputerName=" + computername + "\n"
 
-        f = open(os.path.join(self.iso_contents, self.winarch, "winnt.sif"), "w")
+        f = open(os.path.join(self.iso_contents, self.winarch, "winnt.sif"),
+                 "w")
         f.writelines(lines)
         f.close()
 
