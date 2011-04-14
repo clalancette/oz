@@ -80,6 +80,8 @@ class Windows2000andXPand2003(Guest.CDGuest):
                     return "    ProductID=" + self.tdl.key + "\n"
                 elif re.match(" *ComputerName", line):
                     return "    ComputerName=" + computername + "\n"
+                elif re.match(" *AdminPassword", line):
+                    return "    AdminPassword=" + self.rootpw + "\n"
                 else:
                     return line
 
@@ -163,6 +165,12 @@ class Windows2008and7(Guest.CDGuest):
 
             keys = xp.xpathEval('/ms:unattend/ms:settings/ms:component/ms:ProductKey')
             keys[0].setContent(self.tdl.key)
+
+            adminpw = xp.xpathEval('/ms:unattend/ms:settings/ms:component/ms:UserAccounts/ms:AdministratorPassword/ms:Value')
+            adminpw[0].setContent(self.rootpw)
+
+            autologinpw = xp.xpathEval('/ms:unattend/ms:settings/ms:component/ms:AutoLogon/ms:Password/ms:Value')
+            autologinpw[0].setContent(self.rootpw)
 
             doc.saveFile(outname)
         else:

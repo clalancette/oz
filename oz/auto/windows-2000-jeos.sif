@@ -14,7 +14,7 @@
     UnattendSwitch="Yes"
 
 [GuiUnattended]
-    AdminPassword=ozrootpw
+    AdminPassword=%ROOTPW%
     AutoLogon=Yes
     AutoLogonCount=1
     OEMSkipRegional=1

@@ -17,6 +17,7 @@
 import re
 import shutil
 import os
+import libxml2
 
 import Guest
 import ozutil
@@ -37,8 +38,21 @@ class OpenSUSEGuest(Guest.CDGuest):
 
     def modify_iso(self):
         self.log.debug("Putting the autoyast in place")
-        shutil.copy(self.autoyast, os.path.join(self.iso_contents,
-                                                "autoinst.xml"))
+
+        outname = os.path.join(self.iso_contents, "autoinst.xml")
+
+        if self.autoyast == ozutil.generate_full_auto_path("opensuse-" + self.tdl.update + "-jeos.xml"):
+            doc = libxml2.parseFile(self.autoyast)
+
+            xp = doc.xpathNewContext()
+            xp.xpathRegisterNs("suse", "http://www.suse.com/1.0/yast2ns")
+
+            pw = xp.xpathEval('/suse:profile/suse:users/suse:user/suse:user_password')
+            pw[0].setContent(self.rootpw)
+
+            doc.saveFile(outname)
+        else:
+            shutil.copy(self.autoyast, outname)
 
         self.log.debug("Modifying the boot options")
         isolinux_cfg = os.path.join(self.iso_contents, "boot", self.tdl.arch,

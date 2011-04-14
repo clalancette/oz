@@ -208,6 +208,10 @@ class Guest(object):
         else:
             raise OzException.OzException("Unknown diskbus type " + diskbus)
 
+        self.rootpw = self.tdl.rootpw
+        if self.rootpw is None:
+            self.rootpw = "ozrootpw"
+
         self.log.debug("Name: %s, UUID: %s" % (self.tdl.name, self.uuid))
         self.log.debug("MAC: %s, distro: %s" % (self.macaddr, self.tdl.distro))
         self.log.debug("update: %s, arch: %s, diskimage: %s" % (self.tdl.update, self.tdl.arch, self.diskimage))

@@ -14,7 +14,7 @@
     UnattendSwitch="Yes"
 
 [GuiUnattended]
-    AdminPassword="ozrootpw"
+    AdminPassword="%ROOTPW%"
     EncryptedAdminPassword=NO
     AutoLogon=Yes
     AutoLogonCount=1

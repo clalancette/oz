@@ -38,9 +38,21 @@ class UbuntuGuest(Guest.CDGuest):
         self.log.debug("Modifying ISO")
 
         self.log.debug("Copying preseed file")
-        shutil.copy(self.preseed_file, os.path.join(self.iso_contents,
-                                                    "preseed",
-                                                    "customiso.seed"))
+        outname = os.path.join(self.iso_contents, "preseed", "customiso.seed")
+
+        if self.preseed_file == ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed"):
+
+            def preseed_sub(line):
+                if re.match('d-i passwd/root-password password', line):
+                    return 'd-i passwd/root-password password ' + self.rootpw + '\n'
+                elif re.match('d-i passwd/root-password-again password', line):
+                    return 'd-i passwd/root-password-again password ' + self.rootpw + '\n'
+                else:
+                    return line
+
+            self.copy_modify_file(self.preseed_file, outname, preseed_sub)
+        else:
+            shutil.copy(self.preseed_file, outname)
 
         self.log.debug("Modifying isolinux.cfg")
         isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
@@ -87,9 +99,21 @@ class Ubuntu610and704Guest(Guest.CDGuest):
     def modify_iso(self):
         self.log.debug("Putting the preseed file in place")
 
-        shutil.copy(self.preseed_file, os.path.join(self.iso_contents,
-                                                    "preseed",
-                                                    "customiso.seed"))
+        outname = os.path.join(self.iso_contents, "preseed", "customiso.seed")
+
+        if self.preseed_file == ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed"):
+
+            def preseed_sub(line):
+                if re.match('d-i passwd/root-password password', line):
+                    return 'd-i passwd/root-password password ' + self.rootpw + '\n'
+                elif re.match('d-i passwd/root-password-again password', line):
+                    return 'd-i passwd/root-password-again password ' + self.rootpw + '\n'
+                else:
+                    return line
+
+            self.copy_modify_file(self.preseed_file, outname, preseed_sub)
+        else:
+            shutil.copy(self.preseed_file, outname)
 
         self.log.debug("Modifying isolinux.cfg")
         isolinuxcfg = os.path.join(self.iso_contents, "isolinux",

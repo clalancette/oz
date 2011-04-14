@@ -39,7 +39,18 @@ class FedoraGuest(RedHat.RedHatCDYumGuest):
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")
 
-        shutil.copy(self.ks_file, os.path.join(self.iso_contents, "ks.cfg"))
+        outname = os.path.join(self.iso_contents, "ks.cfg")
+
+        if self.ks_file == ozutil.generate_full_auto_path("fedora-" + self.tdl.update + "-jeos.ks"):
+            def kssub(line):
+                if re.match("^rootpw", line):
+                    return "rootpw " + self.rootpw + '\n'
+                else:
+                    return line
+
+            self.copy_modify_file(self.ks_file, outname, kssub)
+        else:
+            shutil.copy(self.ks_file, outname)
 
         self.log.debug("Modifying the boot options")
         isolinuxcfg = os.path.join(self.iso_contents, "isolinux",

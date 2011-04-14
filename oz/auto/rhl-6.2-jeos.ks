@@ -5,7 +5,7 @@ lang en_US
 mouse generic3ps/2 --device psaux
 skipx
 network --bootproto dhcp
-rootpw --iscrypted $1$0q7k23Sr$aKkhNCvyxvwmc5DoVi28k.
+rootpw %ROOTPW%
 auth --useshadow --enablemd5
 timezone --utc America/New_York
 lilo --location mbr --linear

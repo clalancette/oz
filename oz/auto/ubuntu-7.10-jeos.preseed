@@ -18,8 +18,8 @@ d-i partman/confirm boolean true
 
 d-i passwd/root-login boolean true
 d-i passwd/make-user boolean false
-d-i passwd/root-password password ozrootpw
-d-i passwd/root-password-again password ozrootpw
+d-i passwd/root-password password %ROOTPW%
+d-i passwd/root-password-again password %ROOTPW%
 
 tasksel tasksel/first multiselect standard
 d-i mirror/http/proxy string

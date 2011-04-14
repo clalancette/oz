@@ -91,6 +91,9 @@ class TDL(object):
         else:
             raise OzException.OzException("Unknown install type " + self.installtype + " in TDL")
 
+        self.rootpw = get_value(self.doc, '/template/os/rootpw',
+                                "root/Administrator password", optional=True)
+
         self.packages = []
         for package in self.doc.xpathEval('/template/packages/package'):
             # package name

@@ -160,7 +160,7 @@
       </password_settings>
       <shell>/bin/bash</shell>
       <uid>0</uid>
-      <user_password>ozrootpw</user_password>
+      <user_password>%ROOTPW%</user_password>
       <username>root</username>
     </user>
   </users>

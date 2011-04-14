@@ -551,6 +551,8 @@ class RedHatFDGuest(Guest.FDGuest):
             def kssub(line):
                 if re.match("^url", line):
                     return "url --url " + self.url + "\n"
+                elif re.match("^rootpw", line):
+                    return "rootpw " + self.rootpw + "\n"
                 else:
                     return line
 
