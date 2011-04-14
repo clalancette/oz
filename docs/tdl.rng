@@ -66,6 +66,11 @@
                       <text/>
                     </element>
                   </optional>
+                  <optional>
+                    <element name='reboot'>
+                      <ref name='bool'/>
+                    </element>
+                  </optional>
                 </interleave>
               </element>
             </zeroOrMore>

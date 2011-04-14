@@ -391,7 +391,14 @@ class Windows2008and7(Windows):
         stdout, stderr, retcode = self.guest_execute_command(guestaddr,
                                                              "cmd.exe /c del c:\\temp\\" + package.name)
 
-    def install_package(self, guestaddr, package):
+    def open_socket(self, guestaddr):
+        stdout, stderr, retcode = self.guest_execute_command(guestaddr,
+                                                             "cmd.exe /c reg add HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce /v ReportIP /t REG_SZ /d \"C:\\Windows\\System32\\WindowsPowershell\\v1.0\\powershell.exe -ExecutionPolicy RemoteSigned -command Start-Sleep 10;$socket=new-object System.Net.Sockets.TcpClient;$socket.Connect(\'" + self.host_bridge_ip + "\'," + str(self.listen_port) + ")")
+
+        if retcode != 0:
+            raise oz.OzException.OzException("Failed to add ReportIP key in registry")
+
+    def install_package(self, guestaddr, package, libvirt_dom, libvirt_xml):
         share = self.tdl.repositories[package.repo]
 
         samba = Samba()
@@ -422,6 +429,9 @@ class Windows2008and7(Windows):
 
         self.copy_package(guestaddr, package, samba)
 
+        if package.reboot:
+            self.open_socket(guestaddr)
+
         guestcmd = 'cmd.exe /c c:\\temp\\' + package.filename
         if package.args is not None:
             guestcmd += ' ' + package.args
@@ -431,6 +441,18 @@ class Windows2008and7(Windows):
         stdout, stderr, retcode = self.guest_execute_command(guestaddr,
                                                              guestcmd)
         # FIXME: check for errors here
+
+        if package.reboot:
+            self.log.debug("Waiting for reboot")
+            if not self.wait_for_guest_shutdown(libvirt_dom, count=600):
+                raise oz.OzException.OzException("Guest did not shut down in time, package %s failed to install" % (package.name))
+
+            # FIXME: does this really work?  We passed in libvirt_dom and
+            # guestaddr from customize(), but since they are pass-by-value,
+            # I think we'll have stale handles if we try to do installation
+            # of multiple packages requiring reboot
+            libvirt_dom = self.libvirt_conn.createXML(libvirt_xml, 0)
+            guestaddr = self.wait_for_guest_boot()
 
         self.delete_package(guestaddr, package)
 
@@ -454,7 +476,7 @@ class Windows2008and7(Windows):
             try:
                 # first install all of the additional packages
                 for package in self.tdl.packages:
-                    self.install_package(guestaddr, package)
+                    self.install_package(guestaddr, package, libvirt_dom, libvirt_xml)
 
                 # now sysprep the OS
                 self.log.info("Starting sysprep")

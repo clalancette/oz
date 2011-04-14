@@ -74,11 +74,12 @@ class Package(object):
     filename - The filename that contains this package (optional).
     args     - Arguments necessary to install this package (optional).
     """
-    def __init__(self, name, repo, filename, args):
+    def __init__(self, name, repo, filename, args, reboot):
         self.name = name
         self.repo = repo
         self.filename = filename
         self.args = args
+        self.reboot = reboot
 
 def string_to_bool(instr, component):
     """
@@ -185,7 +186,15 @@ class TDL(object):
             args = get_value(package, 'arguments', "package arguments",
                              optional=True)
 
-            self.packages.append(Package(name, repo, filename, args))
+            # does the package require reboot (optional)
+            rebootstr = get_value(package,'reboot', "package reboot",
+                                  optional=True)
+            if rebootstr == None:
+                rebootstr = 'no'
+
+            reboot = string_to_bool(rebootstr, "Package reboot")
+
+            self.packages.append(Package(name, repo, filename, args, reboot))
 
         self.files = {}
         for afile in self.doc.xpathEval('/template/files/file'):
