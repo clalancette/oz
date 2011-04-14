@@ -24,11 +24,8 @@ import OzException
 
 class RHEL6Guest(RedHat.RedHatCDYumGuest):
     def __init__(self, tdl, config, auto):
-        RedHat.RedHatCDYumGuest.__init__(self, tdl.name, tdl.distro, tdl.update,
-                                         tdl.arch, tdl.installtype, "virtio",
-                                         None, None, "virtio", config)
-
-        self.tdl = tdl
+        RedHat.RedHatCDYumGuest.__init__(self, tdl, "virtio", None, None,
+                                         "virtio", config)
 
         self.ks_file = auto
         if self.ks_file is None:

@@ -24,11 +24,8 @@ import OzException
 
 class RHEL4Guest(RedHat.RedHatCDGuest):
     def __init__(self, tdl, config, auto, nicmodel, diskbus):
-        RedHat.RedHatCDGuest.__init__(self, tdl.name, tdl.distro, tdl.update,
-                                      tdl.arch, tdl.installtype, nicmodel, None,
-                                      None, diskbus, config)
-
-        self.tdl = tdl
+        RedHat.RedHatCDGuest.__init__(self, tdl, nicmodel, None, None, diskbus,
+                                      config)
 
         self.ks_file = auto
         if self.ks_file is None:
@@ -76,7 +73,7 @@ class RHEL4Guest(RedHat.RedHatCDGuest):
 
             if not lines[1].startswith("Red Hat Enterprise Linux 4"):
                 raise OzException.OzException("Invalid .discinfo file on ISO")
-            if lines[2].strip() != self.arch:
+            if lines[2].strip() != self.tdl.arch:
                 raise OzException.OzException("Invalid .discinfo architecture on ISO")
             if not lines[3].strip().startswith("1,2,3,4"):
                 raise OzException.OzException("Only DVDs are supported for RHEL-4 ISO installs")

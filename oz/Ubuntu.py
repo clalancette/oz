@@ -24,11 +24,7 @@ import OzException
 
 class UbuntuGuest(Guest.CDGuest):
     def __init__(self, tdl, config, auto, initrd, nicmodel, diskbus):
-        Guest.CDGuest.__init__(self, tdl.name, tdl.distro, tdl.update, tdl.arch,
-                               tdl.installtype, nicmodel, None, None, diskbus,
-                               config)
-
-        self.tdl = tdl
+        Guest.CDGuest.__init__(self, tdl, nicmodel, None, None, diskbus, config)
 
         self.casper_initrd = initrd
 
@@ -80,11 +76,7 @@ class UbuntuGuest(Guest.CDGuest):
 
 class Ubuntu610and704Guest(Guest.CDGuest):
     def __init__(self, tdl, config, auto):
-        Guest.CDGuest.__init__(self, tdl.name, tdl.distro, tdl.update, tdl.arch,
-                               tdl.installtype, "rtl8139", None, None, None,
-                               config)
-
-        self.tdl = tdl
+        Guest.CDGuest.__init__(self, tdl, "rtl8139", None, None, None, config)
 
         self.preseed_file = auto
         if self.preseed_file is None:

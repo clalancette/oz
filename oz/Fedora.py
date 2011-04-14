@@ -25,11 +25,9 @@ import OzException
 class FedoraGuest(RedHat.RedHatCDYumGuest):
     def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,
                  brokenisomethod):
-        RedHat.RedHatCDYumGuest.__init__(self, tdl.name, tdl.distro, tdl.update,
-                                         tdl.arch, tdl.installtype, nicmodel,
-                                         None, None, diskbus, config)
+        RedHat.RedHatCDYumGuest.__init__(self, tdl, nicmodel, None, None,
+                                         diskbus, config)
 
-        self.tdl = tdl
         self.ks_file = auto
         if self.ks_file is None:
             self.ks_file = ozutil.generate_full_auto_path("fedora-" + self.tdl.update + "-jeos.ks")

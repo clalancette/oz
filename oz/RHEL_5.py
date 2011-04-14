@@ -24,11 +24,8 @@ import OzException
 
 class RHEL5Guest(RedHat.RedHatCDYumGuest):
     def __init__(self, tdl, config, auto, nicmodel, diskbus):
-        RedHat.RedHatCDYumGuest.__init__(self, tdl.name, tdl.distro, tdl.update,
-                                         tdl.arch, tdl.installtype, nicmodel,
-                                         None, None, diskbus, config)
-
-        self.tdl = tdl
+        RedHat.RedHatCDYumGuest.__init__(self, tdl, nicmodel, None, None,
+                                         diskbus, config)
 
         self.ks_file = auto
         if self.ks_file is None:

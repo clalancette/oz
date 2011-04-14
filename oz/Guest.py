@@ -143,19 +143,19 @@ class Guest(object):
 
         self.log.debug("libvirt bridge name is %s, host_bridge_ip is %s" % (self.bridge_name, self.host_bridge_ip))
 
-    def __init__(self, name, distro, update, arch, nicmodel, clockoffset,
-                 mousetype, diskbus, config):
-        if arch != "i386" and arch != "x86_64":
-            raise OzException.OzException("Unsupported guest arch " + arch)
+    def __init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus, config):
+        self.tdl = tdl
+
+        # for backwards compatibility
+        self.name = self.tdl.name
+
+        if self.tdl.arch != "i386" and self.tdl.arch != "x86_64":
+            raise OzException.OzException("Unsupported guest arch " + self.tdl.arch)
         self.log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
         self.uuid = uuid.uuid4()
         mac = [0x52, 0x54, 0x00, random.randint(0x00, 0xff),
                random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
         self.macaddr = ':'.join(map(lambda x:"%02x" % x, mac))
-        self.distro = distro
-        self.update = update
-        self.arch = arch
-        self.name = name
 
         # configuration from 'paths' section
         self.output_dir = self.get_conf(config, 'paths', 'output_dir',
@@ -182,10 +182,10 @@ class Guest(object):
 
         self.jeos_cache_dir = os.path.join(self.data_dir, "jeos")
         self.jeos_filename = os.path.join(self.jeos_cache_dir,
-                                          self.distro + self.update + self.arch + ".dsk")
+                                          self.tdl.distro + self.tdl.update + self.tdl.arch + ".dsk")
 
-        self.diskimage = os.path.join(self.output_dir, self.name + ".dsk")
-        self.icicle_tmp = os.path.join(self.data_dir, "icicletmp", self.name)
+        self.diskimage = os.path.join(self.output_dir, self.tdl.name + ".dsk")
+        self.icicle_tmp = os.path.join(self.data_dir, "icicletmp", self.tdl.name)
         self.listen_port = random.randrange(1024, 65535)
 
         self.connect_to_libvirt()
@@ -208,17 +208,17 @@ class Guest(object):
         else:
             raise OzException.OzException("Unknown diskbus type " + diskbus)
 
-        self.log.debug("Name: %s, UUID: %s" % (self.name, self.uuid))
-        self.log.debug("MAC: %s, distro: %s" % (self.macaddr, self.distro))
-        self.log.debug("update: %s, arch: %s, diskimage: %s" % (self.update, self.arch, self.diskimage))
+        self.log.debug("Name: %s, UUID: %s" % (self.tdl.name, self.uuid))
+        self.log.debug("MAC: %s, distro: %s" % (self.macaddr, self.tdl.distro))
+        self.log.debug("update: %s, arch: %s, diskimage: %s" % (self.tdl.update, self.tdl.arch, self.diskimage))
         self.log.debug("nicmodel: %s, clockoffset: %s" % (self.nicmodel, self.clockoffset))
         self.log.debug("mousetype: %s, disk_bus: %s, disk_dev: %s" % (self.mousetype, self.disk_bus, self.disk_dev))
         self.log.debug("icicletmp: %s, listen_port: %d" % (self.icicle_tmp, self.listen_port))
 
     def cleanup_old_guest(self):
-        self.log.info("Cleaning up guest named %s" % (self.name))
+        self.log.info("Cleaning up guest named %s" % (self.tdl.name))
         try:
-            dom = self.libvirt_conn.lookupByName(self.name)
+            dom = self.libvirt_conn.lookupByName(self.tdl.name)
             try:
                 dom.destroy()
             except libvirt.libvirtError:
@@ -234,11 +234,11 @@ class Guest(object):
         # this method checks if anything we are going to do will conflict
         # with what already exists.  In particular, if a guest with the same
         # name, UUID, or diskimage already exists, we'll raise an exception
-        self.log.info("Checking for guest conflicts with %s" % (self.name))
+        self.log.info("Checking for guest conflicts with %s" % (self.tdl.name))
 
         try:
-            self.libvirt_conn.lookupByName(self.name)
-            raise OzException.OzException("Domain with name %s already exists" % (self.name))
+            self.libvirt_conn.lookupByName(self.tdl.name)
+            raise OzException.OzException("Domain with name %s already exists" % (self.tdl.name))
         except libvirt.libvirtError:
             pass
 
@@ -254,18 +254,18 @@ class Guest(object):
     # the next 4 methods are intended to be overridden by the individual
     # OS backends; raise an error if they are called but not implemented
     def generate_install_media(self, force_download=False):
-        raise OzException.OzException("Install media for %s%s is not implemented, install cannot continue" % (self.distro, self.update))
+        raise OzException.OzException("Install media for %s%s is not implemented, install cannot continue" % (self.tdl.distro, self.tdl.update))
 
     def customize(self, libvirt_xml):
-        raise OzException.OzException("Customization for %s%s is not implemented" % (self.distro, self.update))
+        raise OzException.OzException("Customization for %s%s is not implemented" % (self.tdl.distro, self.tdl.update))
 
     def generate_icicle(self, libvirt_xml):
-        raise OzException.OzException("ICICLE generation for %s%s is not implemented" % (self.distro, self.update))
+        raise OzException.OzException("ICICLE generation for %s%s is not implemented" % (self.tdl.distro, self.tdl.update))
 
     # this method is intended to be an optimization if the user wants to do
     # both customize and generate_icicle
     def customize_and_generate_icicle(self, libvirt_xml):
-        raise OzException.OzException("Customization and ICICLE generate for %s%s is not implemented" % (self.distro, self.update))
+        raise OzException.OzException("Customization and ICICLE generate for %s%s is not implemented" % (self.tdl.distro, self.tdl.update))
 
     def jeos(self, skip_jeos=True):
         if not skip_jeos and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
@@ -284,7 +284,7 @@ class Guest(object):
         target.setProp("dev", bus)
 
     def generate_xml(self, bootdev, want_install_disk=True):
-        self.log.info("Generate XML for guest %s with bootdev %s" % (self.name, bootdev))
+        self.log.info("Generate XML for guest %s with bootdev %s" % (self.tdl.name, bootdev))
 
         # create XML document
         doc = libxml2.newDoc("1.0")
@@ -294,7 +294,7 @@ class Guest(object):
         domain.setProp("type", self.libvirt_type)
 
         # create name element
-        domain.newChild(None, "name", self.name)
+        domain.newChild(None, "name", self.tdl.name)
 
         # create memory elements
         domain.newChild(None, "memory", "1048576")
@@ -379,14 +379,14 @@ class Guest(object):
         return doc.serialize(None, 1)
 
     def generate_blank_diskimage(self, size=10):
-        self.log.info("Generating %dGB blank diskimage for %s" % (size, self.name))
+        self.log.info("Generating %dGB blank diskimage for %s" % (size, self.tdl.name))
         f = open(self.diskimage, "w")
         # 10 GB disk image by default
         f.truncate(size * 1024 * 1024 * 1024)
         f.close()
 
     def generate_diskimage(self, size=10):
-        self.log.info("Generating %dGB diskimage with fake partition for %s" % (size, self.name))
+        self.log.info("Generating %dGB diskimage with fake partition for %s" % (size, self.tdl.name))
         # FIXME: I think that this partition table will only work with the 10GB
         # image.  We'll need to do something more sophisticated when we handle
         # variable sized disks
@@ -416,7 +416,7 @@ class Guest(object):
         origcount = count
         while count > 0:
             if count % 10 == 0:
-                self.log.debug("Waiting for %s to finish installing, %d/%d" % (self.name, count, origcount))
+                self.log.debug("Waiting for %s to finish installing, %d/%d" % (self.tdl.name, count, origcount))
             try:
                 rd_req, rd_bytes, wr_req, wr_bytes, errs = libvirt_dom.blockStats(diskdev)
             except libvirt.libvirtError, e:
@@ -458,13 +458,13 @@ class Guest(object):
             self.capture_screenshot(libvirt_dom.XMLDesc(0))
             raise OzException.OzException("Timed out waiting for install to finish")
 
-        self.log.info("Install of %s succeeded" % (self.name))
+        self.log.info("Install of %s succeeded" % (self.tdl.name))
 
     def wait_for_guest_shutdown(self, libvirt_dom, count=60):
         origcount = count
         while count > 0:
             if count % 10 == 0:
-                self.log.debug("Waiting for %s to shutdown, %d/%d" % (self.name, count, origcount))
+                self.log.debug("Waiting for %s to shutdown, %d/%d" % (self.tdl.name, count, origcount))
             try:
                 info = libvirt_dom.info()
             except libvirt.libvirtError, e:
@@ -548,7 +548,7 @@ class Guest(object):
 
     def capture_screenshot(self, xml):
         screenshot = os.path.join(self.screenshot_dir,
-                                  self.name + "-" + str(time.time()) + ".png")
+                                  self.tdl.name + "-" + str(time.time()) + ".png")
 
         doc = libxml2.parseMemory(xml, len(xml))
         graphics = doc.xpathEval('/domain/devices/graphics')
@@ -619,7 +619,7 @@ class Guest(object):
                         raise OzException.OzException("Cannot setup ICICLE generation on a running disk")
 
 
-        self.log.info("Setting up guestfs handle for %s" % (self.name))
+        self.log.info("Setting up guestfs handle for %s" % (self.tdl.name))
         g = guestfs.GuestFS()
 
         self.log.debug("Adding disk image %s" % (input_disk))
@@ -666,7 +666,7 @@ class Guest(object):
         return g
 
     def guestfs_handle_cleanup(self, g_handle):
-        self.log.info("Cleaning up guestfs handle for %s" % (self.name))
+        self.log.info("Cleaning up guestfs handle for %s" % (self.tdl.name))
         self.log.debug("Syncing")
         g_handle.sync()
 
@@ -677,7 +677,7 @@ class Guest(object):
         g_handle.kill_subprocess()
 
     def wait_for_guest_boot(self):
-        self.log.info("Waiting for guest %s to boot" % (self.name))
+        self.log.info("Waiting for guest %s to boot" % (self.tdl.name))
 
         listen = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -695,7 +695,7 @@ class Guest(object):
             try:
                 count = 300
                 while count > 0:
-                    self.log.debug("Waiting for guest %s to boot, %d/300" % (self.name, count))
+                    self.log.debug("Waiting for guest %s to boot, %d/300" % (self.tdl.name, count))
                     rlist, wlist, xlist = select.select([listen], [], [], 10)
                     if len(rlist) > 0:
                         new_sock, addr = listen.accept()
@@ -814,19 +814,18 @@ class Guest(object):
         outfile.close()
 
 class CDGuest(Guest):
-    def __init__(self, name, distro, update, arch, installtype, nicmodel,
-                 clockoffset, mousetype, diskbus, config):
-        Guest.__init__(self, name, distro, update, arch, nicmodel, clockoffset,
-                       mousetype, diskbus, config)
+    def __init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus, config):
+        Guest.__init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus,
+                       config)
 
         self.orig_iso = os.path.join(self.data_dir, "isos",
-                                     self.distro + self.update + self.arch + "-" + installtype + ".iso")
+                                     self.tdl.distro + self.tdl.update + self.tdl.arch + "-" + self.tdl.installtype + ".iso")
         self.modified_iso_cache = os.path.join(self.data_dir, "isos",
-                                               self.distro + self.update + self.arch + "-" + installtype + "-oz.iso")
+                                               self.tdl.distro + self.tdl.update + self.tdl.arch + "-" + self.tdl.installtype + "-oz.iso")
         self.output_iso = os.path.join(self.output_dir,
-                                       self.name + "-" + installtype + "-oz.iso")
+                                       self.tdl.name + "-" + self.tdl.installtype + "-oz.iso")
         self.iso_contents = os.path.join(self.data_dir, "isocontent",
-                                         self.name + "-" + installtype)
+                                         self.tdl.name + "-" + self.tdl.installtype)
 
         self.log.debug("Original ISO path: %s" % self.orig_iso)
         self.log.debug("Modified ISO cache: %s" % self.modified_iso_cache)
@@ -842,7 +841,7 @@ class CDGuest(Guest):
             shutil.rmtree(self.iso_contents)
         os.makedirs(self.iso_contents)
 
-        self.log.info("Setting up guestfs handle for %s" % (self.name))
+        self.log.info("Setting up guestfs handle for %s" % (self.tdl.name))
         gfs = guestfs.GuestFS()
         self.log.debug("Adding ISO image %s" % (self.orig_iso))
         gfs.add_drive_opts(self.orig_iso, readonly=1, format='raw')
@@ -1022,7 +1021,7 @@ class CDGuest(Guest):
         out.close()
 
     def install(self, timeout=None):
-        self.log.info("Running install for %s" % (self.name))
+        self.log.info("Running install for %s" % (self.tdl.name))
         xml = self.generate_xml("cdrom")
         dom = self.libvirt_conn.createXML(xml, 0)
 
@@ -1071,16 +1070,15 @@ class CDGuest(Guest):
             os.unlink(self.orig_iso)
 
 class FDGuest(Guest):
-    def __init__(self, name, distro, update, arch, nicmodel, clockoffset,
-                 mousetype, diskbus, config):
-        Guest.__init__(self, name, distro, update, arch, nicmodel, clockoffset,
-                       mousetype, diskbus, config)
+    def __init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus, config):
+        Guest.__init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus,
+                       config)
         self.orig_floppy = os.path.join(self.data_dir, "floppies",
-                                        self.distro + self.update + self.arch + ".img")
+                                        self.tdl.distro + self.tdl.update + self.tdl.arch + ".img")
         self.modified_floppy_cache = os.path.join(self.data_dir, "floppies",
-                                                  self.distro + self.update + self.arch + "-oz.img")
-        self.output_floppy = os.path.join(self.output_dir, self.name + "-oz.img")
-        self.floppy_contents = os.path.join(self.data_dir, "floppycontent", self.name)
+                                                  self.tdl.distro + self.tdl.update + self.tdl.arch + "-oz.img")
+        self.output_floppy = os.path.join(self.output_dir, self.tdl.name + "-oz.img")
+        self.floppy_contents = os.path.join(self.data_dir, "floppycontent", self.tdl.name)
 
         self.log.debug("Original floppy path: %s" % self.orig_floppy)
         self.log.debug("Modified floppy cache: %s" % self.modified_floppy_cache)
@@ -1095,7 +1093,7 @@ class FDGuest(Guest):
         shutil.copyfile(self.orig_floppy, self.output_floppy)
 
     def install(self, timeout=None):
-        self.log.info("Running install for %s" % (self.name))
+        self.log.info("Running install for %s" % (self.tdl.name))
         xml = self.generate_xml("fd")
         dom = self.libvirt_conn.createXML(xml, 0)
 

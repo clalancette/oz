@@ -32,11 +32,8 @@ def get_windows_arch(tdl_arch):
 
 class Windows2000andXPand2003(Guest.CDGuest):
     def __init__(self, tdl, config, auto):
-        Guest.CDGuest.__init__(self, tdl.name, tdl.distro, tdl.update, tdl.arch,
-                               tdl.installtype, 'rtl8139', "localtime", "usb",
-                               None, config)
-
-        self.tdl = tdl
+        Guest.CDGuest.__init__(self, tdl, 'rtl8139', "localtime", "usb", None,
+                               config)
 
         if self.tdl.update == "2000" and self.tdl.arch != "i386":
             raise OzException.OzException("Windows 2000 only supports i386 architecture")
@@ -96,7 +93,7 @@ class Windows2000andXPand2003(Guest.CDGuest):
         return self.iso_generate_install_media(self.url, force_download)
 
     def install(self, timeout=None):
-        self.log.info("Running install for %s" % (self.name))
+        self.log.info("Running install for %s" % (self.tdl.name))
         xml = self.generate_xml("cdrom")
         dom = self.libvirt_conn.createXML(xml, 0)
 
@@ -119,11 +116,8 @@ class Windows2000andXPand2003(Guest.CDGuest):
 
 class Windows2008and7(Guest.CDGuest):
     def __init__(self, tdl, config, auto):
-        Guest.CDGuest.__init__(self, tdl.name, tdl.distro, tdl.update, tdl.arch,
-                               tdl.installtype, 'rtl8139', "localtime", "usb",
-                               None, config)
-
-        self.tdl = tdl
+        Guest.CDGuest.__init__(self, tdl, 'rtl8139', "localtime", "usb", None,
+                               config)
 
         if self.tdl.key is None:
             raise OzException.OzException("A key is required when installing Windows 2000, XP, or 2003")
@@ -181,7 +175,7 @@ class Windows2008and7(Guest.CDGuest):
         return self.iso_generate_install_media(self.url, force_download)
 
     def install(self, timeout=None):
-        self.log.info("Running install for %s" % (self.name))
+        self.log.info("Running install for %s" % (self.tdl.name))
         xml = self.generate_xml("cdrom")
         dom = self.libvirt_conn.createXML(xml, 0)
 

@@ -23,11 +23,8 @@ import OzException
 
 class DebianGuest(Guest.CDGuest):
     def __init__(self, tdl, config, auto):
-        Guest.CDGuest.__init__(self, tdl.name, tdl.distro, tdl.update, tdl.arch,
-                               tdl.installtype, 'virtio', None, None, 'virtio',
+        Guest.CDGuest.__init__(self, tdl, 'virtio', None, None, 'virtio',
                                config)
-
-        self.tdl = tdl
 
         self.preseed_file = auto
         if self.preseed_file is None:

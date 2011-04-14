@@ -24,11 +24,8 @@ import OzException
 
 class OpenSUSEGuest(Guest.CDGuest):
     def __init__(self, tdl, config, auto):
-        Guest.CDGuest.__init__(self, tdl.name, tdl.distro, tdl.update, tdl.arch,
-                               tdl.installtype, "virtio", None, None, "virtio",
+        Guest.CDGuest.__init__(self, tdl, "virtio", None, None, "virtio",
                                config)
-
-        self.tdl = tdl
 
         self.autoyast = auto
         if self.autoyast is None:
