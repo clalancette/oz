@@ -67,24 +67,32 @@ class Windows2000andXPand2003(Guest.CDGuest):
         self.geteltorito(self.orig_iso, os.path.join(self.iso_contents,
                                                      "cdboot", "boot.bin"))
 
-        computername = "OZ" + str(random.randrange(1, 900000))
+        outname = os.path.join(self.iso_contents, self.winarch, "winnt.sif")
 
-        infile = open(self.siffile, 'r')
-        outfile = open(os.path.join(self.iso_contents, self.winarch,
-                                    "winnt.sif"), 'w')
+        if self.siffile == ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif"):
+            # if this is the oz default siffile, we modify certain parameters
+            # to make installation succeed
+            computername = "OZ" + str(random.randrange(1, 900000))
 
-        for line in infile.xreadlines():
-            if re.match(" *ProductKey", line):
-                outfile.write("    ProductKey=" + self.tdl.key + "\n")
-            elif re.match(" *ProductID", line):
-                outfile.write("    ProductID=" + self.tdl.key + "\n")
-            elif re.match(" *ComputerName", line):
-                outfile.write("    ComputerName=" + computername + "\n")
-            else:
-                outfile.write(line)
+            infile = open(self.siffile, 'r')
+            outfile = open(outname, 'w')
 
-        infile.close()
-        outfile.close()
+            for line in infile.xreadlines():
+                if re.match(" *ProductKey", line):
+                    outfile.write("    ProductKey=" + self.tdl.key + "\n")
+                elif re.match(" *ProductID", line):
+                    outfile.write("    ProductID=" + self.tdl.key + "\n")
+                elif re.match(" *ComputerName", line):
+                    outfile.write("    ComputerName=" + computername + "\n")
+                else:
+                    outfile.write(line)
+
+            infile.close()
+            outfile.close()
+        else:
+            # if the user provided their own siffile, do not override their
+            # choices; the user gets to keep both pieces if something breaks
+            shutil.copy(self.siffile, outname)
 
     def generate_install_media(self, force_download=False):
         self.log.info("Generating install media")
