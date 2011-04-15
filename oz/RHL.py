@@ -16,6 +16,7 @@
 
 import re
 import os
+import shutil
 
 import ozutil
 import RedHat
