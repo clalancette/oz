@@ -529,6 +529,10 @@ class RedHatCDYumGuest(RedHatCDGuest):
 
 class RedHatFDGuest(Guest.FDGuest):
     def __init__(self, tdl, config, auto, ks_name, nicmodel):
+        Guest.FDGuest.__init__(self, self.tdl.name, self.tdl.distro,
+                               self.tdl.update, self.tdl.arch, nicmodel, None,
+                               None, None, config)
+
         self.tdl = tdl
         if self.tdl.arch != "i386":
             raise OzException.OzException("Invalid arch " + self.tdl.arch + "for " + self.tdl.distro + " guest")
@@ -540,10 +544,6 @@ class RedHatFDGuest(Guest.FDGuest):
         self.ks_file = auto
         if self.ks_file is None:
             self.ks_file = ozutil.generate_full_auto_path(self.ks_name)
-
-        Guest.FDGuest.__init__(self, self.tdl.name, self.tdl.distro,
-                               self.tdl.update, self.tdl.arch, nicmodel, None,
-                               None, None, config)
 
     def modify_floppy(self):
         self.mkdir_p(self.floppy_contents)
