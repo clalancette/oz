@@ -74,18 +74,34 @@ class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
         f.close()
 
     def check_media(self):
-        if self.tdl.installtype != 'iso':
-            return
-        # FIXME: this is a quick hack to get CentOS-5 working for now.
-        # We really should look at the disks and try to do something better
-        if self.tdl.distro == "CentOS-5":
-            return
-
         pvd = self.get_primary_volume_descriptor(self.orig_iso)
 
-        if not re.match("RHEL/5(\.[0-9])? " + self.tdl.arch + " DVD",
-                        pvd.volume_identifier):
-            raise oz.OzException.OzException("Only DVDs are supported for RHEL-5 ISO installs")
+        # all of the below should have "LINUX" as their system_identifier,
+        # so check it here
+        if pvd.system_identifier != "LINUX                           ":
+            raise oz.OzException.OzException("Invalid system identifier on ISO for " + self.tdl.distro + " install")
+
+        if self.tdl.distro == "RHEL-5":
+            if self.tdl.installtype == 'iso':
+                if not re.match("RHEL/5(\.[0-9])? " + self.tdl.arch + " DVD",
+                                pvd.volume_identifier):
+                    raise oz.OzException.OzException("Only DVDs are supported for RHEL-5 ISO installs")
+            else:
+                # url installs
+                if not pvd.volume_identifier.startswith("Red Hat Enterprise Linux"):
+                    raise oz.OzException.OzException("Invalid boot.iso for RHEL-5 URL install")
+        else:
+            # CentOS-5
+            if self.tdl.installtype == 'iso':
+                # unfortunately CentOS-5 has the same volume identifier for both
+                # DVDs and CDs.  To tell them apart, we assume that if the
+                # size is smaller than 1GB, this is a CD
+                if not re.match("CentOS_5.[0-9]_Final", pvd.volume_identifier) or (pvd.space_size * 2048) < 1 * 1024 * 1024 * 1024:
+                    raise oz.OzException.OzException("Only DVDs are supported for CentOS-5 ISO installs")
+            else:
+                # url installs
+                if not re.match("CentOS *", pvd.volume_identifier):
+                    raise oz.OzException.OzException("Invalid boot.iso for CentOS-5 URL install")
 
 def get_class(tdl, config, auto):
     if tdl.update in ["GOLD", "U1", "U2", "U3"]:

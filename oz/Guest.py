@@ -1072,10 +1072,10 @@ class CDGuest(Guest):
                 return
 
         self.get_original_iso(url, force_download)
+        if hasattr(self, 'check_media'):
+            self.check_media()
         self.copy_iso()
         try:
-            if hasattr(self, 'check_media'):
-                self.check_media()
             self.modify_iso()
             self.generate_new_iso()
             if self.cache_modified_media:

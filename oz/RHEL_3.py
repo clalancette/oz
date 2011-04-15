@@ -87,15 +87,23 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         f.close()
 
     def check_media(self):
-        if self.tdl.installtype != 'iso':
-            return
-
-        # RHEL-3 can't possibly reach here, since we only allow URL installs
-        # there.  Therefore this is only to check CentOS-3 DVDs
         pvd = self.get_primary_volume_descriptor(self.orig_iso)
-        if not re.match("CentOS-3(\.[0-9])? " + self.tdl.arch + " DVD$",
-                        pvd.volume_identifier):
-            raise oz.OzException.OzException("Only DVDs are supported for CentOS-3 ISO installs")
+
+        if pvd.system_identifier != "LINUX                           ":
+            raise oz.OzException.OzException("Invalid system identifier on ISO for " + self.tdl.distro + " install")
+
+        if self.tdl.distro == "RHEL-3":
+            if self.tdl.installtype == "iso":
+                raise oz.OzException.OzException("BUG: shouldn't be able to reach RHEL-3 with ISO checking")
+            # The boot ISOs for RHEL-3 don't have a whole lot of identifying
+            # information.  We just pass through here, doing nothing
+        else:
+            if self.tdl.installtype == "iso":
+                if not re.match("CentOS-3(\.[0-9])? " + self.tdl.arch + " DVD$",
+                                pvd.volume_identifier):
+                    raise oz.OzException.OzException("Only DVDs are supported for CentOS-3 ISO installs")
+            # The boot ISOs for CentOS-3 don't have a whole lot of identifying
+            # information.  We just pass through here, doing nothing
 
 def get_class(tdl, config, auto):
     if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9"]:
