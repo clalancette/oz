@@ -78,7 +78,10 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         f.writelines(lines)
         f.close()
 
-    def check_dvd(self):
+    def check_media(self):
+        if self.tdl.installtype != 'iso':
+            return
+
         # RHEL-3 can't possibly reach here, since we only allow URL installs
         # there.  Therefore this is only to check CentOS-3 DVDs
         volume_identifier = self.get_primary_volume_descriptor(self.orig_iso)

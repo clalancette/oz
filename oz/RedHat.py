@@ -45,7 +45,7 @@ X11Forwarding yes
 Subsystem	sftp	/usr/libexec/openssh/sftp-server
 """
 
-    def generate_iso(self):
+    def generate_new_iso(self):
         self.log.debug("Generating new ISO")
         Guest.subprocess_check_output(["mkisofs", "-r", "-T", "-J", "-V",
                                        "Custom", "-b", "isolinux/isolinux.bin",
@@ -373,29 +373,11 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             libvirt_dom.destroy()
 
     def generate_install_media(self, force_download=False):
-        self.log.info("Generating install media")
-
-        if not force_download and os.access(self.modified_iso_cache, os.F_OK):
-            self.log.info("Using cached modified media")
-            shutil.copyfile(self.modified_iso_cache, self.output_iso)
-            return
-
         fetchurl = self.url
         if self.tdl.installtype == 'url':
             fetchurl += "/images/boot.iso"
 
-        self.get_original_iso(fetchurl, force_download)
-        self.copy_iso()
-        try:
-            if hasattr(self, 'check_dvd') and self.tdl.installtype == 'iso':
-                self.check_dvd()
-            self.modify_iso()
-            self.generate_iso()
-            if self.cache_modified_media:
-                self.log.info("Caching modified media for future use")
-                shutil.copyfile(self.output_iso, self.modified_iso_cache)
-        finally:
-            self.cleanup_iso()
+        return self.iso_generate_install_media(fetchurl, force_download)
 
 class RedHatCDYumGuest(RedHatCDGuest):
     def check_anaconda_url(self, tdl, iso=True, url=True):

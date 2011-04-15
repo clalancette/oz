@@ -76,23 +76,7 @@ class UbuntuGuest(Guest.CDGuest):
                                        self.iso_contents])
 
     def generate_install_media(self, force_download=False):
-        self.log.info("Generating install media")
-
-        if not force_download and os.access(self.modified_iso_cache, os.F_OK):
-            self.log.info("Using cached modified media")
-            shutil.copyfile(self.modified_iso_cache, self.output_iso)
-            return
-
-        self.get_original_iso(self.url, force_download)
-        self.copy_iso()
-        try:
-            self.modify_iso()
-            self.generate_new_iso()
-            if self.cache_modified_media:
-                self.log.info("Caching modified media for future use")
-                shutil.copyfile(self.output_iso, self.modified_iso_cache)
-        finally:
-            self.cleanup_iso()
+        return self.iso_generate_install_media(self.url, force_download)
 
 class Ubuntu610and704Guest(Guest.CDGuest):
     def __init__(self, tdl, config, auto):
@@ -155,23 +139,7 @@ class Ubuntu610and704Guest(Guest.CDGuest):
                                        self.iso_contents])
 
     def generate_install_media(self, force_download=False):
-        self.log.info("Generating install media")
-
-        if not force_download and os.access(self.modified_iso_cache, os.F_OK):
-            self.log.info("Using cached modified media")
-            shutil.copyfile(self.modified_iso_cache, self.output_iso)
-            return
-
-        self.get_original_iso(self.url, force_download)
-        self.copy_iso()
-        try:
-            self.modify_iso()
-            self.generate_new_iso()
-            if self.cache_modified_media:
-                self.log.info("Caching modified media for future use")
-                shutil.copyfile(self.output_iso, self.modified_iso_cache)
-        finally:
-            self.cleanup_iso()
+        self.iso_generate_install_media(self.url, force_download)
 
 def get_class(tdl, config, auto):
     if tdl.update in ["6.10", "7.04"]:

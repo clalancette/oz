@@ -65,7 +65,9 @@ class RHEL5Guest(RedHat.RedHatCDYumGuest):
         f.writelines(lines)
         f.close()
 
-    def check_dvd(self):
+    def check_media(self):
+        if self.tdl.installtype != 'iso':
+            return
         # FIXME: this is a quick hack to get CentOS-5 working for now.
         # We really should look at the disks and try to do something better
         if self.tdl.distro == "CentOS-5":

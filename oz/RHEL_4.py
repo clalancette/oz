@@ -65,7 +65,10 @@ class RHEL4Guest(RedHat.RedHatCDGuest):
         f.writelines(lines)
         f.close()
 
-    def check_dvd(self):
+    def check_media(self):
+        if self.tdl.installtype != 'iso':
+            return
+
         if self.tdl.distro == "RHEL-4":
             f = open(os.path.join(self.iso_contents, ".discinfo"), 'r')
             lines = f.readlines()

@@ -1028,6 +1028,27 @@ class CDGuest(Guest):
 
         return self.generate_xml("hd", want_install_disk=False)
 
+    def iso_generate_install_media(self, url, force_download):
+        self.log.info("Generating install media")
+
+        if not force_download and os.access(self.modified_iso_cache, os.F_OK):
+            self.log.info("Using cached modified media")
+            shutil.copyfile(self.modified_iso_cache, self.output_iso)
+            return
+
+        self.get_original_iso(url, force_download)
+        self.copy_iso()
+        try:
+            if hasattr(self, 'check_media'):
+                self.check_media()
+            self.modify_iso()
+            self.generate_new_iso()
+            if self.cache_modified_media:
+                self.log.info("Caching modified media for future use")
+                shutil.copyfile(self.output_iso, self.modified_iso_cache)
+        finally:
+            self.cleanup_iso()
+
     def cleanup_iso(self):
         self.log.info("Cleaning up old ISO data")
         shutil.rmtree(self.iso_contents)
