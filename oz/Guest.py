@@ -923,6 +923,7 @@ class CDGuest(Guest):
         cdfile.seek(16*2048)
         fmt = "=B5sBB32s32sQLL32sHHHH"
         (desc_type, identifier, version, unused1, system_identifier, volume_identifier, unused2, space_size_le, space_size_be, unused3, set_size_le, set_size_be, seqnum_le, seqnum_be) = struct.unpack(fmt, cdfile.read(struct.calcsize(fmt)))
+        cdfile.close()
 
         if desc_type != 0x1:
             raise OzException.OzException("Invalid primary volume descriptor")
