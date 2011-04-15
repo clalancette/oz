@@ -818,6 +818,15 @@ class Guest(object):
         outfile.close()
 
 class CDGuest(Guest):
+    class PrimaryVolumeDescriptor(object):
+        def __init__(self, version, sysid, volid, space_size, set_size, seqnum):
+            self.version = version
+            self.system_identifier = sysid
+            self.volume_identifier = volid
+            self.space_size = space_size
+            self.set_size = set_size
+            self.seqnum = seqnum
+
     def __init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus, config):
         Guest.__init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus,
                        config)
@@ -924,7 +933,9 @@ class CDGuest(Guest):
         if unused2 != 0x0:
             raise OzException.OzException("data in 2nd unused field")
 
-        return volume_identifier
+        return self.PrimaryVolumeDescriptor(version, system_identifier,
+                                            volume_identifier, space_size_le,
+                                            set_size_le, seqnum_le)
 
     def geteltorito(self, cdfile, outfile):
         self.get_primary_volume_descriptor(cdfile)

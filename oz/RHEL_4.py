@@ -89,9 +89,9 @@ class RHEL4Guest(RedHat.RedHatCDGuest):
             if not lines[3].strip().startswith("1,2,3,4"):
                 raise OzException.OzException("Only DVDs are supported for RHEL-4 ISO installs")
         else:
-            volume_identifier = self.get_primary_volume_descriptor(self.orig_iso)
+            pvd = self.get_primary_volume_descriptor(self.orig_iso)
 
-            if not re.match("CentOS 4(\.[0-9])?.*DVD", volume_identifier):
+            if not re.match("CentOS 4(\.[0-9])?.*DVD", pvd.volume_identifier):
                 raise OzException.OzException("Only DVDs are supported for CentOS-4 ISO installs")
 
 def get_class(tdl, config, auto):

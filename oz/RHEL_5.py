@@ -81,9 +81,10 @@ class RHEL5Guest(RedHat.RedHatCDYumGuest):
         if self.tdl.distro == "CentOS-5":
             return
 
-        volume_identifier = self.get_primary_volume_descriptor(self.orig_iso)
+        pvd = self.get_primary_volume_descriptor(self.orig_iso)
 
-        if not re.match("RHEL/5(\.[0-9])? " + self.tdl.arch + " DVD", volume_identifier):
+        if not re.match("RHEL/5(\.[0-9])? " + self.tdl.arch + " DVD",
+                        pvd.volume_identifier):
             raise OzException.OzException("Only DVDs are supported for RHEL-5 ISO installs")
 
 def get_class(tdl, config, auto):
