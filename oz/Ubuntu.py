@@ -139,7 +139,7 @@ class Ubuntu610and704Guest(Guest.CDGuest):
                                        self.iso_contents])
 
     def generate_install_media(self, force_download=False):
-        self.iso_generate_install_media(self.url, force_download)
+        return self.iso_generate_install_media(self.url, force_download)
 
 def get_class(tdl, config, auto):
     if tdl.update in ["6.10", "7.04"]:
