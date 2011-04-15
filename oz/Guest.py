@@ -766,7 +766,7 @@ class Guest(object):
         pubname = privname + ".pub"
         if os.access(privname, os.F_OK) and not os.access(pubname, os.F_OK):
             # hm, private key exists but not public?  We have to regenerate
-            os.remove(self.sshprivkey)
+            os.remove(privname)
 
         if not os.access(privname, os.F_OK) and os.access(pubname, os.F_OK):
             # hm, public key exists but not private?  We have to regenerate
