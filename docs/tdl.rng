@@ -20,94 +20,94 @@
               <text/>
             </element>
             <element name='arch'>
-	      <choice>
-		<value>i386</value>
-		<value>x86_64</value>
-	      </choice>
+              <choice>
+                <value>i386</value>
+                <value>x86_64</value>
+              </choice>
             </element>
             <element name='install'>
-	      <choice>
-		<ref name='url'/>
-		<ref name='iso'/>
-	      </choice>
+              <choice>
+                <ref name='url'/>
+                <ref name='iso'/>
+              </choice>
             </element>
-	    <element name='rootpw'>
-	      <text/>
-	    </element>
+            <element name='rootpw'>
+              <text/>
+            </element>
           </interleave>
         </element>
-	<optional>
-	  <element name='description'>
-	    <text/>
-	  </element>
-	</optional>
-	<optional>
-	  <element name='packages'>
-	    <zeroOrMore>
-	      <element name='package'>
-		<attribute name='name'>
-		  <text/>
-		</attribute>
-		<interleave>
-		  <optional>
-		    <element name='repository'>
-		      <text/>
-		    </element>
-		  </optional>
-		  <optional>
-		    <element name='file'>
-		      <text/>
-		    </element>
-		  </optional>
-		  <optional>
-		    <element name='arguments'>
-		      <text/>
-		    </element>
-		  </optional>
-		</interleave>
-	      </element>
-	    </zeroOrMore>
-	  </element>
-	</optional>
-	<optional>
-	  <element name='files'>
-	    <oneOrMore>
-	      <element name='file'>
-		<attribute name='name'>
-		  <text/>
-		</attribute>
-		<attribute name='type'>
-		  <choice>
-		    <value>raw</value>
-		    <value>base64</value>
-		  </choice>
-		</attribute>
-		<text/>
-	      </element>
-	    </oneOrMore>
-	  </element>
-	</optional>
-	<optional>
-	  <element name='repositories'>
-	    <zeroOrMore>
-	      <element name='repository'>
-		<attribute name='name'>
-		  <text/>
-		</attribute>
-		<interleave>
-		  <element name='url'>
-		    <text/>
-		  </element>
-		  <optional>
-		    <element name='signed'>
-		      <ref name='bool'/>
-		    </element>
-		  </optional>
-		</interleave>
-	      </element>
-	    </zeroOrMore>
-	  </element>
-	</optional>
+        <optional>
+          <element name='description'>
+            <text/>
+          </element>
+        </optional>
+        <optional>
+          <element name='packages'>
+            <zeroOrMore>
+              <element name='package'>
+                <attribute name='name'>
+                  <text/>
+                </attribute>
+                <interleave>
+                  <optional>
+                    <element name='repository'>
+                      <text/>
+                    </element>
+                  </optional>
+                  <optional>
+                    <element name='file'>
+                      <text/>
+                    </element>
+                  </optional>
+                  <optional>
+                    <element name='arguments'>
+                      <text/>
+                    </element>
+                  </optional>
+                </interleave>
+              </element>
+            </zeroOrMore>
+          </element>
+        </optional>
+        <optional>
+          <element name='files'>
+            <oneOrMore>
+              <element name='file'>
+                <attribute name='name'>
+                  <text/>
+                </attribute>
+                <attribute name='type'>
+                  <choice>
+                    <value>raw</value>
+                    <value>base64</value>
+                  </choice>
+                </attribute>
+                <text/>
+              </element>
+            </oneOrMore>
+          </element>
+        </optional>
+        <optional>
+          <element name='repositories'>
+            <zeroOrMore>
+              <element name='repository'>
+                <attribute name='name'>
+                  <text/>
+                </attribute>
+                <interleave>
+                  <element name='url'>
+                    <text/>
+                  </element>
+                  <optional>
+                    <element name='signed'>
+                      <ref name='bool'/>
+                    </element>
+                  </optional>
+                </interleave>
+              </element>
+            </zeroOrMore>
+          </element>
+        </optional>
       </interleave>
     </element>
   </define>
@@ -133,16 +133,16 @@
   <define name='bool'>
     <choice>
       <data type="string">
-	<param name="pattern">[Tt][Rr][Uu][Ee]</param>
+        <param name="pattern">[Tt][Rr][Uu][Ee]</param>
       </data>
       <data type="string">
-	<param name="pattern">[Ff][Aa][Ll][Ss][Ee]</param>
+        <param name="pattern">[Ff][Aa][Ll][Ss][Ee]</param>
       </data>
       <data type="string">
-	<param name="pattern">[Yy][Ee][Ss]</param>
+        <param name="pattern">[Yy][Ee][Ss]</param>
       </data>
       <data type="string">
-	<param name="pattern">[Nn][Oo]</param>
+        <param name="pattern">[Nn][Oo]</param>
       </data>
     </choice>
   </define>

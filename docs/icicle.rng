@@ -8,20 +8,20 @@
   <define name='icicle'>
     <element name='icicle'>
       <interleave>
-	<element name='packages'>
-	  <zeroOrMore>
-	    <element name='package'>
-	      <attribute name='name'>
-		<text/>
-	      </attribute>
-	    </element>
-	  </zeroOrMore>
-	</element>
-	<optional>
-	  <element name='description'>
-	    <text/>
-	  </element>
-	</optional>
+        <element name='packages'>
+          <zeroOrMore>
+            <element name='package'>
+              <attribute name='name'>
+                <text/>
+              </attribute>
+            </element>
+          </zeroOrMore>
+        </element>
+        <optional>
+          <element name='description'>
+            <text/>
+          </element>
+        </optional>
       </interleave>
     </element>
   </define>
