@@ -31,9 +31,11 @@
                 <ref name='iso'/>
               </choice>
             </element>
-            <element name='rootpw'>
-              <text/>
-            </element>
+            <optional>
+              <element name='rootpw'>
+                <text/>
+              </element>
+            </optional>
           </interleave>
         </element>
         <optional>
