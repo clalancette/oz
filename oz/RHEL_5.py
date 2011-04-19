@@ -38,7 +38,6 @@ class RHEL5Guest(RedHat.RedHatCDYumGuest):
 
         outname = os.path.join(self.iso_contents, "ks.cfg")
 
-
         if self.ks_file == ozutil.generate_full_auto_path("rhel-5-jeos.ks"):
             def kssub(line):
                 if re.match("^rootpw", line):
