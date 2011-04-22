@@ -98,10 +98,12 @@ class Windows2000andXPand2003(Guest.CDGuest):
         if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
             self.log.info("Found cached JEOS, using it")
             ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
-            return self.generate_xml("hd", want_install_disk=False)
+            return self.generate_xml("hd", None)
 
         self.log.info("Running install for %s" % (self.tdl.name))
-        xml = self.generate_xml("cdrom")
+        xml = self.generate_xml("cdrom", self.InstallDev("cdrom",
+                                                         self.output_iso,
+                                                         "hdc"))
         dom = self.libvirt_conn.createXML(xml, 0)
 
         if timeout is None:
@@ -109,7 +111,8 @@ class Windows2000andXPand2003(Guest.CDGuest):
 
         self.wait_for_install_finish(dom, timeout)
 
-        xml = self.generate_xml("hd")
+        xml = self.generate_xml("hd", self.InstallDev("cdrom", self.output_iso,
+                                                         "hdc"))
         dom = self.libvirt_conn.createXML(xml, 0)
 
         self.wait_for_install_finish(dom, timeout)
@@ -119,7 +122,7 @@ class Windows2000andXPand2003(Guest.CDGuest):
             self.mkdir_p(self.jeos_cache_dir)
             ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
 
-        return self.generate_xml("hd", want_install_disk=False)
+        return self.generate_xml("hd", None)
 
 class Windows2008and7(Guest.CDGuest):
     def __init__(self, tdl, config, auto):
@@ -191,10 +194,12 @@ class Windows2008and7(Guest.CDGuest):
         if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
             self.log.info("Found cached JEOS, using it")
             ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
-            return self.generate_xml("hd", want_install_disk=False)
+            return self.generate_xml("hd", None)
 
         self.log.info("Running install for %s" % (self.tdl.name))
-        xml = self.generate_xml("cdrom")
+        xml = self.generate_xml("cdrom", self.InstallDev("cdrom",
+                                                         self.output_iso,
+                                                         "hdc"))
         dom = self.libvirt_conn.createXML(xml, 0)
 
         if timeout is None:
@@ -202,12 +207,14 @@ class Windows2008and7(Guest.CDGuest):
 
         self.wait_for_install_finish(dom, timeout)
 
-        xml = self.generate_xml("hd")
+        xml = self.generate_xml("hd", self.InstallDev("cdrom", self.output_iso,
+                                                      "hdc"))
         dom = self.libvirt_conn.createXML(xml, 0)
 
         self.wait_for_install_finish(dom, timeout)
 
-        xml = self.generate_xml("hd")
+        xml = self.generate_xml("hd", self.InstallDev("cdrom", self.output_iso,
+                                                      "hdc"))
         dom = self.libvirt_conn.createXML(xml, 0)
         self.wait_for_install_finish(dom, timeout)
 
@@ -216,7 +223,7 @@ class Windows2008and7(Guest.CDGuest):
             self.mkdir_p(self.jeos_cache_dir)
             ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
 
-        return self.generate_xml("hd", want_install_disk=False)
+        return self.generate_xml("hd", None)
 
 def get_class(tdl, config, auto):
     if tdl.update in ["2000", "XP", "2003"]:

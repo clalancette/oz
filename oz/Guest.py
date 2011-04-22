@@ -271,16 +271,13 @@ class Guest(object):
     def customize_and_generate_icicle(self, libvirt_xml):
         raise OzException.OzException("Customization and ICICLE generate for %s%s is not implemented" % (self.tdl.distro, self.tdl.update))
 
-    def targetDev(self, doc, devicetype, path, bus):
-        install = doc.newChild(None, "disk", None)
-        install.setProp("type", "file")
-        install.setProp("device", devicetype)
-        source = install.newChild(None, "source", None)
-        source.setProp("file", path)
-        target = install.newChild(None, "target", None)
-        target.setProp("dev", bus)
+    class InstallDev(object):
+        def __init__(self, devicetype, path, bus):
+            self.devicetype = devicetype
+            self.path = path
+            self.bus = bus
 
-    def generate_xml(self, bootdev, want_install_disk=True):
+    def generate_xml(self, bootdev, installdev):
         self.log.info("Generate XML for guest %s with bootdev %s" % (self.tdl.name, bootdev))
 
         # create XML document
@@ -364,16 +361,20 @@ class Guest(object):
         bootTarget.setProp("bus", self.disk_bus)
         bootSource = bootDisk.newChild(None, "source", None)
         bootSource.setProp("file", self.diskimage)
-        # install disk (cdrom or floppy)
-        if want_install_disk:
-            if hasattr(self, "output_iso"):
-                self.targetDev(devices, "cdrom", self.output_iso, "hdc")
-            if hasattr(self, "output_floppy"):
-                self.targetDev(devices, "floppy", self.output_floppy, "fda")
+        # install disk (if any)
+        if installdev:
+            install = devices.newChild(None, "disk", None)
+            install.setProp("type", "file")
+            install.setProp("device", installdev.devicetype)
+            source = install.newChild(None, "source", None)
+            source.setProp("file", installdev.path)
+            target = install.newChild(None, "target", None)
+            target.setProp("dev", installdev.bus)
 
-        self.log.debug("Generated XML:\n%s" % (doc.serialize(None, 1)))
+        xml = doc.serialize(None, 1)
+        self.log.debug("Generated XML:\n%s" % (xml))
 
-        return doc.serialize(None, 1)
+        return xml
 
     def generate_blank_diskimage(self, size=10):
         self.log.info("Generating %dGB blank diskimage for %s" % (size, self.tdl.name))
@@ -1038,10 +1039,12 @@ class CDGuest(Guest):
         if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
             self.log.info("Found cached JEOS, using it")
             ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
-            return self.generate_xml("hd", want_install_disk=False)
+            return self.generate_xml("hd", None)
 
         self.log.info("Running install for %s" % (self.tdl.name))
-        xml = self.generate_xml("cdrom")
+        xml = self.generate_xml("cdrom", self.InstallDev("cdrom",
+                                                         self.output_iso,
+                                                         "hdc"))
         dom = self.libvirt_conn.createXML(xml, 0)
 
         if timeout is None:
@@ -1054,7 +1057,7 @@ class CDGuest(Guest):
             self.mkdir_p(self.jeos_cache_dir)
             ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
 
-        return self.generate_xml("hd", want_install_disk=False)
+        return self.generate_xml("hd", None)
 
     def iso_generate_install_media(self, url, force_download):
         self.log.info("Generating install media")
@@ -1126,10 +1129,12 @@ class FDGuest(Guest):
         if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
             self.log.info("Found cached JEOS, using it")
             ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
-            return self.generate_xml("hd", want_install_disk=False)
+            return self.generate_xml("hd", None)
 
         self.log.info("Running install for %s" % (self.tdl.name))
-        xml = self.generate_xml("fd")
+        xml = self.generate_xml("fd", self.InstallDev("floppy",
+                                                      self.output_floppy,
+                                                      "fda"))
         dom = self.libvirt_conn.createXML(xml, 0)
 
         if timeout is None:
@@ -1142,7 +1147,7 @@ class FDGuest(Guest):
             self.mkdir_p(self.jeos_cache_dir)
             ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
 
-        return self.generate_xml("hd", want_install_disk=False)
+        return self.generate_xml("hd", None)
 
     def cleanup_floppy(self):
         self.log.info("Cleaning up floppy data")
