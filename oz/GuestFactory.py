@@ -14,6 +14,10 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+"""
+Factory functions.
+"""
+
 import Fedora
 import FedoraCore
 import RHEL_2_1
@@ -29,6 +33,18 @@ import Debian
 import OzException
 
 def guest_factory(tdl, config, auto):
+    """
+    Factory function return an appropriate Guest object based on the TDL.
+    The arguments are:
+
+    tdl    - The TDL object to be used.  The object will be determined based
+             on the distro and version from the TDL.
+    config - A ConfigParser object that contains configuration.  If None is
+             passed for the config, Oz defaults will be used.
+    auto   - An unattended installation file to be used for the
+             installation.  If None is passed for auto, then Oz will use
+             a known-working unattended installation file.
+    """
     if tdl.distro == "Fedora":
         return Fedora.get_class(tdl, config, auto)
     elif tdl.distro == "FedoraCore":
@@ -57,6 +73,9 @@ def guest_factory(tdl, config, auto):
     raise OzException.OzException("Invalid distribution " + tdl.distro)
 
 def distrolist():
+    """
+    Function to print out a list of supported distributions.
+    """
     print "   Fedora: 7, 8, 9, 10, 11, 12, 13, 14"
     print "   Fedora Core: 1, 2, 3, 4, 5, 6"
     print "   RHEL 2.1: GOLD, U2, U3, U4, U5, U6"
