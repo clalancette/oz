@@ -108,6 +108,7 @@ schema_expect_fail test-14-os-no-arch.tdl
 schema_expect_fail test-15-os-no-install.tdl
 schema_expect_success test-16-signed-repository.tdl
 schema_expect_fail test-17-repo-invalid-signed.tdl
+schema_expect_success test-18-rootpw.tdl
 
 python_expect_success test-01-simple-iso.tdl
 python_expect_success test-02-simple-url.tdl
@@ -126,6 +127,7 @@ python_expect_fail test-14-os-no-arch.tdl
 python_expect_fail test-15-os-no-install.tdl
 python_expect_success test-16-signed-repository.tdl
 python_expect_fail test-17-repo-invalid-signed.tdl
+python_expect_success test-18-rootpw.tdl
 
 echo "SUCCESS: $SUCCESS, FAIL: $FAIL"
 exit $FAIL
