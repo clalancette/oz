@@ -14,12 +14,31 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+"""
+Template Description Language (TDL)
+"""
+
 import libxml2
 import base64
 
 import OzException
 
 def get_value(doc, xmlstring, component, optional=False):
+    """
+    Function to get the contents from an XML node.  It takes 4 arguments:
+
+    doc       - The libxml2 document to get a value from.
+    xmlstring - The XPath string to use.
+    component - A string representing which TDL component is being
+                looked for (used in error reporting).
+    optional  - A boolean describing whether this XML node is allowed to be
+                absent or not.  If optional is True and the node is absent,
+                None is returned.  If optional is False and the node is
+                absent, an exception is raised.  (default: False)
+
+    Returns the content of the XML node if found, None if the node is not
+    found and optional is True.
+    """
     res = doc.xpathEval(xmlstring)
     if len(res) == 1:
         return res[0].getContent()
@@ -32,12 +51,29 @@ def get_value(doc, xmlstring, component, optional=False):
         raise OzException.OzException("Expected 0 or 1 %s in TDL, saw %d" % (component, len(res)))
 
 class Repository(object):
+    """
+    Class that represents a single repository to be used for installing
+    packages.  Objects of this type contain 3 pieces of information:
+
+    name   - The name of this repository.
+    url    - The URL of this repository.
+    signed - Whether this repository is signed (optional).
+    """
     def __init__(self, name, url, signed):
         self.name = name
         self.url = url
         self.signed = signed
 
 class Package(object):
+    """
+    Class that represents a single package to be installed.
+    Objects of this type contain 4 pieces of information:
+
+    name     - The name of the package.
+    repo     - The repository that this package comes from (optional).
+    filename - The filename that contains this package (optional).
+    args     - Arguments necessary to install this package (optional).
+    """
     def __init__(self, name, repo, filename, args):
         self.name = name
         self.repo = repo
@@ -45,6 +81,17 @@ class Package(object):
         self.args = args
 
 def string_to_bool(instr, component):
+    """
+    Function to take a string and determine whether it is True, Yes, False,
+    or No.  It takes 2 arguments:
+
+    instr     - The string to examine.
+    component - A string representing which TDL component is being
+                looked for (used in error reporting).
+
+    Returns True if instr is "Yes" or "True", False if instr is "No"
+    or "False", and raises an Exception otherwise.
+    """
     lower = instr.lower()
     if lower == 'no' or lower == 'false':
         return False
@@ -53,6 +100,31 @@ def string_to_bool(instr, component):
     raise OzException.OzException("%s property must be 'true', 'yes', 'false', or' no'" % (component))
 
 class TDL(object):
+    """
+    Class that represents a parsed piece of TDL XML.  Objects of this kind
+    contain 10 pieces of information:
+
+    name         - The name assigned to this TDL.
+    distro       - The type of operating system this TDL represents.
+    update       - The version of the operating system this TDL represents.
+    arch         - The architecture of the operating system this TDL
+                   represents. Currently this must be one of "i386" or
+                   "x86_64".
+    key          - The installation key necessary to install this operating
+                   system (optional).
+    description  - A free-form description of this TDL (optional).
+    installtype  - The method to be used to install this operating system.
+                   Currently this must be one of "url" or "iso".
+    packages     - A list of Package objects describing the packages to be
+                   installed on the operating system.  This list may be
+                   empty.
+    repositories - A dictionary of Repository objects describing the
+                   repositories to be searched to find packages.  The
+                   dictionary is indexed by repository name.  This
+                   dictionary may be empty.
+    files        - A dictionary of file contents to be added to the
+                   operating system.  The dictionary is indexed by filename.
+    """
     def __init__(self, xmlstring):
         self.doc = None
 
