@@ -271,13 +271,6 @@ class Guest(object):
     def customize_and_generate_icicle(self, libvirt_xml):
         raise OzException.OzException("Customization and ICICLE generate for %s%s is not implemented" % (self.tdl.distro, self.tdl.update))
 
-    def jeos(self, skip_jeos=True):
-        if not skip_jeos and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
-            self.log.info("Found cached JEOS, using it")
-            ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
-            return self.generate_xml("hd", want_install_disk=False)
-        return None
-
     def targetDev(self, doc, devicetype, path, bus):
         install = doc.newChild(None, "disk", None)
         install.setProp("type", "file")
@@ -389,7 +382,12 @@ class Guest(object):
         f.truncate(size * 1024 * 1024 * 1024)
         f.close()
 
-    def generate_diskimage(self, size=10):
+    def generate_diskimage(self, size=10, force=False):
+        if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
+            # if we found a cached JEOS, we don't need to do anything here;
+            # we'll copy the JEOS itself later on
+            return
+
         self.log.info("Generating %dGB diskimage with fake partition for %s" % (size, self.tdl.name))
         # FIXME: I think that this partition table will only work with the 10GB
         # image.  We'll need to do something more sophisticated when we handle
@@ -1036,7 +1034,12 @@ class CDGuest(Guest):
         out.write(eltoritodata)
         out.close()
 
-    def install(self, timeout=None):
+    def install(self, timeout=None, force=False):
+        if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
+            self.log.info("Found cached JEOS, using it")
+            ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
+            return self.generate_xml("hd", want_install_disk=False)
+
         self.log.info("Running install for %s" % (self.tdl.name))
         xml = self.generate_xml("cdrom")
         dom = self.libvirt_conn.createXML(xml, 0)
@@ -1056,10 +1059,15 @@ class CDGuest(Guest):
     def iso_generate_install_media(self, url, force_download):
         self.log.info("Generating install media")
 
-        if not force_download and os.access(self.modified_iso_cache, os.F_OK):
-            self.log.info("Using cached modified media")
-            shutil.copyfile(self.modified_iso_cache, self.output_iso)
-            return
+        if not force_download:
+            if os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
+                # if we found a cached JEOS, we don't need to do anything here;
+                # we'll copy the JEOS itself later on
+                return
+            elif os.access(self.modified_iso_cache, os.F_OK):
+                self.log.info("Using cached modified media")
+                shutil.copyfile(self.modified_iso_cache, self.output_iso)
+                return
 
         self.get_original_iso(url, force_download)
         self.copy_iso()
@@ -1080,9 +1088,15 @@ class CDGuest(Guest):
 
     def cleanup_install(self):
         self.log.info("Cleaning up after install")
-        os.unlink(self.output_iso)
-        self.log.debug("Removed modified ISO")
-        if not self.cache_original_media:
+        # the modified ISO may not exist if we did a JEOS copy instead of a
+        # full install
+        if os.access(self.output_iso, os.F_OK):
+            self.log.debug("Removing modified ISO")
+            os.unlink(self.output_iso)
+        # the original ISO may not exist if we did a JEOS copy instead of a
+        # full install
+        if not self.cache_original_media and os.access(self.orig_iso, os.F_OK):
+            self.log.debug("Removing original ISO")
             os.unlink(self.orig_iso)
 
 class FDGuest(Guest):
@@ -1108,7 +1122,12 @@ class FDGuest(Guest):
         self.log.info("Copying floppy contents for modification")
         shutil.copyfile(self.orig_floppy, self.output_floppy)
 
-    def install(self, timeout=None):
+    def install(self, timeout=None, force=False):
+        if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
+            self.log.info("Found cached JEOS, using it")
+            ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
+            return self.generate_xml("hd", want_install_disk=False)
+
         self.log.info("Running install for %s" % (self.tdl.name))
         xml = self.generate_xml("fd")
         dom = self.libvirt_conn.createXML(xml, 0)

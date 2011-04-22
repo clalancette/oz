@@ -66,7 +66,11 @@ class FedoraCoreGuest(RedHat.RedHatCDGuest):
         f.close()
 
 class FedoraCore4Guest(FedoraCoreGuest):
-    def generate_diskimage(self, size=10):
+    def generate_diskimage(self, size=10, force=False):
+        if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
+            # if we found a cached JEOS, we don't need to do anything here;
+            # we'll copy the JEOS itself later on
+            return
         self.generate_blank_diskimage()
 
 def get_class(tdl, config, auto):

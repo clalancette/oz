@@ -590,11 +590,15 @@ class RedHatFDGuest(Guest.FDGuest):
     def generate_install_media(self, force_download=False):
         self.log.info("Generating install media")
 
-        if not force_download and os.access(self.modified_floppy_cache,
-                                            os.F_OK):
-            self.log.info("Using cached modified media")
-            shutil.copyfile(self.modified_floppy_cache, self.output_floppy)
-            return
+        if not force_download:
+            if os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
+                # if we found a cached JEOS, we don't need to do anything here;
+                # we'll copy the JEOS itself later on
+                return
+            elif os.access(self.modified_floppy_cache, os.F_OK):
+                self.log.info("Using cached modified media")
+                shutil.copyfile(self.modified_floppy_cache, self.output_floppy)
+                return
 
         self.get_original_floppy(self.url + "/images/bootnet.img",
                                  force_download)

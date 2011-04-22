@@ -94,7 +94,12 @@ class Windows2000andXPand2003(Guest.CDGuest):
     def generate_install_media(self, force_download=False):
         return self.iso_generate_install_media(self.url, force_download)
 
-    def install(self, timeout=None):
+    def install(self, timeout=None, force=False):
+        if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
+            self.log.info("Found cached JEOS, using it")
+            ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
+            return self.generate_xml("hd", want_install_disk=False)
+
         self.log.info("Running install for %s" % (self.tdl.name))
         xml = self.generate_xml("cdrom")
         dom = self.libvirt_conn.createXML(xml, 0)
@@ -182,7 +187,12 @@ class Windows2008and7(Guest.CDGuest):
     def generate_install_media(self, force_download=False):
         return self.iso_generate_install_media(self.url, force_download)
 
-    def install(self, timeout=None):
+    def install(self, timeout=None, force=False):
+        if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
+            self.log.info("Found cached JEOS, using it")
+            ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
+            return self.generate_xml("hd", want_install_disk=False)
+
         self.log.info("Running install for %s" % (self.tdl.name))
         xml = self.generate_xml("cdrom")
         dom = self.libvirt_conn.createXML(xml, 0)

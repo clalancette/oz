@@ -128,18 +128,16 @@ try:
     else:
         guest.check_for_guest_conflict()
 
-    libvirt_xml = guest.jeos(force_download)
-    if libvirt_xml is None:
-        guest.generate_install_media(force_download)
+    guest.generate_install_media(force_download)
+    try:
         try:
-            try:
-                guest.generate_diskimage()
-                libvirt_xml = guest.install(timeout)
-            except:
-                guest.cleanup_old_guest()
-                raise
-        finally:
-            guest.cleanup_install()
+            guest.generate_diskimage(force=force_download)
+            libvirt_xml = guest.install(timeout, force_download)
+        except:
+            guest.cleanup_old_guest()
+            raise
+    finally:
+        guest.cleanup_install();
 
     if customize and generate_icicle:
         print guest.customize_and_generate_icicle(libvirt_xml)
