@@ -22,6 +22,7 @@ man2html:
 
 unittests:
 	@cd tests/tdl ; ./run.sh
+	@cd tests/factory ; ./run.sh
 
 clean:
-	rm -rf MANIFEST build dist usr *~ oz.spec *.pyc oz/*~ oz/*.pyc examples/*~ oz/auto/*~ man/*~ docs/*~ man/*.html tests/tdl/*~
+	rm -rf MANIFEST build dist usr *~ oz.spec *.pyc oz/*~ oz/*.pyc examples/*~ oz/auto/*~ man/*~ docs/*~ man/*.html tests/tdl/*~ tests/factory/*~
