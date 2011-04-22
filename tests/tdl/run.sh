@@ -6,6 +6,9 @@ if [ -z "$DEBUG" ]; then
     DEBUG=0
 fi
 
+SUCCESS=0
+FAIL=0
+
 schema_expect_success() {
     echo -n "Testing Schema $1..."
     if [ ! -r "$1" ]; then
@@ -19,8 +22,10 @@ schema_expect_success() {
     fi
     if [ $? -eq 0 ]; then
 	echo "OK"
+	SUCCESS=$(( $SUCCESS + 1 ))
     else
 	echo "FAIL"
+	FAIL=$(( $FAIL + 1 ))
     fi
 }
 schema_expect_fail() {
@@ -36,8 +41,10 @@ schema_expect_fail() {
     fi
     if [ $? -ne 0 ]; then
 	echo "OK"
+	SUCCESS=$(( $SUCCESS + 1 ))
     else
 	echo "FAIL"
+	FAIL=$(( $FAIL + 1 ))
     fi
 }
 
@@ -56,8 +63,10 @@ python_expect_success() {
 
     if [ $? -eq 0 ]; then
 	echo "OK"
+	SUCCESS=$(( $SUCCESS + 1 ))
     else
 	echo "FAIL"
+	FAIL=$(( $FAIL + 1 ))
     fi
 }
 python_expect_fail() {
@@ -75,8 +84,10 @@ python_expect_fail() {
 
     if [ $? -ne 0 ]; then
 	echo "OK"
+	SUCCESS=$(( $SUCCESS + 1 ))
     else
 	echo "FAIL"
+	FAIL=$(( $FAIL + 1 ))
     fi
 }
 
@@ -115,3 +126,6 @@ python_expect_fail test-14-os-no-arch.tdl
 python_expect_fail test-15-os-no-install.tdl
 python_expect_success test-16-signed-repository.tdl
 python_expect_fail test-17-repo-invalid-signed.tdl
+
+echo "SUCCESS: $SUCCESS, FAIL: $FAIL"
+exit $FAIL
