@@ -24,29 +24,35 @@ import Guest
 import ozutil
 import OzException
 
-def get_windows_arch(tdl_arch):
-    arch = tdl_arch
-    if arch == "x86_64":
-        arch = "amd64"
-    return arch
-
-class Windows2000andXPand2003(Guest.CDGuest):
-    def __init__(self, tdl, config, auto):
-        Guest.CDGuest.__init__(self, tdl, 'rtl8139', "localtime", "usb", None,
+class Windows(Guest.CDGuest):
+    def __init__(self, tdl, config):
+        Guest.CDGuest.__init__(self, tdl, "rtl8139", "localtime", "usb", None,
                                config)
+
+        if self.tdl.key is None:
+            raise OzException.OzException("A key is required when installing Windows")
+
+        self.url = self.check_url(self.tdl, iso=True, url=False)
+
+    def get_windows_arch(self, tdl_arch):
+        arch = tdl_arch
+        if arch == "x86_64":
+            arch = "amd64"
+        return arch
+
+    def generate_install_media(self, force_download=False):
+        return self.iso_generate_install_media(self.url, force_download)
+
+class Windows2000andXPand2003(Windows):
+    def __init__(self, tdl, config, auto):
+        Windows.__init__(self, tdl, config)
 
         if self.tdl.update == "2000" and self.tdl.arch != "i386":
             raise OzException.OzException("Windows 2000 only supports i386 architecture")
-        if self.tdl.key is None:
-            raise OzException.OzException("A key is required when installing Windows 2000, XP, or 2003")
 
         self.siffile = auto
         if self.siffile is None:
             self.siffile = ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif")
-
-        self.url = self.check_url(self.tdl, iso=True, url=False)
-
-        self.winarch = get_windows_arch(self.tdl.arch)
 
     def generate_new_iso(self):
         self.log.debug("Generating new ISO")
@@ -66,7 +72,9 @@ class Windows2000andXPand2003(Guest.CDGuest):
         self.geteltorito(self.orig_iso, os.path.join(self.iso_contents,
                                                      "cdboot", "boot.bin"))
 
-        outname = os.path.join(self.iso_contents, self.winarch, "winnt.sif")
+        outname = os.path.join(self.iso_contents,
+                               self.get_windows_arch(self.tdl.arch),
+                               "winnt.sif")
 
         if self.siffile == ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif"):
             # if this is the oz default siffile, we modify certain parameters
@@ -91,54 +99,39 @@ class Windows2000andXPand2003(Guest.CDGuest):
             # choices; the user gets to keep both pieces if something breaks
             shutil.copy(self.siffile, outname)
 
-    def generate_install_media(self, force_download=False):
-        return self.iso_generate_install_media(self.url, force_download)
-
     def install(self, timeout=None, force=False):
         if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
             self.log.info("Found cached JEOS, using it")
             ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
-            return self.generate_xml("hd", None)
+        else:
+            self.log.info("Running install for %s" % (self.tdl.name))
 
-        self.log.info("Running install for %s" % (self.tdl.name))
-        xml = self.generate_xml("cdrom", self.InstallDev("cdrom",
-                                                         self.output_iso,
-                                                         "hdc"))
-        dom = self.libvirt_conn.createXML(xml, 0)
+            cddev = self.InstallDev("cdrom", self.output_iso, "hdc")
 
-        if timeout is None:
-            timeout = 3600
+            if timeout is None:
+                timeout = 3600
 
-        self.wait_for_install_finish(dom, timeout)
+            dom = self.libvirt_conn.createXML(self.generate_xml("cdrom", cddev),
+                                              0)
+            self.wait_for_install_finish(dom, timeout)
 
-        xml = self.generate_xml("hd", self.InstallDev("cdrom", self.output_iso,
-                                                         "hdc"))
-        dom = self.libvirt_conn.createXML(xml, 0)
+            dom = self.libvirt_conn.createXML(self.generate_xml("hd", cddev), 0)
+            self.wait_for_install_finish(dom, timeout)
 
-        self.wait_for_install_finish(dom, timeout)
-
-        if self.cache_jeos:
-            self.log.info("Caching JEOS")
-            self.mkdir_p(self.jeos_cache_dir)
-            ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
+            if self.cache_jeos:
+                self.log.info("Caching JEOS")
+                self.mkdir_p(self.jeos_cache_dir)
+                ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
 
         return self.generate_xml("hd", None)
 
-class Windows2008and7(Guest.CDGuest):
+class Windows2008and7(Windows):
     def __init__(self, tdl, config, auto):
-        Guest.CDGuest.__init__(self, tdl, 'rtl8139', "localtime", "usb", None,
-                               config)
-
-        if self.tdl.key is None:
-            raise OzException.OzException("A key is required when installing Windows 2000, XP, or 2003")
+        Windows.__init__(self, tdl, config)
 
         self.unattendfile = auto
         if self.unattendfile is None:
             self.unattendfile = ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.xml")
-
-        self.url = self.check_url(self.tdl, iso=True, url=False)
-
-        self.winarch = get_windows_arch(self.tdl.arch)
 
     def generate_new_iso(self):
         self.log.debug("Generating new ISO")
@@ -169,7 +162,8 @@ class Windows2008and7(Guest.CDGuest):
             xp.xpathRegisterNs("ms", "urn:schemas-microsoft-com:unattend")
 
             for component in xp.xpathEval('/ms:unattend/ms:settings/ms:component'):
-                component.setProp('processorArchitecture', self.winarch)
+                component.setProp('processorArchitecture',
+                                  self.get_windows_arch(self.tdl.arch))
 
             keys = xp.xpathEval('/ms:unattend/ms:settings/ms:component/ms:ProductKey')
             keys[0].setContent(self.tdl.key)
@@ -187,41 +181,32 @@ class Windows2008and7(Guest.CDGuest):
             # breaks
             shutil.copy(self.unattendfile, outname)
 
-    def generate_install_media(self, force_download=False):
-        return self.iso_generate_install_media(self.url, force_download)
-
     def install(self, timeout=None, force=False):
         if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
             self.log.info("Found cached JEOS, using it")
             ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
-            return self.generate_xml("hd", None)
+        else:
+            self.log.info("Running install for %s" % (self.tdl.name))
 
-        self.log.info("Running install for %s" % (self.tdl.name))
-        xml = self.generate_xml("cdrom", self.InstallDev("cdrom",
-                                                         self.output_iso,
-                                                         "hdc"))
-        dom = self.libvirt_conn.createXML(xml, 0)
+            cddev = self.InstallDev("cdrom", self.output_iso, "hdc")
 
-        if timeout is None:
-            timeout = 6000
+            if timeout is None:
+                timeout = 6000
 
-        self.wait_for_install_finish(dom, timeout)
+            dom = self.libvirt_conn.createXML(self.generate_xml("cdrom", cddev),
+                                              0)
+            self.wait_for_install_finish(dom, timeout)
 
-        xml = self.generate_xml("hd", self.InstallDev("cdrom", self.output_iso,
-                                                      "hdc"))
-        dom = self.libvirt_conn.createXML(xml, 0)
+            dom = self.libvirt_conn.createXML(self.generate_xml("hd", cddev), 0)
+            self.wait_for_install_finish(dom, timeout)
 
-        self.wait_for_install_finish(dom, timeout)
+            dom = self.libvirt_conn.createXML(self.generate_xml("hd", cddev), 0)
+            self.wait_for_install_finish(dom, timeout)
 
-        xml = self.generate_xml("hd", self.InstallDev("cdrom", self.output_iso,
-                                                      "hdc"))
-        dom = self.libvirt_conn.createXML(xml, 0)
-        self.wait_for_install_finish(dom, timeout)
-
-        if self.cache_jeos:
-            self.log.info("Caching JEOS")
-            self.mkdir_p(self.jeos_cache_dir)
-            ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
+            if self.cache_jeos:
+                self.log.info("Caching JEOS")
+                self.mkdir_p(self.jeos_cache_dir)
+                ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
 
         return self.generate_xml("hd", None)
 
