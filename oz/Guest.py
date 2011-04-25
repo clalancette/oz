@@ -376,30 +376,16 @@ class Guest(object):
 
         return xml
 
-    def generate_blank_diskimage(self, size=10):
-        self.log.info("Generating %dGB blank diskimage for %s" % (size, self.tdl.name))
-        f = open(self.diskimage, "w")
-        # 10 GB disk image by default
-        f.truncate(size * 1024 * 1024 * 1024)
-        f.close()
-
     def generate_diskimage(self, size=10, force=False):
         if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
             # if we found a cached JEOS, we don't need to do anything here;
             # we'll copy the JEOS itself later on
             return
 
-        self.log.info("Generating %dGB diskimage with fake partition for %s" % (size, self.tdl.name))
-        # FIXME: I think that this partition table will only work with the 10GB
-        # image.  We'll need to do something more sophisticated when we handle
-        # variable sized disks
+        self.log.info("Generating %dGB diskimage for %s" % (size,
+                                                            self.tdl.name))
         f = open(self.diskimage, "w")
-        f.seek(0x1bf)
-        f.write("\x01\x01\x00\x82\xfe\x3f\x7c\x3f\x00\x00\x00\xfe\xa3\x1e")
-        f.seek(0x1fe)
-        f.write("\x55\xaa")
-        f.seek(size * 1024 * 1024 * 1024)
-        f.write("\x00")
+        f.truncate(size * 1024 * 1024 * 1024)
         f.close()
 
     def wait_for_install_finish(self, libvirt_dom, count, inactivity_timeout=300):

@@ -1,8 +1,8 @@
 ;SetupMgrTag
 [Data]
     AutoPartition=1
-    MsDosInitiated="0"
-    UnattendedInstall="Yes"
+    MsDosInitiated=No
+    UnattendedInstall=Yes
 
 [Unattended]
     UnattendMode=FullUnattended

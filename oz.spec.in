@@ -25,6 +25,7 @@ Requires: mtools
 Requires: python-uuid
 Requires: openssh
 Requires: m2crypto
+Requires: pyparted
 
 BuildRequires: python
 

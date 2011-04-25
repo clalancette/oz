@@ -65,17 +65,7 @@ class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
         f.writelines(lines)
         f.close()
 
-class FedoraCore4Guest(FedoraCoreGuest):
-    def generate_diskimage(self, size=10, force=False):
-        if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
-            # if we found a cached JEOS, we don't need to do anything here;
-            # we'll copy the JEOS itself later on
-            return
-        self.generate_blank_diskimage()
-
 def get_class(tdl, config, auto):
-    if tdl.update in ["1", "2", "3", "5", "6"]:
+    if tdl.update in ["1", "2", "3", "4", "5", "6"]:
         return FedoraCoreGuest(tdl, config, auto)
-    if tdl.update in ["4"]:
-        return FedoraCore4Guest(tdl, config, auto)
     raise oz.OzException.OzException("Unsupported FedoraCore update " + tdl.update)
