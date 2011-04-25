@@ -14,19 +14,34 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+"""
+Miscellaneous utility functions.
+"""
+
 import os
 
 def generate_full_auto_path(relative):
+    """
+    Function to find the absolute path to an unattended installation file.
+    """
     # all of the automated installation paths are installed to $pkg_path/auto,
     # so we just need to find it and generate the right path here
     pkg_path = os.path.dirname(__file__)
     return os.path.abspath(os.path.join(pkg_path, "auto", relative))
 
 def generate_full_guesttools_path(relative):
+    """
+    Function to find the absolute path to a guest tools executable.
+    """
     pkg_path = os.path.dirname(__file__)
     return os.path.abspath(os.path.join(pkg_path, "guesttools", relative))
 
 def executable_exists(program):
+    """
+    Function to find out whether an executable exists in the PATH
+    of the user.  If so, the absolute path to the executable is returned.
+    If not, an exception is raised.
+    """
     def is_exe(fpath):
         return os.path.exists(fpath) and os.access(fpath, os.X_OK)
 
@@ -42,9 +57,11 @@ def executable_exists(program):
 
     raise Exception, "Could not find %s" % (program)
 
-# a function to copy files sparsely.  The logic here is all taken from coreutils
-# cp, specifically 'sparse_copy'
 def copyfile_sparse(src, dest):
+    """
+    Function to copy a file sparsely if possible.  The logic here is
+    all taken from coreutils cp, specifically the 'sparse_copy' function.
+    """
     src_fd = os.open(src, os.O_RDONLY)
     dest_fd = os.open(dest, os.O_WRONLY|os.O_CREAT|os.O_TRUNC)
 
