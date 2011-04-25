@@ -1039,23 +1039,22 @@ class CDGuest(Guest):
         if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
             self.log.info("Found cached JEOS, using it")
             ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
-            return self.generate_xml("hd", None)
+        else:
+            self.log.info("Running install for %s" % (self.tdl.name))
 
-        self.log.info("Running install for %s" % (self.tdl.name))
-        xml = self.generate_xml("cdrom", self.InstallDev("cdrom",
-                                                         self.output_iso,
-                                                         "hdc"))
-        dom = self.libvirt_conn.createXML(xml, 0)
+            cddev = self.InstallDev("cdrom", self.output_iso, "hdc")
 
-        if timeout is None:
-            timeout = 1200
+            if timeout is None:
+                timeout = 1200
 
-        self.wait_for_install_finish(dom, timeout)
+            dom = self.libvirt_conn.createXML(self.generate_xml("cdrom", cddev),
+                                              0)
+            self.wait_for_install_finish(dom, timeout)
 
-        if self.cache_jeos:
-            self.log.info("Caching JEOS")
-            self.mkdir_p(self.jeos_cache_dir)
-            ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
+            if self.cache_jeos:
+                self.log.info("Caching JEOS")
+                self.mkdir_p(self.jeos_cache_dir)
+                ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
 
         return self.generate_xml("hd", None)
 
@@ -1129,23 +1128,21 @@ class FDGuest(Guest):
         if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
             self.log.info("Found cached JEOS, using it")
             ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
-            return self.generate_xml("hd", None)
+        else:
+            self.log.info("Running install for %s" % (self.tdl.name))
 
-        self.log.info("Running install for %s" % (self.tdl.name))
-        xml = self.generate_xml("fd", self.InstallDev("floppy",
-                                                      self.output_floppy,
-                                                      "fda"))
-        dom = self.libvirt_conn.createXML(xml, 0)
+            fddev = self.InstallDev("floppy", self.output_floppy, "fda")
 
-        if timeout is None:
-            timeout = 1200
+            if timeout is None:
+                timeout = 1200
 
-        self.wait_for_install_finish(dom, timeout)
+            dom = self.libvirt_conn.createXML(self.generate_xml("fd", fddev), 0)
+            self.wait_for_install_finish(dom, timeout)
 
-        if self.cache_jeos:
-            self.log.info("Caching JEOS")
-            self.mkdir_p(self.jeos_cache_dir)
-            ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
+            if self.cache_jeos:
+                self.log.info("Caching JEOS")
+                self.mkdir_p(self.jeos_cache_dir)
+                ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
 
         return self.generate_xml("hd", None)
 
