@@ -35,12 +35,6 @@ class Windows(oz.Guest.CDGuest):
 
         self.url = self.check_url(self.tdl, iso=True, url=False)
 
-    def get_windows_arch(self, tdl_arch):
-        arch = tdl_arch
-        if arch == "x86_64":
-            arch = "amd64"
-        return arch
-
     def generate_install_media(self, force_download=False):
         return self.iso_generate_install_media(self.url, force_download)
 
@@ -99,6 +93,12 @@ class Windows2000andXPand2003(Windows):
                                          geometry=geom)
             disk.addPartition(partition=partition, constraint=constraint)
             disk.commit()
+
+    def get_windows_arch(self, tdl_arch):
+        arch = tdl_arch
+        if arch == "x86_64":
+            arch = "amd64"
+        return arch
 
     def modify_iso(self):
         self.log.debug("Modifying ISO")
@@ -180,6 +180,12 @@ class Windows2008and7(Windows):
                                           "-V", "Custom", "-udf",
                                           "-o", self.output_iso,
                                           self.iso_contents])
+
+    def get_windows_arch(self, tdl_arch):
+        arch = "x86"
+        if tdl_arch == "x86_64":
+            arch = "amd64"
+        return arch
 
     def modify_iso(self):
         self.log.debug("Modifying ISO")
