@@ -68,10 +68,10 @@ class UbuntuGuest(oz.Guest.CDGuest):
         f.write("  menu default\n")
         if os.path.isdir(os.path.join(self.iso_contents, "casper")):
             f.write("  kernel /casper/vmlinuz\n")
-            f.write("  append file=/cdrom/preseed/customiso.seed boot=casper automatic-ubiquity noprompt initrd=/casper/" + self.casper_initrd + "\n")
+            f.write("  append file=/cdrom/preseed/customiso.seed boot=casper automatic-ubiquity noprompt keyboard-configuration/layoutcode=us initrd=/casper/" + self.casper_initrd + "\n")
         else:
             f.write("  kernel /install/vmlinuz\n")
-            f.write("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us netcfg/choose_interface=auto priority=critical initrd=/install/initrd.gz --\n")
+            f.write("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us netcfg/choose_interface=auto keyboard-configuration/layoutcode=us priority=critical initrd=/install/initrd.gz --\n")
         f.close()
 
     def generate_new_iso(self):
@@ -167,6 +167,6 @@ def get_class(tdl, config, auto):
     if tdl.update in ["8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4", "8.10",
                       "9.04"]:
         return UbuntuGuest(tdl, config, auto, "initrd.gz", "virtio", "virtio")
-    if tdl.update in ["9.10", "10.04", "10.04.1", "10.10"]:
+    if tdl.update in ["9.10", "10.04", "10.04.1", "10.10", "11.04"]:
         return UbuntuGuest(tdl, config, auto, "initrd.lz", "virtio", "virtio")
     raise oz.OzException.OzException("Unsupported Ubuntu update " + tdl.update)
