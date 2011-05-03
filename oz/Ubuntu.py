@@ -77,12 +77,13 @@ class UbuntuGuest(oz.Guest.CDGuest):
     def generate_new_iso(self):
         self.log.info("Generating new ISO")
         oz.Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom", "-J",
-                                       "-l", "-b", "isolinux/isolinux.bin",
-                                       "-c", "isolinux/boot.cat",
-                                       "-no-emul-boot", "-boot-load-size", "4",
-                                       "-cache-inodes", "-boot-info-table",
-                                       "-v", "-v", "-o", self.output_iso,
-                                       self.iso_contents])
+                                          "-l", "-b", "isolinux/isolinux.bin",
+                                          "-c", "isolinux/boot.cat",
+                                          "-no-emul-boot",
+                                          "-boot-load-size", "4",
+                                          "-cache-inodes", "-boot-info-table",
+                                          "-v", "-v", "-o", self.output_iso,
+                                          self.iso_contents])
 
     def generate_install_media(self, force_download=False):
         return self.iso_generate_install_media(self.url, force_download)
@@ -149,12 +150,13 @@ class Ubuntu610and704Guest(oz.Guest.CDGuest):
     def generate_new_iso(self):
         self.log.info("Generating new ISO")
         oz.Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom", "-J",
-                                       "-l", "-b", "isolinux/isolinux.bin",
-                                       "-c", "isolinux/boot.cat",
-                                       "-no-emul-boot", "-boot-load-size", "4",
-                                       "-cache-inodes", "-boot-info-table",
-                                       "-v", "-v", "-o", self.output_iso,
-                                       self.iso_contents])
+                                          "-l", "-b", "isolinux/isolinux.bin",
+                                          "-c", "isolinux/boot.cat",
+                                          "-no-emul-boot",
+                                          "-boot-load-size", "4",
+                                          "-cache-inodes", "-boot-info-table",
+                                          "-v", "-v", "-o", self.output_iso,
+                                          self.iso_contents])
 
     def generate_install_media(self, force_download=False):
         return self.iso_generate_install_media(self.url, force_download)

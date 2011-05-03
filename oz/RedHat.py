@@ -341,15 +341,16 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
         return icicle_output
 
-    def guest_live_upload(self, guestaddr, file_to_upload, destination):
-        self.guest_execute_command(guestaddr, "mkdir -p " + os.path.dirname(destination))
+    def guest_live_upload(self, guestaddr, file_to_upload, destination, timeout=10):
+        self.guest_execute_command(guestaddr,
+                                   "mkdir -p " + os.path.dirname(destination))
 
         return oz.Guest.subprocess_check_output(["scp", "-i", self.sshprivkey,
-                                              "-o", "StrictHostKeyChecking=no",
-                                              "-o", "ConnectTimeout=" + str(timeout),
-                                              "-o", "UserKnownHostsFile=/dev/null",
-                                              file_to_upload,
-                                              "root@" + guestaddr + ":" + destination])
+                                                 "-o", "StrictHostKeyChecking=no",
+                                                 "-o", "ConnectTimeout=" + str(timeout),
+                                                 "-o", "UserKnownHostsFile=/dev/null",
+                                                 file_to_upload,
+                                                 "root@" + guestaddr + ":" + destination])
 
     def customize_files(self, guestaddr):
         self.log.info("Uploading custom files")
