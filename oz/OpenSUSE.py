@@ -103,7 +103,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         if libvirt_dom is not None:
             libvirt_dom.destroy()
 
-    def guest_execute_command(self, guestaddr, command):
+    def guest_execute_command(self, guestaddr, command, timeout=10):
         # ServerAliveInterval protects against NAT firewall timeouts
         # on long-running commands with no output
         # PasswordAuthentication=no prevents us from falling back to
@@ -111,7 +111,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         return oz.Guest.subprocess_check_output(["ssh", "-i", self.sshprivkey,
                                                  "-o", "ServerAliveInterval=30",
                                                  "-o", "StrictHostKeyChecking=no",
-                                                 "-o", "ConnectTimeout=5",
+                                                 "-o", "ConnectTimeout=" + str(timeout),
                                                  "-o", "UserKnownHostsFile=/dev/null",
                                                  "-o", "PasswordAuthentication=no",
                                                  "root@" + guestaddr, command])

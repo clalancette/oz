@@ -300,7 +300,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         finally:
             self.guestfs_handle_cleanup(g_handle)
 
-    def guest_execute_command(self, guestaddr, command):
+    def guest_execute_command(self, guestaddr, command, timeout=10):
         # ServerAliveInterval protects against NAT firewall timeouts
         # on long-running commands with no output
         # PasswordAuthentication=no prevents us from falling back to
@@ -308,7 +308,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         return oz.Guest.subprocess_check_output(["ssh", "-i", self.sshprivkey,
                                                  "-o", "ServerAliveInterval=30",
                                                  "-o", "StrictHostKeyChecking=no",
-                                                 "-o", "ConnectTimeout=5",
+                                                 "-o", "ConnectTimeout=" + str(timeout),
                                                  "-o", "UserKnownHostsFile=/dev/null",
                                                  "-o", "PasswordAuthentication=no",
                                                  "root@" + guestaddr, command])
@@ -346,7 +346,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
         return oz.Guest.subprocess_check_output(["scp", "-i", self.sshprivkey,
                                               "-o", "StrictHostKeyChecking=no",
-                                              "-o", "ConnectTimeout=5",
+                                              "-o", "ConnectTimeout=" + str(timeout),
                                               "-o", "UserKnownHostsFile=/dev/null",
                                               file_to_upload,
                                               "root@" + guestaddr + ":" + destination])
