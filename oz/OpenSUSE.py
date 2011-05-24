@@ -192,7 +192,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
 
             try:
                 guestaddr = None
-                guestaddr = self.wait_for_guest_boot()
+                guestaddr = self.wait_for_guest_boot(libvirt_dom)
                 stdout, stderr, retcode = self.guest_execute_command(guestaddr,
                                                                      'rpm -qa')
 

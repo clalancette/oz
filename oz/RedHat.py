@@ -331,7 +331,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
             try:
                 guestaddr = None
-                guestaddr = self.wait_for_guest_boot()
+                guestaddr = self.wait_for_guest_boot(libvirt_dom)
                 icicle_output = self.do_icicle(guestaddr)
             finally:
                 self.shutdown_guest(guestaddr, libvirt_dom)
@@ -500,7 +500,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
 
             try:
                 guestaddr = None
-                guestaddr = self.wait_for_guest_boot()
+                guestaddr = self.wait_for_guest_boot(libvirt_dom)
 
                 self.do_customize(guestaddr)
             finally:
@@ -518,7 +518,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
             libvirt_dom = self.libvirt_conn.createXML(libvirt_xml, 0)
 
             try:
-                guestaddr = self.wait_for_guest_boot()
+                guestaddr = self.wait_for_guest_boot(libvirt_dom)
 
                 if self.tdl.packages or self.tdl.files:
                     self.do_customize(guestaddr)

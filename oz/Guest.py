@@ -665,7 +665,7 @@ class Guest(object):
         self.log.debug("Killing guestfs subprocess")
         g_handle.kill_subprocess()
 
-    def wait_for_guest_boot(self):
+    def wait_for_guest_boot(self, libvirt_dom):
         self.log.info("Waiting for guest %s to boot" % (self.tdl.name))
 
         listen = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -684,13 +684,21 @@ class Guest(object):
             try:
                 count = 300
                 while count > 0:
-                    self.log.debug("Waiting for guest %s to boot, %d/300" % (self.tdl.name, count))
-                    rlist, wlist, xlist = select.select([listen], [], [], 10)
+                    if count % 10 == 0:
+                        self.log.debug("Waiting for guest %s to boot, %d/300" % (self.tdl.name, count))
+                    rlist, wlist, xlist = select.select([listen], [], [], 1)
                     if len(rlist) > 0:
                         new_sock, addr = listen.accept()
                         new_sock.close()
                         break
-                    count -= 10
+
+                    # OK, the guest hasn't checked in yet.  Do an "info" on
+                    # the domain just to make sure it is still alive.  If it
+                    # isn't, this will throw an exception (which is what
+                    # we want)
+                    libvirt_dom.info()
+
+                    count -= 1
             finally:
                 try:
                     subprocess_check_output(["iptables", "-D", "INPUT", "1"])
