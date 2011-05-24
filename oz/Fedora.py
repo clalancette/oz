@@ -85,7 +85,7 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
         f.close()
 
 def get_class(tdl, config, auto):
-    if tdl.update in ["10", "11", "12", "13", "14"]:
+    if tdl.update in ["10", "11", "12", "13", "14", "15"]:
         return FedoraGuest(tdl, config, auto, "virtio", True, "virtio", True)
     if tdl.update in ["7", "8", "9"]:
         return FedoraGuest(tdl, config, auto, "rtl8139", False, None, False)
