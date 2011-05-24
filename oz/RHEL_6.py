@@ -74,6 +74,6 @@ class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
         f.close()
 
 def get_class(tdl, config, auto):
-    if tdl.update in ["0"]:
+    if tdl.update in ["0", "1"]:
         return RHEL6Guest(tdl, config, auto)
     raise oz.OzException.OzException("Unsupported RHEL-6 update " + tdl.update)
