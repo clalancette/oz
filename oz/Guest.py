@@ -1021,7 +1021,7 @@ class CDGuest(Guest):
         out.write(eltoritodata)
         out.close()
 
-    def install(self, timeout=None, force=False):
+    def do_install(self, timeout=None, force=False, reboots=0):
         if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
             self.log.info("Found cached JEOS, using it")
             oz.ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
@@ -1037,12 +1037,20 @@ class CDGuest(Guest):
                                               0)
             self.wait_for_install_finish(dom, timeout)
 
+            for i in range(0, reboots):
+                dom = self.libvirt_conn.createXML(self.generate_xml("hd",
+                                                                    cddev), 0)
+                self.wait_for_install_finish(dom, timeout)
+
             if self.cache_jeos:
                 self.log.info("Caching JEOS")
                 self.mkdir_p(self.jeos_cache_dir)
                 oz.ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
 
         return self.generate_xml("hd", None)
+
+    def install(self, timeout=None, force=False):
+        return self.do_install(timeout, force, 0)
 
     def iso_generate_install_media(self, url, force_download):
         self.log.info("Generating install media")

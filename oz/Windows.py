@@ -134,30 +134,10 @@ class Windows2000andXPand2003(Windows):
             shutil.copy(self.siffile, outname)
 
     def install(self, timeout=None, force=False):
-        if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
-            self.log.info("Found cached JEOS, using it")
-            oz.ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
-        else:
-            self.log.info("Running install for %s" % (self.tdl.name))
-
-            cddev = self.InstallDev("cdrom", self.output_iso, "hdc")
-
-            if timeout is None:
-                timeout = 3600
-
-            dom = self.libvirt_conn.createXML(self.generate_xml("cdrom", cddev),
-                                              0)
-            self.wait_for_install_finish(dom, timeout)
-
-            dom = self.libvirt_conn.createXML(self.generate_xml("hd", cddev), 0)
-            self.wait_for_install_finish(dom, timeout)
-
-            if self.cache_jeos:
-                self.log.info("Caching JEOS")
-                self.mkdir_p(self.jeos_cache_dir)
-                oz.ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
-
-        return self.generate_xml("hd", None)
+        internal_timeout = timeout
+        if internal_timeout is None:
+            internal_timeout = 3600
+        return self.do_install(internal_timeout, force, 1)
 
 class Windows2008and7(Windows):
     def __init__(self, tdl, config, auto):
@@ -223,33 +203,10 @@ class Windows2008and7(Windows):
             shutil.copy(self.unattendfile, outname)
 
     def install(self, timeout=None, force=False):
-        if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
-            self.log.info("Found cached JEOS, using it")
-            oz.ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
-        else:
-            self.log.info("Running install for %s" % (self.tdl.name))
-
-            cddev = self.InstallDev("cdrom", self.output_iso, "hdc")
-
-            if timeout is None:
-                timeout = 6000
-
-            dom = self.libvirt_conn.createXML(self.generate_xml("cdrom", cddev),
-                                              0)
-            self.wait_for_install_finish(dom, timeout)
-
-            dom = self.libvirt_conn.createXML(self.generate_xml("hd", cddev), 0)
-            self.wait_for_install_finish(dom, timeout)
-
-            dom = self.libvirt_conn.createXML(self.generate_xml("hd", cddev), 0)
-            self.wait_for_install_finish(dom, timeout)
-
-            if self.cache_jeos:
-                self.log.info("Caching JEOS")
-                self.mkdir_p(self.jeos_cache_dir)
-                oz.ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
-
-        return self.generate_xml("hd", None)
+        internal_timeout = timeout
+        if internal_timeout is None:
+            internal_timeout = 6000
+        return self.do_install(internal_timeout, force, 2)
 
 def get_class(tdl, config, auto):
     if tdl.update in ["2000", "XP", "2003"]:
