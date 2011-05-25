@@ -89,6 +89,9 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
     def generate_install_media(self, force_download=False):
         return self.iso_generate_install_media(self.url, force_download)
 
+    def install(self, timeout=None, force=False):
+        return self.do_install(timeout, force, 1)
+
     def shutdown_guest(self, guestaddr, libvirt_dom):
         if guestaddr is not None:
             try:
@@ -137,12 +140,11 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
 
         # reset the service link
         self.log.debug("Resetting sshd service")
-        runlevel = self.get_default_runlevel(g_handle)
-        startuplink = '/etc/rc.d/rc' + runlevel + '.d/S04sshd'
-        if g_handle.exists(startuplink):
-            g_handle.rm(startuplink)
-        if g_handle.exists(startuplink + ".icicle"):
-            g_handle.mv(startuplink + ".icicle", startuplink)
+        if g_handle.exists("/etc/init.d/after.local"):
+            g_handle.rm("/etc/init.d/after.local")
+        if g_handle.exists("/etc/init.d/after.local.icicle"):
+            g_handle.mv("/etc/init.d/after.local.icicle",
+                        "/etc/init.d/after.local")
 
     def image_ssh_teardown_step_3(self, g_handle):
         self.log.debug("Teardown step 3")
@@ -180,6 +182,12 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
             self.guestfs_handle_cleanup(g_handle)
             shutil.rmtree(self.icicle_tmp)
 
+    def do_icicle(self, guestaddr):
+        stdout, stderr, retcode = self.guest_execute_command(guestaddr,
+                                                             'rpm -qa')
+
+        return self.output_icicle_xml(stdout.split("\n"), self.tdl.description)
+
     def generate_icicle(self, libvirt_xml):
         self.log.info("Generating ICICLE")
 
@@ -193,11 +201,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
             try:
                 guestaddr = None
                 guestaddr = self.wait_for_guest_boot(libvirt_dom)
-                stdout, stderr, retcode = self.guest_execute_command(guestaddr,
-                                                                     'rpm -qa')
-
-                icicle_output = self.output_icicle_xml(stdout.split("\n"),
-                                                       self.tdl.description)
+                icicle_output = self.do_icicle(guestaddr)
             finally:
                 self.shutdown_guest(guestaddr, libvirt_dom)
 
@@ -240,11 +244,17 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         if not g_handle.exists('/etc/init.d/sshd') or not g_handle.exists('/usr/sbin/sshd'):
             raise oz.OzException.OzException("ssh not installed on the image, cannot continue")
 
-        runlevel = self.get_default_runlevel(g_handle)
-        startuplink = '/etc/rc.d/rc' + runlevel + '.d/S04sshd'
-        if g_handle.exists(startuplink):
-            g_handle.mv(startuplink, startuplink + ".icicle")
-        g_handle.ln_sf('/etc/init.d/sshd', startuplink)
+        if g_handle.exists("/etc/init.d/after.local"):
+            g_handle.mv("/etc/init.d/after.local",
+                        "/etc/init.d/after.local.icicle")
+
+        local = self.icicle_tmp + "/after.local"
+        f = open(local, "w")
+        f.write("/sbin/service sshd start\n")
+        f.close()
+
+        g_handle.upload(local, "/etc/init.d/after.local")
+        os.unlink(local)
 
         sshd_config = \
 """PasswordAuthentication no
@@ -326,6 +336,90 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
 
         finally:
             self.guestfs_handle_cleanup(g_handle)
+
+    def customize_repos(self, guestaddr):
+        self.log.debug("Installing additional repository files")
+        for repo in self.tdl.repositories.values():
+            self.guest_execute_command(guestaddr,
+                                       "zypper addrepo %s %s" % (repo.url,
+                                                                 repo.name))
+
+    def do_customize(self, guestaddr):
+        self.customize_repos(guestaddr)
+
+        self.log.debug("Installing custom packages")
+        packstr = ''
+        for package in self.tdl.packages:
+            packstr += package.name + ' '
+
+        if packstr != '':
+            # due to a bug in OpenSUSE 11.1, we want to remove the default
+            # CD repo first
+            stdout, stderr, retcode = self.guest_execute_command(guestaddr,
+                                                                 'zypper repos -d')
+            removerepos = []
+            for line in stdout.split('\n'):
+                if re.match("^[0-9]+", line):
+                    split = line.split('|')
+
+                    if re.match("^cd://", split[7].strip()):
+                        removerepos.append(split[0].strip())
+            for repo in removerepos:
+                self.guest_execute_command(guestaddr,
+                                           'zypper removerepo %s' % (repo))
+
+            self.guest_execute_command(guestaddr,
+                                       'zypper -n install %s' % (packstr))
+
+        self.log.debug("Syncing")
+        self.guest_execute_command(guestaddr, 'sync')
+
+    def customize(self, libvirt_xml):
+        self.log.info("Customizing image")
+
+        if not self.tdl.packages and not self.tdl.files:
+            self.log.info("No additional packages or files to install, skipping customization")
+            return
+
+        self.collect_setup(libvirt_xml)
+
+        libvirt_dom = None
+        try:
+            libvirt_dom = self.libvirt_conn.createXML(libvirt_xml, 0)
+
+            try:
+                guestaddr = None
+                guestaddr = self.wait_for_guest_boot(libvirt_dom)
+
+                self.do_customize(guestaddr)
+            finally:
+                self.shutdown_guest(guestaddr, libvirt_dom)
+        finally:
+            self.collect_teardown(libvirt_xml)
+
+    def customize_and_generate_icicle(self, libvirt_xml):
+        self.log.info("Customizing and generating ICICLE")
+
+        self.collect_setup(libvirt_xml)
+
+        libvirt_dom = None
+        try:
+            libvirt_dom = self.libvirt_conn.createXML(libvirt_xml, 0)
+
+            try:
+                guestaddr = None
+                guestaddr = self.wait_for_guest_boot(libvirt_dom)
+
+                if self.tdl.packages or self.tdl.files:
+                    self.do_customize(guestaddr)
+
+                icicle = self.do_icicle(guestaddr)
+            finally:
+                self.shutdown_guest(guestaddr, libvirt_dom)
+        finally:
+            self.collect_teardown(libvirt_xml)
+
+        return icicle
 
 def get_class(tdl, config, auto):
     if tdl.update in ["11.0", "11.1", "11.2", "11.3", "11.4"]:
