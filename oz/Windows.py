@@ -87,7 +87,6 @@ class Windows2000andXPand2003(Windows):
             disk = parted.freshDisk(dev, 'msdos')
             constraint = parted.Constraint(device=dev)
             geom = parted.Geometry(device=dev, start=1, end=2)
-            #                       end=(constraint.maxSize - 1))
             partition = parted.Partition(disk=disk,
                                          type=parted.PARTITION_NORMAL,
                                          geometry=geom)
