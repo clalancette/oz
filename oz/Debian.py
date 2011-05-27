@@ -41,6 +41,12 @@ class DebianGuest(oz.Guest.CDGuest):
                                                     "preseed",
                                                     "customiso.seed"))
 
+        if self.tdl.arch == "x86_64":
+            installdir = "/install.amd"
+        else:
+            # arch == i386
+            installdir = "/install.386"
+
         self.log.debug("Modifying isolinux.cfg")
         isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
                                    "isolinux.cfg")
@@ -52,8 +58,8 @@ class DebianGuest(oz.Guest.CDGuest):
         f.write("label customiso\n")
         f.write("  menu label ^Customiso\n")
         f.write("  menu default\n")
-        f.write("  kernel /install.amd/vmlinuz\n")
-        f.write("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us netcfg/choose_interface=auto priority=critical initrd=/install.amd/initrd.gz --\n")
+        f.write("  kernel " + installdir + "/vmlinuz\n")
+        f.write("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us netcfg/choose_interface=auto priority=critical initrd=" + installdir + "/initrd.gz --\n")
         f.close()
 
     def generate_new_iso(self):
