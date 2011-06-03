@@ -17,7 +17,6 @@
 import shutil
 import re
 import os
-import parted
 
 import oz.ozutil
 import oz.RedHat
@@ -86,18 +85,7 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
         f.close()
 
     def generate_diskimage(self, size=10, force=False):
-        if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
-            # if we found a cached JEOS, we don't need to do anything here;
-            # we'll copy the JEOS itself later on
-            return
-
-        self.log.info("Generating %dGB diskimage for %s" % (size,
-                                                            self.tdl.name))
-
-        f = open(self.diskimage, "w")
-        f.truncate(size * 1024 * 1024 * 1024)
-        f.close()
-
+        createpart = False
         if self.tdl.update in ["11", "12"]:
             # If given a blank diskimage, Fedora 11/12 stops very early in
             # install with a message about losing all of your data on the
@@ -105,15 +93,8 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
             #
             # To avoid that message, just create a partition table that spans
             # the entire disk
-            dev = parted.Device(self.diskimage)
-            disk = parted.freshDisk(dev, 'msdos')
-            constraint = parted.Constraint(device=dev)
-            geom = parted.Geometry(device=dev, start=1, end=2)
-            partition = parted.Partition(disk=disk,
-                                         type=parted.PARTITION_NORMAL,
-                                         geometry=geom)
-            disk.addPartition(partition=partition, constraint=constraint)
-            disk.commit()
+            createpart = True
+        return self.internal_generate_diskimage(size, force, createpart)
 
 def get_class(tdl, config, auto):
     if tdl.update in ["10", "11", "12", "13", "14", "15"]:

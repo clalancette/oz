@@ -19,7 +19,6 @@ import re
 import os
 import libxml2
 import shutil
-import parted
 
 import oz.Guest
 import oz.ozutil
@@ -62,18 +61,7 @@ class Windows2000andXPand2003(Windows):
                                           self.iso_contents])
 
     def generate_diskimage(self, size=10, force=False):
-        if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
-            # if we found a cached JEOS, we don't need to do anything here;
-            # we'll copy the JEOS itself later on
-            return
-
-        self.log.info("Generating %dGB diskimage for %s" % (size,
-                                                            self.tdl.name))
-
-        f = open(self.diskimage, "w")
-        f.truncate(size * 1024 * 1024 * 1024)
-        f.close()
-
+        createpart = False
         if self.tdl.update == "2000":
             # If given a blank diskimage, windows 2000 stops very early in
             # install with a message:
@@ -81,17 +69,10 @@ class Windows2000andXPand2003(Windows):
             #  Setup has determined that your computer's starupt hard disk is
             #  new or has been erased...
             #
-            # To avoid that message, just create a partition table that spans
+            # To avoid that message, create a partition table that spans
             # the entire disk
-            dev = parted.Device(self.diskimage)
-            disk = parted.freshDisk(dev, 'msdos')
-            constraint = parted.Constraint(device=dev)
-            geom = parted.Geometry(device=dev, start=1, end=2)
-            partition = parted.Partition(disk=disk,
-                                         type=parted.PARTITION_NORMAL,
-                                         geometry=geom)
-            disk.addPartition(partition=partition, constraint=constraint)
-            disk.commit()
+            createpart = True
+        return self.internal_generate_diskimage(size, force, createpart)
 
     def get_windows_arch(self, tdl_arch):
         arch = tdl_arch

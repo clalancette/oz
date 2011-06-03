@@ -36,6 +36,7 @@ import urlparse
 import fcntl
 import M2Crypto
 import base64
+import parted
 
 import oz.ozutil
 import oz.OzException
@@ -376,7 +377,8 @@ class Guest(object):
 
         return xml
 
-    def generate_diskimage(self, size=10, force=False):
+    def internal_generate_diskimage(self, size=10, force=False,
+                                      create_partition=False):
         if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
             # if we found a cached JEOS, we don't need to do anything here;
             # we'll copy the JEOS itself later on
@@ -384,11 +386,28 @@ class Guest(object):
 
         self.log.info("Generating %dGB diskimage for %s" % (size,
                                                             self.tdl.name))
+
         f = open(self.diskimage, "w")
         f.truncate(size * 1024 * 1024 * 1024)
         f.close()
 
-    def wait_for_install_finish(self, libvirt_dom, count, inactivity_timeout=300):
+        if create_partition:
+            dev = parted.Device(self.diskimage)
+            disk = parted.freshDisk(dev, 'msdos')
+            constraint = parted.Constraint(device=dev)
+            geom = parted.Geometry(device=dev, start=1, end=2)
+            partition = parted.Partition(disk=disk,
+                                         type=parted.PARTITION_NORMAL,
+                                         geometry=geom)
+            disk.addPartition(partition=partition, constraint=constraint)
+            disk.commit()
+
+
+    def generate_diskimage(self, size=10, force=False):
+        return self.__internal_generate_diskimage(size, force, False)
+
+    def wait_for_install_finish(self, libvirt_dom, count,
+                                inactivity_timeout=300):
         # first find the disk device we are installing to; this will be
         # monitored for activity during the installation
         domxml = libvirt_dom.XMLDesc(0)
