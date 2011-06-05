@@ -25,13 +25,11 @@ import oz.OzException
 class RHL9Guest(oz.RedHat.RedHatCDGuest):
     def __init__(self, tdl, config, auto):
         oz.RedHat.RedHatCDGuest.__init__(self, tdl, "rtl8139", None, None, None,
-                                         config)
+                                         config, False, True)
 
         self.ks_file = auto
         if self.ks_file is None:
             self.ks_file = oz.ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks")
-
-        self.url = self.check_url(self.tdl, iso=False, url=True)
 
         if self.tdl.arch != "i386":
             raise oz.OzException.OzException("Invalid arch " + self.tdl.arch + "for RHL guest")

@@ -24,7 +24,8 @@ import oz.ozutil
 import oz.OzException
 
 class RedHatCDGuest(oz.Guest.CDGuest):
-    def __init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus, config):
+    def __init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus, config,
+                 iso_allowed, url_allowed):
         oz.Guest.CDGuest.__init__(self, tdl, nicmodel, clockoffset, mousetype,
                                   diskbus, config)
         self.sshprivkey = os.path.join('/etc', 'oz', 'id_rsa-icicle-gen')
@@ -42,6 +43,8 @@ AcceptEnv XMODIFIERS
 X11Forwarding yes
 Subsystem	sftp	/usr/libexec/openssh/sftp-server
 """
+
+        self.url = self.check_url(self.tdl, iso=iso_allowed, url=url_allowed)
 
     def generate_new_iso(self):
         self.log.debug("Generating new ISO")
@@ -384,8 +387,8 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         return self.iso_generate_install_media(fetchurl, force_download)
 
 class RedHatCDYumGuest(RedHatCDGuest):
-    def check_anaconda_url(self, tdl, iso=True, url=True):
-        url = self.check_url(tdl, iso, url)
+    def check_url(self, tdl, iso=True, url=True):
+        url = RedHatCDGuest.check_url(self, tdl, iso, url)
 
         if self.tdl.installtype == 'url':
             # The HTTP/1.1 specification allows for servers that don't support

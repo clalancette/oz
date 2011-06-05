@@ -26,15 +26,13 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
     def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,
                  brokenisomethod):
         oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, nicmodel, None, None,
-                                            diskbus, config)
+                                            diskbus, config, True, True)
 
         self.ks_file = auto
         if self.ks_file is None:
             self.ks_file = oz.ozutil.generate_full_auto_path("fedora-" + self.tdl.update + "-jeos.ks")
         self.haverepo = haverepo
         self.brokenisomethod = brokenisomethod
-
-        self.url = self.check_anaconda_url(self.tdl, iso=True, url=True)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")

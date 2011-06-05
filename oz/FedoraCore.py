@@ -25,13 +25,11 @@ import oz.OzException
 class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
     def __init__(self, tdl, config, auto):
         oz.RedHat.RedHatCDGuest.__init__(self, tdl, 'rtl8139', None, None, None,
-                                         config)
+                                         config, True, True)
 
         self.ks_file = auto
         if self.ks_file is None:
             self.ks_file = oz.ozutil.generate_full_auto_path("fedoracore-" + self.tdl.update + "-jeos.ks")
-
-        self.url = self.check_url(self.tdl, iso=True, url=True)
 
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)

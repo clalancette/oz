@@ -24,18 +24,16 @@ import oz.OzException
 
 class RHEL3Guest(oz.RedHat.RedHatCDGuest):
     def __init__(self, tdl, config, auto):
+        iso_support = True
+        if tdl.distro == "RHEL-3":
+            iso_support = False
+
         oz.RedHat.RedHatCDGuest.__init__(self, tdl, None, None, None, None,
-                                         config)
+                                         config, iso_support, True)
 
         self.ks_file = auto
         if self.ks_file is None:
             self.ks_file = oz.ozutil.generate_full_auto_path("rhel-3-jeos.ks")
-
-        iso_support = True
-        if self.tdl.distro == "RHEL-3":
-            iso_support = False
-
-        self.url = self.check_url(self.tdl, iso=iso_support, url=True)
 
         # override the sshd_config value set in RedHatCDGuest.__init__
         self.sshd_config = \

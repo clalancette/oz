@@ -25,13 +25,11 @@ import oz.OzException
 class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
     def __init__(self, tdl, config, auto):
         oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, "virtio", None, None,
-                                            "virtio", config)
+                                            "virtio", config, True, True)
 
         self.ks_file = auto
         if self.ks_file is None:
             self.ks_file = oz.ozutil.generate_full_auto_path("rhel-6-jeos.ks")
-
-        self.url = self.check_anaconda_url(self.tdl, iso=True, url=True)
 
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")
