@@ -60,3 +60,15 @@ does this, it somehow messes up the %description (minor, probably a change to
 the setup macro), fails to create the /var/lib/oz subdirectories (which could
 be moved into setup.py as well), and also fails to find the gzipped man page
 files (which is what eventually causes the build to fail).
+17. RHL 6.2 does not work via HTTP because of a bug in the installer; when
+parsing a URL passed in via "method", it fails to put a / at the beginning of
+the URL.  What this means is that when the installer goes to fetch the install
+images via "GET path/to/netstg2.img HTTP/0.9", the web server then returns an
+error.  To do a fully automated install, we need to use an ISO, NFS or FTP
+install method; I could not get FTP to work, but I did not try that hard.
+18. RHL 6.1 fails because there is no netstg2.img available in the distribution
+I have.  Unfortunately, I have not been able to find the netstg2.img, nor an
+ISO of 6.1 to do an alternate install.  NFS may still work here.
+19. RHL 6.0 fails because the kernel panics on boot:
+     VFS: Cannot open root device 08:21
+     Kernel panic: VFS: Unable to mount root fs on 08:21

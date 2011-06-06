@@ -84,21 +84,6 @@ def get_class(tdl, config, auto):
         return RHL9Guest(tdl, config, auto)
     if tdl.update in ["7.2", "7.3", "8"]:
         return RHL70and71and72and73and8Guest(tdl, config, auto, "rtl8139")
-    # FIXME: RHL 6.2 does not work via HTTP because of a bug in the installer;
-    # when parsing a URL passed in via "method", it fails to put a / at the
-    # beginning of the URL.  What this means is that when the installer goes
-    # to fetch the install images via "GET path/to/netstg2.img HTTP/0.9", the
-    # web server then returns an error.  To do a fully automated install, we
-    # need to use an ISO, NFS or FTP install method; I could not get FTP
-    # to work, but I did not try that hard
-    # FIXME: RHL 6.1 fails for a different reason, namely that there is no
-    # netstg2.img available in the distribution I have.  Unfortunately, I have
-    # not been able to find the netstg2.img, nor an ISO of 6.1 to do an
-    # alternate install.  NFS may still work here.
-    # FIXME: RHL 6.0 fails for yet a different reason, a kernel panic on boot
-    # The panic is:
-    # VFS: Cannot open root device 08:21
-    # Kernel panic: VFS: Unable to mount root fs on 08:21
     if tdl.update in ["7.0", "7.1"]:
         return RHL70and71and72and73and8Guest(tdl, config, auto, "ne2k_pci")
     raise oz.OzException.OzException("Unsupported RHL update " + tdl.update)
