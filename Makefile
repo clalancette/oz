@@ -1,5 +1,10 @@
+VERSION = $(shell egrep "^VERSION" setup.py | awk '{print $$3}')
+
 sdist:
 	python setup.py sdist
+
+signed-tarball: sdist
+	gpg --detach-sign --armor -o dist/oz-$(VERSION).tar.gz.sign dist/oz-$(VERSION).tar.gz
 
 signed-rpm: sdist
 	rpmbuild -ba oz.spec --sign --define "_sourcedir `pwd`/dist"
@@ -9,6 +14,8 @@ rpm: sdist
 
 srpm: sdist
 	rpmbuild -bs oz.spec --define "_sourcedir `pwd`/dist"
+
+release: signed-rpm signed-tarball
 
 man2html:
 	@echo "Generating oz-install HTML page from man"
