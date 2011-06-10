@@ -3,12 +3,13 @@
 Summary: Library and utilities for automated guest OS installs
 Name: oz
 Version: @VERSION@
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: LGPLv2
 Group: Development
 URL: http://aeolusproject.org/oz.html
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
+BuildArch: noarch
 Requires: gvnc-tools
 Requires: python-libguestfs
 Requires: libxml2-python
@@ -43,7 +44,6 @@ python setup.py build
 %{__rm} -rf $RPM_BUILD_ROOT
 python setup.py install -O1 --root=$RPM_BUILD_ROOT
 
-%{__rm} -f $RPM_BUILD_ROOT%{python_sitelib}/oz/guesttools/icicle-nc.c
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/isocontent/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/isos/
@@ -89,6 +89,9 @@ fi
 
 
 %changelog
+* Fri Jun 10 2011 Pádraig Brady <P@draigBrady.com> - 0.4.0-2
+- Change to noarch.
+
 * Tue May 24 2011 Chris Lalancette <clalance@redhat.com> - 0.4.0-1
 - Release 0.4.0.
 
