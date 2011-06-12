@@ -33,6 +33,7 @@ def usage():
     print "\t\tof using the hard-coded one.  This is useful if you want to pass"
     print "\t\ta custom kickstart for installation"
     print "  -c <config>\tGet config from <config> (default is /etc/oz/oz.cfg)"
+    print "  -x <xmlfile>\tWrite libvirt XML to the specified file"
     print "  -d <level>\tTurn up logging level.  The levels are:"
     print "\t\t\t0 - errors only (this is the default)"
     print "\t\t\t1 - errors and warnings"
@@ -52,8 +53,8 @@ def usage():
     sys.exit(1)
 
 try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], 'a:c:d:fghpt:u',
-                                   ['auto', 'config', 'debug', 'force-download',
+    opts, args = getopt.gnu_getopt(sys.argv[1:], 'a:c:d:x:fghpt:u',
+                                   ['auto', 'config', 'debug', 'xmlfile', 'force-download',
                                     'generate-icicle', 'help', 'cleanup',
                                     'timeout', 'customize'])
 except getopt.GetoptError, err:
@@ -65,6 +66,7 @@ logformat = "%(message)s"
 force_download = False
 config_file = "/etc/oz/oz.cfg"
 generate_icicle = False
+filename = None
 customize = False
 cleanup = False
 auto = None
@@ -72,6 +74,8 @@ timeout = None
 for o, a in opts:
     if o in ("-a", "--auto"):
         auto = a
+    elif o in ("-x", "--xmlfile"):
+        filename = a
     elif o in ("-c", "--config"):
         config_file = a
     elif o in ("-d", "--debug"):
@@ -146,7 +150,8 @@ try:
     elif generate_icicle:
         print guest.generate_icicle(libvirt_xml)
 
-    filename = guest.name + time.strftime("%b_%d_%Y-%H:%M:%S")
+    if filename is None:
+        filename = guest.name + time.strftime("%b_%d_%Y-%H:%M:%S")
     open(filename, 'w').write(libvirt_xml)
     print "Libvirt XML was written to " + filename
 except Exception, exc:

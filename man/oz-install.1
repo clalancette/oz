@@ -46,6 +46,11 @@ Turn on debugging output to level \fBloglevel\fR.  The log levels are:
 .IP "4 - all messages, prepended with the level and classname"
 .RE
 .TP
+.B "\-x <xmlfile>"
+Oz will normally generate a libvirt XML file in the current working
+directory suffixed with the date and time.  Specifing the -x option
+allows the filename to be overridden.
+.TP
 .B "\-f"
 Force the generation of new installation media.  By default, oz-install will
 always try to use a locally cached version of the oz-modified install
