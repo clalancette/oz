@@ -1060,6 +1060,21 @@ class CDGuest(Guest):
     def install(self, timeout=None, force=False):
         return self.do_install(timeout, force, 0)
 
+    def check_media(self):
+        # base method to check the media.  In the common case, do nothing;
+        # subclasses that need to check the media will override this.
+        pass
+
+    def modify_iso(self):
+        # base method to modify the ISO.  Subclasses are expected to override
+        # this
+        raise oz.OzException.OzException("Internal error, subclass didn't override modify_iso")
+
+    def generate_new_iso(self):
+        # base method to generate the new ISO.  Subclasses are expected to
+        # override this
+        raise oz.OzException.OzException("Internal error, subclass didn't override generate_new_iso")
+
     def iso_generate_install_media(self, url, force_download):
         self.log.info("Generating install media")
 
@@ -1074,8 +1089,7 @@ class CDGuest(Guest):
                 return
 
         self.get_original_iso(url, force_download)
-        if hasattr(self, 'check_media'):
-            self.check_media()
+        self.check_media()
         self.copy_iso()
         try:
             self.modify_iso()
