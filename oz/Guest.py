@@ -404,7 +404,7 @@ class Guest(object):
 
 
     def generate_diskimage(self, size=10, force=False):
-        return self.__internal_generate_diskimage(size, force, False)
+        return self.internal_generate_diskimage(size, force, False)
 
     def wait_for_install_finish(self, libvirt_dom, count,
                                 inactivity_timeout=300):
