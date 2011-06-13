@@ -29,6 +29,7 @@ class RedHatCDGuest(oz.Guest.CDGuest):
         oz.Guest.CDGuest.__init__(self, tdl, nicmodel, clockoffset, mousetype,
                                   diskbus, config)
         self.sshprivkey = os.path.join('/etc', 'oz', 'id_rsa-icicle-gen')
+        self.crond_was_active = False
         self.sshd_config = \
 """SyslogFacility AUTHPRIV
 PasswordAuthentication yes
@@ -168,11 +169,15 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
         # reset the service link
         self.log.debug("Resetting crond service")
-        startuplink = self.get_service_runlevel_link(g_handle, 'crond')
-        if g_handle.exists(startuplink):
-            g_handle.rm(startuplink)
-        if g_handle.exists(startuplink + ".icicle"):
-            g_handle.mv(startuplink + ".icicle", startuplink)
+        if g_handle.exists('/lib/systemd/system/crond.service'):
+            if not self.crond_was_active:
+                g_handle.rm('/etc/systemd/system/multi-user.target.wants/crond.service')
+        else:
+            startuplink = self.get_service_runlevel_link(g_handle, 'crond')
+            if g_handle.exists(startuplink):
+               g_handle.rm(startuplink)
+            if g_handle.exists(startuplink + ".icicle"):
+                g_handle.mv(startuplink + ".icicle", startuplink)
 
     def image_ssh_teardown_step_5(self, g_handle):
         self.log.debug("Teardown step 5")
@@ -247,7 +252,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
     def image_ssh_setup_step_4(self, g_handle):
         # part 4; make sure the guest announces itself
         self.log.debug("Step 4: Guest announcement")
-        if not g_handle.exists('/etc/init.d/crond') or not g_handle.exists('/usr/sbin/crond'):
+        if not g_handle.exists('/usr/sbin/crond'):
             raise oz.OzException.OzException("cron not installed on the image, cannot continue")
 
         iciclepath = oz.ozutil.generate_full_guesttools_path('icicle-nc')
@@ -261,10 +266,16 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
         g_handle.upload(announcefile, '/etc/cron.d/announce')
 
-        startuplink = self.get_service_runlevel_link(g_handle, 'crond')
-        if g_handle.exists(startuplink):
-            g_handle.mv(startuplink, startuplink + ".icicle")
-        g_handle.ln_sf('/etc/init.d/crond', startuplink)
+        if g_handle.exists('/lib/systemd/system/crond.service'):
+            if g_handle.exists('/etc/systemd/system/multi-user.target.wants/crond.service'):
+                self.crond_was_active = True;
+            else:
+                g_handle.ln_sf('/lib/systemd/system/crond.service', '/etc/systemd/system/multi-user.target.wants/crond.service')
+        else:
+            startuplink = self.get_service_runlevel_link(g_handle, 'crond')
+            if g_handle.exists(startuplink):
+                g_handle.mv(startuplink, startuplink + ".icicle")
+            g_handle.ln_sf('/etc/init.d/crond', startuplink)
 
         os.unlink(announcefile)
 
