@@ -344,14 +344,18 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
         return icicle_output
 
-    def guest_live_upload(self, guestaddr, file_to_upload, destination, timeout=10):
+    def guest_live_upload(self, guestaddr, file_to_upload, destination,
+                          timeout=10):
         self.guest_execute_command(guestaddr,
-                                   "mkdir -p " + os.path.dirname(destination))
+                                   "mkdir -p " + os.path.dirname(destination),
+                                   timeout)
 
         return oz.Guest.subprocess_check_output(["scp", "-i", self.sshprivkey,
+                                                 "-o", "ServerAliveInterval=30",
                                                  "-o", "StrictHostKeyChecking=no",
                                                  "-o", "ConnectTimeout=" + str(timeout),
                                                  "-o", "UserKnownHostsFile=/dev/null",
+                                                 "-o", "PasswordAuthentication=no",
                                                  file_to_upload,
                                                  "root@" + guestaddr + ":" + destination])
 
