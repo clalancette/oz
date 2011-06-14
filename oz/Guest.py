@@ -474,21 +474,42 @@ class Guest(object):
         """
         # first find the disk device we are installing to; this will be
         # monitored for activity during the installation
-        disktarget = libxml2.parseDoc(libvirt_dom.XMLDesc(0)).xpathEval("/domain/devices/disk[@device='disk']/target")
-        if len(disktarget) < 1:
+        doc = libxml2.parseDoc(libvirt_dom.XMLDesc(0))
+        disktargets = doc.xpathEval("/domain/devices/disk/target")
+        if len(disktargets) < 1:
             raise oz.OzException.OzException("Could not find disk target")
-        diskdev = disktarget[0].prop('dev')
-        if diskdev is None:
+        diskdevs = []
+        for target in disktargets:
+            diskdevs.append(target.prop('dev'))
+        if not diskdevs:
             raise oz.OzException.OzException("Could not find disk target device")
+        inttargets = doc.xpathEval("/domain/devices/interface/target")
+        if len(inttargets) < 1:
+            raise oz.OzException.OzException("Could not find interface target")
+        intdevs = []
+        for target in inttargets:
+            intdevs.append(target.prop('dev'))
+        if not intdevs:
+            raise oz.OzException.OzException("Could not find interface target device")
 
         last_disk_activity = 0
+        last_network_activity = 0
         inactivity_countdown = inactivity_timeout
         origcount = count
         while count > 0:
             if count % 10 == 0:
                 self.log.debug("Waiting for %s to finish installing, %d/%d" % (self.tdl.name, count, origcount))
             try:
-                rd_req, rd_bytes, wr_req, wr_bytes, errs = libvirt_dom.blockStats(diskdev)
+                total_disk_req = 0
+                for dev in diskdevs:
+                    rd_req, rd_bytes, wr_req, wr_bytes, errs = libvirt_dom.blockStats(dev)
+                    total_disk_req += rd_req + wr_req
+
+                total_net_bytes = 0
+                for dev in intdevs:
+                    rx_bytes, rx_packets, rx_errs, rx_drop, tx_bytes, tx_packets, tx_errs, tx_drop = libvirt_dom.interfaceStats(dev)
+                    total_net_bytes += rx_bytes + tx_bytes
+
             except libvirt.libvirtError, e:
                 if e.get_error_domain() == libvirt.VIR_FROM_QEMU and (e.get_error_code() in [libvirt.VIR_ERR_NO_DOMAIN, libvirt.VIR_ERR_SYSTEM_ERROR, libvirt.VIR_ERR_OPERATION_FAILED]):
                     break
@@ -505,8 +526,8 @@ class Guest(object):
                     self.log.debug(" int2 is %d" % e.get_int2())
                     raise
 
-            # if we saw no disk activity in the countdown window, we presume the
-            # install has hung.  Fail here
+            # if we saw no disk or network activity in the countdown window,
+            # we presume the install has hung.  Fail here
             if inactivity_countdown == 0:
                 screenshot_path = self._capture_screenshot(libvirt_dom.XMLDesc(0))
                 exc_str = "No disk activity in %d seconds, failing.  " % (inactivity_timeout)
@@ -516,7 +537,22 @@ class Guest(object):
                     exc_str += "Failed to take screenshot"
                 raise oz.OzException.OzException(exc_str)
 
-            if (rd_req + wr_req) == last_disk_activity:
+            # rd_req and wr_req are the *total* number of disk read requests and
+            # write requests ever made for this domain.  Similarly rd_bytes and
+            # wr_bytes are the total number of network bytes read or written
+            # for this domain
+
+            # we define activity as having done a read or write request on the
+            # install disk, or having done at least 4KB of network transfers in
+            # the last second.  The thinking is that if the installer is putting
+            # bits on disk, there will be disk activity, so we should keep
+            # waiting.  On the other hand, the installer might be downloading
+            # bits to eventually install on disk, so we look for network
+            # activity as well.  We say that transfers of at least 4KB must be
+            # made, however, to try to reduce false positives from things like
+            # ARP requests
+
+            if (total_disk_req == last_disk_activity) and (total_net_bytes < (last_network_activity + 4096)):
                 # if we saw no read or write requests since the last iteration,
                 # decrement our activity timer
                 inactivity_countdown -= 1
@@ -524,7 +560,8 @@ class Guest(object):
                 # if we did see some activity, then we can reset the timer
                 inactivity_countdown = inactivity_timeout
 
-            last_disk_activity = rd_req + wr_req
+            last_disk_activity = total_disk_req
+            last_network_activity = total_net_bytes
             count -= 1
             time.sleep(1)
 
