@@ -27,9 +27,7 @@ class RHL9Guest(oz.RedHat.RedHatCDGuest):
         oz.RedHat.RedHatCDGuest.__init__(self, tdl, "rtl8139", None, None, None,
                                          config, False, True)
 
-        self.ks_file = auto
-        if self.ks_file is None:
-            self.ks_file = oz.ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks")
+        self.auto = auto
 
         if self.tdl.arch != "i386":
             raise oz.OzException.OzException("Invalid arch " + self.tdl.arch + "for RHL guest")
@@ -37,10 +35,12 @@ class RHL9Guest(oz.RedHat.RedHatCDGuest):
     def modify_iso(self):
         self.log.debug("Putting the kickstart in place")
 
-        output_ks = os.path.join(self.iso_contents, "ks.cfg")
+        outname = os.path.join(self.iso_contents, "ks.cfg")
 
-        if self.ks_file == oz.ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks"):
+        if self.auto is None:
             def kssub(line):
+                # because we need to do this URL substitution here, we can't use
+                # the generic "copy_kickstart()" method
                 if re.match("^url", line):
                     return "url --url " + self.url + "\n"
                 elif re.match("^rootpw", line):
@@ -48,28 +48,14 @@ class RHL9Guest(oz.RedHat.RedHatCDGuest):
                 else:
                     return line
 
-            self.copy_modify_file(self.ks_file, output_ks, kssub)
+            self.copy_modify_file(oz.ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks"),
+                                                                    outname,
+                                                                    kssub)
         else:
-            shutil.copy(self.ks_file, output_ks)
+            shutil.copy(self.auto, outname)
 
-        self.log.debug("Modifying the boot options")
-        isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
-                                   "isolinux.cfg")
-        f = open(isolinuxcfg, "r")
-        lines = f.readlines()
-        f.close()
-        for index, line in enumerate(lines):
-            if re.match("timeout", line):
-                lines[index] = "timeout 1\n"
-            elif re.match("default", line):
-                lines[index] = "default customiso\n"
-        lines.append("label customiso\n")
-        lines.append("  kernel vmlinuz\n")
-        lines.append("  append initrd=initrd.img ks=cdrom:/ks.cfg method=" + self.url + "\n")
-
-        f = open(isolinuxcfg, "w")
-        f.writelines(lines)
-        f.close()
+        initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method=" + self.url + "\n"
+        self.modify_isolinux(initrdline)
 
 class RHL70and71and72and73and8Guest(oz.RedHat.RedHatFDGuest):
     def __init__(self, tdl, config, auto, nicmodel):

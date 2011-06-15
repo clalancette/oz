@@ -14,10 +14,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-import shutil
-import re
-import os
-
 import oz.ozutil
 import oz.RedHat
 import oz.OzException
@@ -27,49 +23,17 @@ class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
         oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, "virtio", None, None,
                                             "virtio", config, True, True)
 
-        self.ks_file = auto
-        if self.ks_file is None:
-            self.ks_file = oz.ozutil.generate_full_auto_path("rhel-6-jeos.ks")
+        self.auto = auto
 
     def modify_iso(self):
-        self.log.debug("Putting the kickstart in place")
+        self.copy_kickstart(self.auto, "rhel-6-jeos.ks")
 
-        outname = os.path.join(self.iso_contents, "ks.cfg")
-
-        if self.ks_file == oz.ozutil.generate_full_auto_path("rhel-6-jeos.ks"):
-            def kssub(line):
-                if re.match("^rootpw", line):
-                    return "rootpw " + self.rootpw + '\n'
-                else:
-                    return line
-
-            self.copy_modify_file(self.ks_file, outname, kssub)
-        else:
-            shutil.copy(self.ks_file, outname)
-
-        self.log.debug("Modifying the boot options")
-        isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
-                                   "isolinux.cfg")
-        f = open(isolinuxcfg, "r")
-        lines = f.readlines()
-        f.close()
-        for index, line in enumerate(lines):
-            if re.match("timeout", line):
-                lines[index] = "timeout 1\n"
-            elif re.match("default", line):
-                lines[index] = "default customiso\n"
-        lines.append("label customiso\n")
-        lines.append("  kernel vmlinuz\n")
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
         if self.tdl.installtype == "url":
             initrdline += " repo=" + self.url + "\n"
         else:
             initrdline += "\n"
-        lines.append(initrdline)
-
-        f = open(isolinuxcfg, "w")
-        f.writelines(lines)
-        f.close()
+        self.modify_isolinux(initrdline)
 
 def get_class(tdl, config, auto):
     if tdl.update in ["0", "1"]:

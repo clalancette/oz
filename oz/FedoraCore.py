@@ -14,10 +14,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-import shutil
-import re
-import os
-
 import oz.ozutil
 import oz.RedHat
 import oz.OzException
@@ -27,41 +23,21 @@ class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
         oz.RedHat.RedHatCDGuest.__init__(self, tdl, 'rtl8139', None, None, None,
                                          config, True, True)
 
-        self.ks_file = auto
-        if self.ks_file is None:
-            self.ks_file = oz.ozutil.generate_full_auto_path("fedoracore-" + self.tdl.update + "-jeos.ks")
+        self.auto = auto
 
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)
 
     def modify_iso(self):
-        self.log.debug("Putting the kickstart in place")
+        self.copy_kickstart(self.auto,
+                            "fedoracore-" + self.tdl.update + "-jeos.ks")
 
-        shutil.copy(self.ks_file, os.path.join(self.iso_contents, "ks.cfg"))
-
-        self.log.debug("Modifying the boot options")
-        isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
-                                   "isolinux.cfg")
-        f = open(isolinuxcfg, "r")
-        lines = f.readlines()
-        f.close()
-        for index, line in enumerate(lines):
-            if re.match("timeout", line):
-                lines[index] = "timeout 1\n"
-            elif re.match("default", line):
-                lines[index] = "default customiso\n"
-        lines.append("label customiso\n")
-        lines.append("  kernel vmlinuz\n")
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method="
         if self.tdl.installtype == "url":
             initrdline += self.url + "\n"
         else:
             initrdline += "cdrom:/dev/cdrom\n"
-        lines.append(initrdline)
-
-        f = open(isolinuxcfg, "w")
-        f.writelines(lines)
-        f.close()
+        self.modify_isolinux(initrdline)
 
 def get_class(tdl, config, auto):
     if tdl.update in ["1", "2", "3", "4", "5", "6"]:

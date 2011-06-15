@@ -58,6 +58,36 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                                           "-o", self.output_iso,
                                           self.iso_contents])
 
+    def modify_isolinux(self, initrdline):
+        self.log.debug("Modifying isolinux.cfg")
+        isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
+                                   "isolinux.cfg")
+
+        f = open(isolinuxcfg, "w")
+        f.write("default customiso\n")
+        f.write("timeout 1\n")
+        f.write("prompt 0\n")
+        f.write("label customiso\n")
+        f.write("  kernel vmlinuz\n")
+        f.write(initrdline)
+        f.close()
+
+    def copy_kickstart(self, auto, stock):
+        self.log.debug("Putting the kickstart in place")
+        outname = os.path.join(self.iso_contents, "ks.cfg")
+
+        if auto is None:
+            def kssub(line):
+                if re.match("^rootpw", line):
+                    return "rootpw " + self.rootpw + '\n'
+                else:
+                    return line
+
+            self.copy_modify_file(oz.ozutil.generate_full_auto_path(stock),
+                                  outname, kssub)
+        else:
+            shutil.copy(auto, outname)
+
     def get_default_runlevel(self, g_handle):
         runlevel = "3"
         if g_handle.exists('/etc/inittab'):
