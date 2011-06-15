@@ -50,7 +50,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             initrdline += "cdrom:/dev/cdrom\n"
         self.modify_isolinux(initrdline)
 
-    def check_media(self):
+    def check_pvd(self):
         pvd = self.get_primary_volume_descriptor(self.orig_iso)
 
         if pvd.system_identifier != "LINUX                           ":

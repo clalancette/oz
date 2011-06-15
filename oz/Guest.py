@@ -1079,9 +1079,14 @@ class CDGuest(Guest):
     def install(self, timeout=None, force=False):
         return self.do_install(timeout, force, 0)
 
-    def check_media(self):
+    def check_pvd(self):
         # base method to check the media.  In the common case, do nothing;
         # subclasses that need to check the media will override this.
+        pass
+
+    def check_iso_tree(self):
+        # base method to check the ISO tree.  In the common case, do nothing;
+        # subclasses that need to check the tree will override this.
         pass
 
     def modify_iso(self):
@@ -1108,8 +1113,9 @@ class CDGuest(Guest):
                 return
 
         self.get_original_iso(url, force_download)
-        self.check_media()
+        self.check_pvd()
         self.copy_iso()
+        self.check_iso_tree()
         try:
             self.modify_iso()
             self.generate_new_iso()

@@ -37,7 +37,7 @@ class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
             initrdline += "cdrom:/dev/cdrom\n"
         self.modify_isolinux(initrdline)
 
-    def check_media(self):
+    def check_pvd(self):
         pvd = self.get_primary_volume_descriptor(self.orig_iso)
 
         # all of the below should have "LINUX" as their system_identifier,
