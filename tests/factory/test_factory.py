@@ -59,32 +59,33 @@ def test_distro(distro, version, arch, installtype):
 
     guest = oz.GuestFactory.guest_factory(tdl, config, None)
 
-def expect_success(distro, version, arch, installtype):
+def runtest(distro, version, arch, installtype, expect_success):
     global success
     global fail
 
     print "Testing %s-%s-%s-%s..." % (distro, version, arch, installtype),
     try:
         test_distro(distro, version, arch, installtype)
-        success += 1
-        print "OK"
+        if expect_success:
+            success += 1
+            print "OK"
+        else:
+            fail += 1
+            print "FAIL"
     except Exception, e:
-        print e
-        print "FAIL"
-        fail += 1
+        if expect_success:
+            fail += 1
+            print e
+            print "FAIL"
+        else:
+            success += 1
+            print "OK"
+
+def expect_success(distro, version, arch, installtype):
+    return runtest(distro, version, arch, installtype, True)
 
 def expect_fail(distro, version, arch, installtype):
-    global success
-    global fail
-
-    print "Testing %s-%s-%s-%s..." % (distro, version, arch, installtype),
-    try:
-        test_distro(distro, version, arch, installtype)
-        fail += 1
-        print "FAIL"
-    except:
-        print "OK"
-        success += 1
+    return runtest(distro, version, arch, installtype, False)
 
 # bad distro
 expect_fail("foo", "1", "i386", "url")
@@ -102,7 +103,7 @@ for version in ["1", "2", "3", "4", "5", "6"]:
 expect_fail("FedoraCore", "24", "x86_64", "iso")
 
 # Fedora
-for version in ["7", "8", "9", "10", "11", "12", "13", "14"]:
+for version in ["7", "8", "9", "10", "11", "12", "13", "14", "15"]:
     for arch in ["i386", "x86_64"]:
         for installtype in ["url", "iso"]:
             expect_success("Fedora", version, arch, installtype)
@@ -157,7 +158,7 @@ for distro in ["RHEL-5", "CentOS-5"]:
 expect_fail("RHEL-5", "U10", "x86_64", "url")
 
 # RHEL-6
-for version in ["0"]:
+for version in ["0", "1"]:
     for arch in ["i386", "x86_64"]:
         for installtype in ["url", "iso"]:
             expect_success("RHEL-6", version, arch, installtype)
@@ -196,7 +197,8 @@ expect_fail("OpenSUSE", "11.4", "x86_64", "url")
 
 # Ubuntu
 for version in ["6.10", "7.04", "7.10", "8.04", "8.04.1", "8.04.2", "8.04.3",
-                "8.04.4", "8.10", "9.04", "9.10", "10.04", "10.04.1", "10.10"]:
+                "8.04.4", "8.10", "9.04", "9.10", "10.04", "10.04.1", "10.10",
+                "11.04"]:
     for arch in ["i386", "x86_64"]:
         expect_success("Ubuntu", version, arch, "iso")
 # bad Ubuntu version
