@@ -3,11 +3,11 @@
 Summary: Library and utilities for automated guest OS installs
 Name: oz
 Version: @VERSION@
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: LGPLv2
-Group: Development
+Group: Development/Libraries
 URL: http://aeolusproject.org/oz.html
-Source0: %{name}-%{version}.tar.gz
+Source0: http://repos.fedorapeople.org/repos/aeolus/oz/%{version}/tarball/%{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildArch: noarch
 Requires: gvnc-tools
@@ -56,6 +56,8 @@ mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/jeos
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/oz
 %{__cp} oz.cfg $RPM_BUILD_ROOT%{_sysconfdir}/oz
 
+chmod 755 $RPM_BUILD_ROOT%{python_sitelib}/oz/guesttools/*
+
 %post
 if [ ! -f %{_sysconfdir}/oz/id_rsa-icicle-gen ]; then
    ssh-keygen -t rsa -b 2048 -N "" -f %{_sysconfdir}/oz/id_rsa-icicle-gen
@@ -89,6 +91,9 @@ fi
 
 
 %changelog
+* Wed Jun 15 2011 Pádraig Brady <P@draigBrady.com> - 0.4.0-3
+- Address rpmlint issues.
+
 * Fri Jun 10 2011 Pádraig Brady <P@draigBrady.com> - 0.4.0-2
 - Change to noarch.
 
