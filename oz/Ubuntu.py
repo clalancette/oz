@@ -35,6 +35,11 @@ class UbuntuGuest(oz.Guest.CDGuest):
 
         self.url = self.check_url(self.tdl, iso=True, url=False)
 
+    def check_iso_tree(self):
+        if self.tdl.update == "7.04":
+            if os.path.isdir(os.path.join(self.iso_contents, "casper")):
+                raise oz.OzException.OzException("Ubuntu 7.04 installs can only be done using the alternate or server CDs")
+
     def modify_iso(self):
         self.log.debug("Modifying ISO")
 
@@ -58,7 +63,6 @@ class UbuntuGuest(oz.Guest.CDGuest):
         self.log.debug("Modifying isolinux.cfg")
         isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
                                    "isolinux.cfg")
-        os.unlink(isolinuxcfg)
         f = open(isolinuxcfg, 'w')
         f.write("default customiso\n")
         f.write("timeout 1\n")
@@ -88,7 +92,13 @@ class UbuntuGuest(oz.Guest.CDGuest):
     def generate_install_media(self, force_download=False):
         return self.iso_generate_install_media(self.url, force_download)
 
-class Ubuntu610and704Guest(oz.Guest.CDGuest):
+    def install(self, timeout=None, force=False):
+        if self.tdl.update == "7.04":
+            if not timeout:
+                timeout = 3000
+        return self.do_install(timeout, force, 0)
+
+class Ubuntu610Guest(oz.Guest.CDGuest):
     def __init__(self, tdl, config, auto):
         oz.Guest.CDGuest.__init__(self, tdl, "rtl8139", None, None, None,
                                   config)
@@ -162,9 +172,9 @@ class Ubuntu610and704Guest(oz.Guest.CDGuest):
         return self.iso_generate_install_media(self.url, force_download)
 
 def get_class(tdl, config, auto):
-    if tdl.update in ["6.10", "7.04"]:
-        return Ubuntu610and704Guest(tdl, config, auto)
-    if tdl.update in ["7.10"]:
+    if tdl.update in ["6.10"]:
+        return Ubuntu610Guest(tdl, config, auto)
+    if tdl.update in ["7.04", "7.10"]:
         return UbuntuGuest(tdl, config, auto, "initrd.gz", "rtl8139", None)
     if tdl.update in ["8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4", "8.10",
                       "9.04"]:
