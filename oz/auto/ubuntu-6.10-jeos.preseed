@@ -10,7 +10,7 @@ d-i netcfg/wireless_wep string
 d-i clock-setup/utc boolean true
 d-i time/zone string US/Eastern
 
-d-i partman-auto/init_automatically_partition select Use the largest continuous free space
+d-i partman-auto/disk string /dev/hda
 d-i partman-auto/method string regular
 d-i partman-auto/choose_recipe select Separate /home partition
 d-i partman/confirm_write_new_label boolean true

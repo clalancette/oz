@@ -36,9 +36,9 @@ class UbuntuGuest(oz.Guest.CDGuest):
         self.url = self.check_url(self.tdl, iso=True, url=False)
 
     def check_iso_tree(self):
-        if self.tdl.update == "7.04":
+        if self.tdl.update in ["6.10", "7.04"]:
             if os.path.isdir(os.path.join(self.iso_contents, "casper")):
-                raise oz.OzException.OzException("Ubuntu 7.04 installs can only be done using the alternate or server CDs")
+                raise oz.OzException.OzException("Ubuntu 6.10 and 7.04 installs can only be done using the alternate or server CDs")
 
     def modify_iso(self):
         self.log.debug("Modifying ISO")
@@ -93,88 +93,13 @@ class UbuntuGuest(oz.Guest.CDGuest):
         return self.iso_generate_install_media(self.url, force_download)
 
     def install(self, timeout=None, force=False):
-        if self.tdl.update == "7.04":
+        if self.tdl.update in ["6.10", "7.04"]:
             if not timeout:
                 timeout = 3000
         return self.do_install(timeout, force, 0)
 
-class Ubuntu610Guest(oz.Guest.CDGuest):
-    def __init__(self, tdl, config, auto):
-        oz.Guest.CDGuest.__init__(self, tdl, "rtl8139", None, None, None,
-                                  config)
-
-        self.preseed_file = auto
-        if self.preseed_file is None:
-            self.preseed_file = oz.ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
-
-        self.url = self.check_url(self.tdl, iso=True, url=False)
-
-    def modify_iso(self):
-        self.log.debug("Putting the preseed file in place")
-
-        outname = os.path.join(self.iso_contents, "preseed", "customiso.seed")
-
-        if self.preseed_file == oz.ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed"):
-
-            def preseed_sub(line):
-                if re.match('d-i passwd/root-password password', line):
-                    return 'd-i passwd/root-password password ' + self.rootpw + '\n'
-                elif re.match('d-i passwd/root-password-again password', line):
-                    return 'd-i passwd/root-password-again password ' + self.rootpw + '\n'
-                else:
-                    return line
-
-            self.copy_modify_file(self.preseed_file, outname, preseed_sub)
-        else:
-            shutil.copy(self.preseed_file, outname)
-
-        self.log.debug("Modifying isolinux.cfg")
-        isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
-                                   "isolinux.cfg")
-        f = open(isolinuxcfg, "r")
-        lines = f.readlines()
-        f.close()
-
-        for index, line in enumerate(lines):
-            if re.match(" *TIMEOUT", line, re.IGNORECASE):
-                lines[index] = "TIMEOUT 1\n"
-            elif re.match(" *DEFAULT", line, re.IGNORECASE):
-                lines[index] = "DEFAULT customiso\n"
-            elif re.match(" *GFXBOOT", line, re.IGNORECASE):
-                lines[index] = ""
-            elif re.match("^APPEND", line, re.IGNORECASE):
-                lines[index] = ""
-        lines.append("LABEL customiso\n")
-        lines.append("  menu label ^Customiso\n")
-        if os.path.isdir(os.path.join(self.iso_contents, "casper")):
-            lines.append("  kernel /casper/vmlinuz\n")
-            lines.append("  append file=/cdrom/preseed/customiso.seed locale=en_US console-setup/ask_detect=false console-setup/layoutcode=us priority=critical ramdisk_size=141876 root=/dev/ram rw initrd=/casper/initrd.gz --\n")
-        else:
-            lines.append("  kernel /install/vmlinuz\n")
-            lines.append("  append file=/cdrom/preseed/customiso.seed locale=en_US console-setup/ask_detect=false console-setup/layoutcode=us priority=critical ramdisk_size=141876 root=/dev/ram rw initrd=/install/initrd.gz --\n")
-
-        f = open(isolinuxcfg, "w")
-        f.writelines(lines)
-        f.close()
-
-    def generate_new_iso(self):
-        self.log.info("Generating new ISO")
-        oz.Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom", "-J",
-                                          "-l", "-b", "isolinux/isolinux.bin",
-                                          "-c", "isolinux/boot.cat",
-                                          "-no-emul-boot",
-                                          "-boot-load-size", "4",
-                                          "-cache-inodes", "-boot-info-table",
-                                          "-v", "-v", "-o", self.output_iso,
-                                          self.iso_contents])
-
-    def generate_install_media(self, force_download=False):
-        return self.iso_generate_install_media(self.url, force_download)
-
 def get_class(tdl, config, auto):
-    if tdl.update in ["6.10"]:
-        return Ubuntu610Guest(tdl, config, auto)
-    if tdl.update in ["7.04", "7.10"]:
+    if tdl.update in ["6.10", "7.04", "7.10"]:
         return UbuntuGuest(tdl, config, auto, "initrd.gz", "rtl8139", None)
     if tdl.update in ["8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4", "8.10",
                       "9.04"]:
