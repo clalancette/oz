@@ -77,3 +77,23 @@ secret when it connects to the waiting oz process, and oz will check to make
 sure this is the correct secret (otherwise it will continue waiting).  This
 will reduce the possibility that an arbitrary connection (not from the guest)
 is made to oz, and fake it into thinking the guest is up.
+21. Add some way to make multiple parallel builds of the same OS and type not
+tromp on each other.  jclift has suggested that we have a lock file in place
+that we check.
+
+For example, if we are installing 2 F-14 x86_64 URL-based guests
+at the same time, the first one in would create f14x86_64-url-<pid>.lock while
+it is downloading the ISO file.  When the second install started, it would
+look for the presence of that lock file; if the lockfile is not there, the
+second install would go ahead and download the file.  If the lockfile is there
+and the PID listed is still alive, the second install would assume the first
+one is still downloading and wait in a poll loop.  If the lockfile is there and
+the PID listed is not alive, then the second install would assume the first
+install crashed, and proceed to re-download the file.
+
+This works fine in all cases except for the "hung" install case.  That is, if
+the first install hangs up somehow and is not downloading the necessary files,
+this could cause other installs to hang indefinitely behind it.  This shouldn't
+be a huge problem, though, because a) things don't hang up very often in this
+manner, and b) the situation is really no worse than today, things would just
+fail earlier.
