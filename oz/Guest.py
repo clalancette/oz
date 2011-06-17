@@ -378,7 +378,7 @@ class Guest(object):
         return xml
 
     def internal_generate_diskimage(self, size=10, force=False,
-                                      create_partition=False):
+                                    create_partition=False):
         if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
             # if we found a cached JEOS, we don't need to do anything here;
             # we'll copy the JEOS itself later on
@@ -401,7 +401,6 @@ class Guest(object):
                                          geometry=geom)
             disk.addPartition(partition=partition, constraint=constraint)
             disk.commit()
-
 
     def generate_diskimage(self, size=10, force=False):
         return self.internal_generate_diskimage(size, force, False)
