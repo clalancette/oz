@@ -3,12 +3,13 @@
 # A script that tries various methods to connect to...
 host=$1
 port=$2
+secret=$3
 
 exec 2>/dev/null # Be quiet about failures
 
-exec 3<>/dev/tcp/$host/$port ||
+echo "$secret" >/dev/tcp/$host/$port ||
 
-nc $host $port </dev/null ||
+echo "$secret" | nc $host $port ||
 
 echo "\
 use strict;
@@ -19,6 +20,7 @@ my \$sock = new IO::Socket::INET (PeerAddr => '$host',
                                   Proto => 'tcp',
                                  );
 die \"Could not create socket: \$!\n\" unless \$sock;
+print \$sock \"$secret\n\";
 close (\$sock);
 " | perl ||
 
@@ -26,5 +28,6 @@ echo "\
 import sys, socket
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect(('$host', $port))
+s.send('$secret\n')
 s.close()
 " | python

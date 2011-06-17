@@ -290,7 +290,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
 
         announcefile = self.icicle_tmp + "/announce"
         f = open(announcefile, 'w')
-        f.write('*/1 * * * * root /bin/bash -c "/root/icicle-nc ' + self.host_bridge_ip + ' ' + str(self.listen_port) + '"\n')
+        f.write('*/1 * * * * root /bin/bash -c "/root/icicle-nc ' + self.host_bridge_ip + ' ' + str(self.listen_port) + ' ' + str(self.uuid) + '"\n')
         f.close()
 
         g_handle.upload(announcefile, '/etc/cron.d/announce')

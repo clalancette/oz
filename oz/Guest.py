@@ -706,9 +706,24 @@ class Guest(object):
                         self.log.debug("Waiting for guest %s to boot, %d/300" % (self.tdl.name, count))
                     rlist, wlist, xlist = select.select([listen], [], [], 1)
                     if len(rlist) > 0:
+                        # OK, something connected to the socket.  Read some
+                        # data from the socket and make sure it matches the
+                        # 'secret' (i.e. the guest UUID).  If it does, the
+                        # guest checked in.  If not, this is a connection from
+                        # something else, and we should ignore it.
                         new_sock, addr = listen.accept()
+                        new_sock.settimeout(10)
+                        data = new_sock.recv(len(str(self.uuid)))
+
+                        self.log.debug("Received data |%s| from socket" % (data))
+
+                        guest_checkin = False
+                        if data == str(self.uuid):
+                            guest_checkin = True
                         new_sock.close()
-                        break
+
+                        if guest_checkin:
+                            break
 
                     # OK, the guest hasn't checked in yet.  Do an "info" on
                     # the domain just to make sure it is still alive.  If it
