@@ -10,6 +10,7 @@ URL: http://aeolusproject.org/oz.html
 Source0: http://repos.fedorapeople.org/repos/aeolus/oz/%{version}/tarball/%{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildArch: noarch
+Requires: python >= 2.5
 Requires: gvnc-tools
 Requires: python-libguestfs
 Requires: libxml2-python

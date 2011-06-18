@@ -92,3 +92,132 @@ def copyfile_sparse(src, dest):
 
     os.close(src_fd)
     os.close(dest_fd)
+
+def bsd_split(line, digest_type):
+    current = len(digest_type)
+
+    if line[current] == ' ':
+        current += 1
+
+    if line[current] != '(':
+        return None, None
+
+    current += 1
+
+    # find end of filename.  The BSD 'md5' and 'sha1' commands do not escape
+    # filenames, so search backwards for the last ')'
+    file_end = line.rfind(')')
+    if file_end == -1:
+        # could not find the ending ), fail
+        return None, None
+
+    filename = line[current:file_end]
+
+    line = line[(file_end + 1):]
+    line = line.lstrip()
+
+    if line[0] != '=':
+        return None, None
+
+    line = line[1:]
+
+    line = line.lstrip()
+    if line[-1] == '\n':
+        line = line[:-1]
+
+    return line, filename
+
+def sum_split(line, digest_bits):
+    digest_hex_bytes = digest_bits / 4
+    min_digest_line_length = digest_hex_bytes + 2 + 1 # length of hex message digest + blank and binary indicator (2 bytes) + minimum file length (1 byte)
+
+    min_length = min_digest_line_length
+    if line[0] == '\\':
+        min_length = min_length + 1
+    if len(line) < min_length:
+        # if the line is too short, skip it
+        return None, None
+
+    if line[0] == '\\':
+        current = digest_hex_bytes + 1
+        hex_digest = line[1:current]
+        escaped_filename = True
+    else:
+        current = digest_hex_bytes
+        hex_digest = line[0:current]
+        escaped_filename = False
+
+    # if the digest is not immediately followed by a white space, it is an
+    # error
+    if line[current] != ' ' and line[current] != '\t':
+        return None, None
+
+    current += 1
+    # if the whitespace is not immediately followed by another space or a *,
+    # it is an error
+    if line[current] != ' ' and line[current] != '*':
+        return None, None
+
+    if line[current] == '*':
+        binary = True
+
+    current += 1
+
+    if line[-1] == '\n':
+        filename = line[current:-1]
+    else:
+        filename = line[current:]
+
+    if escaped_filename:
+        # FIXME: a \0 is not allowed in the sum file format, but
+        # string_escape allows it.  We'd probably have to implement our
+        # own codec to fix this
+        filename = filename.decode('string_escape')
+
+    return hex_digest, filename
+
+def get_sum_from_file(sumfile, file_to_find, digest_bits, digest_type):
+    retval = None
+
+    f = open(sumfile, 'r')
+    for line in f.xreadlines():
+        binary = False
+
+        # remove any leading whitespace
+        line = line.lstrip()
+
+        # ignore blank lines
+        if len(line) == 0:
+            continue
+
+        # ignore comment lines
+        if line[0] == '#':
+            continue
+
+        if line.startswith(digest_type):
+            # OK, if it starts with a string of ["MD5", "SHA1", "SHA256"], then
+            # this is a BSD-style sumfile
+            hex_digest, filename = bsd_split(line, digest_type)
+        else:
+            # regular sumfile
+            hex_digest, filename = sum_split(line, digest_bits)
+
+        if hex_digest is None or filename is None:
+            continue
+
+        if filename == file_to_find:
+            retval = hex_digest
+            break
+
+    f.close()
+
+    return retval
+
+def get_md5sum_from_file(sumfile, file_to_find):
+    return get_sum_from_file(sumfile, file_to_find, 128, "MD5")
+
+def get_sha1sum_from_file(sumfile, file_to_find):
+    return get_sum_from_file(sumfile, file_to_find, 160, "SHA1")
+
+def get_sha256sum_from_file(sumfile, file_to_find):
+    return get_sum_from_file(sumfile, file_to_find, 256, "SHA256")

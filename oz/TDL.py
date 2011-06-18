@@ -154,12 +154,37 @@ class TDL(object):
         self.installtype = install[0].prop('type')
         if self.installtype is None:
             raise oz.OzException.OzException("Failed to find OS install type in TDL")
+
+        # we only support md5/sha1/sha256 sums for ISO install types.  However,
+        # we make sure the instance variables are set to None for both types
+        # so code lower down in the stack doesn't have to care about the ISO
+        # vs. URL install type distinction, and can just check whether or not
+        # these URLs are None
+        self.iso_md5_url = None
+        self.iso_sha1_url = None
+        self.iso_sha256_url = None
+
         if self.installtype == "url":
             self.url = get_value(self.doc, '/template/os/install/url',
                                  'OS install URL')
         elif self.installtype == "iso":
             self.iso = get_value(self.doc, '/template/os/install/iso',
                                  'OS install ISO')
+            self.iso_md5_url = get_value(self.doc,
+                                         '/template/os/install/md5sum',
+                                         'OS install ISO MD5SUM', optional=True)
+            self.iso_sha1_url = get_value(self.doc,
+                                          '/template/os/install/sha1sum',
+                                          'OS install ISO SHA1SUM',
+                                          optional=True)
+            self.iso_sha256_url = get_value(self.doc,
+                                            '/template/os/install/sha256sum',
+                                            'OS install ISO SHA256SUM',
+                                            optional=True)
+            # only one of md5, sha1, or sha256 can be specified; raise an error
+            # if multiple are
+            if (self.iso_md5_url and self.iso_sha1_url) or (self.iso_md5_url and self.iso_sha256_url) or (self.iso_sha1_url and self.iso_sha256_url):
+                raise oz.OzException.OzException("Only one of <md5sum>, <sha1sum>, and <sha256sum> can be specified")
         else:
             raise oz.OzException.OzException("Unknown install type " + self.installtype + " in TDL")
 

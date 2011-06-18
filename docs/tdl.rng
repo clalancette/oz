@@ -127,9 +127,24 @@
     <attribute name='type'>
       <value>iso</value>
     </attribute>
-    <element name='iso'>
-      <text/>
-    </element>
+    <interleave>
+      <element name='iso'>
+        <text/>
+      </element>
+      <optional>
+        <choice>
+          <element name='md5sum'>
+	    <text/>
+          </element>
+          <element name='sha1sum'>
+            <text/>
+          </element>
+          <element name='sha256sum'>
+            <text/>
+          </element>
+        </choice>
+      </optional>
+    </interleave>
   </define>
 
   <define name='bool'>
