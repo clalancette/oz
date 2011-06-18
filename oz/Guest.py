@@ -509,49 +509,47 @@ class Guest(object):
         if content_length == 0:
             raise oz.OzException.OzException("Install media of 0 size detected, something is wrong")
 
-        original_available = False
         if not force_download and os.access(output, os.F_OK):
             if content_length == os.stat(output)[stat.ST_SIZE]:
-                original_available = True
+                self.log.info("Original install media available, using cached version")
+                return
 
-        if original_available:
-            self.log.info("Original install media available, using cached version")
-        else:
-            # before fetching everything, make sure that we have enough
-            # space on the filesystem to store the data we are about to download
-            outdir = os.path.dirname(output)
-            self.mkdir_p(outdir)
-            devdata = os.statvfs(outdir)
-            if (devdata.f_bsize*devdata.f_bavail) < content_length:
-                raise oz.OzException.OzException("Not enough room on %s for install media" % (outdir))
-            self.log.info("Fetching the original install media from %s" % (url))
-            self.last_mb = -1
-            def progress(down_total, down_current, up_total, up_current):
-                if down_total == 0:
-                    return
-                current_mb = int(down_current) / 10485760
-                if current_mb > self.last_mb or down_current == down_total:
-                    self.last_mb = current_mb
-                    self.log.debug("%dkB of %dkB" % (down_current/1024, down_total/1024))
+        # before fetching everything, make sure that we have enough
+        # space on the filesystem to store the data we are about to download
+        outdir = os.path.dirname(output)
+        self.mkdir_p(outdir)
+        devdata = os.statvfs(outdir)
+        if (devdata.f_bsize*devdata.f_bavail) < content_length:
+            raise oz.OzException.OzException("Not enough room on %s for install media" % (outdir))
+        self.log.info("Fetching the original install media from %s" % (url))
+        self.last_mb = -1
+        def progress(down_total, down_current, up_total, up_current):
+            if down_total == 0:
+                return
+            current_mb = int(down_current) / 10485760
+            if current_mb > self.last_mb or down_current == down_total:
+                self.last_mb = current_mb
+                self.log.debug("%dkB of %dkB" % (down_current/1024,
+                                                 down_total/1024))
 
-            self.outf = open(output, "w")
-            def data(buf):
-                self.outf.write(buf)
+        self.outf = open(output, "w")
+        def data(buf):
+            self.outf.write(buf)
 
-            c = pycurl.Curl()
-            c.setopt(c.URL, url)
-            c.setopt(c.CONNECTTIMEOUT, 5)
-            c.setopt(c.WRITEFUNCTION, data)
-            c.setopt(c.NOPROGRESS, 0)
-            c.setopt(c.PROGRESSFUNCTION, progress)
-            c.perform()
-            c.close()
-            self.outf.close()
+        c = pycurl.Curl()
+        c.setopt(c.URL, url)
+        c.setopt(c.CONNECTTIMEOUT, 5)
+        c.setopt(c.WRITEFUNCTION, data)
+        c.setopt(c.NOPROGRESS, 0)
+        c.setopt(c.PROGRESSFUNCTION, progress)
+        c.perform()
+        c.close()
+        self.outf.close()
 
-            if os.stat(output)[stat.ST_SIZE] == 0:
-                # if we see a zero-sized media after the download, we know
-                # something went wrong
-                raise oz.OzException.OzException("Media of 0 size downloaded")
+        if os.stat(output)[stat.ST_SIZE] == 0:
+            # if we see a zero-sized media after the download, we know
+            # something went wrong
+            raise oz.OzException.OzException("Media of 0 size downloaded")
 
     def capture_screenshot(self, xml):
         screenshot = os.path.join(self.screenshot_dir,
