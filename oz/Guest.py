@@ -714,15 +714,9 @@ class Guest(object):
                         new_sock, addr = listen.accept()
                         new_sock.settimeout(10)
                         data = new_sock.recv(len(str(self.uuid)))
-
-                        self.log.debug("Received data |%s| from socket" % (data))
-
-                        guest_checkin = False
-                        if data == str(self.uuid):
-                            guest_checkin = True
                         new_sock.close()
 
-                        if guest_checkin:
+                        if data == str(self.uuid):
                             break
 
                     # OK, the guest hasn't checked in yet.  Do an "info" on
