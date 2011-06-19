@@ -269,7 +269,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
         if g_handle.exists('/lib/systemd/system/crond.service'):
             if g_handle.exists('/etc/systemd/system/multi-user.target.wants/crond.service'):
-                self.crond_was_active = True;
+                self.crond_was_active = True
             else:
                 g_handle.ln_sf('/lib/systemd/system/crond.service',
                                '/etc/systemd/system/multi-user.target.wants/crond.service')
