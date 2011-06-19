@@ -72,7 +72,8 @@ def subprocess_check_output(*popenargs, **kwargs):
 
     if retcode:
         cmd = ' '.join(*popenargs)
-        raise oz.OzException.OzException("'%s' failed(%d): %s" % (cmd, retcode, stderr))
+        raise oz.OzException.OzException("'%s' failed(%d): %s" % (cmd, retcode,
+                                                                  stderr))
     return (stdout, stderr, retcode)
 
 class Guest(object):
@@ -152,7 +153,8 @@ class Guest(object):
 
         if self.tdl.arch != "i386" and self.tdl.arch != "x86_64":
             raise oz.OzException.OzException("Unsupported guest arch " + self.tdl.arch)
-        self.log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
+        self.log = logging.getLogger('%s.%s' % (__name__,
+                                                self.__class__.__name__))
         self.uuid = uuid.uuid4()
         mac = [0x52, 0x54, 0x00, random.randint(0x00, 0xff),
                random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
@@ -186,7 +188,8 @@ class Guest(object):
                                           self.tdl.distro + self.tdl.update + self.tdl.arch + ".dsk")
 
         self.diskimage = os.path.join(self.output_dir, self.tdl.name + ".dsk")
-        self.icicle_tmp = os.path.join(self.data_dir, "icicletmp", self.tdl.name)
+        self.icicle_tmp = os.path.join(self.data_dir, "icicletmp",
+                                       self.tdl.name)
         self.listen_port = random.randrange(1024, 65535)
 
         self.connect_to_libvirt()
@@ -969,7 +972,8 @@ class CDGuest(Guest):
         # some padding that happens that causes the unpacking to fail.
         # Instead we force "standard" alignment, which has no padding
         fmt = "=B5sB23s41sI"
-        (boot, isoIdent, version, toritoSpec, unused, bootP) = struct.unpack(fmt, cdfile.read(struct.calcsize(fmt)))
+        (boot, isoIdent, version, toritoSpec, unused, bootP) = struct.unpack(fmt,
+                                                                             cdfile.read(struct.calcsize(fmt)))
         if boot != 0x0:
             raise oz.OzException.OzException("invalid CD boot sector")
         if version != 0x1:
@@ -984,7 +988,8 @@ class CDGuest(Guest):
         cdfile.seek(bootP*2048)
         fmt = "=BBH24sHBB"
         bootdata = cdfile.read(struct.calcsize(fmt))
-        (header, platform, unused, manu, unused2, five, aa) = struct.unpack(fmt, bootdata)
+        (header, platform, unused, manu, unused2, five, aa) = struct.unpack(fmt,
+                                                                            bootdata)
         if header != 0x1:
             raise oz.OzException.OzException("invalid CD boot sector header")
         if platform != 0x0 and platform != 0x1 and platform != 0x2:
@@ -1156,8 +1161,10 @@ class FDGuest(Guest):
                                         self.tdl.distro + self.tdl.update + self.tdl.arch + ".img")
         self.modified_floppy_cache = os.path.join(self.data_dir, "floppies",
                                                   self.tdl.distro + self.tdl.update + self.tdl.arch + "-oz.img")
-        self.output_floppy = os.path.join(self.output_dir, self.tdl.name + "-oz.img")
-        self.floppy_contents = os.path.join(self.data_dir, "floppycontent", self.tdl.name)
+        self.output_floppy = os.path.join(self.output_dir,
+                                          self.tdl.name + "-oz.img")
+        self.floppy_contents = os.path.join(self.data_dir, "floppycontent",
+                                            self.tdl.name)
 
         self.log.debug("Original floppy path: %s" % self.orig_floppy)
         self.log.debug("Modified floppy cache: %s" % self.modified_floppy_cache)

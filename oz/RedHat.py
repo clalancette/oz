@@ -246,7 +246,8 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         # part 3; open up iptables
         self.log.debug("Step 3: Open up the firewall")
         if g_handle.exists('/etc/sysconfig/iptables'):
-            g_handle.mv('/etc/sysconfig/iptables', '/etc/sysconfig/iptables.icicle')
+            g_handle.mv('/etc/sysconfig/iptables',
+                        '/etc/sysconfig/iptables.icicle')
         # implicit else; if there is no iptables file, the firewall is open
 
     def image_ssh_setup_step_4(self, g_handle):
@@ -270,7 +271,8 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             if g_handle.exists('/etc/systemd/system/multi-user.target.wants/crond.service'):
                 self.crond_was_active = True;
             else:
-                g_handle.ln_sf('/lib/systemd/system/crond.service', '/etc/systemd/system/multi-user.target.wants/crond.service')
+                g_handle.ln_sf('/lib/systemd/system/crond.service',
+                               '/etc/systemd/system/multi-user.target.wants/crond.service')
         else:
             startuplink = self.get_service_runlevel_link(g_handle, 'crond')
             if g_handle.exists(startuplink):
@@ -474,7 +476,8 @@ class RedHatCDYumGuest(RedHatCDGuest):
                 new_url = response.geturl()
                 response.close()
 
-                self.log.debug("Original URL %s resolved to %s" % (url, new_url))
+                self.log.debug("Original URL %s resolved to %s" % (url,
+                                                                   new_url))
 
                 if 'Accept-Ranges' in info and info['Accept-Ranges'] == "none":
                     if url == new_url:
