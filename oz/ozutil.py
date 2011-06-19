@@ -351,3 +351,19 @@ def mkdir_p(path):
         os.makedirs(path)
     elif not os.path.isdir(path):
         raise Exception, "cannot create '%s': File exists" % (path)
+
+def copy_modify_file(inname, outname, subfunc):
+    """
+    Method to copy a file from inname to outname, passing each line through
+    subfunc first.  subfunc is expected to be a method that takes a single
+    argument in (the next line), and returns a string to be written to the
+    output file after modification (if any).
+    """
+    infile = open(inname, 'r')
+    outfile = open(outname, 'w')
+
+    for line in infile.xreadlines():
+        outfile.write(subfunc(line))
+
+    infile.close()
+    outfile.close()

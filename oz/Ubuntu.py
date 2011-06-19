@@ -60,7 +60,7 @@ class UbuntuGuest(oz.Guest.CDGuest):
 
             def _preseed_sub(line):
                 """
-                Method that is called back from __copy_modify_file() to
+                Method that is called back from oz.ozutil.copy_modify_file() to
                 modify preseed files as appropriate for Ubuntu.
                 """
                 if re.match('d-i passwd/root-password password', line):
@@ -70,7 +70,7 @@ class UbuntuGuest(oz.Guest.CDGuest):
                 else:
                     return line
 
-            self._copy_modify_file(self.preseed_file, outname, _preseed_sub)
+            oz.ozutil.copy_modify_file(self.preseed_file, outname, _preseed_sub)
         else:
             shutil.copy(self.preseed_file, outname)
 

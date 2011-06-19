@@ -1014,22 +1014,6 @@ class Guest(object):
             open(pubname, 'w').write(keystring)
             os.chmod(pubname, 0644)
 
-    def _copy_modify_file(self, inname, outname, subfunc):
-        """
-        Method to copy a file from inname to outname, passing each line
-        through subfunc first.  subfunc is expected to be a method that
-        takes a single argument in (the next line), and returns a string
-        to be written to the output file after modification (if any).
-        """
-        infile = open(inname, 'r')
-        outfile = open(outname, 'w')
-
-        for line in infile.xreadlines():
-            outfile.write(subfunc(line))
-
-        infile.close()
-        outfile.close()
-
 class CDGuest(Guest):
     """
     Class for guest installation via ISO.

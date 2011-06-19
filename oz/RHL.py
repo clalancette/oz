@@ -50,7 +50,7 @@ class RHL9Guest(oz.RedHat.RedHatCDGuest):
         if self.auto is None:
             def _kssub(line):
                 """
-                Method that is called back from __copy_modify_file() to
+                Method that is called back from oz.ozutil.copy_modify_file() to
                 modify kickstart files as appropriate for RHL-9.
                 """
                 # because we need to do this URL substitution here, we can't use
@@ -62,9 +62,8 @@ class RHL9Guest(oz.RedHat.RedHatCDGuest):
                 else:
                     return line
 
-            self._copy_modify_file(oz.ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks"),
-                                    outname,
-                                    _kssub)
+            oz.ozutil.copy_modify_file(oz.ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks"),
+                                       outname, _kssub)
         else:
             shutil.copy(self.auto, outname)
 

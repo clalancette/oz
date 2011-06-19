@@ -134,7 +134,7 @@ class Windows2000andXPand2003(Windows):
 
             def _sifsub(line):
                 """
-                Method that is called back from __copy_modify_file() to
+                Method that is called back from oz.ozutil.copy_modify_file() to
                 modify sif files as appropriate for Windows 2000/XP/2003.
                 """
                 if re.match(" *ProductKey", line):
@@ -148,7 +148,7 @@ class Windows2000andXPand2003(Windows):
                 else:
                     return line
 
-            self._copy_modify_file(self.siffile, outname, _sifsub)
+            oz.ozutil.copy_modify_file(self.siffile, outname, _sifsub)
         else:
             # if the user provided their own siffile, do not override their
             # choices; the user gets to keep both pieces if something breaks

@@ -100,7 +100,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         if auto is None:
             def _kssub(line):
                 """
-                Method that is called back from __copy_modify_file() to
+                Method that is called back from oz.ozutil.copy_modify_file() to
                 modify kickstart files as appropriate for RHL-9.
                 """
                 if re.match("^rootpw", line):
@@ -108,8 +108,8 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                 else:
                     return line
 
-            self._copy_modify_file(oz.ozutil.generate_full_auto_path(stock),
-                                   outname, _kssub)
+            oz.ozutil.copy_modify_file(oz.ozutil.generate_full_auto_path(stock),
+                                       outname, _kssub)
         else:
             shutil.copy(auto, outname)
 
@@ -725,7 +725,7 @@ class RedHatFDGuest(oz.Guest.FDGuest):
         if self.ks_file == oz.ozutil.generate_full_auto_path(self.ks_name):
             def _kssub(line):
                 """
-                Method that is called back from __copy_modify_file() to
+                Method that is called back from oz.ozutil.copy_modify_file() to
                 modify kickstart files as appropriate for RHL.
                 """
                 if re.match("^url", line):
@@ -735,7 +735,7 @@ class RedHatFDGuest(oz.Guest.FDGuest):
                 else:
                     return line
 
-            self._copy_modify_file(self.ks_file, output_ks, _kssub)
+            oz.ozutil.copy_modify_file(self.ks_file, output_ks, _kssub)
         else:
             shutil.copy(self.ks_file, output_ks)
 
