@@ -49,8 +49,8 @@ class RHL9Guest(oz.RedHat.RedHatCDGuest):
                     return line
 
             self.copy_modify_file(oz.ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks"),
-                                                                    outname,
-                                                                    kssub)
+                                  outname,
+                                  kssub)
         else:
             shutil.copy(self.auto, outname)
 
