@@ -642,7 +642,7 @@ class RedHatFDGuest(oz.Guest.FDGuest):
         self.log.info("Generating install media")
 
         if not force_download:
-            if os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
+            if os.access(self.jeos_filename, os.F_OK):
                 # if we found a cached JEOS, we don't need to do anything here;
                 # we'll copy the JEOS itself later on
                 return

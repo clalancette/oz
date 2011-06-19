@@ -379,7 +379,7 @@ class Guest(object):
 
     def internal_generate_diskimage(self, size=10, force=False,
                                     create_partition=False):
-        if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
+        if not force and os.access(self.jeos_filename, os.F_OK):
             # if we found a cached JEOS, we don't need to do anything here;
             # we'll copy the JEOS itself later on
             return
@@ -1055,7 +1055,7 @@ class CDGuest(Guest):
         out.close()
 
     def do_install(self, timeout=None, force=False, reboots=0):
-        if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
+        if not force and os.access(self.jeos_filename, os.F_OK):
             self.log.info("Found cached JEOS, using it")
             oz.ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
         else:
@@ -1109,7 +1109,7 @@ class CDGuest(Guest):
         self.log.info("Generating install media")
 
         if not force_download:
-            if os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
+            if os.access(self.jeos_filename, os.F_OK):
                 # if we found a cached JEOS, we don't need to do anything here;
                 # we'll copy the JEOS itself later on
                 return
@@ -1172,7 +1172,7 @@ class FDGuest(Guest):
         shutil.copyfile(self.orig_floppy, self.output_floppy)
 
     def install(self, timeout=None, force=False):
-        if not force and os.access(self.jeos_cache_dir, os.F_OK) and os.access(self.jeos_filename, os.F_OK):
+        if not force and os.access(self.jeos_filename, os.F_OK):
             self.log.info("Found cached JEOS, using it")
             oz.ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
         else:
