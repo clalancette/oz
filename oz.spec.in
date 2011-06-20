@@ -69,7 +69,7 @@ fi
 
 %files
 %defattr(-,root,root,-)
-%doc README COPYING
+%doc README COPYING examples
 %dir %attr(0755, root, root) %{_sysconfdir}/oz/
 %config(noreplace) %{_sysconfdir}/oz/oz.cfg
 %dir %attr(0755, root, root) %{_localstatedir}/lib/oz/
@@ -91,6 +91,9 @@ fi
 
 
 %changelog
+* Wed Jun 20 2011 Pádraig Brady <P@draigBrady.com> - 0.4.0-4
+- Include examples/.
+
 * Wed Jun 15 2011 Pádraig Brady <P@draigBrady.com> - 0.4.0-3
 - Address rpmlint issues.
 

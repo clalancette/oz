@@ -22,13 +22,12 @@ library.  Unfortunately I have not figured out how to do it in python yet,
 so this needs further research.
 5.  Before attempting an install, check the output_dir to make sure it will
 approximately have enough space for the output disk image.
-6.  Include the example TDLs in the RPM spec file.
-7.  Documentation on how to use the classes, and what new classes need to
+6.  Documentation on how to use the classes, and what new classes need to
 provide.
-8.  Add the ability to do (optional) checksumming on the downloaded install
+7.  Add the ability to do (optional) checksumming on the downloaded install
 media.
-9.  Write pydoc documentation for all of the classes and methods.
-10. With windows from MSDN (at least 2000, maybe other versions too), the
+8.  Write pydoc documentation for all of the classes and methods.
+9.  With windows from MSDN (at least 2000, maybe other versions too), the
 top-level doesn't really contain the bits you care about.  What happens is
 that there are 3 boot options on the CD: installer for Professional, Server, and
 Advanced Server.  The directory structure on the CD is something like:
@@ -45,34 +44,34 @@ then copy just that subdirectory.  You'll also need to extract the appropriate
 parts of eltorito so it boots automatically, and then you'll also need to set
 i386/txtsetup.sif [SetupData]: SetupSourcePath = "\".  See
 http://old.bink.nu/bootcd/
-11. Write a boxgrinder plugin.  This requires implementing a ruby class
+10. Write a boxgrinder plugin.  This requires implementing a ruby class
 for it, and implementing .after_init, .deliverables_exists?, .run, .deliverables.
-12. Debian/Ubuntu packages.
-13. Take a screen shot if some customization or generate-icicle steps time out.
-14. Try to do automatic detection of distro/version/architecture from the ISO
+11. Debian/Ubuntu packages.
+12. Take a screen shot if some customization or generate-icicle steps time out.
+13. Try to do automatic detection of distro/version/architecture from the ISO
 that are provided to us.  That will make it so that a minimal TDL will only
 include the path to the ISO, and we can figure out the rest of the information.
-15. Add support for additional drivers during install (needed for Windows virtio
+14. Add support for additional drivers during install (needed for Windows virtio
 support).
-16. Make "python setup.py bdist_rpm" work.  The problem is that bdist_rpm
+15. Make "python setup.py bdist_rpm" work.  The problem is that bdist_rpm
 generates its own SPEC file based on the information in setup.py.  When it
 does this, it somehow messes up the %description (minor, probably a change to
 the setup macro), fails to create the /var/lib/oz subdirectories (which could
 be moved into setup.py as well), and also fails to find the gzipped man page
 files (which is what eventually causes the build to fail).
-17. RHL 6.2 does not work via HTTP because of a bug in the installer; when
+16. RHL 6.2 does not work via HTTP because of a bug in the installer; when
 parsing a URL passed in via "method", it fails to put a / at the beginning of
 the URL.  What this means is that when the installer goes to fetch the install
 images via "GET path/to/netstg2.img HTTP/0.9", the web server then returns an
 error.  To do a fully automated install, we need to use an ISO, NFS or FTP
 install method; I could not get FTP to work, but I did not try that hard.
-18. RHL 6.1 fails because there is no netstg2.img available in the distribution
+17. RHL 6.1 fails because there is no netstg2.img available in the distribution
 I have.  Unfortunately, I have not been able to find the netstg2.img, nor an
 ISO of 6.1 to do an alternate install.  NFS may still work here.
-19. RHL 6.0 fails because the kernel panics on boot:
+18. RHL 6.0 fails because the kernel panics on boot:
      VFS: Cannot open root device 08:21
      Kernel panic: VFS: Unable to mount root fs on 08:21
-20. Add some way to make multiple parallel builds of the same OS and type not
+19. Add some way to make multiple parallel builds of the same OS and type not
 tromp on each other.  jclift has suggested that we have a lock file in place
 that we check.
 
