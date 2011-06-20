@@ -132,8 +132,8 @@ try:
     else:
         guest.check_for_guest_conflict()
 
-    guest.generate_install_media(force_download)
     try:
+        guest.generate_install_media(force_download)
         try:
             guest.generate_diskimage(force=force_download)
             libvirt_xml = guest.install(timeout, force_download)
