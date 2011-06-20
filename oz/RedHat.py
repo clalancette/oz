@@ -59,6 +59,11 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                                           "-o", self.output_iso,
                                           self.iso_contents])
 
+    def check_iso_tree(self):
+        kernel = os.path.join(self.iso_contents, "isolinux", "vmlinuz")
+        if not os.path.exists(kernel):
+            raise oz.OzException.OzException("Fedora/Red Hat installs can only be done using a boot.iso (netinst) or DVD image (LiveCDs are not supported)")
+
     def modify_isolinux(self, initrdline):
         self.log.debug("Modifying isolinux.cfg")
         isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
