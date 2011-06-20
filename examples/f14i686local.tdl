@@ -1,0 +1,12 @@
+<template>
+  <name>f14jeos</name>
+  <os>
+    <name>Fedora</name>
+    <version>14</version>
+    <arch>i386</arch>
+    <install type='iso'>
+      <iso>file:///Fedora-14-i386-netinst.iso</iso>
+    </install>
+  </os>
+  <description>Fedora 14</description>
+</template>
