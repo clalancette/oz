@@ -32,7 +32,7 @@ import oz.linuxutil
 
 class UbuntuGuest(oz.Guest.CDGuest):
     """
-    Class for Ubuntu 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, 11.04, 11.10, 12.04, 12.10, and 13.04 installation.
+    Class for Ubuntu 5.10, 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, 11.04, 11.10, 12.04, 12.10, and 13.04 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, initrd, nicmodel,
                  diskbus, macaddress):
@@ -91,6 +91,10 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
 
         self.cmdline = "priority=critical locale=en_US"
 
+        self.reboots = 0
+        if self.tdl.update in ["5.10"]:
+            self.reboots = 1
+
     def _check_iso_tree(self, customize_or_icicle):
         # ISOs that contain casper are desktop install CDs
         if os.path.isdir(os.path.join(self.iso_contents, "casper")):
@@ -147,21 +151,29 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
             shutil.copyfile(os.path.join(self.iso_contents, "boot.cat"),
                             os.path.join(isolinuxdir, "boot.cat"))
         f = open(isolinuxcfg, 'w')
-        f.write("default customiso\n")
-        f.write("timeout 1\n")
-        f.write("prompt 0\n")
-        f.write("label customiso\n")
-        f.write("  menu label ^Customiso\n")
-        f.write("  menu default\n")
-        if os.path.isdir(os.path.join(self.iso_contents, "casper")):
-            f.write("  kernel /casper/vmlinuz\n")
-            f.write("  append file=/cdrom/preseed/customiso.seed boot=casper automatic-ubiquity noprompt keyboard-configuration/layoutcode=us initrd=/casper/" + self.casper_initrd + "\n")
+
+        if self.tdl.update in ["5.10"]:
+            f.write("DEFAULT /install/vmlinuz\n")
+            f.write("APPEND initrd=/install/initrd.gz ramdisk_size=16384 root=/dev/rd/0 rw preseed/file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US kbd-chooser/method=us netcfg/choose_interface=auto keyboard-configuration/layoutcode=us debconf/priority=critical --\n")
+            f.write("TIMEOUT 1\n")
+            f.write("PROMPT 0\n")
         else:
-            keyboard = "console-setup/layoutcode=us"
-            if self.tdl.update == "6.06":
-                keyboard = "kbd-chooser/method=us"
-            f.write("  kernel /install/vmlinuz\n")
-            f.write("  append preseed/file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US " + keyboard + " netcfg/choose_interface=auto keyboard-configuration/layoutcode=us priority=critical initrd=/install/initrd.gz --\n")
+            f.write("default customiso\n")
+            f.write("timeout 1\n")
+            f.write("prompt 0\n")
+            f.write("label customiso\n")
+            f.write("  menu label ^Customiso\n")
+            f.write("  menu default\n")
+            if os.path.isdir(os.path.join(self.iso_contents, "casper")):
+                f.write("  kernel /casper/vmlinuz\n")
+                f.write("  append file=/cdrom/preseed/customiso.seed boot=casper automatic-ubiquity noprompt keyboard-configuration/layoutcode=us initrd=/casper/" + self.casper_initrd + "\n")
+            else:
+                keyboard = "console-setup/layoutcode=us"
+                if self.tdl.update == "6.06":
+                    keyboard = "kbd-chooser/method=us"
+                f.write("  kernel /install/vmlinuz\n")
+                f.write("  append preseed/file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US " + keyboard + " netcfg/choose_interface=auto keyboard-configuration/layoutcode=us priority=critical initrd=/install/initrd.gz --\n")
+
         f.close()
 
     def _generate_new_iso(self):
@@ -182,10 +194,10 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         """
         Method to run the operating system installation.
         """
-        if self.tdl.update in ["6.06", "6.10", "7.04"]:
+        if self.tdl.update in ["5.10", "6.06", "6.10", "7.04"]:
             if not timeout:
                 timeout = 3000
-        return self._do_install(timeout, force, 0, self.cmdline)
+        return self._do_install(timeout, force, self.reboots, self.cmdline)
 
     def _get_service_runlevel_link(self, g_handle, service):
         """
@@ -798,7 +810,8 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for Ubuntu installs.
     """
-    if tdl.update in ["6.06", "6.06.1", "6.06.2", "6.10", "7.04", "7.10"]:
+    if tdl.update in ["5.10", "6.06", "6.06.1", "6.06.2", "6.10", "7.04",
+                      "7.10"]:
         return UbuntuGuest(tdl, config, auto, output_disk, "initrd.gz",
                            netdev, diskbus, macaddress)
     if tdl.update in ["8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4", "8.10",
@@ -823,4 +836,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Ubuntu: 6.06[.1,.2], 6.10, 7.04, 7.10, 8.04[.1,.2,.3,.4], 8.10, 9.04, 9.10, 10.04[.1,.2,.3], 10.10, 11.04, 11.10, 12.04[.1,.2], 12.10, 13.04"
+    return "Ubuntu: 5.10, 6.06[.1,.2], 6.10, 7.04, 7.10, 8.04[.1,.2,.3,.4], 8.10, 9.04, 9.10, 10.04[.1,.2,.3], 10.10, 11.04, 11.10, 12.04[.1,.2], 12.10, 13.04"
