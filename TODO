@@ -89,3 +89,16 @@ this could cause other installs to hang indefinitely behind it.  This shouldn't
 be a huge problem, though, because a) things don't hang up very often in this
 manner, and b) the situation is really no worse than today, things would just
 fail earlier.
+
+19.  Enable SELinux in enforcing mode inside of Fedora/RHEL guests.  The current
+problem with this is that prior to launching the customize step, we upload files
+like ssh keys via libguestfs.  In the default mode libguestfs uploads them with
+no SELinux context, which means reads are denied.
+
+Jim Meyering suggests that we add a script to the end of /etc/rc.d/rc.local that
+does a "restorecon" on the files we care about.  Then we don't need to worry
+about knowing the context in Oz; we just make it do the right thing.  There
+are two problems with this: 1) if we upload /etc/rc.d/rc.local, that will have
+the wrong context that we have to deal with, and 2) there is a race condition
+between icicle-nc checking in and this restorecon script finishing.  Neither
+problem is insurmountable, but we should make the effort to get this working.
