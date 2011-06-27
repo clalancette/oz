@@ -123,7 +123,7 @@ class Guest(object):
                 network = self.libvirt_conn.networkLookupByName(netname)
 
                 xml = network.XMLDesc(0)
-                doc = libxml2.parseMemory(xml, len(xml))
+                doc = libxml2.parseDoc(xml)
 
                 forward = doc.xpathEval('/network/forward')
                 if len(forward) != 1:
@@ -412,7 +412,7 @@ class Guest(object):
         # first find the disk device we are installing to; this will be
         # monitored for activity during the installation
         domxml = libvirt_dom.XMLDesc(0)
-        doc = libxml2.parseMemory(domxml, len(domxml))
+        doc = libxml2.parseDoc(domxml)
         disktarget = doc.xpathEval("/domain/devices/disk[@device='disk']/target")
         if len(disktarget) < 1:
             raise oz.OzException.OzException("Could not find disk target")
@@ -621,7 +621,7 @@ class Guest(object):
         screenshot = os.path.join(self.screenshot_dir,
                                   self.tdl.name + "-" + str(time.time()) + ".png")
 
-        doc = libxml2.parseMemory(xml, len(xml))
+        doc = libxml2.parseDoc(xml)
         graphics = doc.xpathEval('/domain/devices/graphics')
         if len(graphics) != 1:
             self.log.error("Could not find the VNC port")
@@ -645,7 +645,7 @@ class Guest(object):
             self.log.error("Failed to take screenshot")
 
     def guestfs_handle_setup(self, libvirt_xml):
-        input_doc = libxml2.parseMemory(libvirt_xml, len(libvirt_xml))
+        input_doc = libxml2.parseDoc(libvirt_xml)
         namenode = input_doc.xpathEval('/domain/name')
         if len(namenode) != 1:
             raise oz.OzException.OzException("invalid libvirt XML with no name")
@@ -669,7 +669,7 @@ class Guest(object):
             self.log.debug("DomID: %d" % (domid))
             dom = self.libvirt_conn.lookupByID(domid)
             xml = dom.XMLDesc(0)
-            doc = libxml2.parseMemory(xml, len(xml))
+            doc = libxml2.parseDoc(xml)
             namenode = doc.xpathEval('/domain/name')
             if len(namenode) != 1:
                 # hm, odd, a domain without a name?
