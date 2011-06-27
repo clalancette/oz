@@ -80,25 +80,6 @@ class Package(object):
         self.filename = filename
         self.args = args
 
-def string_to_bool(instr, component):
-    """
-    Function to take a string and determine whether it is True, Yes, False,
-    or No.  It takes 2 arguments:
-
-    instr     - The string to examine.
-    component - A string representing which TDL component is being
-                looked for (used in error reporting).
-
-    Returns True if instr is "Yes" or "True", False if instr is "No"
-    or "False", and raises an Exception otherwise.
-    """
-    lower = instr.lower()
-    if lower == 'no' or lower == 'false':
-        return False
-    if lower == 'yes' or lower == 'true':
-        return True
-    raise oz.OzException.OzException("%s property must be 'true', 'yes', 'false', or' no'" % (component))
-
 class TDL(object):
     """
     Class that represents a parsed piece of TDL XML.  Objects of this kind
@@ -246,7 +227,9 @@ class TDL(object):
             if signstr is None:
                 signstr = 'no'
 
-            signed = string_to_bool(signstr, "Repository signed")
+            signed = oz.ozutil.string_to_bool(signstr)
+            if signed is None:
+                raise oz.OzException.OzException("Repository signed property must be 'true', 'yes', 'false', or 'no'")
 
             self.repositories[name] = Repository(name, url, signed)
 

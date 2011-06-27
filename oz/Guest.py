@@ -88,15 +88,13 @@ class Guest(object):
     def get_boolean_conf(self, config, section, key, default):
         value = self.get_conf(config, section, key, None)
         if value is None:
-            value = default
-        elif value.lower() == 'true' or value.lower() == 'yes':
-            value = True
-        elif value.lower() == 'false' or value.lower() == 'no':
-            value = False
-        else:
+            return default
+
+        retval = oz.ozutil.string_to_bool(value)
+        if retval is None:
             raise oz.OzException.OzException("Configuration parameter '%s' must be True, Yes, False, or No" % (key))
 
-        return value
+        return retval
 
     def connect_to_libvirt(self):
         def libvirt_error_handler(ctxt, err):

@@ -221,3 +221,18 @@ def get_sha1sum_from_file(sumfile, file_to_find):
 
 def get_sha256sum_from_file(sumfile, file_to_find):
     return get_sum_from_file(sumfile, file_to_find, 256, "SHA256")
+
+def string_to_bool(instr):
+    """
+    Function to take a string and determine whether it is True, Yes, False,
+    or No.  It takes a single argument, which is the string to examine.
+
+    Returns True if instr is "Yes" or "True", False if instr is "No"
+    or "False", and None otherwise.
+    """
+    lower = instr.lower()
+    if lower == 'no' or lower == 'false':
+        return False
+    if lower == 'yes' or lower == 'true':
+        return True
+    return None
