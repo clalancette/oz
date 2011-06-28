@@ -538,14 +538,18 @@ class RedHatCDYumGuest(RedHatCDGuest):
 
         self.customize_files(guestaddr)
 
+        self.log.debug("Running custom commands")
+        for name, content in self.tdl.commands.items():
+            self.guest_execute_command(guestaddr, '%s' % (content))
+
         self.log.debug("Syncing")
         self.guest_execute_command(guestaddr, 'sync')
 
     def customize(self, libvirt_xml):
         self.log.info("Customizing image")
 
-        if not self.tdl.packages and not self.tdl.files:
-            self.log.info("No additional packages or files to install, skipping customization")
+        if not self.tdl.packages and not self.tdl.files and not self.tdl.commands:
+            self.log.info("No additional packages, files or commands to install, skipping customization")
             return
 
         self.collect_setup(libvirt_xml)

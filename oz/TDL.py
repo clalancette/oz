@@ -124,6 +124,9 @@ class TDL(object):
                    dictionary may be empty.
     files        - A dictionary of file contents to be added to the
                    operating system.  The dictionary is indexed by filename.
+    commands     - A dictionary of commands to run inside the guest VM.  The
+                   dictionary is indexed by commands.  This dictionary may be
+                   empty.
     """
     def __init__(self, xmlstring):
         self.doc = None
@@ -246,6 +249,26 @@ class TDL(object):
             signed = string_to_bool(signstr, "Repository signed")
 
             self.repositories[name] = Repository(name, url, signed)
+
+        self.commands = {}
+        for command in self.doc.xpathEval('/template/commands/command'):
+            name = command.prop('name')
+            if name is None:
+                raise oz.OzException.OzException("Command without a name was given")
+            contenttype = command.prop('type')
+            if contenttype is None:
+                contenttype = 'raw'
+
+            content = command.getContent().strip()
+            if contenttype == 'raw':
+                self.commands[name] = content
+            elif contenttype == 'base64':
+                if len(content) == 0:
+                    self.commands[name] = ""
+                else:
+                    self.commands[name] = base64.b64decode(content)
+            else:
+                raise oz.OzException.OzException("File type for %s must be 'raw' or 'base64'" % (name))
 
     def __del__(self):
         if self.doc is not None:

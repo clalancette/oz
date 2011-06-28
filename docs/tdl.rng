@@ -90,6 +90,24 @@
           </element>
         </optional>
         <optional>
+          <element name='commands'>
+            <oneOrMore>
+              <element name='command'>
+                <attribute name='name'>
+                  <text/>
+                </attribute>
+                <attribute name='type'>
+                  <choice>
+                    <value>raw</value>
+                    <value>base64</value>
+                  </choice>
+                </attribute>
+                <text/>
+              </element>
+            </oneOrMore>
+          </element>
+        </optional>
+        <optional>
           <element name='repositories'>
             <zeroOrMore>
               <element name='repository'>
