@@ -54,7 +54,7 @@ class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
                 # url installs
                 if not pvd.volume_identifier.startswith("Red Hat Enterprise Linux"):
                     raise oz.OzException.OzException("Invalid boot.iso for RHEL-5 URL install")
-        else:
+        elif self.tdl.distro == "CentOS-5":
             # CentOS-5
             if self.tdl.installtype == 'iso':
                 # unfortunately CentOS-5 has the same volume identifier for both

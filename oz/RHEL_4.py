@@ -56,7 +56,7 @@ class RHEL4Guest(oz.RedHat.RedHatCDGuest):
                 # url installs
                 if not pvd.volume_identifier.startswith("Red Hat Enterprise Linux"):
                     raise oz.OzException.OzException("Invalid boot.iso for RHEL-4 URL install")
-        else:
+        elif self.tdl.distro == "CentOS-4":
             if self.tdl.installtype == 'iso':
                 if not re.match("CentOS 4(\.[0-9])?.*DVD", pvd.volume_identifier):
                     raise oz.OzException.OzException("Only DVDs are supported for CentOS-4 ISO installs")
