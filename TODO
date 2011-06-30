@@ -102,3 +102,22 @@ are two problems with this: 1) if we upload /etc/rc.d/rc.local, that will have
 the wrong context that we have to deal with, and 2) there is a race condition
 between icicle-nc checking in and this restorecon script finishing.  Neither
 problem is insurmountable, but we should make the effort to get this working.
+
+20.  Do preflight checks on detected bridges.  That is, if we detected the
+bridge (i.e. it was not specified by the user), then we should do some basic
+checks to make sure that we think it will work.  We should check the state
+of at least:
+
+    /proc/sys/vm/net/ipv4/ip_forward
+    /proc/sys/net/bridge/bridge-nf-call-arptables
+    /proc/sys/net/bridge/bridge-nf-call-ip6tables
+    /proc/sys/net/bridge/bridge-nf-call-iptables
+    iptables -t filter -L -v
+    iptables -t nat -L -v
+
+21.  We should check to make sure that none of the repositories listed are
+"localhost", since those make no sense.
+22.  We should add a mode where we assume the responsibility for uploading RPMs
+into the guest (via ssh) and then doing a yum localinstall on those RPMs.
+23.  We should add additional commands section.  In particular, we should have
+"pre" package installation and "post" package installation command sections.
