@@ -121,3 +121,7 @@ of at least:
 into the guest (via ssh) and then doing a yum localinstall on those RPMs.
 23.  We should add additional commands section.  In particular, we should have
 "pre" package installation and "post" package installation command sections.
+24.  On distributions that use NetworkManager, we can speed up the customization
+and ICICLE generation step by using dbus-monitor to monitor when NetworkManager
+has brought up the network.  This should save us an average of 30 seconds per
+customization.
