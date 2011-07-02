@@ -60,7 +60,8 @@ def guest_factory(tdl, config, auto):
                         "ScientificLinux-5", "SL-5"]:
         return oz.RHEL_5.get_class(tdl, config, auto)
     elif tdl.distro in ["RedHatEnterpriseLinux-6", "RHEL-6",
-                        "ScientificLinux-6", "SL-6"]:
+                        "ScientificLinux-6", "SL-6",
+                        "OracleEnterpriseLinux-6", "OEL-6"]:
         return oz.RHEL_6.get_class(tdl, config, auto)
     elif tdl.distro == "Ubuntu":
         return oz.Ubuntu.get_class(tdl, config, auto)
@@ -96,4 +97,5 @@ def distrolist():
     print "   Scientific Linux 4: U9"
     print "   Scientific Linux 5: U6"
     print "   Scientific Linux 6: 0"
+    print "   OEL 6: 0, 1"
     print "   Debian: 5, 6"
