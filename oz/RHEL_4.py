@@ -22,8 +22,8 @@ import oz.OzException
 
 class RHEL4Guest(oz.RedHat.RedHatCDGuest):
     def __init__(self, tdl, config, auto, nicmodel, diskbus):
-        oz.RedHat.RedHatCDGuest.__init__(self, tdl, nicmodel, None, None,
-                                         diskbus, config, True, True)
+        oz.RedHat.RedHatCDGuest.__init__(self, tdl, nicmodel, diskbus, config,
+                                         True, True)
 
         self.auto = auto
 

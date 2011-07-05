@@ -20,8 +20,8 @@ import oz.OzException
 
 class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
     def __init__(self, tdl, config, auto):
-        oz.RedHat.RedHatCDGuest.__init__(self, tdl, 'rtl8139', None, None, None,
-                                         config, True, True)
+        oz.RedHat.RedHatCDGuest.__init__(self, tdl, 'rtl8139', None, config,
+                                         True, True)
 
         self.auto = auto
 

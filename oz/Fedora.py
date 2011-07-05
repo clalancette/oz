@@ -21,8 +21,8 @@ import oz.OzException
 class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
     def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,
                  brokenisomethod):
-        oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, nicmodel, None, None,
-                                            diskbus, config, True, True)
+        oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, nicmodel, diskbus,
+                                            config, True, True)
 
         self.auto = auto
 

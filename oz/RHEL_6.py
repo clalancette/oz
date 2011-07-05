@@ -20,8 +20,8 @@ import oz.OzException
 
 class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
     def __init__(self, tdl, config, auto):
-        oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, "virtio", None, None,
-                                            "virtio", config, True, True)
+        oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, "virtio", "virtio",
+                                            config, True, True)
 
         self.auto = auto
 

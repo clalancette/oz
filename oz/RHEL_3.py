@@ -26,8 +26,8 @@ class RHEL3Guest(oz.RedHat.RedHatCDGuest):
         if tdl.distro == "RHEL-3":
             iso_support = False
 
-        oz.RedHat.RedHatCDGuest.__init__(self, tdl, None, None, None, None,
-                                         config, iso_support, True)
+        oz.RedHat.RedHatCDGuest.__init__(self, tdl, 'rtl8139', None, config,
+                                         iso_support, True)
 
         self.auto = auto
 

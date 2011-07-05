@@ -24,10 +24,10 @@ import oz.ozutil
 import oz.OzException
 
 class RedHatCDGuest(oz.Guest.CDGuest):
-    def __init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus, config,
-                 iso_allowed, url_allowed):
-        oz.Guest.CDGuest.__init__(self, tdl, nicmodel, clockoffset, mousetype,
-                                  diskbus, config)
+    def __init__(self, tdl, nicmodel, diskbus, config, iso_allowed,
+                 url_allowed):
+        oz.Guest.CDGuest.__init__(self, tdl, nicmodel, None, None, diskbus,
+                                  config)
         self.sshprivkey = os.path.join('/etc', 'oz', 'id_rsa-icicle-gen')
         self.crond_was_active = False
         self.sshd_config = \

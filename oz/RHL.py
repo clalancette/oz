@@ -24,8 +24,8 @@ import oz.OzException
 
 class RHL9Guest(oz.RedHat.RedHatCDGuest):
     def __init__(self, tdl, config, auto):
-        oz.RedHat.RedHatCDGuest.__init__(self, tdl, "rtl8139", None, None, None,
-                                         config, False, True)
+        oz.RedHat.RedHatCDGuest.__init__(self, tdl, "rtl8139", None, config,
+                                         False, True)
 
         self.auto = auto
 
