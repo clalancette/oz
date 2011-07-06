@@ -108,6 +108,7 @@ expect_success test-24-sha256sum.tdl
 expect_fail test-25-md5sum-and-sha1sum.tdl
 expect_fail test-26-md5sum-and-sha256sum.tdl
 expect_fail test-27-sha1sum-and-sha256sum.tdl
+expect_fail test-28-package-no-name.tdl
 
 echo "SUCCESS: $SUCCESS, FAIL: $FAIL"
 exit $FAIL
