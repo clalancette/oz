@@ -125,3 +125,11 @@ into the guest (via ssh) and then doing a yum localinstall on those RPMs.
 and ICICLE generation step by using dbus-monitor to monitor when NetworkManager
 has brought up the network.  This should save us an average of 30 seconds per
 customization.
+25.  Support hashes for the root password support.
+26.  Add a mode where we use a reverse ssh tunnel with a SOCKS proxy to
+download the packages.  This means that the packages need to be visible to the
+imagefactory machine, but not necessarily to the instance.
+27.  Make the rootpw tag required for users of the library.  However, in order
+to support the simple TDL that we currently support today, add a flag to disable
+this checking, and have the oz binaries (oz-install, oz-customize,
+oz-generate-icicle) set the flag to False to disable the checking.
