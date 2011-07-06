@@ -115,6 +115,8 @@ expect_success test-31-file-raw-type.tdl
 expect_success test-32-file-base64-type.tdl
 expect_fail test-33-file-invalid-type.tdl
 expect_fail test-34-file-invalid-base64.tdl
+expect_fail test-35-repository-no-name.tdl
+expect_fail test-36-repository-no-url.tdl
 
 echo "SUCCESS: $SUCCESS, FAIL: $FAIL"
 exit $FAIL
