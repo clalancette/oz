@@ -101,6 +101,7 @@ expect_fail test-17-repo-invalid-signed.tdl
 expect_success test-18-rootpw.tdl
 expect_success test-19-key.tdl
 expect_fail test-20-multiple-install.tdl
+expect_fail test-21-missing-install-type.tdl
 
 echo "SUCCESS: $SUCCESS, FAIL: $FAIL"
 exit $FAIL
