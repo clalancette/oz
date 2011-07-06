@@ -36,11 +36,11 @@
                 <text/>
               </element>
             </optional>
-	    <optional>
-	      <element name='key'>
-		<text/>
-	      </element>
-	    </optional>
+            <optional>
+              <element name='key'>
+                <text/>
+              </element>
+            </optional>
           </interleave>
         </element>
         <optional>
@@ -78,38 +78,32 @@
         </optional>
         <optional>
           <element name='files'>
-            <oneOrMore>
+            <zeroOrMore>
               <element name='file'>
                 <attribute name='name'>
                   <text/>
                 </attribute>
-                <attribute name='type'>
-                  <choice>
-                    <value>raw</value>
-                    <value>base64</value>
-                  </choice>
-                </attribute>
-                <text/>
+                <choice>
+                  <ref name='rawtype'/>
+                  <ref name='base64type'/>
+                </choice>
               </element>
-            </oneOrMore>
+            </zeroOrMore>
           </element>
         </optional>
         <optional>
           <element name='commands'>
-            <oneOrMore>
+            <zeroOrMore>
               <element name='command'>
                 <attribute name='name'>
                   <text/>
                 </attribute>
-                <attribute name='type'>
-                  <choice>
-                    <value>raw</value>
-                    <value>base64</value>
-                  </choice>
-                </attribute>
-                <text/>
+                <choice>
+                  <ref name='rawtype'/>
+                  <ref name='base64type'/>
+                </choice>
               </element>
-            </oneOrMore>
+            </zeroOrMore>
           </element>
         </optional>
         <optional>
@@ -157,7 +151,7 @@
       <optional>
         <choice>
           <element name='md5sum'>
-	    <text/>
+            <text/>
           </element>
           <element name='sha1sum'>
             <text/>
@@ -185,6 +179,28 @@
         <param name="pattern">[Nn][Oo]</param>
       </data>
     </choice>
+  </define>
+
+  <define name='rawtype'>
+    <optional>
+      <attribute name='type'>
+	<value>raw</value>
+      </attribute>
+    </optional>
+    <text/>
+  </define>
+
+  <define name='base64'>
+    <data type="string">
+      <param name="pattern">[a-zA-Z0-9+/]+={0,2}</param>
+    </data>
+  </define>
+
+  <define name='base64type'>
+    <attribute name='type'>
+      <value>base64</value>
+    </attribute>
+    <ref name='base64'/>
   </define>
 
 </grammar>
