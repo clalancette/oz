@@ -109,6 +109,12 @@ expect_fail test-25-md5sum-and-sha1sum.tdl
 expect_fail test-26-md5sum-and-sha256sum.tdl
 expect_fail test-27-sha1sum-and-sha256sum.tdl
 expect_fail test-28-package-no-name.tdl
+expect_success test-29-files.tdl
+expect_fail test-30-file-no-name.tdl
+expect_success test-31-file-raw-type.tdl
+expect_success test-32-file-base64-type.tdl
+expect_fail test-33-file-invalid-type.tdl
+expect_fail test-34-file-invalid-base64.tdl
 
 echo "SUCCESS: $SUCCESS, FAIL: $FAIL"
 exit $FAIL
