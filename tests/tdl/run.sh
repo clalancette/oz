@@ -102,6 +102,12 @@ expect_success test-18-rootpw.tdl
 expect_success test-19-key.tdl
 expect_fail test-20-multiple-install.tdl
 expect_fail test-21-missing-install-type.tdl
+expect_success test-22-md5sum.tdl
+expect_success test-23-sha1sum.tdl
+expect_success test-24-sha256sum.tdl
+expect_fail test-25-md5sum-and-sha1sum.tdl
+expect_fail test-26-md5sum-and-sha256sum.tdl
+expect_fail test-27-sha1sum-and-sha256sum.tdl
 
 echo "SUCCESS: $SUCCESS, FAIL: $FAIL"
 exit $FAIL
