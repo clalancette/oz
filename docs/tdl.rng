@@ -36,6 +36,11 @@
                 <text/>
               </element>
             </optional>
+	    <optional>
+	      <element name='key'>
+		<text/>
+	      </element>
+	    </optional>
           </interleave>
         </element>
         <optional>
