@@ -99,6 +99,7 @@ expect_fail test-15-os-no-install.tdl
 expect_success test-16-signed-repository.tdl
 expect_fail test-17-repo-invalid-signed.tdl
 expect_success test-18-rootpw.tdl
+expect_success test-19-key.tdl
 
 echo "SUCCESS: $SUCCESS, FAIL: $FAIL"
 exit $FAIL

@@ -1,0 +1,12 @@
+<template>
+  <name>windows</name>
+  <os>
+    <name>Windows</name>
+    <version>2003</version>
+    <arch>i386</arch>
+    <install type='iso'>
+      <iso>http://example.org/Windows2003.iso</iso>
+    </install>
+    <key>1234-456-789</key>
+  </os>
+</template>
