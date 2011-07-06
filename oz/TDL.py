@@ -21,6 +21,7 @@ Template Description Language (TDL)
 import libxml2
 import base64
 
+import oz.ozutil
 import oz.OzException
 
 def get_value(doc, xmlstring, component, optional=False):
