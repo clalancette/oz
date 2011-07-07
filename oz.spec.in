@@ -8,7 +8,6 @@ License: LGPLv2
 Group: Development/Libraries
 URL: http://aeolusproject.org/oz.html
 Source0: http://repos.fedorapeople.org/repos/aeolus/oz/%{version}/tarball/%{name}-%{version}.tar.gz
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildArch: noarch
 Requires: python >= 2.5
 Requires: gvnc-tools
@@ -36,7 +35,7 @@ Oz is a set of libraries and utilities for doing automated guest OS
 installations, with minimal input from the user.
 
 %prep
-%setup -q -n oz-%{version}
+%setup -q -n %{name}-%{version}
 
 %build
 python setup.py build
@@ -64,12 +63,8 @@ if [ ! -f %{_sysconfdir}/oz/id_rsa-icicle-gen ]; then
    ssh-keygen -t rsa -b 2048 -N "" -f %{_sysconfdir}/oz/id_rsa-icicle-gen
 fi
 
-%clean
-%{__rm} -rf $RPM_BUILD_ROOT
-
 
 %files
-%defattr(-,root,root,-)
 %doc README COPYING examples
 %dir %attr(0755, root, root) %{_sysconfdir}/oz/
 %config(noreplace) %{_sysconfdir}/oz/oz.cfg
