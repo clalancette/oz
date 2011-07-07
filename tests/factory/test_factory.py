@@ -28,7 +28,14 @@ def default_route():
             continue
     raise Exception, "Could not find default route"
 
+# we find the default route for this machine.  Note that this very well
+# may not be a bridge, but for the purposes of testing the factory, it
+# doesn't really matter; it just has to have an IP address
+route = default_route()
+
 def test_distro(distro, version, arch, installtype):
+    global route
+
     tdlxml = """
 <template>
   <name>tester</name>
@@ -45,11 +52,6 @@ def test_distro(distro, version, arch, installtype):
 """ % (distro, version, arch, installtype, installtype, installtype)
 
     tdl = oz.TDL.TDL(tdlxml)
-
-    # we find the default route for this machine.  Note that this very well
-    # may not be a bridge, but for the purposes of testing the factory, it
-    # doesn't really matter; it just has to have an IP address
-    route = default_route()
 
     config = ConfigParser.SafeConfigParser()
     config.readfp(StringIO.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
