@@ -47,23 +47,26 @@ def guest_factory(tdl, config, auto):
     """
     if tdl.distro == "Fedora":
         return oz.Fedora.get_class(tdl, config, auto)
-    elif tdl.distro == "FedoraCore":
+    elif tdl.distro in ["FedoraCore", "FC"]:
         return oz.FedoraCore.get_class(tdl, config, auto)
-    elif tdl.distro == "RHEL-2.1":
+    elif tdl.distro in ["RedHatEnterpriseLinux-2.1", "RHEL-2.1"]:
         return oz.RHEL_2_1.get_class(tdl, config, auto)
-    elif tdl.distro in ["RHEL-3", "CentOS-3"]:
+    elif tdl.distro in ["RedHatEnterpriseLinux-3", "RHEL-3", "CentOS-3"]:
         return oz.RHEL_3.get_class(tdl, config, auto)
-    elif tdl.distro in ["RHEL-4", "CentOS-4", "ScientificLinux-4"]:
+    elif tdl.distro in ["RedHatEnterpriseLinux-4", "RHEL-4", "CentOS-4",
+                        "ScientificLinux-4", "SL-4"]:
         return oz.RHEL_4.get_class(tdl, config, auto)
-    elif tdl.distro in ["RHEL-5", "CentOS-5", "ScientificLinux-5"]:
+    elif tdl.distro in ["RedHatEnterpriseLinux-5", "RHEL-5", "CentOS-5",
+                        "ScientificLinux-5", "SL-5"]:
         return oz.RHEL_5.get_class(tdl, config, auto)
-    elif tdl.distro in ["RHEL-6", "ScientificLinux-6"]:
+    elif tdl.distro in ["RedHatEnterpriseLinux-6", "RHEL-6",
+                        "ScientificLinux-6", "SL-6"]:
         return oz.RHEL_6.get_class(tdl, config, auto)
     elif tdl.distro == "Ubuntu":
         return oz.Ubuntu.get_class(tdl, config, auto)
     elif tdl.distro == "Windows":
         return oz.Windows.get_class(tdl, config, auto)
-    elif tdl.distro == "RHL":
+    elif tdl.distro in ["RedHatLinux", "RHL"]:
         return oz.RHL.get_class(tdl, config, auto)
     elif tdl.distro == "OpenSUSE":
         return oz.OpenSUSE.get_class(tdl, config, auto)
