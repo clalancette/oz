@@ -26,10 +26,13 @@ import libvirt
 import ConfigParser
 import gzip
 import guestfs
+import threading
+import random
 
 import oz.Guest
 import oz.ozutil
 import oz.OzException
+import oz.proxy
 
 class RedHatCDGuest(oz.Guest.CDGuest):
     """
@@ -462,6 +465,21 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         return oz.ozutil.ssh_execute_command(guestaddr, self.sshprivkey,
                                              command, timeout)
 
+    def guest_execute_command_tunnel(self, guestaddr, remoteport, localport,
+                                     command, timeout=10):
+        # ServerAliveInterval protects against NAT firewall timeouts
+        # on long-running commands with no output
+        # PasswordAuthentication=no prevents us from falling back to
+        # keyboard-interactive password prompting
+        return oz.Guest.subprocess_check_output(["ssh", "-i", self.sshprivkey,
+                                                 "-o", "ServerAliveInterval=30",
+                                                 "-o", "StrictHostKeyChecking=no",
+                                                 "-o", "ConnectTimeout=" + str(timeout),
+                                                 "-o", "UserKnownHostsFile=/dev/null",
+                                                 "-o", "PasswordAuthentication=no",
+                                                 "-R", "%s:localhost:%s" % (remoteport, localport),
+                                                 "root@" + guestaddr, command])
+
     def do_icicle(self, guestaddr):
         """
         Method to collect the package information and generate the ICICLE XML.
@@ -854,12 +872,37 @@ class RedHatCDYumGuest(RedHatCDGuest):
 
         self.log.debug("Installing custom packages")
         packstr = ''
-        for package in self.tdl.packages:
+        for package in self.tdl.packages.list:
             packstr += package.name + ' '
 
         if packstr != '':
-            self.guest_execute_command(guestaddr,
-                                       'yum -y install %s' % (packstr))
+            if self.tdl.packages.packtype == 'proxy':
+                # if we are doing a proxy install, we need to do a number of
+                # things:
+                # 1)  setup /etc/yum.conf to use a proxy
+                # 2)  Fire off the proxy server
+                # 3)  ssh into the guest with a valid -R
+
+                remoteport = random.randrange(1024, 65535)
+                localport = random.randrange(1024, 65535)
+                # FIXME: we need to undo the yum changes when we are done
+                self.guest_execute_command(guestaddr,
+                                           'sed -i -e "s/\[main\]/\[main\]\\nproxy=http:\/\/localhost:%d/" /etc/yum.conf' % (remoteport))
+
+                # FIXME: hardcoded port here, choose one dynamically
+                proxy_server = oz.proxy.ThreadingHTTPServer(('0.0.0.0',
+                                                             localport),
+                                                            oz.proxy.ProxyHandler)
+                proxy_thread = threading.Thread(target=proxy_server.serve_forever)
+                proxy_thread.setDaemon(True)
+                proxy_thread.start()
+                self.guest_execute_command_tunnel(guestaddr, str(remoteport),
+                                                  str(localport),
+                                                  "yum -y install %s" % (packstr))
+                proxy_server.shutdown()
+            else:
+                self.guest_execute_command(guestaddr,
+                                           'yum -y install %s' % (packstr))
 
         self._customize_files(guestaddr)
 

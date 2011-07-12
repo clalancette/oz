@@ -82,6 +82,11 @@ class Package(object):
         self.filename = filename
         self.args = args
 
+class Packages(object):
+    def __init__(self, packtype, package_list):
+        self.packtype = packtype
+        self.list = package_list
+
 class TDL(object):
     """
     Class that represents a parsed piece of TDL XML.  Objects of this kind
@@ -246,6 +251,12 @@ class TDL(object):
         listed both in packslist and the initial TDL is listed only once,
         from the packslist.
         """
+        # FIXME: this assumes a single packages section.  But maybe we want
+        # to allow multiple, some via proxy and some not?  I'm not sure
+        packtype = self.doc.xpathEval('/template/packages')[0].prop('type')
+        if packtype is None:
+            packtype = 'download'
+        plist = []
         for package in packslist:
             # package name
             name = package.prop('name')
@@ -272,7 +283,11 @@ class TDL(object):
                     self.packages.remove(package)
 
             # now add in our new package def
-            self.packages.append(Package(name, repo, filename, args))
+            plist.append(Package(name, repo, filename, args))
+        if not plist:
+            self.packages = None
+        else:
+            self.packages = Packages(packtype, plist)
 
     def merge_repositories(self, repos):
         """

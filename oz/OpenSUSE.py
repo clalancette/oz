@@ -417,7 +417,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
 
         self.log.debug("Installing custom packages")
         packstr = ''
-        for package in self.tdl.packages:
+        for package in self.tdl.packages.list:
             packstr += package.name + ' '
 
         if packstr != '':

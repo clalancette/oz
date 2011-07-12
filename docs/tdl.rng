@@ -50,6 +50,14 @@
         </optional>
         <optional>
           <element name='packages'>
+            <optional>
+              <attribute name='type'>
+                <choice>
+                  <value>proxy</value>
+                  <value>download</value>
+                </choice>
+              </attribute>
+            </optional>
             <zeroOrMore>
               <element name='package'>
                 <attribute name='name'>
