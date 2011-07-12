@@ -117,6 +117,12 @@ expect_fail test-33-file-invalid-type.tdl
 expect_fail test-34-file-invalid-base64.tdl
 expect_fail test-35-repository-no-name.tdl
 expect_fail test-36-repository-no-url.tdl
+expect_success test-37-command.tdl
+expect_fail test-38-command-no-name.tdl
+expect_success test-39-command-raw-type.tdl
+expect_success test-40-command-base64-type.tdl
+expect_fail test-41-command-bogus-base64.tdl
+expect_fail test-42-command-bogus-type.tdl
 
 echo "SUCCESS: $SUCCESS, FAIL: $FAIL"
 exit $FAIL
