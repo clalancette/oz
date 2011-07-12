@@ -59,7 +59,7 @@ def guest_factory(tdl, config, auto):
     elif tdl.distro in ["RedHatEnterpriseLinux-5", "RHEL-5", "CentOS-5",
                         "ScientificLinux-5", "SL-5"]:
         return oz.RHEL_5.get_class(tdl, config, auto)
-    elif tdl.distro in ["RedHatEnterpriseLinux-6", "RHEL-6",
+    elif tdl.distro in ["RedHatEnterpriseLinux-6", "RHEL-6", "CentOS-6",
                         "ScientificLinux-6", "SL-6",
                         "OracleEnterpriseLinux-6", "OEL-6"]:
         return oz.RHEL_6.get_class(tdl, config, auto)
@@ -94,6 +94,7 @@ def distrolist():
     print "   CentOS 3: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9"
     print "   CentOS 4: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9"
     print "   CentOS 5: GOLD, U1, U2, U3, U4, U5"
+    print "   CentOS 6: 0, 1"
     print "   Scientific Linux 4: U9"
     print "   Scientific Linux 5: U6"
     print "   Scientific Linux 6: 0"
