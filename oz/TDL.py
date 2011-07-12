@@ -110,7 +110,7 @@ class TDL(object):
                    dictionary is indexed by commands.  This dictionary may be
                    empty.
     """
-    def __init__(self, xmlstring):
+    def __init__(self, xmlstring, rootpw_required=False):
         self.doc = None
 
         self.doc = libxml2.parseDoc(xmlstring)
@@ -174,7 +174,8 @@ class TDL(object):
             raise oz.OzException.OzException("Unknown install type " + self.installtype + " in TDL")
 
         self.rootpw = get_value(self.doc, '/template/os/rootpw',
-                                "root/Administrator password", optional=True)
+                                "root/Administrator password",
+                                optional=not rootpw_required)
 
         self.packages = []
         for package in self.doc.xpathEval('/template/packages/package'):
