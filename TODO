@@ -129,3 +129,9 @@ customization.
 26.  Add a mode where we use a reverse ssh tunnel with a SOCKS proxy to
 download the packages.  This means that the packages need to be visible to the
 imagefactory machine, but not necessarily to the instance.
+27.  During customization/icicle generation, we should check to make sure that
+the bridge listed in the libvirt XML matches up with what we detected (if
+anything).  This isn't really an issue when doing oz-install -g -u, but if you
+use the short-circuit oz-customize or oz-generate-icicle, the user could have
+fed us bad data.
+28.  In TDL.py, do a real schema validation using tdl.rng
