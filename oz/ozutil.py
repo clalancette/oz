@@ -22,6 +22,7 @@ import os
 import socket
 import fcntl
 import struct
+import random
 
 def generate_full_auto_path(relative):
     """
@@ -254,3 +255,11 @@ def get_ip_from_interface(ifname):
     s.close()
 
     return ipaddr
+
+def generate_macaddress():
+    """
+    Function to generate a random MAC address.
+    """
+    mac = [0x52, 0x54, 0x00, random.randint(0x00, 0xff),
+           random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
+    return ':'.join(map(lambda x:"%02x" % x, mac))

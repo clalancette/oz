@@ -146,9 +146,7 @@ class Guest(object):
         self.log = logging.getLogger('%s.%s' % (__name__,
                                                 self.__class__.__name__))
         self.uuid = uuid.uuid4()
-        mac = [0x52, 0x54, 0x00, random.randint(0x00, 0xff),
-               random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
-        self.macaddr = ':'.join(map(lambda x:"%02x" % x, mac))
+        self.macaddr = oz.ozutil.generate_macaddress()
 
         # configuration from 'paths' section
         self.output_dir = self.get_conf(config, 'paths', 'output_dir',
