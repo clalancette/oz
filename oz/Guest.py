@@ -33,7 +33,6 @@ import struct
 import numpy
 import tempfile
 import urlparse
-import fcntl
 import M2Crypto
 import base64
 import parted
@@ -97,22 +96,10 @@ class Guest(object):
         return retval
 
     def discover_libvirt_bridge(self):
-        def get_ip_address(ifname):
-            SIOCGIFADDR = 0x8915
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            ipaddr = socket.inet_ntoa(fcntl.ioctl(s.fileno(), SIOCGIFADDR,
-                                                  struct.pack('256s',
-                                                              ifname[:15]))[20:24])
-
-            s.close()
-
-            return ipaddr
-
-
         if self.bridge_name is not None:
             # if the bridge name was specified in the config file, just detect
             # the IP address here
-            self.host_bridge_ip = get_ip_address(self.bridge_name)
+            self.host_bridge_ip = oz.ozutil.get_ip_from_interface(self.bridge_name)
         else:
             # otherwise, try to detect a private libvirt bridge
             for netname in self.libvirt_conn.listNetworks():
