@@ -96,9 +96,7 @@ class Guest(object):
 
         return retval
 
-    def connect_to_libvirt(self):
-        def libvirt_error_handler(ctxt, err):
-            pass
+    def discover_libvirt_bridge(self):
         def get_ip_address(ifname):
             SIOCGIFADDR = 0x8915
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -110,8 +108,6 @@ class Guest(object):
 
             return ipaddr
 
-        libvirt.registerErrorHandler(libvirt_error_handler, 'context')
-        self.libvirt_conn = libvirt.open(self.libvirt_uri)
 
         if self.bridge_name is not None:
             # if the bridge name was specified in the config file, just detect
@@ -143,6 +139,14 @@ class Guest(object):
             raise oz.OzException.OzException("Could not find a viable libvirt NAT bridge, install cannot continue")
 
         self.log.debug("libvirt bridge name is %s, host_bridge_ip is %s" % (self.bridge_name, self.host_bridge_ip))
+
+    def connect_to_libvirt(self):
+        def libvirt_error_handler(ctxt, err):
+            pass
+
+        libvirt.registerErrorHandler(libvirt_error_handler, 'context')
+        self.libvirt_conn = libvirt.open(self.libvirt_uri)
+        self.discover_libvirt_bridge()
 
     def __init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus, config):
         self.tdl = tdl
