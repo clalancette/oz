@@ -949,8 +949,8 @@ class Guest(object):
             # when doing URL installs, we can't allow localhost URLs (the URL
             # will be embedded into the installer, so the install is guaranteed
             # to fail with localhost URLs).  Disallow them here
-            p = urlparse.urlparse(url)
-            if p[1] in ["localhost", "localhost.localdomain", "127.0.0.1"]:
+            if urlparse.urlparse(url)[1] in ["localhost", "127.0.0.1",
+                                             "localhost.localdomain"]:
                 raise oz.OzException.OzException("Can not use localhost for an URL based install")
         else:
             if iso and url:

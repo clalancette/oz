@@ -114,23 +114,21 @@ of at least:
     iptables -t filter -L -v
     iptables -t nat -L -v
 
-20.  We should check to make sure that none of the repositories listed are
-"localhost", since those make no sense.
-21.  We should add a mode where we assume the responsibility for uploading RPMs
+20.  We should add a mode where we assume the responsibility for uploading RPMs
 into the guest (via ssh) and then doing a yum localinstall on those RPMs.
-22.  We should add additional commands section.  In particular, we should have
+21.  We should add additional commands section.  In particular, we should have
 "pre" package installation and "post" package installation command sections.
-23.  On distributions that use NetworkManager, we can speed up the customization
+22.  On distributions that use NetworkManager, we can speed up the customization
 and ICICLE generation step by using dbus-monitor to monitor when NetworkManager
 has brought up the network.  This should save us an average of 30 seconds per
 customization.
-24.  Support hashes for the root password support.
-25.  Add a mode where we use a reverse ssh tunnel with a SOCKS proxy to
+23.  Support hashes for the root password support.
+24.  Add a mode where we use a reverse ssh tunnel with a SOCKS proxy to
 download the packages.  This means that the packages need to be visible to the
 imagefactory machine, but not necessarily to the instance.
-26.  During customization/icicle generation, we should check to make sure that
+25.  During customization/icicle generation, we should check to make sure that
 the bridge listed in the libvirt XML matches up with what we detected (if
 anything).  This isn't really an issue when doing oz-install -g -u, but if you
 use the short-circuit oz-customize or oz-generate-icicle, the user could have
 fed us bad data.
-27.  In TDL.py, do a real schema validation using tdl.rng
+26.  In TDL.py, do a real schema validation using tdl.rng

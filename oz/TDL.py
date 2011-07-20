@@ -20,6 +20,7 @@ Template Description Language (TDL)
 
 import libxml2
 import base64
+import urlparse
 
 import oz.ozutil
 import oz.OzException
@@ -224,6 +225,10 @@ class TDL(object):
             if name is None:
                 raise oz.OzException.OzException("Repository without a name was given")
             url = get_value(repo, 'url', 'repository url')
+
+            if urlparse.urlparse(url)[1] in ["localhost", "127.0.0.1",
+                                             "localhost.localdomain"]:
+                raise oz.OzException.OzException("Repositories cannot be localhost, since they must be reachable from the guest operating system")
 
             signstr = get_value(repo, 'signed', 'signed', optional=True)
             if signstr is None:
