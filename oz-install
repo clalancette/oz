@@ -53,10 +53,10 @@ def usage():
     sys.exit(1)
 
 try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], 'a:c:d:x:fghpt:u',
-                                   ['auto', 'config', 'debug', 'xmlfile', 'force-download',
+    opts, args = getopt.gnu_getopt(sys.argv[1:], 'a:c:d:fghpt:ux:',
+                                   ['auto', 'config', 'debug', 'force-download',
                                     'generate-icicle', 'help', 'cleanup',
-                                    'timeout', 'customize'])
+                                    'timeout', 'customize', 'xmlfile'])
 except getopt.GetoptError, err:
     print str(err)
     usage()
@@ -74,8 +74,6 @@ timeout = None
 for o, a in opts:
     if o in ("-a", "--auto"):
         auto = a
-    elif o in ("-x", "--xmlfile"):
-        filename = a
     elif o in ("-c", "--config"):
         config_file = a
     elif o in ("-d", "--debug"):
@@ -106,6 +104,8 @@ for o, a in opts:
         timeout = int(a)
     elif o in ("-u", "--customize"):
         customize = True
+    elif o in ("-x", "--xmlfile"):
+        filename = a
     else:
         assert False, "unhandled option"
 
