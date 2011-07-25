@@ -90,4 +90,3 @@ def get_class(tdl, config, auto):
         return RHL70and71and72and73and8Guest(tdl, config, auto, "rtl8139")
     if tdl.update in ["7.0", "7.1"]:
         return RHL70and71and72and73and8Guest(tdl, config, auto, "ne2k_pci")
-    raise oz.OzException.OzException("Unsupported RHL update " + tdl.update)

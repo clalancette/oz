@@ -88,4 +88,3 @@ def get_class(tdl, config, auto):
     """
     if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9"]:
         return RHEL3Guest(tdl, config, auto)
-    raise oz.OzException.OzException("Unsupported " + tdl.distro + " update " + tdl.update)

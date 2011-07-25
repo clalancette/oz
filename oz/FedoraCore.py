@@ -55,4 +55,3 @@ def get_class(tdl, config, auto):
     """
     if tdl.update in ["1", "2", "3", "4", "5", "6"]:
         return FedoraCoreGuest(tdl, config, auto)
-    raise oz.OzException.OzException("Unsupported FedoraCore update " + tdl.update)

@@ -51,4 +51,3 @@ def get_class(tdl, config, auto):
     """
     if tdl.update in ["0", "1"]:
         return RHEL6Guest(tdl, config, auto)
-    raise oz.OzException.OzException("Unsupported " + tdl.distro + " update " + tdl.update)

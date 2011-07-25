@@ -507,5 +507,3 @@ def get_class(tdl, config, auto):
     """
     if tdl.update in ["11.0", "11.1", "11.2", "11.3", "11.4"]:
         return OpenSUSEGuest(tdl, config, auto)
-
-    raise oz.OzException.OzException("Unsupported OpenSUSE update " + tdl.update)

@@ -102,4 +102,3 @@ def get_class(tdl, config, auto):
     """
     if tdl.update in ["5", "6"]:
         return DebianGuest(tdl, config, auto)
-    raise oz.OzException.OzException("Unsupported Debian update " + tdl.update)

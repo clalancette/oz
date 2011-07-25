@@ -88,4 +88,3 @@ def get_class(tdl, config, auto):
         return RHEL4Guest(tdl, config, auto, "rtl8139", None)
     if tdl.update in ["U8", "U9"]:
         return RHEL4Guest(tdl, config, auto, "virtio", "virtio")
-    raise oz.OzException.OzException("Unsupported " + tdl.distro + " update " + tdl.update)

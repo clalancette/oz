@@ -87,4 +87,3 @@ def get_class(tdl, config, auto):
         return FedoraGuest(tdl, config, auto, "virtio", True, "virtio", True)
     if tdl.update in ["7", "8", "9"]:
         return FedoraGuest(tdl, config, auto, "rtl8139", False, None, False)
-    raise oz.OzException.OzException("Unsupported Fedora update " + tdl.update)

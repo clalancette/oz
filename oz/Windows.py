@@ -253,4 +253,3 @@ def get_class(tdl, config, auto):
         return Windows2000andXPand2003(tdl, config, auto)
     if tdl.update in ["2008", "7"]:
         return Windows2008and7(tdl, config, auto)
-    raise oz.OzException.OzException("Unsupported Windows update " + tdl.update)

@@ -139,4 +139,3 @@ def get_class(tdl, config, auto):
         return UbuntuGuest(tdl, config, auto, "initrd.gz", "virtio", "virtio")
     if tdl.update in ["9.10", "10.04", "10.04.1", "10.10", "11.04"]:
         return UbuntuGuest(tdl, config, auto, "initrd.lz", "virtio", "virtio")
-    raise oz.OzException.OzException("Unsupported Ubuntu update " + tdl.update)

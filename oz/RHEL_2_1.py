@@ -35,4 +35,3 @@ def get_class(tdl, config, auto):
     """
     if tdl.update in ["GOLD", "U2", "U3", "U4", "U5", "U6"]:
         return RHEL21Guest(tdl, config, auto)
-    raise oz.OzException.OzException("Unsupported RHEL-2.1 update " + tdl.update)
