@@ -154,7 +154,7 @@ expect_fail("RHEL-4", "U10", "x86_64", "url")
 
 # RHEL-5/CentOS-5
 for distro in ["RHEL-5", "CentOS-5"]:
-    for version in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6"]:
+    for version in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7"]:
         for arch in ["i386", "x86_64"]:
             for installtype in ["url", "iso"]:
                 expect_success(distro, version, arch, installtype)
