@@ -58,6 +58,8 @@ def test_distro(distro, version, arch, installtype):
 
     if os.getenv('DEBUG') != None:
         logging.basicConfig(level=logging.DEBUG, format="%(message)s")
+    else:
+        logging.basicConfig(level=logging.ERROR, format="%(message)s")
 
     guest = oz.GuestFactory.guest_factory(tdl, config, None)
 
