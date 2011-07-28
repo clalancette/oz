@@ -546,8 +546,13 @@ class Guest(object):
             # if we saw no disk activity in the countdown window, we presume the
             # install has hung.  Fail here
             if inactivity_countdown == 0:
-                self._capture_screenshot(libvirt_dom.XMLDesc(0))
-                raise oz.OzException.OzException("No disk activity in %d seconds, failing" % (inactivity_timeout))
+                screenshot_path = self._capture_screenshot(libvirt_dom.XMLDesc(0))
+                exc_str = "No disk activity in %d seconds, failing.  " % (inactivity_timeout)
+                if screenshot_path is not None:
+                    exc_str += "Check screenshot at %s for more detail" % (screenshot_path)
+                else:
+                    exc_str += "Failed to take screenshot"
+                raise oz.OzException.OzException(exc_str)
 
             if (rd_req + wr_req) == last_disk_activity:
                 # if we saw no read or write requests since the last iteration,
@@ -563,8 +568,13 @@ class Guest(object):
 
         if count == 0:
             # if we timed out, then let's make sure to take a screenshot.
-            self._capture_screenshot(libvirt_dom.XMLDesc(0))
-            raise oz.OzException.OzException("Timed out waiting for install to finish")
+            screenshot_path = self._capture_screenshot(libvirt_dom.XMLDesc(0))
+            exc_str = "Timed out waiting for install to finish.  "
+            if screenshot_path is not None:
+                exc_str += "Check screenshot at %s for more detail" % (screenshot_path)
+            else:
+                exc_str += "Failed to take screenshot"
+            raise oz.OzException.OzException(exc_str)
 
         self.log.info("Install of %s succeeded" % (self.tdl.name))
 
@@ -743,31 +753,33 @@ class Guest(object):
         """
         Method to capture a screenshot of the VM.
         """
-        screenshot = os.path.join(self.screenshot_dir,
-                                  self.tdl.name + "-" + str(time.time()) + ".png")
+        screenshot = os.path.realpath(os.path.join(self.screenshot_dir,
+                                                   self.tdl.name + "-" + str(time.time()) + ".png"))
 
         doc = libxml2.parseDoc(xml)
         graphics = doc.xpathEval('/domain/devices/graphics')
         if len(graphics) != 1:
-            self.log.error("Could not find the VNC port")
-            return
+            self.log.error("Could not find the VNC port, not take screenshot")
+            return None
 
         if graphics[0].prop('type') != 'vnc':
             self.log.error("Graphics type is not VNC, not taking screenshot")
-            return
+            return None
 
         port = graphics[0].prop('port')
 
         if port is None:
             self.log.error("Port is not specified, not taking screenshot")
-            return
+            return None
 
         vnc = "localhost:%s" % (int(port) - 5900)
 
         try:
             subprocess_check_output(['gvnccapture', vnc, screenshot])
+            return screenshot
         except:
             self.log.error("Failed to take screenshot")
+            return None
 
     def _guestfs_handle_setup(self, libvirt_xml):
         """
