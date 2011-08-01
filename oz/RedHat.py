@@ -419,17 +419,8 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         """
         Method to execute a command on the guest and return the output.
         """
-        # ServerAliveInterval protects against NAT firewall timeouts
-        # on long-running commands with no output
-        # PasswordAuthentication=no prevents us from falling back to
-        # keyboard-interactive password prompting
-        return oz.Guest.subprocess_check_output(["ssh", "-i", self.sshprivkey,
-                                                 "-o", "ServerAliveInterval=30",
-                                                 "-o", "StrictHostKeyChecking=no",
-                                                 "-o", "ConnectTimeout=" + str(timeout),
-                                                 "-o", "UserKnownHostsFile=/dev/null",
-                                                 "-o", "PasswordAuthentication=no",
-                                                 "root@" + guestaddr, command])
+        return oz.ozutil.ssh_execute_command(guestaddr, self.sshprivkey,
+                                             command, timeout)
 
     def _do_icicle(self, guestaddr):
         """

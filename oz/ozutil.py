@@ -23,6 +23,8 @@ import socket
 import fcntl
 import struct
 import random
+import subprocess
+import tempfile
 
 def generate_full_auto_path(relative):
     """
@@ -284,3 +286,57 @@ def generate_macaddress():
     mac = [0x52, 0x54, 0x00, random.randint(0x00, 0xff),
            random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
     return ':'.join(map(lambda x:"%02x" % x, mac))
+
+
+def subprocess_check_output(*popenargs, **kwargs):
+    """
+    Function to call a subprocess and gather the output.
+    """
+    if 'stdout' in kwargs:
+        raise ValueError('stdout argument not allowed, it will be overridden.')
+    if 'stderr' in kwargs:
+        raise ValueError('stderr argument not allowed, it will be overridden.')
+
+    executable_exists(popenargs[0][0])
+
+    # NOTE: it is very, very important that we use temporary files for
+    # collecting stdout and stderr here.  There is a nasty bug in python
+    # subprocess; if your process produces more than 64k of data on an fd that
+    # is using subprocess.PIPE, the whole thing will hang. To avoid this, we
+    # use temporary fds to capture the data
+    stdouttmp = tempfile.TemporaryFile()
+    stderrtmp = tempfile.TemporaryFile()
+
+    process = subprocess.Popen(stdout=stdouttmp, stderr=stderrtmp, *popenargs,
+                               **kwargs)
+    process.communicate()
+    retcode = process.poll()
+
+    stdouttmp.seek(0, 0)
+    stdout = stdouttmp.read()
+    stdouttmp.close()
+
+    stderrtmp.seek(0, 0)
+    stderr = stderrtmp.read()
+    stderrtmp.close()
+
+    if retcode:
+        cmd = ' '.join(*popenargs)
+        raise Exception("'%s' failed(%d): %s" % (cmd, retcode, stderr))
+    return (stdout, stderr, retcode)
+
+def ssh_execute_command(guestaddr, sshprivkey, command, timeout=10):
+    """
+    Function to execute a command on the guest using SSH and return the output.
+    """
+    # ServerAliveInterval protects against NAT firewall timeouts
+    # on long-running commands with no output
+    # PasswordAuthentication=no prevents us from falling back to
+    # keyboard-interactive password prompting
+    return subprocess_check_output(["ssh", "-i", sshprivkey,
+                                    "-o", "ServerAliveInterval=30",
+                                    "-o", "StrictHostKeyChecking=no",
+                                    "-o", "ConnectTimeout=" + str(timeout),
+                                    "-o", "UserKnownHostsFile=/dev/null",
+                                    "-o", "PasswordAuthentication=no",
+                                    "root@" + guestaddr, command])
