@@ -528,19 +528,19 @@ class Guest(object):
             try:
                 rd_req, rd_bytes, wr_req, wr_bytes, errs = libvirt_dom.blockStats(diskdev)
             except libvirt.libvirtError, e:
-                self.log.debug("Libvirt Domain Info Failed:")
-                self.log.debug(" code is %d" % e.get_error_code())
-                self.log.debug(" domain is %d" % e.get_error_domain())
-                self.log.debug(" message is %s" % e.get_error_message())
-                self.log.debug(" level is %d" % e.get_error_level())
-                self.log.debug(" str1 is %s" % e.get_str1())
-                self.log.debug(" str2 is %s" % e.get_str2())
-                self.log.debug(" str3 is %s" % e.get_str3())
-                self.log.debug(" int1 is %d" % e.get_int1())
-                self.log.debug(" int2 is %d" % e.get_int2())
                 if e.get_error_domain() == libvirt.VIR_FROM_QEMU and (e.get_error_code() in [libvirt.VIR_ERR_NO_DOMAIN, libvirt.VIR_ERR_SYSTEM_ERROR, libvirt.VIR_ERR_OPERATION_FAILED]):
                     break
                 else:
+                    self.log.debug("Libvirt Block Stats Failed:")
+                    self.log.debug(" code is %d" % e.get_error_code())
+                    self.log.debug(" domain is %d" % e.get_error_domain())
+                    self.log.debug(" message is %s" % e.get_error_message())
+                    self.log.debug(" level is %d" % e.get_error_level())
+                    self.log.debug(" str1 is %s" % e.get_str1())
+                    self.log.debug(" str2 is %s" % e.get_str2())
+                    self.log.debug(" str3 is %s" % e.get_str3())
+                    self.log.debug(" int1 is %d" % e.get_int1())
+                    self.log.debug(" int2 is %d" % e.get_int2())
                     raise
 
             # if we saw no disk activity in the countdown window, we presume the
@@ -588,21 +588,21 @@ class Guest(object):
             if count % 10 == 0:
                 self.log.debug("Waiting for %s to shutdown, %d/%d" % (self.tdl.name, count, origcount))
             try:
-                info = libvirt_dom.info()
+                libvirt_dom.info()
             except libvirt.libvirtError, e:
-                self.log.debug("Libvirt Domain Info Failed:")
-                self.log.debug(" code is %d" % e.get_error_code())
-                self.log.debug(" domain is %d" % e.get_error_domain())
-                self.log.debug(" message is %s" % e.get_error_message())
-                self.log.debug(" level is %d" % e.get_error_level())
-                self.log.debug(" str1 is %s" % e.get_str1())
-                self.log.debug(" str2 is %s" % e.get_str2())
-                self.log.debug(" str3 is %s" % e.get_str3())
-                self.log.debug(" int1 is %d" % e.get_int1())
-                self.log.debug(" int2 is %d" % e.get_int2())
                 if e.get_error_domain() == libvirt.VIR_FROM_QEMU and (e.get_error_code() in [libvirt.VIR_ERR_NO_DOMAIN, libvirt.VIR_ERR_SYSTEM_ERROR, libvirt.VIR_ERR_OPERATION_FAILED]):
                     break
                 else:
+                    self.log.debug("Libvirt Domain Info Failed:")
+                    self.log.debug(" code is %d" % e.get_error_code())
+                    self.log.debug(" domain is %d" % e.get_error_domain())
+                    self.log.debug(" message is %s" % e.get_error_message())
+                    self.log.debug(" level is %d" % e.get_error_level())
+                    self.log.debug(" str1 is %s" % e.get_str1())
+                    self.log.debug(" str2 is %s" % e.get_str2())
+                    self.log.debug(" str3 is %s" % e.get_str3())
+                    self.log.debug(" int1 is %d" % e.get_int1())
+                    self.log.debug(" int2 is %d" % e.get_int2())
                     raise
 
             count -= 1
