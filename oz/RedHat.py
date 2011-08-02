@@ -59,15 +59,14 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         Method to create a new ISO based on the modified CD/DVD.
         """
         self.log.debug("Generating new ISO")
-        oz.Guest.subprocess_check_output(["mkisofs", "-r", "-T", "-J",
-                                          "-V", "Custom",
-                                          "-b", "isolinux/isolinux.bin",
-                                          "-c", "isolinux/boot.cat",
-                                          "-no-emul-boot",
-                                          "-boot-load-size", "4",
-                                          "-boot-info-table", "-v", "-v",
-                                          "-o", self.output_iso,
-                                          self.iso_contents])
+        oz.ozutil.subprocess_check_output(["mkisofs", "-r", "-T", "-J",
+                                           "-V", "Custom", "-no-emul-boot",
+                                           "-b", "isolinux/isolinux.bin",
+                                           "-c", "isolinux/boot.cat",
+                                           "-boot-load-size", "4",
+                                           "-boot-info-table", "-v", "-v",
+                                           "-o", self.output_iso,
+                                           self.iso_contents])
 
     def _check_iso_tree(self):
         kernel = os.path.join(self.iso_contents, "isolinux", "vmlinuz")
@@ -468,14 +467,14 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                                    "mkdir -p " + os.path.dirname(destination),
                                    timeout)
 
-        return oz.Guest.subprocess_check_output(["scp", "-i", self.sshprivkey,
-                                                 "-o", "ServerAliveInterval=30",
-                                                 "-o", "StrictHostKeyChecking=no",
-                                                 "-o", "ConnectTimeout=" + str(timeout),
-                                                 "-o", "UserKnownHostsFile=/dev/null",
-                                                 "-o", "PasswordAuthentication=no",
-                                                 file_to_upload,
-                                                 "root@" + guestaddr + ":" + destination])
+        return oz.ozutil.subprocess_check_output(["scp", "-i", self.sshprivkey,
+                                                  "-o", "ServerAliveInterval=30",
+                                                  "-o", "StrictHostKeyChecking=no",
+                                                  "-o", "ConnectTimeout=" + str(timeout),
+                                                  "-o", "UserKnownHostsFile=/dev/null",
+                                                  "-o", "PasswordAuthentication=no",
+                                                  file_to_upload,
+                                                  "root@" + guestaddr + ":" + destination])
 
     def _customize_files(self, guestaddr):
         """
@@ -740,8 +739,8 @@ class RedHatFDGuest(oz.Guest.FDGuest):
         else:
             shutil.copy(self.ks_file, output_ks)
 
-        oz.Guest.subprocess_check_output(["mcopy", "-i", self.output_floppy,
-                                          output_ks, "::KS.CFG"])
+        oz.ozutil.subprocess_check_output(["mcopy", "-i", self.output_floppy,
+                                           output_ks, "::KS.CFG"])
 
         self.log.debug("Modifying the syslinux.cfg")
 
@@ -757,12 +756,13 @@ class RedHatFDGuest(oz.Guest.FDGuest):
 
         # sometimes, syslinux.cfg on the floppy gets marked read-only.  Avoid
         # problems with the subsequent mcopy by marking it read/write.
-        oz.Guest.subprocess_check_output(["mattrib", "-r", "-i",
-                                          self.output_floppy, "::SYSLINUX.CFG"])
+        oz.ozutil.subprocess_check_output(["mattrib", "-r", "-i",
+                                           self.output_floppy,
+                                           "::SYSLINUX.CFG"])
 
-        oz.Guest.subprocess_check_output(["mcopy", "-n", "-o", "-i",
-                                          self.output_floppy, syslinux,
-                                          "::SYSLINUX.CFG"])
+        oz.ozutil.subprocess_check_output(["mcopy", "-n", "-o", "-i",
+                                           self.output_floppy, syslinux,
+                                           "::SYSLINUX.CFG"])
 
     def generate_install_media(self, force_download=False):
         """

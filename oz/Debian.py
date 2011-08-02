@@ -77,14 +77,14 @@ class DebianGuest(oz.Guest.CDGuest):
         Method to create a new ISO based on the modified CD/DVD.
         """
         self.log.info("Generating new ISO")
-        oz.Guest.subprocess_check_output(["mkisofs", "-r", "-V", "Custom", "-J",
-                                          "-l", "-b", "isolinux/isolinux.bin",
-                                          "-c", "isolinux/boot.cat",
-                                          "-no-emul-boot",
-                                          "-boot-load-size", "4",
-                                          "-cache-inodes", "-boot-info-table",
-                                          "-v", "-v", "-o", self.output_iso,
-                                          self.iso_contents])
+        oz.ozutil.subprocess_check_output(["mkisofs", "-r", "-V", "Custom",
+                                           "-J", "-l", "-no-emul-boot",
+                                           "-b", "isolinux/isolinux.bin",
+                                           "-c", "isolinux/boot.cat",
+                                           "-boot-load-size", "4",
+                                           "-cache-inodes", "-boot-info-table",
+                                           "-v", "-v", "-o", self.output_iso,
+                                           self.iso_contents])
 
     def generate_install_media(self, force_download=False):
         """

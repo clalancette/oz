@@ -47,7 +47,8 @@ import oz.OzException
 
 def subprocess_check_output(*popenargs, **kwargs):
     """
-    Function to call a subprocess and gather the output.
+    Function to call a subprocess and gather the output.  Deprecated; slated to
+    be removed in Oz version 0.7.0.  See oz.ozutil.subprocess_check_output().
     """
     return oz.ozutil.subprocess_check_output(*popenargs, **kwargs)
 
@@ -728,7 +729,7 @@ class Guest(object):
         vnc = "localhost:%s" % (int(port) - 5900)
 
         try:
-            subprocess_check_output(['gvnccapture', vnc, screenshot])
+            oz.ozutil.subprocess_check_output(['gvnccapture', vnc, screenshot])
             return screenshot
         except:
             self.log.error("Failed to take screenshot")
@@ -862,11 +863,11 @@ class Guest(object):
             listen.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             listen.bind((self.host_bridge_ip, self.listen_port))
             listen.listen(1)
-            subprocess_check_output(["iptables", "-I", "INPUT", "1",
-                                     "-p", "tcp", "-m", "tcp",
-                                     "-d", self.host_bridge_ip,
-                                     "--dport", str(self.listen_port),
-                                     "-j", "ACCEPT"])
+            oz.ozutil.subprocess_check_output(["iptables", "-I", "INPUT", "1",
+                                               "-p", "tcp", "-m", "tcp",
+                                               "-d", self.host_bridge_ip,
+                                               "--dport", str(self.listen_port),
+                                               "-j", "ACCEPT"])
 
             try:
                 count = 300
@@ -897,7 +898,8 @@ class Guest(object):
                     count -= 1
             finally:
                 try:
-                    subprocess_check_output(["iptables", "-D", "INPUT", "1"])
+                    oz.ozutil.subprocess_check_output(["iptables", "-D",
+                                                       "INPUT", "1"])
                 except:
                     self.log.warn("Failed to delete iptables rule")
         finally:

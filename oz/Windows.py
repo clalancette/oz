@@ -70,15 +70,15 @@ class Windows2000andXPand2003(Windows):
         Method to create a new ISO based on the modified CD/DVD.
         """
         self.log.debug("Generating new ISO")
-        oz.Guest.subprocess_check_output(["mkisofs", "-b", "cdboot/boot.bin",
-                                          "-no-emul-boot", "-boot-load-seg",
-                                          "1984", "-boot-load-size", "4",
-                                          "-iso-level", "2", "-J", "-l", "-D",
-                                          "-N", "-joliet-long",
-                                          "-relaxed-filenames", "-v", "-v",
-                                          "-V", "Custom",
-                                          "-o", self.output_iso,
-                                          self.iso_contents])
+        oz.ozutil.subprocess_check_output(["mkisofs", "-b", "cdboot/boot.bin",
+                                           "-no-emul-boot", "-boot-load-seg",
+                                           "1984", "-boot-load-size", "4",
+                                           "-iso-level", "2", "-J", "-l", "-D",
+                                           "-N", "-joliet-long",
+                                           "-relaxed-filenames", "-v", "-v",
+                                           "-V", "Custom",
+                                           "-o", self.output_iso,
+                                           self.iso_contents])
 
     def generate_diskimage(self, size=10, force=False):
         """
@@ -181,14 +181,14 @@ class Windows2008and7(Windows):
         self.log.debug("Generating new ISO")
         # NOTE: Windows 2008 is very picky about which arguments to mkisofs
         # will generate a bootable CD, so modify these at your own risk
-        oz.Guest.subprocess_check_output(["mkisofs", "-b", "cdboot/boot.bin",
-                                          "-no-emul-boot", "-c", "BOOT.CAT",
-                                          "-iso-level", "2", "-J", "-l", "-D",
-                                          "-N", "-joliet-long",
-                                          "-relaxed-filenames", "-v", "-v",
-                                          "-V", "Custom", "-udf",
-                                          "-o", self.output_iso,
-                                          self.iso_contents])
+        oz.ozutil.subprocess_check_output(["mkisofs", "-b", "cdboot/boot.bin",
+                                           "-no-emul-boot", "-c", "BOOT.CAT",
+                                           "-iso-level", "2", "-J", "-l", "-D",
+                                           "-N", "-joliet-long",
+                                           "-relaxed-filenames", "-v", "-v",
+                                           "-V", "Custom", "-udf",
+                                           "-o", self.output_iso,
+                                           self.iso_contents])
 
     def _get_windows_arch(self, tdl_arch):
         """
