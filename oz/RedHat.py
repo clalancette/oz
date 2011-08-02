@@ -369,7 +369,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         """
         self.log.info("Collection Setup")
 
-        self.mkdir_p(self.icicle_tmp)
+        oz.ozutil.mkdir_p(self.icicle_tmp)
 
         g_handle = self._guestfs_handle_setup(libvirt_xml)
 
@@ -716,7 +716,7 @@ class RedHatFDGuest(oz.Guest.FDGuest):
         """
         Method to make the floppy auto-boot with appropriate parameters.
         """
-        self.mkdir_p(self.floppy_contents)
+        oz.ozutil.mkdir_p(self.floppy_contents)
 
         self.log.debug("Putting the kickstart in place")
 

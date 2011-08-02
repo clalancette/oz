@@ -607,7 +607,7 @@ class Guest(object):
         on the downloaded data.
         """
         outdir = os.path.dirname(output)
-        self.mkdir_p(outdir)
+        oz.ozutil.mkdir_p(outdir)
 
         originalname = os.path.basename(urlparse.urlparse(original_url)[2])
 
@@ -682,7 +682,7 @@ class Guest(object):
         # before fetching everything, make sure that we have enough
         # space on the filesystem to store the data we are about to download
         outdir = os.path.dirname(output)
-        self.mkdir_p(outdir)
+        oz.ozutil.mkdir_p(outdir)
         devdata = os.statvfs(outdir)
         if (devdata.f_bsize*devdata.f_bavail) < content_length:
             raise oz.OzException.OzException("Not enough room on %s for install media" % (outdir))
@@ -934,9 +934,9 @@ class Guest(object):
     def mkdir_p(self, path):
         """
         Create a directory and all of its parents.
+        Deprecated; slated for removal in Oz 0.7.0.  See oz.ozutil.mkdir_p().
         """
-        if not os.access(path, os.F_OK):
-            os.makedirs(path)
+        return oz.ozutil.mkdir_p(path)
 
     def _check_url(self, tdl, iso=True, url=True):
         """
@@ -1299,7 +1299,7 @@ class CDGuest(Guest):
 
             if self.cache_jeos:
                 self.log.info("Caching JEOS")
-                self.mkdir_p(self.jeos_cache_dir)
+                oz.ozutil.mkdir_p(self.jeos_cache_dir)
                 oz.ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
 
         return self._generate_xml("hd", None)
@@ -1445,7 +1445,7 @@ class FDGuest(Guest):
 
             if self.cache_jeos:
                 self.log.info("Caching JEOS")
-                self.mkdir_p(self.jeos_cache_dir)
+                oz.ozutil.mkdir_p(self.jeos_cache_dir)
                 oz.ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
 
         return self._generate_xml("hd", None)

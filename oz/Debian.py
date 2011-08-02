@@ -46,7 +46,7 @@ class DebianGuest(oz.Guest.CDGuest):
         self.log.debug("Modifying ISO")
 
         self.log.debug("Copying preseed file")
-        self.mkdir_p(os.path.join(self.iso_contents, "preseed"))
+        oz.ozutil.mkdir_p(os.path.join(self.iso_contents, "preseed"))
         shutil.copy(self.preseed_file, os.path.join(self.iso_contents,
                                                     "preseed",
                                                     "customiso.seed"))

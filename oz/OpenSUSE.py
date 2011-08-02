@@ -363,7 +363,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         """
         self.log.info("Collection Setup")
 
-        self.mkdir_p(self.icicle_tmp)
+        oz.ozutil.mkdir_p(self.icicle_tmp)
 
         g_handle = self._guestfs_handle_setup(libvirt_xml)
 

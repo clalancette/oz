@@ -340,3 +340,14 @@ def ssh_execute_command(guestaddr, sshprivkey, command, timeout=10):
                                     "-o", "UserKnownHostsFile=/dev/null",
                                     "-o", "PasswordAuthentication=no",
                                     "root@" + guestaddr, command])
+
+def mkdir_p(path):
+    """
+    Function to make a directory and all intermediate directories as necessary.
+    The functionality differs from os.makedirs slightly, in that this function
+    does *not* raise an error if the directory already exists.
+    """
+    if not os.access(path, os.F_OK):
+        os.makedirs(path)
+    elif not os.path.isdir(path):
+        raise Exception, "cannot create '%s': File exists" % (path)
