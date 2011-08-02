@@ -25,7 +25,6 @@ Requires: python-uuid
 Requires: openssh
 Requires: m2crypto
 Requires: pyparted
-Requires: virt-what
 
 BuildRequires: python
 
