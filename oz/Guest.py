@@ -464,9 +464,7 @@ class Guest(object):
         """
         # first find the disk device we are installing to; this will be
         # monitored for activity during the installation
-        domxml = libvirt_dom.XMLDesc(0)
-        doc = libxml2.parseDoc(domxml)
-        disktarget = doc.xpathEval("/domain/devices/disk[@device='disk']/target")
+        disktarget = libxml2.parseDoc(libvirt_dom.XMLDesc(0)).xpathEval("/domain/devices/disk[@device='disk']/target")
         if len(disktarget) < 1:
             raise oz.OzException.OzException("Could not find disk target")
         diskdev = disktarget[0].prop('dev')
@@ -710,8 +708,7 @@ class Guest(object):
         screenshot = os.path.realpath(os.path.join(self.screenshot_dir,
                                                    self.tdl.name + "-" + str(time.time()) + ".png"))
 
-        doc = libxml2.parseDoc(xml)
-        graphics = doc.xpathEval('/domain/devices/graphics')
+        graphics = libxml2.parseDoc(xml).xpathEval('/domain/devices/graphics')
         if len(graphics) != 1:
             self.log.error("Could not find the VNC port, not take screenshot")
             return None
@@ -761,9 +758,7 @@ class Guest(object):
 
         for domid in self.libvirt_conn.listDomainsID():
             self.log.debug("DomID: %d" % (domid))
-            dom = self.libvirt_conn.lookupByID(domid)
-            xml = dom.XMLDesc(0)
-            doc = libxml2.parseDoc(xml)
+            doc = libxml2.parseDoc(self.libvirt_conn.lookupByID(domid).XMLDesc(0))
             namenode = doc.xpathEval('/domain/name')
             if len(namenode) != 1:
                 # hm, odd, a domain without a name?
