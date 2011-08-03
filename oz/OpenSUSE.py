@@ -141,7 +141,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
 
     def _image_ssh_teardown_step_1(self, g_handle):
         """
-        First step to undo __image_ssh_setup (remove authorized keys).
+        First step to undo _image_ssh_setup (remove authorized keys).
         """
         self.log.debug("Teardown step 1")
         # reset the authorized keys
@@ -154,7 +154,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
 
     def _image_ssh_teardown_step_2(self, g_handle):
         """
-        Second step to undo __image_ssh_setup (remove custom sshd_config).
+        Second step to undo _image_ssh_setup (remove custom sshd_config).
         """
         self.log.debug("Teardown step 2")
         # remove custom sshd_config
@@ -174,7 +174,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
 
     def _image_ssh_teardown_step_3(self, g_handle):
         """
-        Third step to undo __image_ssh_setup (remove guest announcement).
+        Third step to undo _image_ssh_setup (remove guest announcement).
         """
         self.log.debug("Teardown step 3")
         # remove announce cronjob
@@ -198,7 +198,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
 
     def _collect_teardown(self, libvirt_xml):
         """
-        Method to reverse the changes done in __collect_setup.
+        Method to reverse the changes done in _collect_setup.
         """
         self.log.info("Collection Teardown")
 

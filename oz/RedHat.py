@@ -151,7 +151,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
     def _image_ssh_teardown_step_1(self, g_handle):
         """
-        First step to undo __image_ssh_setup (remove authorized keys).
+        First step to undo _image_ssh_setup (remove authorized keys).
         """
         self.log.debug("Teardown step 1")
         # reset the authorized keys
@@ -164,7 +164,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
     def _image_ssh_teardown_step_2(self, g_handle):
         """
-        Second step to undo __image_ssh_setup (reset sshd service).
+        Second step to undo _image_ssh_setup (reset sshd service).
         """
         self.log.debug("Teardown step 2")
         # remove custom sshd_config
@@ -184,7 +184,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
     def _image_ssh_teardown_step_3(self, g_handle):
         """
-        Third step to undo __image_ssh_setup (reset iptables).
+        Third step to undo _image_ssh_setup (reset iptables).
         """
         self.log.debug("Teardown step 3")
         # reset iptables
@@ -197,7 +197,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
     def _image_ssh_teardown_step_4(self, g_handle):
         """
-        Fourth step to undo __image_ssh_setup (remove guest announcement).
+        Fourth step to undo _image_ssh_setup (remove guest announcement).
         """
         self.log.debug("Teardown step 4")
         # remove announce cronjob
@@ -224,7 +224,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
     def _image_ssh_teardown_step_5(self, g_handle):
         """
-        Fifth step to undo __image_ssh_setup (reset SELinux).
+        Fifth step to undo _image_ssh_setup (reset SELinux).
         """
         self.log.debug("Teardown step 5")
         if g_handle.exists('/etc/selinux/config'):
@@ -235,7 +235,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
     def _collect_teardown(self, libvirt_xml):
         """
-        Method to reverse the changes done in __collect_setup.
+        Method to reverse the changes done in _collect_setup.
         """
         self.log.info("Collection Teardown")
 
