@@ -141,7 +141,7 @@ try:
             guest.cleanup_old_guest()
             raise
     finally:
-        guest.cleanup_install();
+        guest.cleanup_install()
 
     if customize and generate_icicle:
         print guest.customize_and_generate_icicle(libvirt_xml)
