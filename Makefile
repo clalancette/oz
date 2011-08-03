@@ -32,7 +32,7 @@ unittests:
 	@cd tests/factory ; ./run.sh
 
 pylint:
-	pylint --rcfile=pylint.conf oz
+	pylint --rcfile=pylint.conf oz oz-install oz-customize oz-cleanup-cache oz-generate-icicle
 
 clean:
 	rm -rf MANIFEST build dist usr *~ oz.spec *.pyc oz/*~ oz/*.pyc examples/*~ oz/auto/*~ man/*~ docs/*~ man/*.html tests/tdl/*~ tests/factory/*~
