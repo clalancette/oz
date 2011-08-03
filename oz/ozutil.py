@@ -341,6 +341,23 @@ def ssh_execute_command(guestaddr, sshprivkey, command, timeout=10):
                                     "-o", "PasswordAuthentication=no",
                                     "root@" + guestaddr, command])
 
+def scp_copy_file(guestaddr, sshprivkey, file_to_upload, destination,
+                  timeout=10):
+    """
+    Function to upload a file to the guest using scp.
+    """
+    ssh_execute_command(guestaddr, sshprivkey,
+                        "mkdir -p " + os.path.dirname(destination), timeout)
+
+    return subprocess_check_output(["scp", "-i", sshprivkey,
+                                    "-o", "ServerAliveInterval=30",
+                                    "-o", "StrictHostKeyChecking=no",
+                                    "-o", "ConnectTimeout=" + str(timeout),
+                                    "-o", "UserKnownHostsFile=/dev/null",
+                                    "-o", "PasswordAuthentication=no",
+                                    file_to_upload,
+                                    "root@" + guestaddr + ":" + destination])
+
 def mkdir_p(path):
     """
     Function to make a directory and all intermediate directories as necessary.

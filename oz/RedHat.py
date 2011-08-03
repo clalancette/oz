@@ -463,18 +463,8 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         """
         Method to copy a file to the live guest.
         """
-        self.guest_execute_command(guestaddr,
-                                   "mkdir -p " + os.path.dirname(destination),
-                                   timeout)
-
-        return oz.ozutil.subprocess_check_output(["scp", "-i", self.sshprivkey,
-                                                  "-o", "ServerAliveInterval=30",
-                                                  "-o", "StrictHostKeyChecking=no",
-                                                  "-o", "ConnectTimeout=" + str(timeout),
-                                                  "-o", "UserKnownHostsFile=/dev/null",
-                                                  "-o", "PasswordAuthentication=no",
-                                                  file_to_upload,
-                                                  "root@" + guestaddr + ":" + destination])
+        return oz.ozutil.scp_copy_file(guestaddr, self.sshprivkey,
+                                       file_to_upload, destination, timeout)
 
     def _customize_files(self, guestaddr):
         """

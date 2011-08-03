@@ -404,6 +404,27 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
                                        "zypper addrepo %s %s" % (repo.url,
                                                                  repo.name))
 
+    def guest_live_upload(self, guestaddr, file_to_upload, destination,
+                          timeout=10):
+        """
+        Method to copy a file to the live guest.
+        """
+        return oz.ozutil.scp_copy_file(guestaddr, self.sshprivkey,
+                                       file_to_upload, destination, timeout)
+
+    def _customize_files(self, guestaddr):
+        """
+        Method to upload the custom files specified in the TDL to the guest.
+        """
+        self.log.info("Uploading custom files")
+        for name, content in self.tdl.files.items():
+            localname = os.path.join(self.icicle_tmp, "file")
+            f = open(localname, 'w')
+            f.write(content)
+            f.close()
+            self.guest_live_upload(guestaddr, localname, name)
+            os.unlink(localname)
+
     def _do_customize(self, guestaddr):
         """
         Method to customize by installing additional packages and files.
@@ -433,6 +454,8 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
 
             self.guest_execute_command(guestaddr,
                                        'zypper -n install %s' % (packstr))
+
+        self._customize_files(guestaddr)
 
         self.log.debug("Syncing")
         self.guest_execute_command(guestaddr, 'sync')
