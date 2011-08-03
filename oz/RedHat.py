@@ -630,19 +630,20 @@ class RedHatCDYumGuest(RedHatCDGuest):
         self.log.debug("Syncing")
         self.guest_execute_command(guestaddr, 'sync')
 
-    def customize(self, libvirt_xml):
+    def _internal_customize(self, libvirt_xml, generate_icicle):
         """
-        Method to customize the operating system after installation.
+        Internal method to customize and optionally generate an ICICLE for the
+        operating system after initial installation.
         """
         self.log.info("Customizing image")
 
-        if not self.tdl.packages and not self.tdl.files and not self.tdl.commands:
-            self.log.info("No additional packages, files or commands to install, skipping customization")
+        if not self.tdl.packages and not self.tdl.files and not self.tdl.commands and not generate_icicle:
+            self.log.info("No additional packages, files, or commands to install, and icicle generation not requested, skipping customization")
             return
 
         self._collect_setup(libvirt_xml)
 
-        libvirt_dom = None
+        icicle = None
         try:
             libvirt_dom = self.libvirt_conn.createXML(libvirt_xml, 0)
 
@@ -650,11 +651,23 @@ class RedHatCDYumGuest(RedHatCDGuest):
                 guestaddr = None
                 guestaddr = self._wait_for_guest_boot(libvirt_dom)
 
-                self._do_customize(guestaddr)
+                if self.tdl.packages or self.tdl.files or self.tdl.commands:
+                    self._do_customize(guestaddr)
+
+                if generate_icicle:
+                    icicle = self._do_icicle(guestaddr)
             finally:
                 self._shutdown_guest(guestaddr, libvirt_dom)
         finally:
             self._collect_teardown(libvirt_xml)
+
+        return icicle
+
+    def customize(self, libvirt_xml):
+        """
+        Method to customize the operating system after installation.
+        """
+        return self._internal_customize(libvirt_xml, False)
 
     def customize_and_generate_icicle(self, libvirt_xml):
         """
@@ -662,27 +675,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
         after installation.  This is equivalent to calling customize() and
         generate_icicle() back-to-back, but is faster.
         """
-        self.log.info("Customizing and generating ICICLE")
-
-        self._collect_setup(libvirt_xml)
-
-        libvirt_dom = None
-        try:
-            libvirt_dom = self.libvirt_conn.createXML(libvirt_xml, 0)
-
-            try:
-                guestaddr = self._wait_for_guest_boot(libvirt_dom)
-
-                if self.tdl.packages or self.tdl.files:
-                    self._do_customize(guestaddr)
-
-                icicle = self._do_icicle(guestaddr)
-            finally:
-                self._shutdown_guest(guestaddr, libvirt_dom)
-        finally:
-            self._collect_teardown(libvirt_xml)
-
-        return icicle
+        return self._internal_customize(libvirt_xml, True)
 
 class RedHatFDGuest(oz.Guest.FDGuest):
     """
