@@ -655,6 +655,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
                     self._do_customize(guestaddr)
 
                 if generate_icicle:
+                    self.log.debug("Generating ICICLE")
                     icicle = self._do_icicle(guestaddr)
             finally:
                 self._shutdown_guest(guestaddr, libvirt_dom)
