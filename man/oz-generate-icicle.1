@@ -1,4 +1,4 @@
-.TH OZ-GENERATE-ICICLE 1 "Dec 2010" "oz-generate-icicle"
+.TH OZ-GENERATE-ICICLE 1 "Aug 2011" "oz-generate-icicle"
 
 .SH NAME
 oz-generate-icicle - tool to generate an ICICLE (package manifest) of a disk image
@@ -37,6 +37,11 @@ Turn on debugging output to level \fBloglevel\fR.  The log levels are:
 .TP
 .B "\-h"
 Print a short help message.
+.TP
+.B "\-i <icicle>"
+oz-generate-icicle will normally write the ICICLE XML to stdout.  To
+have oz-generate-icicle write the ICICLE to a file instead, use the -i
+option.
 
 .SH CONFIGURATION FILE
 The Oz configuration file is in standard INI format with several

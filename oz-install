@@ -31,9 +31,8 @@ def usage():
     print " OPTIONS:"
     print "  -a <auto>\tUse the guest configuration tool from <auto> instead"
     print "\t\tof using the hard-coded one.  This is useful if you want to pass"
-    print "\t\ta custom kickstart for installation"
+    print "\t\ta custom kickstart/preseed/sif/etc for installation"
     print "  -c <config>\tGet config from <config> (default is /etc/oz/oz.cfg)"
-    print "  -x <xmlfile>\tWrite libvirt XML to the specified file"
     print "  -d <level>\tTurn up logging level.  The levels are:"
     print "\t\t\t0 - errors only (this is the default)"
     print "\t\t\t1 - errors and warnings"
@@ -43,9 +42,11 @@ def usage():
     print "  -f\t\tForce download of installation media even if already cached"
     print "  -g\t\tGenerate the ICICLE after installation"
     print "  -h\t\tPrint this help message"
+    print "  -i <icicle>\tWrite the ICICLE to <icicle> (only valid with -g)"
     print "  -p\t\tCleanup old guests with the same name before installation"
-    print "  -t <timeout>\tUse a timeout of <timeout> for installation, rather than the default"
+    print "  -t <timeout>\tWait <timeout> seconds for installation, rather than the default"
     print "  -u\t\tAfter installation, do the customization"
+    print "  -x <xmlfile>\tWrite libvirt XML to <xmlfile>"
     print " Currently supported architectures are:"
     print "   i386, x86_64"
     print " Currently supported distros are:"
@@ -53,10 +54,11 @@ def usage():
     sys.exit(1)
 
 try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], 'a:c:d:fghpt:ux:',
+    opts, args = getopt.gnu_getopt(sys.argv[1:], 'a:c:d:fghi:pt:ux:',
                                    ['auto', 'config', 'debug', 'force-download',
-                                    'generate-icicle', 'help', 'cleanup',
-                                    'timeout', 'customize', 'xmlfile'])
+                                    'generate-icicle', 'help', 'icicle',
+                                    'cleanup', 'timeout', 'customize',
+                                    'xmlfile'])
 except getopt.GetoptError, err:
     print str(err)
     usage()
@@ -71,6 +73,7 @@ customize = False
 cleanup = False
 auto = None
 timeout = None
+icicle_file = None
 for o, a in opts:
     if o in ("-a", "--auto"):
         auto = a
@@ -98,6 +101,8 @@ for o, a in opts:
         generate_icicle = True
     elif o in ("-h", "--help"):
         usage()
+    elif o in ("-i", "--icicle"):
+        icicle_file = a
     elif o in ("-p", "--cleanup"):
         cleanup = True
     elif o in ("-t", "--timeout"):
@@ -115,6 +120,10 @@ if os.geteuid() != 0:
 
 if len(args) != 1:
     usage()
+
+if not generate_icicle and icicle_file is not None:
+    print "The -i option must be combined with the -g option"
+    sys.exit(3)
 
 try:
     logging.basicConfig(level=loglevel, format=logformat)
@@ -148,7 +157,12 @@ try:
     elif customize:
         guest.customize(libvirt_xml)
     elif generate_icicle:
-        print guest.generate_icicle(libvirt_xml)
+        icicle_xml = guest.generate_icicle(libvirt_xml)
+        if icicle_file is None:
+            print icicle_xml
+        else:
+            open(icicle_file, 'w').write(icicle_xml)
+            print "ICICLE XML was written to " + icicle_file
 
     if filename is None:
         filename = guest.name + time.strftime("%b_%d_%Y-%H:%M:%S")

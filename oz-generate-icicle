@@ -37,6 +37,7 @@ def usage():
     print "\t\t\t3 - all messages"
     print "\t\t\t4 - all messages, prepended with the level and classname"
     print "  -h\t\tPrint this help message"
+    print "  -i <icicle>\tWrite the ICICLE to <icicle>"
     print " Currently supported architectures are:"
     print "   i386, x86_64"
     print " Currently supported distros are:"
@@ -44,8 +45,8 @@ def usage():
     sys.exit(1)
 
 try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], 'c:d:h', ['config', 'debug',
-                                                           'help'])
+    opts, args = getopt.gnu_getopt(sys.argv[1:], 'c:d:hi:', ['config', 'debug',
+                                                             'help', 'icicle'])
 except getopt.GetoptError, err:
     print str(err)
     usage()
@@ -53,6 +54,7 @@ except getopt.GetoptError, err:
 loglevel = logging.ERROR
 logformat = "%(message)s"
 config_file = "/etc/oz/oz.cfg"
+icicle_file = None
 for o, a in opts:
     if o in ("-c", "--config"):
         config_file = a
@@ -74,6 +76,8 @@ for o, a in opts:
             logformat = logging.BASIC_FORMAT
     elif o in ("-h", "--help"):
         usage()
+    elif o in ("-i", "--icicle"):
+        icicle_file = a
     else:
         assert False, "unhandled option"
 
@@ -104,7 +108,12 @@ try:
     if os.stat(libvirt_xml_file)[stat.ST_SIZE] > (5 * 1024 * 1024):
         raise Exception, "libvirt XML file is too big!"
 
-    print guest.generate_icicle(open(libvirt_xml_file, 'r').read())
+    icicle_xml = guest.generate_icicle(open(libvirt_xml_file, 'r').read())
+    if icicle_file is None:
+        print icicle_xml
+    else:
+        open(icicle_file, 'w').write(icicle_xml)
+        print "ICICLE XML was written to " + icicle_file
 except Exception, exc:
     if loglevel > logging.DEBUG:
         print ""

@@ -1,4 +1,4 @@
-.TH OZ-INSTALL 1 "Dec 2010" "oz-install"
+.TH OZ-INSTALL 1 "Aug 2011" "oz-install"
 
 .SH NAME
 oz-install - tool to automatically install operating systems into files
@@ -61,6 +61,12 @@ after the installation is complete.
 .TP
 .B "\-h"
 Print a short help message.
+.TP
+.B "\-i <icicle>"
+If oz-install has been instructed to generate an ICICLE (see the -g
+option), then it will normally write the ICICLE XML to stdout.  To
+have oz-install write the ICICLE to a file instead, use the -i
+option.  Note that it is an error to specify -i without -g.
 .TP
 .B "\-p"
 Cleanup old guests before installation.  By default, if a guest with
