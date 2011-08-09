@@ -22,6 +22,7 @@ import re
 import shutil
 import os
 import libxml2
+import libvirt
 
 import oz.Guest
 import oz.ozutil
@@ -130,7 +131,17 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
                 self.log.warn("Failed shutting down guest, forcibly killing")
 
         if libvirt_dom is not None:
-            libvirt_dom.destroy()
+            try:
+                libvirt_dom.destroy()
+            except libvirt.libvirtError:
+                # the destroy failed for some reason.  This can happen if
+                # _wait_for_guest_shutdown times out, but the domain shuts
+                # down before we get to destroy.  Check to make sure that the
+                # domain is gone from the list of running domains; if so, just
+                # continue on; if not, re-raise the error.
+                for domid in self.libvirt_conn.listDomainsID():
+                    if domid == libvirt_dom.ID():
+                        raise
 
     def guest_execute_command(self, guestaddr, command, timeout=10):
         """
