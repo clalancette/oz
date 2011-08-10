@@ -617,7 +617,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
 
             os.unlink(localname)
 
-    def _do_customize(self, guestaddr):
+    def do_customize(self, guestaddr):
         """
         Method to customize by installing additional packages and files.
         """
@@ -663,7 +663,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
                 guestaddr = self._wait_for_guest_boot(libvirt_dom)
 
                 if self.tdl.packages or self.tdl.files or self.tdl.commands:
-                    self._do_customize(guestaddr)
+                    self.do_customize(guestaddr)
 
                 if generate_icicle:
                     self.log.debug("Generating ICICLE")

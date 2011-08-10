@@ -436,7 +436,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
             self.guest_live_upload(guestaddr, localname, name)
             os.unlink(localname)
 
-    def _do_customize(self, guestaddr):
+    def do_customize(self, guestaddr):
         """
         Method to customize by installing additional packages and files.
         """
@@ -493,7 +493,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
                 guestaddr = self._wait_for_guest_boot(libvirt_dom)
 
                 if self.tdl.packages or self.tdl.files:
-                    self._do_customize(guestaddr)
+                    self.do_customize(guestaddr)
 
                 if generate_icicle:
                     self.log.debug("Generating ICICLE")
