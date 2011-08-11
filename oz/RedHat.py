@@ -422,7 +422,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         return oz.ozutil.ssh_execute_command(guestaddr, self.sshprivkey,
                                              command, timeout)
 
-    def _do_icicle(self, guestaddr):
+    def do_icicle(self, guestaddr):
         """
         Method to collect the package information and generate the ICICLE XML.
         """
@@ -450,7 +450,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             try:
                 guestaddr = None
                 guestaddr = self._wait_for_guest_boot(libvirt_dom)
-                icicle_output = self._do_icicle(guestaddr)
+                icicle_output = self.do_icicle(guestaddr)
             finally:
                 self._shutdown_guest(guestaddr, libvirt_dom)
 
@@ -667,7 +667,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
 
                 if generate_icicle:
                     self.log.debug("Generating ICICLE")
-                    icicle = self._do_icicle(guestaddr)
+                    icicle = self.do_icicle(guestaddr)
             finally:
                 self._shutdown_guest(guestaddr, libvirt_dom)
         finally:

@@ -225,7 +225,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
             self._guestfs_handle_cleanup(g_handle)
             shutil.rmtree(self.icicle_tmp)
 
-    def _do_icicle(self, guestaddr):
+    def do_icicle(self, guestaddr):
         """
         Method to collect the package information and generate the ICICLE XML.
         """
@@ -253,7 +253,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
             try:
                 guestaddr = None
                 guestaddr = self._wait_for_guest_boot(libvirt_dom)
-                icicle_output = self._do_icicle(guestaddr)
+                icicle_output = self.do_icicle(guestaddr)
             finally:
                 self._shutdown_guest(guestaddr, libvirt_dom)
 
@@ -497,7 +497,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
 
                 if generate_icicle:
                     self.log.debug("Generating ICICLE")
-                    icicle = self._do_icicle(guestaddr)
+                    icicle = self.do_icicle(guestaddr)
             finally:
                 self._shutdown_guest(guestaddr, libvirt_dom)
         finally:
