@@ -25,6 +25,7 @@ import struct
 import random
 import subprocess
 import tempfile
+import errno
 
 def generate_full_auto_path(relative):
     """
@@ -378,10 +379,11 @@ def mkdir_p(path):
     The functionality differs from os.makedirs slightly, in that this function
     does *not* raise an error if the directory already exists.
     """
-    if not os.access(path, os.F_OK):
+    try:
         os.makedirs(path)
-    elif not os.path.isdir(path):
-        raise Exception, "cannot create '%s': File exists" % (path)
+    except OSError, err:
+        if err.errno != errno.EEXIST or not os.path.isdir(path):
+            raise
 
 def copy_modify_file(inname, outname, subfunc):
     """
