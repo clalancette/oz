@@ -22,7 +22,7 @@ Requires: mkisofs
 Requires: numpy
 Requires: mtools
 Requires: python-uuid
-Requires: openssh
+Requires: openssh-clients
 Requires: m2crypto
 Requires: pyparted
 
