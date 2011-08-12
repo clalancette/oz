@@ -331,9 +331,14 @@ def ssh_execute_command(guestaddr, sshprivkey, command, timeout=10):
     """
     # ServerAliveInterval protects against NAT firewall timeouts
     # on long-running commands with no output
+    #
     # PasswordAuthentication=no prevents us from falling back to
     # keyboard-interactive password prompting
+    #
+    # -F /dev/null makes sure that we don't use the global or per-user
+    # configuration files
     return subprocess_check_output(["ssh", "-i", sshprivkey,
+                                    "-F", "/dev/null",
                                     "-o", "ServerAliveInterval=30",
                                     "-o", "StrictHostKeyChecking=no",
                                     "-o", "ConnectTimeout=" + str(timeout),
@@ -349,7 +354,16 @@ def scp_copy_file(guestaddr, sshprivkey, file_to_upload, destination,
     ssh_execute_command(guestaddr, sshprivkey,
                         "mkdir -p " + os.path.dirname(destination), timeout)
 
+    # ServerAliveInterval protects against NAT firewall timeouts
+    # on long-running commands with no output
+    #
+    # PasswordAuthentication=no prevents us from falling back to
+    # keyboard-interactive password prompting
+    #
+    # -F /dev/null makes sure that we don't use the global or per-user
+    # configuration files
     return subprocess_check_output(["scp", "-i", sshprivkey,
+                                    "-F", "/dev/null",
                                     "-o", "ServerAliveInterval=30",
                                     "-o", "StrictHostKeyChecking=no",
                                     "-o", "ConnectTimeout=" + str(timeout),
