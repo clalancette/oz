@@ -21,6 +21,7 @@ Main class for guest installation
 import uuid
 import libvirt
 import os
+import fcntl
 import subprocess
 import shutil
 import time
@@ -41,6 +42,7 @@ import M2Crypto
 import base64
 import parted
 import hashlib
+import errno
 
 import oz.ozutil
 import oz.OzException
@@ -562,7 +564,7 @@ class Guest(object):
 
         return count != 0
 
-    def _download_file(self, from_url, to, show_progress):
+    def _download_file(self, from_url, fd, show_progress):
         """
         Internal method to download a file from from_url to file to.
         """
@@ -580,13 +582,12 @@ class Guest(object):
                 self.log.debug("%dkB of %dkB" % (down_current/1024,
                                                  down_total/1024))
 
-        self.outf = open(to, "w")
         def _data(buf):
             """
             Method that is called back from the pycurl perform() method to
             actually write data to disk.
             """
-            self.outf.write(buf)
+            os.write(fd, buf)
 
         c = pycurl.Curl()
         c.setopt(c.URL, from_url)
@@ -597,52 +598,66 @@ class Guest(object):
             c.setopt(c.PROGRESSFUNCTION, _progress)
         c.perform()
         c.close()
-        self.outf.close()
 
-    def _get_csums(self, original_url, output):
+    def _get_csums(self, original_url, outdir, outputfd):
         """
         Internal method to fetch the checksum file and compute the checksum
         on the downloaded data.
         """
-        outdir = os.path.dirname(output)
-        oz.ozutil.mkdir_p(outdir)
+        if not (self.tdl.iso_md5_url or self.tdl.iso_sha1_url or self.tdl.iso_sha256_url):
+            return True
 
         originalname = os.path.basename(urlparse.urlparse(original_url)[2])
 
         csumname = os.path.join(outdir,
                                 self.tdl.distro + self.tdl.update + self.tdl.arch + "-CHECKSUM")
+        csumfd = os.open(csumname, os.O_WRONLY|os.O_CREAT)
 
-        if self.tdl.iso_md5_url:
-            self.log.debug("Checksum requested, fetching MD5 file")
-            self._download_file(self.tdl.iso_md5_url, csumname, False)
-            upstream_sum = oz.ozutil.get_md5sum_from_file(csumname,
-                                                          originalname)
-            local_sum = hashlib.md5()
-        elif self.tdl.iso_sha1_url:
-            self.log.debug("Checksum requested, fetching SHA1 file")
-            self._download_file(self.tdl.iso_sha1_url, csumname, False)
-            upstream_sum = oz.ozutil.get_sha1sum_from_file(csumname,
-                                                           originalname)
-            local_sum = hashlib.sha1()
-        else:
-            self.log.debug("Checksum requested, fetching SHA256 file")
-            self._download_file(self.tdl.iso_sha256_url, csumname, False)
-            upstream_sum = oz.ozutil.get_sha256sum_from_file(csumname,
-                                                             originalname)
-            local_sum = hashlib.sha256()
+        # from this point forward, we need to close csumfd on success or failure
+        try:
+            self.log.debug("Attempting to get the lock for %s" % (csumname))
+            fcntl.lockf(csumfd, fcntl.LOCK_EX)
+            self.log.debug("Got the lock, doing the download")
 
-        os.unlink(csumname)
+            if self.tdl.iso_md5_url:
+                self.log.debug("Checksum requested, fetching MD5 file")
+                self._download_file(self.tdl.iso_md5_url, csumfd, False)
+                upstream_sum = oz.ozutil.get_md5sum_from_file(csumname,
+                                                              originalname)
+                local_sum = hashlib.md5()
+            elif self.tdl.iso_sha1_url:
+                self.log.debug("Checksum requested, fetching SHA1 file")
+                self._download_file(self.tdl.iso_sha1_url, csumfd, False)
+                upstream_sum = oz.ozutil.get_sha1sum_from_file(csumname,
+                                                               originalname)
+                local_sum = hashlib.sha1()
+            else:
+                self.log.debug("Checksum requested, fetching SHA256 file")
+                self._download_file(self.tdl.iso_sha256_url, csumfd, False)
+                upstream_sum = oz.ozutil.get_sha256sum_from_file(csumname,
+                                                                 originalname)
+                local_sum = hashlib.sha256()
+
+            os.unlink(csumname)
+        finally:
+            os.close(csumfd)
 
         if not upstream_sum:
             raise oz.OzException.OzException("Could not find checksum for original file " + originalname)
 
         self.log.debug("Calculating checksum of downloaded file")
-        f = open(output, 'r')
-        for line in f.xreadlines():
-            local_sum.update(line)
-        f.close()
+        os.lseek(outputfd, 0, os.SEEK_SET)
 
-        return local_sum.hexdigest(), upstream_sum
+        buf = os.read(outputfd, 1024)
+        while buf != '':
+            local_sum.update(buf)
+            buf = os.read(outputfd, 1024)
+
+        retval = local_sum.hexdigest() == upstream_sum
+
+        if retval:
+            self.log.debug("Checksum matches")
+        return retval
 
     def _get_original_media(self, url, output, force_download):
         """
@@ -651,55 +666,57 @@ class Guest(object):
         """
         self.log.info("Fetching the original media")
 
-        response = urllib2.urlopen(url)
-        url = response.geturl()
-        info = response.info()
-        response.close()
+        outdir = os.path.dirname(output)
+        oz.ozutil.mkdir_p(outdir)
 
-        if not info.has_key("Content-Length"):
-            raise oz.OzException.OzException("Could not reach destination to fetch boot media")
-        content_length = int(info["Content-Length"])
-        if content_length == 0:
-            raise oz.OzException.OzException("Install media of 0 size detected, something is wrong")
+        fd = os.open(output, os.O_RDWR|os.O_CREAT)
 
-        if not force_download and os.access(output, os.F_OK):
-            if content_length == os.stat(output)[stat.ST_SIZE]:
-                if self.tdl.iso_md5_url or self.tdl.iso_sha1_url or self.tdl.iso_sha256_url:
-                    local_sum, upstream_sum = self._get_csums(url, output)
-                    if local_sum == upstream_sum:
-                        self.log.info("Original install media available and matches checksum, using cached version")
+        # from this point forward, we need to close fd on success or failure
+        try:
+            self.log.debug("Attempting to get the lock for %s" % (output))
+            fcntl.lockf(fd, fcntl.LOCK_EX)
+            self.log.debug("Got the lock, doing the download")
+
+            # if we reach here, the open and lock succeeded and we can download
+
+            response = urllib2.urlopen(url)
+            url = response.geturl()
+            info = response.info()
+            response.close()
+
+            if not info.has_key("Content-Length"):
+                raise oz.OzException.OzException("Could not reach destination to fetch boot media")
+            content_length = int(info["Content-Length"])
+            if content_length == 0:
+                raise oz.OzException.OzException("Install media of 0 size detected, something is wrong")
+
+            if not force_download:
+                if content_length == os.fstat(fd)[stat.ST_SIZE]:
+                    if self._get_csums(url, outdir, fd):
+                        self.log.info("Original install media available, using cached version")
                         return
                     else:
                         self.log.info("Original available, but checksum mis-match; re-downloading")
-                else:
-                    # no checksum given, just assume it is good enough; this
-                    # preserves backwards compatible behavior
-                    self.log.info("Original install media available, using cached version")
-                    return
 
-        # before fetching everything, make sure that we have enough
-        # space on the filesystem to store the data we are about to download
-        outdir = os.path.dirname(output)
-        oz.ozutil.mkdir_p(outdir)
-        devdata = os.statvfs(outdir)
-        if (devdata.f_bsize*devdata.f_bavail) < content_length:
-            raise oz.OzException.OzException("Not enough room on %s for install media" % (outdir))
-        self.log.info("Fetching the original install media from %s" % (url))
-        self._download_file(url, output, True)
+            # before fetching everything, make sure that we have enough
+            # space on the filesystem to store the data we are about to download
+            devdata = os.statvfs(outdir)
+            if (devdata.f_bsize*devdata.f_bavail) < content_length:
+                raise oz.OzException.OzException("Not enough room on %s for install media" % (outdir))
+            self.log.info("Fetching the original install media from %s" % (url))
+            self._download_file(url, fd, True)
 
-        filesize = os.stat(output)[stat.ST_SIZE]
+            filesize = os.fstat(fd)[stat.ST_SIZE]
 
-        if filesize != content_length:
-            # if the length we downloaded is not the same as what we originally
-            # saw from the headers, something went wrong
-            raise oz.OzException.OzException("Expected to download %d bytes, downloaded %d" % (content_length, filesize))
+            if filesize != content_length:
+                # if the length we downloaded is not the same as what we
+                # originally saw from the headers, something went wrong
+                raise oz.OzException.OzException("Expected to download %d bytes, downloaded %d" % (content_length, filesize))
 
-        if self.tdl.iso_md5_url or self.tdl.iso_sha1_url or self.tdl.iso_sha256_url:
-            local_sum, upstream_sum = self._get_csums(url, output)
-            if local_sum != upstream_sum:
+            if not self._get_csums(url, outdir, fd):
                 raise oz.OzException.OzException("Checksum for downloaded file does not match!")
-            else:
-                self.log.debug("Checksum matches")
+        finally:
+            os.close(fd)
 
     def _capture_screenshot(self, xml):
         """
