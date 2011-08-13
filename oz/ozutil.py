@@ -288,6 +288,10 @@ def generate_macaddress():
            random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
     return ':'.join(map(lambda x:"%02x" % x, mac))
 
+class SubprocessException(Exception):
+    def __init__(self, msg, retcode):
+        Exception.__init__(self, msg)
+        self.retcode = retcode
 
 def subprocess_check_output(*popenargs, **kwargs):
     """
@@ -323,7 +327,7 @@ def subprocess_check_output(*popenargs, **kwargs):
 
     if retcode:
         cmd = ' '.join(*popenargs)
-        raise Exception("'%s' failed(%d): %s" % (cmd, retcode, stderr))
+        raise SubprocessException("'%s' failed(%d): %s" % (cmd, retcode, stderr), retcode)
     return (stdout, stderr, retcode)
 
 def ssh_execute_command(guestaddr, sshprivkey, command, timeout=10):

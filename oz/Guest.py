@@ -874,11 +874,20 @@ class Guest(object):
             listen.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             listen.bind((self.host_bridge_ip, self.listen_port))
             listen.listen(1)
-            oz.ozutil.subprocess_check_output(["iptables", "-I", "INPUT", "1",
-                                               "-p", "tcp", "-m", "tcp",
-                                               "-d", self.host_bridge_ip,
-                                               "--dport", str(self.listen_port),
-                                               "-j", "ACCEPT"])
+
+            while True:
+                try:
+                    oz.ozutil.subprocess_check_output(["iptables", "-I", "INPUT", "1",
+                                                       "-p", "tcp", "-m", "tcp",
+                                                       "-d", self.host_bridge_ip,
+                                                       "--dport", str(self.listen_port),
+                                                       "-j", "ACCEPT"])
+                    break
+                except oz.ozutil.SubprocessException, err:
+                    if err.retcode == errno.EINTR:
+                        continue
+                    else:
+                        raise
 
             try:
                 count = 300
