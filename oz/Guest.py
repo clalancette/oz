@@ -1363,6 +1363,16 @@ class CDGuest(Guest):
         finally:
             self._cleanup_iso()
 
+    def generate_install_media(self, force_download=False):
+        """
+        Method to generate the install media for the operating
+        system.  If force_download is False (the default), then the
+        original media will only be fetched if it is not cached locally.  If
+        force_download is True, then the original media will be downloaded
+        regardless of whether it is cached locally.
+        """
+        return self._iso_generate_install_media(self.url, force_download)
+
     def _cleanup_iso(self):
         """
         Method to cleanup the local ISO contents.

@@ -41,16 +41,6 @@ class Windows(oz.Guest.CDGuest):
 
         self.url = self._check_url(self.tdl, iso=True, url=False)
 
-    def generate_install_media(self, force_download=False):
-        """
-        Method to generate the install media for Windows operating
-        systems.  If force_download is False (the default), then the
-        original media will only be fetched if it is not cached locally.  If
-        force_download is True, then the original media will be downloaded
-        regardless of whether it is cached locally.
-        """
-        return self._iso_generate_install_media(self.url, force_download)
-
 class Windows2000andXPand2003(Windows):
     """
     Class for Windows 2000, XP, and 2003 installation.
