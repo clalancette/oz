@@ -198,7 +198,7 @@ class Windows2008and7(Windows):
 
         os.mkdir(os.path.join(self.iso_contents, "cdboot"))
         self._geteltorito(self.orig_iso, os.path.join(self.iso_contents,
-                                                       "cdboot", "boot.bin"))
+                                                      "cdboot", "boot.bin"))
 
         outname = os.path.join(self.iso_contents, "autounattend.xml")
 
