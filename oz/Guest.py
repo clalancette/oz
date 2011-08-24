@@ -314,7 +314,8 @@ class Guest(object):
             self.path = path
             self.bus = bus
 
-    def _generate_xml(self, bootdev, installdev):
+    def _generate_xml(self, bootdev, installdev, kernel=None, initrd=None,
+                      cmdline=None):
         """
         Method to generate libvirt XML useful for installation.
         """
@@ -353,8 +354,17 @@ class Guest(object):
         # create os
         osNode = domain.newChild(None, "os", None)
         osNode.newChild(None, "type", "hvm")
-        boot = osNode.newChild(None, "boot", None)
-        boot.setProp("dev", bootdev)
+
+        if bootdev:
+            boot = osNode.newChild(None, "boot", None)
+            boot.setProp("dev", bootdev)
+
+        if kernel:
+            osNode.newChild(None, "kernel", kernel)
+        if initrd:
+            osNode.newChild(None, "initrd", initrd)
+        if cmdline:
+            osNode.newChild(None, "cmdline", cmdline)
 
         # create poweroff, reboot, crash
         domain.newChild(None, "on_poweroff", "destroy")
@@ -1292,8 +1302,16 @@ class CDGuest(Guest):
             if timeout is None:
                 timeout = 1200
 
-            dom = self.libvirt_conn.createXML(self._generate_xml("cdrom",
-                                                                 cddev), 0)
+            def exists(name):
+                return hasattr(self, name) and os.access(getattr(self, name), os.F_OK)
+
+            if exists("kernelfname") and exists("initrdfname") and hasattr(self, "cmdline"):
+                xml = self._generate_xml(None, None, self.kernelfname,
+                                         self.initrdfname, self.cmdline)
+            else:
+                xml = self._generate_xml("cdrom", cddev)
+
+            dom = self.libvirt_conn.createXML(xml, 0)
             self._wait_for_install_finish(dom, timeout)
 
             for i in range(0, reboots):
