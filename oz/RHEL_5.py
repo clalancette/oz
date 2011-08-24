@@ -19,6 +19,7 @@ RHEL-5 installation
 """
 
 import re
+import os
 
 import oz.ozutil
 import oz.RedHat
@@ -30,7 +31,8 @@ class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
     """
     def __init__(self, tdl, config, auto, nicmodel, diskbus):
         oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, nicmodel, diskbus,
-                                            config, True, True)
+                                            config, "rhel-5-jeos.ks", True,
+                                            True, "cpio")
 
         self.auto = auto
 
@@ -38,7 +40,7 @@ class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
         """
         Method to make the boot ISO auto-boot with appropriate parameters.
         """
-        self._copy_kickstart(self.auto, "rhel-5-jeos.ks")
+        self._copy_kickstart(os.path.join(self.iso_contents, "ks.cfg"))
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method="
         if self.tdl.installtype == "url":

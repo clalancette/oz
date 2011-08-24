@@ -18,6 +18,8 @@
 Fedora Core installation
 """
 
+import os
+
 import oz.ozutil
 import oz.RedHat
 import oz.OzException
@@ -27,8 +29,12 @@ class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
     Class for Fedora Core 1, 2, 3, 4, 5, and 6 installation.
     """
     def __init__(self, tdl, config, auto):
+        initrdtype = "cpio"
+        if tdl.update in ["1", "2", "3"]:
+            initrdtype = "ext2"
         oz.RedHat.RedHatCDGuest.__init__(self, tdl, 'rtl8139', None, config,
-                                         True, True)
+                                         "fedoracore-" + tdl.update + "-jeos.ks",
+                                         True, True, initrdtype)
 
         self.auto = auto
 
@@ -39,8 +45,7 @@ class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
         """
         Method to modify the ISO for autoinstallation.
         """
-        self._copy_kickstart(self.auto,
-                             "fedoracore-" + self.tdl.update + "-jeos.ks")
+        self._copy_kickstart(os.path.join(self.iso_contents, "ks.cfg"))
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method="
         if self.tdl.installtype == "url":

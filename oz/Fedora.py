@@ -18,6 +18,8 @@
 Fedora installation
 """
 
+import os
+
 import oz.ozutil
 import oz.RedHat
 import oz.OzException
@@ -29,7 +31,9 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
     def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,
                  brokenisomethod):
         oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, nicmodel, diskbus,
-                                            config, True, True)
+                                            config,
+                                            "fedora-" + tdl.update + "-jeos.ks",
+                                            True, True, "cpio")
 
         self.auto = auto
 
@@ -40,8 +44,7 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
         """
         Method to modify the ISO for autoinstallation.
         """
-        self._copy_kickstart(self.auto,
-                             "fedora-" + self.tdl.update + "-jeos.ks")
+        self._copy_kickstart(os.path.join(self.iso_contents, "ks.cfg"))
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
         if self.tdl.installtype == "url":

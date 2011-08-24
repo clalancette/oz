@@ -18,6 +18,8 @@
 RHEL-6 installation
 """
 
+import os
+
 import oz.ozutil
 import oz.RedHat
 import oz.OzException
@@ -28,7 +30,8 @@ class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
     """
     def __init__(self, tdl, config, auto):
         oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, "virtio", "virtio",
-                                            config, True, True)
+                                            config, "rhel-6-jeos.ks", True,
+                                            True, "cpio")
 
         self.auto = auto
 
@@ -36,7 +39,7 @@ class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
         """
         Method to modify the ISO for autoinstallation.
         """
-        self._copy_kickstart(self.auto, "rhel-6-jeos.ks")
+        self._copy_kickstart(os.path.join(self.iso_contents, "ks.cfg"))
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
         if self.tdl.installtype == "url":

@@ -32,8 +32,8 @@ class RedHatCDGuest(oz.Guest.CDGuest):
     """
     Class for RedHat-based CD guests.
     """
-    def __init__(self, tdl, nicmodel, diskbus, config, iso_allowed,
-                 url_allowed):
+    def __init__(self, tdl, nicmodel, diskbus, config, stock_ks, iso_allowed,
+                 url_allowed, initrdtype):
         oz.Guest.CDGuest.__init__(self, tdl, nicmodel, None, None, diskbus,
                                   config)
         self.sshprivkey = os.path.join('/etc', 'oz', 'id_rsa-icicle-gen')
@@ -54,6 +54,15 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 """
 
         self.url = self._check_url(self.tdl, iso=iso_allowed, url=url_allowed)
+        self.stock_ks = stock_ks
+
+        # initrdtype is actually a tri-state:
+        # None - don't try to do direct kernel/initrd boot
+        # "cpio" - Attempt to do direct kernel/initrd boot with a gzipped CPIO
+        #        archive
+        # "ext2" - Attempt to do direct kernel/initrd boot with a gzipped ext2
+        #         filesystem
+        self.initrdtype = initrdtype
 
     def _generate_new_iso(self):
         """
@@ -91,14 +100,13 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         f.write(initrdline)
         f.close()
 
-    def _copy_kickstart(self, auto, stock):
+    def _copy_kickstart(self, outname):
         """
         Method to copy and modify a RedHat style kickstart file.
         """
         self.log.debug("Putting the kickstart in place")
-        outname = os.path.join(self.iso_contents, "ks.cfg")
 
-        if auto is None:
+        if self.auto is None:
             def _kssub(line):
                 """
                 Method that is called back from oz.ozutil.copy_modify_file() to
@@ -109,10 +117,10 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                 else:
                     return line
 
-            oz.ozutil.copy_modify_file(oz.ozutil.generate_full_auto_path(stock),
+            oz.ozutil.copy_modify_file(oz.ozutil.generate_full_auto_path(self.stock_ks),
                                        outname, _kssub)
         else:
-            shutil.copy(auto, outname)
+            shutil.copy(self.auto, outname)
 
     def _get_default_runlevel(self, g_handle):
         """

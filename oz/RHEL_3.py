@@ -19,6 +19,7 @@ RHEL-3 installation
 """
 
 import re
+import os
 
 import oz.ozutil
 import oz.RedHat
@@ -34,7 +35,8 @@ class RHEL3Guest(oz.RedHat.RedHatCDGuest):
             iso_support = False
 
         oz.RedHat.RedHatCDGuest.__init__(self, tdl, 'rtl8139', None, config,
-                                         iso_support, True)
+                                         "rhel-3-jeos.ks", iso_support, True,
+                                         "ext2")
 
         self.auto = auto
 
@@ -51,7 +53,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         """
         Method to make the boot ISO auto-boot with appropriate parameters.
         """
-        self._copy_kickstart(self.auto, "rhel-3-jeos.ks")
+        self._copy_kickstart(os.path.join(self.iso_contents, "ks.cfg"))
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method="
         if self.tdl.installtype == "url":

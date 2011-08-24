@@ -19,6 +19,7 @@ RHEL-4 installation
 """
 
 import re
+import os
 
 import oz.ozutil
 import oz.RedHat
@@ -29,8 +30,11 @@ class RHEL4Guest(oz.RedHat.RedHatCDGuest):
     Class for RHEL-4 installation.
     """
     def __init__(self, tdl, config, auto, nicmodel, diskbus):
+        # we set initrdtype to None because RHEL-4 spews errors using direct
+        # kernel/initrd booting.  The odd part is that it actually works, but
+        # it looks ugly so for now we will just always use the boot.iso method
         oz.RedHat.RedHatCDGuest.__init__(self, tdl, nicmodel, diskbus, config,
-                                         True, True)
+                                         "rhel-4-jeos.ks", True, True, None)
 
         self.auto = auto
 
@@ -38,7 +42,7 @@ class RHEL4Guest(oz.RedHat.RedHatCDGuest):
         """
         Method to make the boot ISO auto-boot with appropriate parameters.
         """
-        self._copy_kickstart(self.auto, "rhel-4-jeos.ks")
+        self._copy_kickstart(os.path.join(self.iso_contents, "ks.cfg"))
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method="
         if self.tdl.installtype == "url":

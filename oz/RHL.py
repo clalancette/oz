@@ -31,8 +31,11 @@ class RHL9Guest(oz.RedHat.RedHatCDGuest):
     Class for RHL-9 installation.
     """
     def __init__(self, tdl, config, auto):
+        # RHL-9 doesn't support direct kernel/initrd booting; it hangs right
+        # after unpacking the initrd
         oz.RedHat.RedHatCDGuest.__init__(self, tdl, "rtl8139", None, config,
-                                         False, True)
+                                         "rhl-" + tdl.update + "-jeos.ks",
+                                         False, True, None)
 
         self.auto = auto
 
@@ -62,7 +65,7 @@ class RHL9Guest(oz.RedHat.RedHatCDGuest):
                 else:
                     return line
 
-            oz.ozutil.copy_modify_file(oz.ozutil.generate_full_auto_path("rhl-" + self.tdl.update + "-jeos.ks"),
+            oz.ozutil.copy_modify_file(oz.ozutil.generate_full_auto_path(self.stock_ks),
                                        outname, _kssub)
         else:
             shutil.copy(self.auto, outname)
