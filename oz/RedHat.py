@@ -23,6 +23,9 @@ import os
 import shutil
 import urllib2
 import libvirt
+import ConfigParser
+import gzip
+import guestfs
 
 import oz.Guest
 import oz.ozutil
@@ -63,6 +66,12 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         # "ext2" - Attempt to do direct kernel/initrd boot with a gzipped ext2
         #         filesystem
         self.initrdtype = initrdtype
+
+        self.kernelfname = os.path.join(self.output_dir,
+                                        self.tdl.name + "-kernel")
+        self.initrdfname = os.path.join(self.output_dir,
+                                        self.tdl.name + "-ramdisk")
+        self.cmdline = "method=" + self.url + " ks=file:/ks.cfg"
 
     def _generate_new_iso(self):
         """
@@ -515,6 +524,159 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                     if domid == libvirt_dom.ID():
                         raise
 
+    def _get_kernel_from_treeinfo(self, fetchurl):
+        """
+        Internal method to download and parse the .treeinfo file from a URL.
+        """
+        kernel = None
+        initrd = None
+
+        oz.ozutil.mkdir_p(self.icicle_tmp)
+        treeinfo = os.path.join(self.icicle_tmp, "treeinfo")
+        self.log.debug("Going to write treeinfo to %s" % (treeinfo))
+        treeinfofd = os.open(treeinfo, os.O_RDWR | os.O_CREAT | os.O_TRUNC)
+        os.unlink(treeinfo)
+        fp = os.fdopen(treeinfofd)
+        try:
+            self.log.debug("Trying to get treeinfo from " + fetchurl + "/.treeinfo")
+            self._download_file(fetchurl + "/.treeinfo", treeinfofd, 0)
+
+            # if we made it here, the .treeinfo existed.  Parse it and
+            # find out the location of the vmlinuz and initrd
+            self.log.debug("Got treeinfo, parsing")
+            os.lseek(treeinfofd, 0, os.SEEK_SET)
+            config = ConfigParser.SafeConfigParser()
+            config.readfp(fp)
+            section = "images-%s" % (self.tdl.arch)
+            self.log.debug("Looking for %s section in config" % (section))
+            if config.has_section(section):
+                self.log.debug("Saw %s section, looking for kernel and initrd" % (section))
+                if config.has_option(section, "kernel"):
+                    kernel = config.get(section, "kernel")
+                if config.has_option(section, "initrd"):
+                    initrd = config.get(section, "initrd")
+        except:
+            # OK, it looks like the .treeinfo didn't exist
+            self.log.debug(".treeinfo didn't exist!")
+        finally:
+            fp.close()
+
+        self.log.debug("Returning kernel %s and initrd %s" % (kernel, initrd))
+        return (kernel, initrd)
+
+    def gzip_file(self, inputfile, outputmode):
+        f = open(inputfile, 'rb')
+        gzf = gzip.GzipFile(self.initrdfname, mode=outputmode)
+        try:
+            gzf.writelines(f)
+            gzf.close()
+            f.close()
+        except:
+            # there is a bit of asymmetry here in that OSs that support cpio
+            # archives have the initial initrdfname copied in the higher level
+            # function, but we delete it here.  OSs that don't support cpio,
+            # though, get the initrd created right here.  C'est le vie
+            os.unlink(self.initrdfname)
+            raise
+
+    def _initrd_inject_ks(self, fetchurl, force_download):
+        """
+        Internal method to download and inject a kickstart into an initrd.
+        """
+        # we first see if we can use direct kernel booting, as that is
+        # faster than downloading the ISO
+        (kernel, initrd) = self._get_kernel_from_treeinfo(fetchurl)
+
+        if kernel is None:
+            self.log.debug("Kernel was None, so hardcoding to images/pxeboot/vmlinuz")
+            # we couldn't find the kernel in the treeinfo, so try a
+            # hard-coded path
+            kernel = "images/pxeboot/vmlinuz"
+        if initrd is None:
+            self.log.debug("Initrd was None, so hardcoding to images/pxeboot/initrd.img")
+            # we couldn't find the initrd in the treeinfo, so try a
+            # hard-coded path
+            initrd = "images/pxeboot/initrd.img"
+
+        kernelcache = os.path.join(self.data_dir, "kernels",
+                                   self.tdl.distro + self.tdl.update + self.tdl.arch + "-kernel")
+        initrdcache = os.path.join(self.data_dir, "kernels",
+                                   self.tdl.distro + self.tdl.update + self.tdl.arch + "-ramdisk")
+
+        self._get_original_media('/'.join([self.url.rstrip('/'),
+                                           kernel.lstrip('/')]),
+                                 kernelcache, force_download)
+
+        try:
+            self._get_original_media('/'.join([self.url.rstrip('/'),
+                                               initrd.lstrip('/')]),
+                                     initrdcache, force_download)
+        except:
+            os.unlink(self.kernelfname)
+            raise
+
+        # if we made it here, then we can copy the kernel into place
+        shutil.copyfile(kernelcache, self.kernelfname)
+
+        try:
+            kspath = os.path.join(self.icicle_tmp, self.stock_ks)
+            self._copy_kickstart(kspath)
+
+            try:
+                if self.initrdtype == "cpio":
+                    # if initrdtype is cpio, then we can just append a gzipped
+                    # archive onto the end of the initrd
+                    extrafname = os.path.join(self.icicle_tmp, "extra.cpio")
+                    self.log.debug("Writing cpio to %s" % (extrafname))
+                    cpiofiledict = {}
+                    cpiofiledict[oz.ozutil.generate_full_auto_path(self.stock_ks)] = 'ks.cfg'
+                    oz.ozutil.write_cpio(cpiofiledict, extrafname)
+
+                    try:
+                        shutil.copyfile(initrdcache, self.initrdfname)
+                        self.gzip_file(extrafname, 'ab')
+                    finally:
+                        os.unlink(extrafname)
+                elif self.initrdtype == "ext2":
+                    # in this case, the archive is not CPIO but is an ext2
+                    # filesystem.  use guestfs to mount it and add the kickstart
+                    self.log.debug("Creating temporary directory")
+                    tmpdir = os.path.join(self.icicle_tmp, "initrd")
+                    oz.ozutil.mkdir_p(tmpdir)
+
+                    ext2file = os.path.join(tmpdir, "initrd.ext2")
+                    self.log.debug("Uncompressing initrd %s to %s" % (self.initrdfname, ext2file))
+                    inf = gzip.open(initrdcache, 'rb')
+                    outf = open(ext2file, "w")
+                    try:
+                        outf.writelines(inf)
+                        inf.close()
+
+                        g = guestfs.GuestFS()
+                        g.add_drive_opts(ext2file, format='raw')
+                        self.log.debug("Launching guestfs")
+                        g.launch()
+
+                        g.mount_options('', g.list_devices()[0], "/")
+
+                        g.upload(kspath, "/ks.cfg")
+
+                        g.sync()
+                        g.umount_all()
+                        g.kill_subprocess()
+
+                        # kickstart is added, lets recompress it
+                        self.gzip_file(ext2file, 'wb')
+                    finally:
+                        os.unlink(ext2file)
+                else:
+                    raise oz.OzException.OzException("Invalid initrdtype, this is a programming error")
+            finally:
+                os.unlink(kspath)
+        except:
+            os.unlink(self.kernelfname)
+            raise
+
     def generate_install_media(self, force_download=False):
         """
         Method to generate the install media for RedHat based operating
@@ -525,9 +687,41 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         """
         fetchurl = self.url
         if self.tdl.installtype == 'url':
+            # set the fetchurl up-front so that if the OS doesn't support
+            # initrd injection, or the injection fails for some reason, we
+            # fall back to the boot.iso
             fetchurl += "/images/boot.iso"
 
+            if self.initrdtype is not None:
+                self.log.debug("Installtype is URL, trying to do direct kernel boot")
+                try:
+                    return self._initrd_inject_ks(self.url, force_download)
+                except Exception, err:
+                    # if any of the above failed, we couldn't use the direct
+                    # kernel/initrd build method.  Fall back to trying to fetch
+                    # the boot.iso instead
+                    self.log.debug("Could not do direct boot, fetching boot.iso instead (the following error message is useful for bug reports, but can be ignored)")
+                    self.log.debug(err)
+
         return self._iso_generate_install_media(fetchurl, force_download)
+
+    def cleanup_install(self):
+        """
+        Method to cleanup any transient install data.
+        """
+        self.log.info("Cleaning up after install")
+
+        for fname in [self.output_iso, self.initrdfname, self.kernelfname]:
+            try:
+                os.unlink(fname)
+            except:
+                pass
+
+        if not self.cache_original_media:
+            try:
+                os.unlink(self.orig_iso)
+            except:
+                pass
 
 class RedHatCDYumGuest(RedHatCDGuest):
     """
