@@ -391,7 +391,7 @@ def mkdir_p(path):
 
 def copy_modify_file(inname, outname, subfunc):
     """
-    Method to copy a file from inname to outname, passing each line through
+    Function to copy a file from inname to outname, passing each line through
     subfunc first.  subfunc is expected to be a method that takes a single
     argument in (the next line), and returns a string to be written to the
     output file after modification (if any).
