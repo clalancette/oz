@@ -26,6 +26,7 @@ import random
 import subprocess
 import tempfile
 import errno
+import stat
 
 def generate_full_auto_path(relative):
     """
@@ -404,3 +405,106 @@ def copy_modify_file(inname, outname, subfunc):
 
     infile.close()
     outfile.close()
+
+def write_cpio(inputdict, outputfile):
+    """
+    Function to write a CPIO archive in the "New ASCII Format".  The inputlist
+    is a dictionary of files to put in the archive, where the dictionary key
+    is the path to the file on the local filesystem and the dictionary value
+    is the location that the file should have in the cpio archive.  The
+    outputfile is the location of the final cpio archive that will be written.
+    """
+    outf = open(outputfile, "w")
+
+    try:
+        for inputfile, destfile in inputdict.items():
+            st = os.stat(inputfile)
+
+            # 070701 is the magic for new CPIO (newc in cpio parlance)
+            outf.write("070701")
+            # inode (really just needs to be unique)
+            outf.write("%08x" % (st[stat.ST_INO]))
+            # mode
+            outf.write("%08x" % (st[stat.ST_MODE]))
+            # uid is 0
+            outf.write("00000000")
+            # gid is 0
+            outf.write("00000000")
+            # nlink (always a single link for a single file)
+            outf.write("00000001")
+            # mtime
+            outf.write("%08x" % (st[stat.ST_MTIME]))
+            # filesize
+            outf.write("%08x" % (st[stat.ST_SIZE]))
+            # devmajor
+            outf.write("%08x" % (os.major(st[stat.ST_DEV])))
+            # dev minor
+            outf.write("%08x" % (os.minor(st[stat.ST_DEV])))
+            # rdevmajor (always 0)
+            outf.write("00000000")
+            # rdevminor (always 0)
+            outf.write("00000000")
+            # namesize (the length of the name plus 1 for the NUL padding)
+            outf.write("%08x" % (len(destfile) + 1))
+            # check (always 0)
+            outf.write("00000000")
+            # write the name of the inputfile minus the leading /
+            stripped = destfile.lstrip('/')
+            outf.write(stripped)
+
+            # we now need to write sentinel NUL byte(s).  We need to make the
+            # header (110 bytes) plus the filename, plus the sentinel a
+            # multiple of 4 bytes.  Note that we always need at *least* one NUL,
+            # so if it is exactly a multiple of 4 we need to write 4 NULs
+            outf.write("\x00"*(4 - ((110+len(stripped)) % 4)))
+
+            # now write the data from the input file
+            inf = open(inputfile, 'r')
+            outf.writelines(inf)
+            inf.close()
+
+            # we now need to write out NUL byte(s) to make it a multiple of 4.
+            # note that unlike the name, we do *not* have to have any NUL bytes,
+            # so if it is already aligned on 4 bytes do nothing
+            remainder = st[stat.ST_SIZE] % 4
+            if remainder != 0:
+                outf.write("\x00"*(4 - remainder))
+
+        # now that we have written all of the file entries, write the trailer
+        outf.write("070701")
+        # zero inode
+        outf.write("00000000")
+        # zero mode
+        outf.write("00000000")
+        # zero uid
+        outf.write("00000000")
+        # zero gid
+        outf.write("00000000")
+        # one nlink
+        outf.write("00000001")
+        # zero mtime
+        outf.write("00000000")
+        # zero filesize
+        outf.write("00000000")
+        # zero devmajor
+        outf.write("00000000")
+        # zero devminor
+        outf.write("00000000")
+        # zero rdevmajor
+        outf.write("00000000")
+        # zero rdevminor
+        outf.write("00000000")
+        # 0xB namesize
+        outf.write("0000000B")
+        # zero check
+        outf.write("00000000")
+        # trailer
+        outf.write("TRAILER!!!")
+
+        # finally, we need to pad to the closest 512 bytes
+        outf.write("\x00"*(512 - (outf.tell() % 512)))
+    except:
+        os.unlink(outputfile)
+        raise
+
+    outf.close()
