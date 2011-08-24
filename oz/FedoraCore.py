@@ -24,7 +24,7 @@ import oz.OzException
 
 class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
     """
-    Class for Fedora Core 1, 2, 3, 5, and 6 installation.
+    Class for Fedora Core 1, 2, 3, 4, 5, and 6 installation.
     """
     def __init__(self, tdl, config, auto):
         oz.RedHat.RedHatCDGuest.__init__(self, tdl, 'rtl8139', None, config,

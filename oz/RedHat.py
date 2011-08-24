@@ -102,7 +102,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             def _kssub(line):
                 """
                 Method that is called back from oz.ozutil.copy_modify_file() to
-                modify kickstart files as appropriate for RHL-9.
+                modify kickstart files as appropriate.
                 """
                 if re.match("^rootpw", line):
                     return "rootpw " + self.rootpw + '\n'
