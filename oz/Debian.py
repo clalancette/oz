@@ -33,12 +33,9 @@ class DebianGuest(oz.Guest.CDGuest):
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
-        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, netdev,
-                                  None, None, diskbus, True, False, macaddress)
-
-        self.preseed_file = auto
-        if self.preseed_file is None:
-            self.preseed_file = oz.ozutil.generate_full_auto_path("debian-" + self.tdl.update + "-jeos.preseed")
+        oz.Guest.CDGuest.__init__(self, tdl, config, auto, output_disk,
+                                  netdev, None, None, diskbus, True, False,
+                                  macaddress)
 
     def _modify_iso(self):
         """
@@ -51,8 +48,7 @@ class DebianGuest(oz.Guest.CDGuest):
 
         outname = os.path.join(self.iso_contents, "preseed", "customiso.seed")
 
-        if self.preseed_file == oz.ozutil.generate_full_auto_path("debian-" + self.tdl.update + "-jeos.preseed"):
-
+        if self.default_auto_file():
             def _preseed_sub(line):
                 """
                 Method that is called back from oz.ozutil.copy_modify_file() to
@@ -65,9 +61,9 @@ class DebianGuest(oz.Guest.CDGuest):
                 else:
                     return line
 
-            oz.ozutil.copy_modify_file(self.preseed_file, outname, _preseed_sub)
+            oz.ozutil.copy_modify_file(self.auto, outname, _preseed_sub)
         else:
-            shutil.copy(self.preseed_file, outname)
+            shutil.copy(self.auto, outname)
 
         if self.tdl.arch == "x86_64":
             installdir = "/install.amd"

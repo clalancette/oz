@@ -33,12 +33,8 @@ class MandrivaGuest(oz.Guest.CDGuest):
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
-        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, netdev,
+        oz.Guest.CDGuest.__init__(self, tdl, config, auto, output_disk, netdev,
                                   None, None, diskbus, True, False, macaddress)
-
-        self.auto = auto
-        if self.auto is None:
-            self.auto = oz.ozutil.generate_full_auto_path("mandriva-" + self.tdl.update + "-jeos.cfg")
 
         self.mandriva_arch = self.tdl.arch
         if self.mandriva_arch == "i386":
@@ -59,7 +55,7 @@ class MandrivaGuest(oz.Guest.CDGuest):
 
         outname = os.path.join(pathdir, "auto_inst.cfg")
 
-        if self.auto == oz.ozutil.generate_full_auto_path("mandriva-" + self.tdl.update + "-jeos.cfg"):
+        if self.default_auto_file():
 
             def _cfg_sub(line):
                 """

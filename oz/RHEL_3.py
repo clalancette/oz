@@ -39,11 +39,9 @@ class RHEL3Guest(oz.RedHat.RedHatCDGuest):
         # although we could use ext2 for the initrdtype here (and hence get
         # fast initial installs), it isn't super reliable on RHEL-3.  Just
         # disable it and fall back to the boot.iso method which is more reliable
-        oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, output_disk,
-                                         netdev, diskbus, "rhel-3-jeos.ks",
-                                         iso_support, True, None, macaddress)
-
-        self.auto = auto
+        oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, auto, output_disk,
+                                         netdev, diskbus, iso_support, True,
+                                         None, macaddress)
 
         # override the sshd_config value set in RedHatCDGuest.__init__
         self.sshd_config = \
@@ -89,6 +87,9 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                     raise oz.OzException.OzException("Only DVDs are supported for CentOS-3 ISO installs")
             # The boot ISOs for CentOS-3 don't have a whole lot of identifying
             # information.  We just pass through here, doing nothing
+
+    def get_auto_path(self):
+        return oz.ozutil.generate_full_auto_path("RHEL3.auto")
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):

@@ -40,11 +40,11 @@ class RedHatCDGuest(oz.Guest.CDGuest):
     """
     Class for RedHat-based CD guests.
     """
-    def __init__(self, tdl, config, output_disk, nicmodel, diskbus, stock_ks,
+    def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus,
                  iso_allowed, url_allowed, initrdtype, macaddress):
-        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, nicmodel,
-                                  None, None, diskbus, iso_allowed, url_allowed,
-                                  macaddress)
+        oz.Guest.CDGuest.__init__(self, tdl, config, auto, output_disk,
+                                  nicmodel, None, None, diskbus, iso_allowed,
+                                  url_allowed, macaddress)
         self.sshprivkey = os.path.join('/etc', 'oz', 'id_rsa-icicle-gen')
         self.crond_was_active = False
         self.sshd_was_active = False
@@ -62,8 +62,6 @@ AcceptEnv XMODIFIERS
 X11Forwarding yes
 Subsystem	sftp	/usr/libexec/openssh/sftp-server
 """
-
-        self.stock_ks = stock_ks
 
         # initrdtype is actually a tri-state:
         # None - don't try to do direct kernel/initrd boot
@@ -130,7 +128,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         """
         self.log.debug("Putting the kickstart in place")
 
-        if self.auto is None:
+        if self.default_auto_file():
             def _kssub(line):
                 """
                 Method that is called back from oz.ozutil.copy_modify_file() to
@@ -141,8 +139,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                 else:
                     return line
 
-            oz.ozutil.copy_modify_file(oz.ozutil.generate_full_auto_path(self.stock_ks),
-                                       outname, _kssub)
+            oz.ozutil.copy_modify_file(self.auto, outname, _kssub)
         else:
             shutil.copy(self.auto, outname)
 
@@ -668,7 +665,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         shutil.copyfile(self.kernelcache, self.kernelfname)
 
         try:
-            kspath = os.path.join(self.icicle_tmp, self.stock_ks)
+            kspath = os.path.join(self.icicle_tmp, "ks.cfg")
             self._copy_kickstart(kspath)
 
             try:
@@ -1209,19 +1206,13 @@ class RedHatFDGuest(oz.Guest.FDGuest):
     """
     Class for RedHat-based floppy guests.
     """
-    def __init__(self, tdl, config, auto, output_disk, ks_name, nicmodel,
-                 diskbus, macaddress):
-        oz.Guest.FDGuest.__init__(self, tdl, config, output_disk, nicmodel,
-                                  None, None, diskbus, macaddress)
+    def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus,
+                 macaddress):
+        oz.Guest.FDGuest.__init__(self, tdl, config, auto, output_disk,
+                                  nicmodel, None, None, diskbus, macaddress)
 
         if self.tdl.arch != "i386":
             raise oz.OzException.OzException("Invalid arch " + self.tdl.arch + "for " + self.tdl.distro + " guest")
-
-        self.ks_name = ks_name
-
-        self.ks_file = auto
-        if self.ks_file is None:
-            self.ks_file = oz.ozutil.generate_full_auto_path(self.ks_name)
 
     def _modify_floppy(self):
         """
@@ -1233,7 +1224,7 @@ class RedHatFDGuest(oz.Guest.FDGuest):
 
         output_ks = os.path.join(self.floppy_contents, "ks.cfg")
 
-        if self.ks_file == oz.ozutil.generate_full_auto_path(self.ks_name):
+        if self.default_auto_file():
             def _kssub(line):
                 """
                 Method that is called back from oz.ozutil.copy_modify_file() to
@@ -1246,9 +1237,9 @@ class RedHatFDGuest(oz.Guest.FDGuest):
                 else:
                     return line
 
-            oz.ozutil.copy_modify_file(self.ks_file, output_ks, _kssub)
+            oz.ozutil.copy_modify_file(self.auto, output_ks, _kssub)
         else:
-            shutil.copy(self.ks_file, output_ks)
+            shutil.copy(self.auto, output_ks)
 
         oz.ozutil.subprocess_check_output(["mcopy", "-i", self.output_floppy,
                                            output_ks, "::KS.CFG"])

@@ -34,12 +34,9 @@ class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
         initrdtype = "cpio"
         if tdl.update in ["1", "2", "3"]:
             initrdtype = "ext2"
-        oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, output_disk,
-                                         netdev, diskbus,
-                                         "fedoracore-" + tdl.update + "-jeos.ks",
-                                         True, True, initrdtype, macaddress)
-
-        self.auto = auto
+        oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, auto, output_disk,
+                                         netdev, diskbus, True, True,
+                                         initrdtype, macaddress)
 
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)
@@ -56,6 +53,9 @@ class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
         else:
             initrdline += "cdrom:/dev/cdrom\n"
         self._modify_isolinux(initrdline)
+
+    def get_auto_path(self):
+        return oz.ozutil.generate_full_auto_path("FedoraCore" + self.tdl.update + ".auto")
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):

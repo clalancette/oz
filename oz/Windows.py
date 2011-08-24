@@ -33,10 +33,11 @@ class Windows(oz.Guest.CDGuest):
     """
     Shared Windows base class.
     """
-    def __init__(self, tdl, config, output_disk, netdev, diskbus, macaddress):
-        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, netdev,
-                                  "localtime", "usb", diskbus,
-                                  True, False, macaddress)
+    def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
+                 macaddress):
+        oz.Guest.CDGuest.__init__(self, tdl, config, auto, output_disk,
+                                  netdev, "localtime", "usb", diskbus, True,
+                                  False, macaddress)
 
         if self.tdl.key is None:
             raise oz.OzException.OzException("A key is required when installing Windows")
@@ -47,15 +48,11 @@ class Windows_v5(Windows):
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
-        Windows.__init__(self, tdl, config, output_disk, netdev, diskbus,
+        Windows.__init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                          macaddress)
 
         if self.tdl.update == "2000" and self.tdl.arch != "i386":
             raise oz.OzException.OzException("Windows 2000 only supports i386 architecture")
-
-        self.siffile = auto
-        if self.siffile is None:
-            self.siffile = oz.ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif")
 
         self.winarch = self.tdl.arch
         if self.winarch == "x86_64":
@@ -112,7 +109,7 @@ class Windows_v5(Windows):
 
         outname = os.path.join(self.iso_contents, self.winarch, "winnt.sif")
 
-        if self.siffile == oz.ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif"):
+        if self.default_auto_file():
             # if this is the oz default siffile, we modify certain parameters
             # to make installation succeed
             computername = "OZ" + str(random.randrange(1, 900000))
@@ -133,11 +130,11 @@ class Windows_v5(Windows):
                 else:
                     return line
 
-            oz.ozutil.copy_modify_file(self.siffile, outname, _sifsub)
+            oz.ozutil.copy_modify_file(self.auto, outname, _sifsub)
         else:
             # if the user provided their own siffile, do not override their
             # choices; the user gets to keep both pieces if something breaks
-            shutil.copy(self.siffile, outname)
+            shutil.copy(self.auto, outname)
 
     def install(self, timeout=None, force=False):
         """
@@ -154,12 +151,8 @@ class Windows_v6(Windows):
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
-        Windows.__init__(self, tdl, config, output_disk, netdev, diskbus,
+        Windows.__init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                          macaddress)
-
-        self.unattendfile = auto
-        if self.unattendfile is None:
-            self.unattendfile = oz.ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.xml")
 
         self.winarch = "x86"
         if self.tdl.arch == "x86_64":
@@ -194,10 +187,10 @@ class Windows_v6(Windows):
 
         outname = os.path.join(self.iso_contents, "autounattend.xml")
 
-        if self.unattendfile == oz.ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.xml"):
+        if self.default_auto_file():
             # if this is the oz default unattend file, we modify certain
             # parameters to make installation succeed
-            doc = libxml2.parseFile(self.unattendfile)
+            doc = libxml2.parseFile(self.auto)
             xp = doc.xpathNewContext()
             xp.xpathRegisterNs("ms", "urn:schemas-microsoft-com:unattend")
 
@@ -218,7 +211,7 @@ class Windows_v6(Windows):
             # if the user provided their own unattend file, do not override
             # their choices; the user gets to keep both pieces if something
             # breaks
-            shutil.copy(self.unattendfile, outname)
+            shutil.copy(self.auto, outname)
 
     def install(self, timeout=None, force=False):
         internal_timeout = timeout

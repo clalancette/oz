@@ -35,11 +35,9 @@ class RHEL4Guest(oz.RedHat.RedHatCDGuest):
         # we set initrdtype to None because RHEL-4 spews errors using direct
         # kernel/initrd booting.  The odd part is that it actually works, but
         # it looks ugly so for now we will just always use the boot.iso method
-        oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, output_disk,
-                                         nicmodel, diskbus, "rhel-4-jeos.ks",
-                                         True, True, None, macaddress)
-
-        self.auto = auto
+        oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, auto, output_disk,
+                                         nicmodel, diskbus, True, True, None,
+                                         macaddress)
 
     def _modify_iso(self):
         """
@@ -88,6 +86,9 @@ class RHEL4Guest(oz.RedHat.RedHatCDGuest):
                 # url installs
                 if not re.match("CentOS *", pvd.volume_identifier):
                     raise oz.OzException.OzException("Invalid boot.iso for CentOS-4 URL install")
+
+    def get_auto_path(self):
+        return oz.ozutil.generate_full_auto_path("RHEL4.auto")
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):

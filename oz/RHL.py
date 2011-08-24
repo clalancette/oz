@@ -35,12 +35,9 @@ class RHL9Guest(oz.RedHat.RedHatCDGuest):
                  macaddress):
         # RHL-9 doesn't support direct kernel/initrd booting; it hangs right
         # after unpacking the initrd
-        oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, output_disk,
-                                         netdev, diskbus,
-                                         "rhl-" + tdl.update + "-jeos.ks",
-                                         False, True, None, macaddress)
-
-        self.auto = auto
+        oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, auto, output_disk,
+                                         netdev, diskbus, False, True, None,
+                                         macaddress)
 
         if self.tdl.arch != "i386":
             raise oz.OzException.OzException("Invalid arch " + self.tdl.arch + "for RHL guest")
@@ -53,7 +50,7 @@ class RHL9Guest(oz.RedHat.RedHatCDGuest):
 
         outname = os.path.join(self.iso_contents, "ks.cfg")
 
-        if self.auto is None:
+        if self.default_auto_file():
             def _kssub(line):
                 """
                 Method that is called back from oz.ozutil.copy_modify_file() to
@@ -68,13 +65,15 @@ class RHL9Guest(oz.RedHat.RedHatCDGuest):
                 else:
                     return line
 
-            oz.ozutil.copy_modify_file(oz.ozutil.generate_full_auto_path(self.stock_ks),
-                                       outname, _kssub)
+            oz.ozutil.copy_modify_file(self.auto, outname, _kssub)
         else:
             shutil.copy(self.auto, outname)
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method=" + self.url + "\n"
         self._modify_isolinux(initrdline)
+
+    def get_auto_path(self):
+        return oz.ozutil.generate_full_auto_path("RedHatLinux" + self.tdl.update + ".auto")
 
 class RHL70and71and72and73and8Guest(oz.RedHat.RedHatFDGuest):
     """
@@ -83,8 +82,10 @@ class RHL70and71and72and73and8Guest(oz.RedHat.RedHatFDGuest):
     def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus,
                  macaddress):
         oz.RedHat.RedHatFDGuest.__init__(self, tdl, config, auto, output_disk,
-                                         "rhl-" + tdl.update + "-jeos.ks",
                                          nicmodel, diskbus, macaddress)
+
+    def get_auto_path(self):
+        return oz.ozutil.generate_full_auto_path("RedHatLinux" + self.tdl.update + ".auto")
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):

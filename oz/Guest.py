@@ -122,7 +122,7 @@ class Guest(object):
         self._discover_libvirt_bridge()
         self._discover_libvirt_type()
 
-    def __init__(self, tdl, config, output_disk, nicmodel, clockoffset,
+    def __init__(self, tdl, config, auto, output_disk, nicmodel, clockoffset,
                  mousetype, diskbus, iso_allowed, url_allowed, macaddress):
         self.tdl = tdl
 
@@ -243,6 +243,10 @@ class Guest(object):
         else:
             self.disksize = int(self.disksize)
 
+        self.auto = auto
+        if self.auto is None:
+            self.auto = self.get_auto_path()
+
         self.log.debug("Name: %s, UUID: %s" % (self.tdl.name, self.uuid))
         self.log.debug("MAC: %s, distro: %s" % (self.macaddr, self.tdl.distro))
         self.log.debug("update: %s, arch: %s, diskimage: %s" % (self.tdl.update, self.tdl.arch, self.diskimage))
@@ -261,6 +265,21 @@ class Guest(object):
         Path to the created image file.
         """
         return self.diskimage
+
+    def get_auto_path(self):
+        """
+        Base method used to generate the path to the automatic installation
+        file (kickstart, preseed, winnt.sif, etc).  Some subclasses override
+        override this method to provide support for additional aliases.
+        """
+        return oz.ozutil.generate_full_auto_path(self.tdl.distro + self.tdl.update + ".auto")
+
+    def default_auto_file(self):
+        """
+        Method to determine if the auto file is the default one or
+        user-provided.
+        """
+        return self.auto == self.get_auto_path()
 
     def cleanup_old_guest(self):
         """
@@ -1307,10 +1326,11 @@ class CDGuest(Guest):
             self.set_size = set_size
             self.seqnum = seqnum
 
-    def __init__(self, tdl, config, output_disk, nicmodel, clockoffset,
+    def __init__(self, tdl, config, auto, output_disk, nicmodel, clockoffset,
                  mousetype, diskbus, iso_allowed, url_allowed, macaddress):
-        Guest.__init__(self, tdl, config, output_disk, nicmodel, clockoffset,
-                       mousetype, diskbus, iso_allowed, url_allowed, macaddress)
+        Guest.__init__(self, tdl, config, auto, output_disk, nicmodel,
+                       clockoffset, mousetype, diskbus, iso_allowed,
+                       url_allowed, macaddress)
 
         self.orig_iso = os.path.join(self.data_dir, "isos",
                                      self.tdl.distro + self.tdl.update + self.tdl.arch + "-" + self.tdl.installtype + ".iso")
@@ -1771,10 +1791,10 @@ class FDGuest(Guest):
     """
     Class for guest installation via floppy disk.
     """
-    def __init__(self, tdl, config, output_disk, nicmodel, clockoffset,
+    def __init__(self, tdl, config, auto, output_disk, nicmodel, clockoffset,
                  mousetype, diskbus, macaddress):
-        Guest.__init__(self, tdl, config, output_disk, nicmodel, clockoffset,
-                       mousetype, diskbus, False, True, macaddress)
+        Guest.__init__(self, tdl, config, auto, output_disk, nicmodel,
+                       clockoffset, mousetype, diskbus, False, True, macaddress)
         self.orig_floppy = os.path.join(self.data_dir, "floppies",
                                         self.tdl.distro + self.tdl.update + self.tdl.arch + ".img")
         self.modified_floppy_cache = os.path.join(self.data_dir, "floppies",

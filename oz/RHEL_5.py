@@ -36,11 +36,9 @@ class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
         # config, auto, output_disk (in that order).  However, in order to not
         # break imagefactory, we want to make output_disk have a default of
         # None, and we can't do that without putting output_disk at the end.
-        oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, output_disk,
-                                            nicmodel, diskbus, "rhel-5-jeos.ks",
+        oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, auto,
+                                            output_disk, nicmodel, diskbus,
                                             True, True, "cpio", macaddress)
-
-        self.auto = auto
 
     def _modify_iso(self):
         """
@@ -100,6 +98,9 @@ class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
                 # url installs
                 if not re.match(r"CentOS *", pvd.volume_identifier):
                     raise oz.OzException.OzException("Invalid boot.iso for SLC-5 URL install")
+
+    def get_auto_path(self):
+        return oz.ozutil.generate_full_auto_path("RHEL5.auto")
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):

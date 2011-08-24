@@ -31,12 +31,9 @@ class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
     """
     def __init__(self, tdl, config, auto, output_disk=None, netdev=None,
                  diskbus=None, macaddress=None):
-        oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, output_disk,
-                                            netdev, diskbus,
-                                            "rhel-6-jeos.ks", True, True,
-                                            "cpio", macaddress)
-
-        self.auto = auto
+        oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, auto,
+                                            output_disk, netdev, diskbus,
+                                            True, True, "cpio", macaddress)
 
     def _modify_iso(self):
         """
@@ -50,6 +47,9 @@ class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
         else:
             initrdline += "\n"
         self._modify_isolinux(initrdline)
+
+    def get_auto_path(self):
+        return oz.ozutil.generate_full_auto_path("RHEL6.auto")
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):

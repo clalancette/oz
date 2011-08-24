@@ -45,8 +45,9 @@ class UbuntuGuest(oz.Guest.CDGuest):
         elif tdl.update in ["12.04", "12.04.1", "12.04.2"]:
             tdl.update = "12.04"
 
-        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, nicmodel,
-                                  None, None, diskbus, True, True, macaddress)
+        oz.Guest.CDGuest.__init__(self, tdl, config, auto, output_disk,
+                                  nicmodel, None, None, diskbus, True, True,
+                                  macaddress)
 
         self.sshprivkey = os.path.join('/etc', 'oz', 'id_rsa-icicle-gen')
         self.crond_was_active = False
@@ -68,9 +69,6 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
 
         self.casper_initrd = initrd
 
-        self.preseed_file = auto
-        if self.preseed_file is None:
-            self.preseed_file = oz.ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
         self.tunnels = {}
 
         self.ssh_startuplink = None
@@ -109,8 +107,7 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         """
         self.log.debug("Putting the preseed file in place")
 
-        if self.preseed_file == oz.ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed"):
-
+        if self.default_auto_file():
             def _preseed_sub(line):
                 """
                 Method that is called back from oz.ozutil.copy_modify_file() to
@@ -123,9 +120,9 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
                 else:
                     return line
 
-            oz.ozutil.copy_modify_file(self.preseed_file, outname, _preseed_sub)
+            oz.ozutil.copy_modify_file(self.auto, outname, _preseed_sub)
         else:
-            shutil.copy(self.preseed_file, outname)
+            shutil.copy(self.auto, outname)
 
     def _modify_iso(self):
         """

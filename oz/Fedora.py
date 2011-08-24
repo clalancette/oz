@@ -38,13 +38,10 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
         directkernel = "cpio"
         if tdl.update in ["16", "17"]:
             directkernel = None
-        oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, output_disk,
-                                            nicmodel, diskbus,
-                                            "fedora-" + tdl.update + "-jeos.ks",
+        oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, auto,
+                                            output_disk, nicmodel, diskbus,
                                             True, True, directkernel,
                                             macaddress)
-
-        self.auto = auto
 
         self.haverepo = haverepo
         self.brokenisomethod = brokenisomethod

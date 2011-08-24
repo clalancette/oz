@@ -33,15 +33,11 @@ class MandrakeGuest(oz.Guest.CDGuest):
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
-        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, netdev,
+        oz.Guest.CDGuest.__init__(self, tdl, config, auto, output_disk, netdev,
                                   None, None, diskbus, True, False, macaddress)
 
         if self.tdl.arch != "i386":
             raise oz.OzException.OzException("Mandrake only supports i386 architecture")
-
-        self.auto = auto
-        if self.auto is None:
-            self.auto = oz.ozutil.generate_full_auto_path("mandrake-" + self.tdl.update + "-jeos.cfg")
 
     def _modify_iso(self):
         """
@@ -53,7 +49,7 @@ class MandrakeGuest(oz.Guest.CDGuest):
 
         outname = os.path.join(self.iso_contents, "auto_inst.cfg")
 
-        if self.auto == oz.ozutil.generate_full_auto_path("mandrake-" + self.tdl.update + "-jeos.cfg"):
+        if self.default_auto_file():
 
             def _cfg_sub(line):
                 """
@@ -101,15 +97,11 @@ class Mandrake82Guest(oz.Guest.CDGuest):
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
-        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, netdev,
+        oz.Guest.CDGuest.__init__(self, tdl, config, auto, output_disk, netdev,
                                   None, None, diskbus, True, False, macaddress)
 
         if self.tdl.arch != "i386":
             raise oz.OzException.OzException("Mandrake only supports i386 architecture")
-
-        self.auto = auto
-        if self.auto is None:
-            self.auto = oz.ozutil.generate_full_auto_path("mandrake-" + self.tdl.update + "-jeos.cfg")
 
     def _modify_iso(self):
         """
@@ -118,7 +110,7 @@ class Mandrake82Guest(oz.Guest.CDGuest):
         self.log.debug("Modifying ISO")
 
         outname = os.path.join(self.iso_contents, "auto_inst.cfg")
-        if self.auto == oz.ozutil.generate_full_auto_path("mandrake-" + self.tdl.update + "-jeos.cfg"):
+        if self.default_auto_file():
 
             def _cfg_sub(line):
                 """

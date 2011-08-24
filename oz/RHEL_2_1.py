@@ -29,8 +29,10 @@ class RHEL21Guest(oz.RedHat.RedHatFDGuest):
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
         oz.RedHat.RedHatFDGuest.__init__(self, tdl, config, auto, output_disk,
-                                         "rhel-2.1-jeos.ks", netdev, diskbus,
-                                         macaddress)
+                                         netdev, diskbus, macaddress)
+
+    def get_auto_path(self):
+        return oz.ozutil.generate_full_auto_path("RHEL2.1.auto")
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):

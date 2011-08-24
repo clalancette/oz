@@ -36,17 +36,14 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
     """
     def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus,
                  macaddress):
-        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, nicmodel,
-                                  None, None, diskbus, True, False, macaddress)
+        oz.Guest.CDGuest.__init__(self, tdl, config, auto, output_disk,
+                                  nicmodel, None, None, diskbus, True, False,
+                                  macaddress)
 
         self.reboots = 1
         if self.tdl.update in ["10.3"]:
             # for 10.3 we don't have a 2-stage install process so don't reboot
             self.reboots = 0
-
-        self.autoyast = auto
-        if self.autoyast is None:
-            self.autoyast = oz.ozutil.generate_full_auto_path("opensuse-" + self.tdl.update + "-jeos.xml")
 
         self.sshprivkey = os.path.join('/etc', 'oz', 'id_rsa-icicle-gen')
 
@@ -58,8 +55,8 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
 
         outname = os.path.join(self.iso_contents, "autoinst.xml")
 
-        if self.autoyast == oz.ozutil.generate_full_auto_path("opensuse-" + self.tdl.update + "-jeos.xml"):
-            doc = libxml2.parseFile(self.autoyast)
+        if self.default_auto_file():
+            doc = libxml2.parseFile(self.auto)
 
             xp = doc.xpathNewContext()
             xp.xpathRegisterNs("suse", "http://www.suse.com/1.0/yast2ns")
@@ -69,7 +66,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
 
             doc.saveFile(outname)
         else:
-            shutil.copy(self.autoyast, outname)
+            shutil.copy(self.auto, outname)
 
         self.log.debug("Modifying the boot options")
         isolinux_cfg = os.path.join(self.iso_contents, "boot", self.tdl.arch,
