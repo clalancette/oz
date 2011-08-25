@@ -626,7 +626,7 @@ class Guest(object):
 
         csumname = os.path.join(outdir,
                                 self.tdl.distro + self.tdl.update + self.tdl.arch + "-CHECKSUM")
-        csumfd = os.open(csumname, os.O_WRONLY|os.O_CREAT)
+        csumfd = os.open(csumname, os.O_WRONLY|os.O_CREAT|os.O_TRUNC)
 
         # from this point forward, we need to close csumfd on success or failure
         try:
@@ -718,6 +718,11 @@ class Guest(object):
             devdata = os.statvfs(outdir)
             if (devdata.f_bsize*devdata.f_bavail) < content_length:
                 raise oz.OzException.OzException("Not enough room on %s for install media" % (outdir))
+
+            # at this point we know we are going to download something.  Make
+            # sure to truncate the file so no stale data is left on the end
+            os.ftruncate(fd, 0)
+
             self.log.info("Fetching the original install media from %s" % (url))
             self._download_file(url, fd, True)
 
