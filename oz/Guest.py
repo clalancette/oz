@@ -58,30 +58,6 @@ class Guest(object):
     """
     Main class for guest installation.
     """
-    def _get_conf(self, config, section, key, default):
-        """
-        Method to retrieve config parameters out of the config file.
-        """
-        if config is not None and config.has_section(section) \
-                and config.has_option(section, key):
-            return config.get(section, key)
-        else:
-            return default
-
-    def _get_boolean_conf(self, config, section, key, default):
-        """
-        Method to retrieve boolean config parameters out of the config file.
-        """
-        value = self._get_conf(config, section, key, None)
-        if value is None:
-            return default
-
-        retval = oz.ozutil.string_to_bool(value)
-        if retval is None:
-            raise oz.OzException.OzException("Configuration parameter '%s' must be True, Yes, False, or No" % (key))
-
-        return retval
-
     def _discover_libvirt_type(self):
         """
         Internal method to discover the libvirt type (qemu, kvm, etc) that
@@ -164,28 +140,33 @@ class Guest(object):
         self.macaddr = oz.ozutil.generate_macaddress()
 
         # configuration from 'paths' section
-        self.output_dir = self._get_conf(config, 'paths', 'output_dir',
-                                         '/var/lib/libvirt/images')
-        self.data_dir = self._get_conf(config, 'paths', 'data_dir',
-                                       '/var/lib/oz')
-        self.screenshot_dir = self._get_conf(config, 'paths', 'screenshot_dir',
-                                             '.')
+        self.output_dir = oz.ozutil.config_get_key(config, 'paths',
+                                                   'output_dir',
+                                                   '/var/lib/libvirt/images')
+        self.data_dir = oz.ozutil.config_get_key(config, 'paths', 'data_dir',
+                                                 '/var/lib/oz')
+        self.screenshot_dir = oz.ozutil.config_get_key(config, 'paths',
+                                                       'screenshot_dir', '.')
 
         # configuration from 'libvirt' section
-        self.libvirt_uri = self._get_conf(config, 'libvirt', 'uri',
-                                          'qemu:///system')
-        self.libvirt_type = self._get_conf(config, 'libvirt', 'type', None)
-        self.bridge_name = self._get_conf(config, 'libvirt', 'bridge_name',
-                                          None)
+        self.libvirt_uri = oz.ozutil.config_get_key(config, 'libvirt', 'uri',
+                                                    'qemu:///system')
+        self.libvirt_type = oz.ozutil.config_get_key(config, 'libvirt', 'type',
+                                                     None)
+        self.bridge_name = oz.ozutil.config_get_key(config, 'libvirt',
+                                                    'bridge_name', None)
 
         # configuration from 'cache' section
-        self.cache_original_media = self._get_boolean_conf(config, 'cache',
-                                                           'original_media',
-                                                           True)
-        self.cache_modified_media = self._get_boolean_conf(config, 'cache',
-                                                           'modified_media',
-                                                           False)
-        self.cache_jeos = self._get_boolean_conf(config, 'cache', 'jeos', False)
+        self.cache_original_media = oz.ozutil.config_get_boolean_key(config,
+                                                                     'cache',
+                                                                     'original_media',
+                                                                     True)
+        self.cache_modified_media = oz.ozutil.config_get_boolean_key(config,
+                                                                     'cache',
+                                                                     'modified_media',
+                                                                     False)
+        self.cache_jeos = oz.ozutil.config_get_boolean_key(config, 'cache',
+                                                           'jeos', False)
 
         self.jeos_cache_dir = os.path.join(self.data_dir, "jeos")
         self.jeos_filename = os.path.join(self.jeos_cache_dir,

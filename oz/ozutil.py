@@ -512,3 +512,26 @@ def write_cpio(inputdict, outputfile):
         raise
 
     outf.close()
+
+def config_get_key(config, section, key, default):
+    """
+    Function to retrieve config parameters out of the config file.
+    """
+    if config is not None and config.has_section(section) and config.has_option(section, key):
+        return config.get(section, key)
+    else:
+        return default
+
+def config_get_boolean_key(config, section, key, default):
+    """
+    Function to retrieve boolean config parameters out of the config file.
+    """
+    value = config_get_key(config, section, key, None)
+    if value is None:
+        return default
+
+    retval = string_to_bool(value)
+    if retval is None:
+        raise Exception, "Configuration parameter '%s' must be True, Yes, False, or No" % (key)
+
+    return retval

@@ -548,13 +548,8 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             config = ConfigParser.SafeConfigParser()
             config.readfp(fp)
             section = "images-%s" % (self.tdl.arch)
-            self.log.debug("Looking for %s section in config" % (section))
-            if config.has_section(section):
-                self.log.debug("Saw %s section, looking for kernel and initrd" % (section))
-                if config.has_option(section, "kernel"):
-                    kernel = config.get(section, "kernel")
-                if config.has_option(section, "initrd"):
-                    initrd = config.get(section, "initrd")
+            kernel = oz.ozutil.config_get_key(config, section, "kernel", None)
+            initrd = oz.ozutil.config_get_key(config, section, "initrd", None)
         except:
             # OK, it looks like the .treeinfo didn't exist
             self.log.debug(".treeinfo didn't exist!")
