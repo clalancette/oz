@@ -243,8 +243,13 @@ class Guest(object):
         except libvirt.libvirtError:
             pass
 
-        if os.access(self.diskimage, os.F_OK):
+        try:
             os.unlink(self.diskimage)
+        except OSError, err:
+            if err.errno == errno.ENOENT:
+                pass
+            else:
+                raise
 
     def check_for_guest_conflict(self):
         """
@@ -1004,11 +1009,11 @@ class Guest(object):
         pubname = privname + ".pub"
         if os.access(privname, os.F_OK) and not os.access(pubname, os.F_OK):
             # hm, private key exists but not public?  We have to regenerate
-            os.remove(privname)
+            os.unlink(privname)
 
         if not os.access(privname, os.F_OK) and os.access(pubname, os.F_OK):
             # hm, public key exists but not private?  We have to regenerate
-            os.remove(pubname)
+            os.unlink(pubname)
 
         # when we get here, either both the private and public key exist, or
         # neither exist.  If they don't exist, generate them
@@ -1089,8 +1094,13 @@ class CDGuest(Guest):
         Method to copy the data out of an ISO onto the local filesystem.
         """
         self.log.info("Copying ISO contents for modification")
-        if os.access(self.iso_contents, os.F_OK):
+        try:
             shutil.rmtree(self.iso_contents)
+        except OSError, err:
+            if err.errno == errno.ENOENT:
+                pass
+            else:
+                raise
         os.makedirs(self.iso_contents)
 
         self.log.info("Setting up guestfs handle for %s" % (self.tdl.name))
@@ -1411,16 +1421,17 @@ class CDGuest(Guest):
         Method to cleanup any transient install data.
         """
         self.log.info("Cleaning up after install")
-        # the modified ISO may not exist if we did a JEOS copy instead of a
-        # full install
-        if os.access(self.output_iso, os.F_OK):
-            self.log.debug("Removing modified ISO")
+
+        try:
             os.unlink(self.output_iso)
-        # the original ISO may not exist if we did a JEOS copy instead of a
-        # full install
-        if not self.cache_original_media and os.access(self.orig_iso, os.F_OK):
-            self.log.debug("Removing original ISO")
-            os.unlink(self.orig_iso)
+        except:
+            pass
+
+        if not self.cache_original_media:
+            try:
+                os.unlink(self.orig_iso)
+            except:
+                pass
 
 class FDGuest(Guest):
     """
@@ -1494,7 +1505,13 @@ class FDGuest(Guest):
         Method to cleanup the installation floppies.
         """
         self.log.info("Cleaning up after install")
-        os.unlink(self.output_floppy)
-        self.log.debug("Removed modified floppy")
+        try:
+            os.unlink(self.output_floppy)
+        except:
+            pass
+
         if not self.cache_original_media:
-            os.unlink(self.orig_floppy)
+            try:
+                os.unlink(self.orig_floppy)
+            except:
+                pass
