@@ -126,7 +126,8 @@ class Guest(object):
         self._discover_libvirt_bridge()
         self._discover_libvirt_type()
 
-    def __init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus, config):
+    def __init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus, config,
+                 iso_allowed, url_allowed):
         self.tdl = tdl
 
         # for backwards compatibility
@@ -200,6 +201,8 @@ class Guest(object):
         self.rootpw = self.tdl.rootpw
         if self.rootpw is None:
             self.rootpw = "ozrootpw"
+
+        self.url = self._check_url(iso=iso_allowed, url=url_allowed)
 
         self.log.debug("Name: %s, UUID: %s" % (self.tdl.name, self.uuid))
         self.log.debug("MAC: %s, distro: %s" % (self.macaddr, self.tdl.distro))
@@ -959,15 +962,22 @@ class Guest(object):
         """
         return oz.ozutil.mkdir_p(path)
 
-    def _check_url(self, tdl, iso=True, url=True):
+    def _check_url(self, iso=True, url=True):
         """
         Method to check that a TDL URL meets the requirements for a particular
         operating system.
         """
-        if iso and tdl.installtype == 'iso':
-            url = tdl.iso
-        elif url and tdl.installtype == 'url':
-            url = tdl.url
+
+        # this method is *slightly* odd in that it references ISOs from the
+        # generic Guest class.  However, the installtype comes from the user
+        # TDL, which means that they could have specified an ISO installtype for
+        # a floppy guest (for instance).  Since we internally always set
+        # iso=False for floppy guests, this will raise an appropriate error
+
+        if iso and self.tdl.installtype == 'iso':
+            url = self.tdl.iso
+        elif url and self.tdl.installtype == 'url':
+            url = self.tdl.url
 
             # when doing URL installs, we can't allow localhost URLs (the URL
             # will be embedded into the installer, so the install is guaranteed
@@ -977,11 +987,11 @@ class Guest(object):
                 raise oz.OzException.OzException("Can not use localhost for an URL based install")
         else:
             if iso and url:
-                raise oz.OzException.OzException("%s installs must be done via url or iso" % (tdl.distro))
+                raise oz.OzException.OzException("%s installs must be done via url or iso" % (self.tdl.distro))
             elif iso:
-                raise oz.OzException.OzException("%s installs must be done via iso" % (tdl.distro))
+                raise oz.OzException.OzException("%s installs must be done via iso" % (self.tdl.distro))
             elif url:
-                raise oz.OzException.OzException("%s installs must be done via url" % (tdl.distro))
+                raise oz.OzException.OzException("%s installs must be done via url" % (self.tdl.distro))
             else:
                 raise oz.OzException.OzException("Unknown error occured while determining install URL")
 
@@ -1051,9 +1061,10 @@ class CDGuest(Guest):
             self.set_size = set_size
             self.seqnum = seqnum
 
-    def __init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus, config):
+    def __init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus, config,
+                 iso_allowed, url_allowed):
         Guest.__init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus,
-                       config)
+                       config, iso_allowed, url_allowed)
 
         self.orig_iso = os.path.join(self.data_dir, "isos",
                                      self.tdl.distro + self.tdl.update + self.tdl.arch + "-" + self.tdl.installtype + ".iso")
@@ -1425,7 +1436,7 @@ class FDGuest(Guest):
     """
     def __init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus, config):
         Guest.__init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus,
-                       config)
+                       config, False, True)
         self.orig_floppy = os.path.join(self.data_dir, "floppies",
                                         self.tdl.distro + self.tdl.update + self.tdl.arch + ".img")
         self.modified_floppy_cache = os.path.join(self.data_dir, "floppies",

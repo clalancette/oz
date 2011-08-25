@@ -34,12 +34,10 @@ class Windows(oz.Guest.CDGuest):
     """
     def __init__(self, tdl, config):
         oz.Guest.CDGuest.__init__(self, tdl, "rtl8139", "localtime", "usb",
-                                  None, config)
+                                  None, config, True, False)
 
         if self.tdl.key is None:
             raise oz.OzException.OzException("A key is required when installing Windows")
-
-        self.url = self._check_url(self.tdl, iso=True, url=False)
 
 class Windows2000andXPand2003(Windows):
     """

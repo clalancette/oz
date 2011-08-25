@@ -34,13 +34,11 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
     """
     def __init__(self, tdl, config, auto):
         oz.Guest.CDGuest.__init__(self, tdl, "virtio", None, None, "virtio",
-                                  config)
+                                  config, True, False)
 
         self.autoyast = auto
         if self.autoyast is None:
             self.autoyast = oz.ozutil.generate_full_auto_path("opensuse-" + self.tdl.update + "-jeos.xml")
-
-        self.url = self._check_url(self.tdl, iso=True, url=False)
 
         self.sshprivkey = os.path.join('/etc', 'oz', 'id_rsa-icicle-gen')
 

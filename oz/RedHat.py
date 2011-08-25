@@ -38,7 +38,7 @@ class RedHatCDGuest(oz.Guest.CDGuest):
     def __init__(self, tdl, nicmodel, diskbus, config, stock_ks, iso_allowed,
                  url_allowed, initrdtype):
         oz.Guest.CDGuest.__init__(self, tdl, nicmodel, None, None, diskbus,
-                                  config)
+                                  config, iso_allowed, url_allowed)
         self.sshprivkey = os.path.join('/etc', 'oz', 'id_rsa-icicle-gen')
         self.crond_was_active = False
         self.sshd_config = \
@@ -56,7 +56,6 @@ X11Forwarding yes
 Subsystem	sftp	/usr/libexec/openssh/sftp-server
 """
 
-        self.url = self._check_url(self.tdl, iso=iso_allowed, url=url_allowed)
         self.stock_ks = stock_ks
 
         # initrdtype is actually a tri-state:
@@ -722,12 +721,12 @@ class RedHatCDYumGuest(RedHatCDGuest):
     """
     Class for RedHat-based CD guests with yum support.
     """
-    def _check_url(self, tdl, iso=True, url=True):
+    def _check_url(self, iso=True, url=True):
         """
         Method to check if a URL specified by the user is one that will work
         with anaconda.
         """
-        url = RedHatCDGuest._check_url(self, tdl, iso, url)
+        url = RedHatCDGuest._check_url(self, iso, url)
 
         if self.tdl.installtype == 'url':
             # The HTTP/1.1 specification allows for servers that don't support
@@ -786,7 +785,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
                 break
 
             if count == 0:
-                raise oz.OzException.OzException("%s URL installs cannot be done using servers that don't accept byte ranges.  Please try another mirror" % (tdl.distro))
+                raise oz.OzException.OzException("%s URL installs cannot be done using servers that don't accept byte ranges.  Please try another mirror" % (self.tdl.distro))
 
         return url
 
@@ -895,8 +894,6 @@ class RedHatFDGuest(oz.Guest.FDGuest):
 
         if self.tdl.arch != "i386":
             raise oz.OzException.OzException("Invalid arch " + self.tdl.arch + "for " + self.tdl.distro + " guest")
-
-        self.url = self._check_url(self.tdl, iso=False, url=True)
 
         self.ks_name = ks_name
 

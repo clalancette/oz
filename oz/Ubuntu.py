@@ -32,15 +32,13 @@ class UbuntuGuest(oz.Guest.CDGuest):
     """
     def __init__(self, tdl, config, auto, initrd, nicmodel, diskbus):
         oz.Guest.CDGuest.__init__(self, tdl, nicmodel, None, None, diskbus,
-                                  config)
+                                  config, True, False)
 
         self.casper_initrd = initrd
 
         self.preseed_file = auto
         if self.preseed_file is None:
             self.preseed_file = oz.ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
-
-        self.url = self._check_url(self.tdl, iso=True, url=False)
 
     def _check_iso_tree(self):
         if self.tdl.update in ["6.06", "6.06.1", "6.06.2", "6.10", "7.04"]:

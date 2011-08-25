@@ -31,13 +31,11 @@ class DebianGuest(oz.Guest.CDGuest):
     """
     def __init__(self, tdl, config, auto):
         oz.Guest.CDGuest.__init__(self, tdl, 'virtio', None, None, 'virtio',
-                                  config)
+                                  config, True, False)
 
         self.preseed_file = auto
         if self.preseed_file is None:
             self.preseed_file = oz.ozutil.generate_full_auto_path("debian-" + self.tdl.update + "-jeos.preseed")
-
-        self.url = self._check_url(self.tdl, iso=True, url=False)
 
     def _modify_iso(self):
         """
