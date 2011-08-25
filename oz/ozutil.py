@@ -290,6 +290,10 @@ def generate_macaddress():
     return ':'.join(map(lambda x:"%02x" % x, mac))
 
 class SubprocessException(Exception):
+    """
+    Class for subprocess exceptions.  In addition to a error message, it also
+    has a retcode member that has the returncode from the command.
+    """
     def __init__(self, msg, retcode):
         Exception.__init__(self, msg)
         self.retcode = retcode
