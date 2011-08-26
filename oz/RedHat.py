@@ -623,7 +623,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                     extrafname = os.path.join(self.icicle_tmp, "extra.cpio")
                     self.log.debug("Writing cpio to %s" % (extrafname))
                     cpiofiledict = {}
-                    cpiofiledict[oz.ozutil.generate_full_auto_path(self.stock_ks)] = 'ks.cfg'
+                    cpiofiledict[kspath] = 'ks.cfg'
                     oz.ozutil.write_cpio(cpiofiledict, extrafname)
 
                     try:
