@@ -28,7 +28,7 @@ import oz.OzException
 
 class UbuntuGuest(oz.Guest.CDGuest):
     """
-    Class for Ubuntu 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, and 10.10 installation.
+    Class for Ubuntu 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, and 11.04 installation.
     """
     def __init__(self, tdl, config, auto, initrd, nicmodel, diskbus):
         oz.Guest.CDGuest.__init__(self, tdl, nicmodel, None, None, diskbus,
