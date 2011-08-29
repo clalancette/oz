@@ -91,12 +91,12 @@ class Windows2000andXPand2003(Windows):
             createpart = True
         return self._internal_generate_diskimage(size, force, createpart)
 
-    def _get_windows_arch(self, tdl_arch):
+    def _get_windows_arch(self):
         """
         Convert a TDL arch (i386 or x86_64) to a Windows 2000/XP/2003 compatible
         arch (i386 or amd64).
         """
-        arch = tdl_arch
+        arch = self.tdl.arch
         if arch == "x86_64":
             arch = "amd64"
         return arch
@@ -111,8 +111,7 @@ class Windows2000andXPand2003(Windows):
         self._geteltorito(self.orig_iso, os.path.join(self.iso_contents,
                                                       "cdboot", "boot.bin"))
 
-        outname = os.path.join(self.iso_contents,
-                               self._get_windows_arch(self.tdl.arch),
+        outname = os.path.join(self.iso_contents, self._get_windows_arch(),
                                "winnt.sif")
 
         if self.siffile == oz.ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif"):
@@ -178,13 +177,13 @@ class Windows2008and7(Windows):
                                            "-o", self.output_iso,
                                            self.iso_contents])
 
-    def _get_windows_arch(self, tdl_arch):
+    def _get_windows_arch(self):
         """
         Convert a TDL arch (i386 or x86_64) to a Windows 2008/7 compatible
         arch (x86 or amd64).
         """
         arch = "x86"
-        if tdl_arch == "x86_64":
+        if self.tdl.arch == "x86_64":
             arch = "amd64"
         return arch
 
@@ -209,7 +208,7 @@ class Windows2008and7(Windows):
 
             for component in xp.xpathEval('/ms:unattend/ms:settings/ms:component'):
                 component.setProp('processorArchitecture',
-                                  self._get_windows_arch(self.tdl.arch))
+                                  self._get_windows_arch())
 
             keys = xp.xpathEval('/ms:unattend/ms:settings/ms:component/ms:ProductKey')
             keys[0].setContent(self.tdl.key)
