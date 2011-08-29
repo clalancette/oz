@@ -558,7 +558,10 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         self.log.debug("Returning kernel %s and initrd %s" % (kernel, initrd))
         return (kernel, initrd)
 
-    def gzip_file(self, inputfile, outputmode):
+    def _gzip_file(self, inputfile, outputmode):
+        """
+        Internal method to gzip a file and write it to the initrd.
+        """
         f = open(inputfile, 'rb')
         gzf = gzip.GzipFile(self.initrdfname, mode=outputmode)
         try:
@@ -628,7 +631,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
                     try:
                         shutil.copyfile(initrdcache, self.initrdfname)
-                        self.gzip_file(extrafname, 'ab')
+                        self._gzip_file(extrafname, 'ab')
                     finally:
                         os.unlink(extrafname)
                 elif self.initrdtype == "ext2":
@@ -660,7 +663,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                         g.kill_subprocess()
 
                         # kickstart is added, lets recompress it
-                        self.gzip_file(ext2file, 'wb')
+                        self._gzip_file(ext2file, 'wb')
                     finally:
                         os.unlink(ext2file)
                 else:
