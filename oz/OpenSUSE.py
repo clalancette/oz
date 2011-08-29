@@ -457,8 +457,8 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         self._customize_files(guestaddr)
 
         self.log.debug("Running custom commands")
-        for name, content in self.tdl.commands.items():
-            self.guest_execute_command(guestaddr, '%s' % (content))
+        for content in self.tdl.commands.values():
+            self.guest_execute_command(guestaddr, content)
 
         self.log.debug("Syncing")
         self.guest_execute_command(guestaddr, 'sync')
