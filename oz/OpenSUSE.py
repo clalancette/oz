@@ -89,14 +89,14 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         self.log.info("Generating new ISO")
         oz.ozutil.subprocess_check_output(["mkisofs", "-r", "-V", "Custom",
                                            "-J", "-no-emul-boot",
-                                          "-b", "boot/" + self.tdl.arch + "/loader/isolinux.bin",
-                                          "-c", "boot/" + self.tdl.arch + "/loader/boot.cat",
-                                          "-boot-load-size", "4",
-                                          "-boot-info-table", "-graft-points",
-                                          "-iso-level", "4", "-pad",
-                                          "-allow-leading-dots", "-l",
-                                          "-o", self.output_iso,
-                                          self.iso_contents])
+                                           "-b", "boot/" + self.tdl.arch + "/loader/isolinux.bin",
+                                           "-c", "boot/" + self.tdl.arch + "/loader/boot.cat",
+                                           "-boot-load-size", "4",
+                                           "-boot-info-table", "-graft-points",
+                                           "-iso-level", "4", "-pad",
+                                           "-allow-leading-dots", "-l",
+                                           "-o", self.output_iso,
+                                           self.iso_contents])
 
     def install(self, timeout=None, force=False):
         """
