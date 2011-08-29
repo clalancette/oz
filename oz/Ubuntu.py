@@ -31,6 +31,13 @@ class UbuntuGuest(oz.Guest.CDGuest):
     Class for Ubuntu 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, and 11.04 installation.
     """
     def __init__(self, tdl, config, auto, initrd, nicmodel, diskbus):
+        if tdl.update in ["6.06", "6.06.1", "6.06.2"]:
+            tdl.update = "6.06"
+        elif tdl.update in ["8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4"]:
+            tdl.update = "8.04"
+        elif tdl.update in ["10.04", "10.04.1", "10.04.2", "10.04.3"]:
+            tdl.update = "10.04"
+
         oz.Guest.CDGuest.__init__(self, tdl, nicmodel, None, None, diskbus,
                                   config, True, False)
 
@@ -41,7 +48,7 @@ class UbuntuGuest(oz.Guest.CDGuest):
             self.preseed_file = oz.ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
 
     def _check_iso_tree(self):
-        if self.tdl.update in ["6.06", "6.06.1", "6.06.2", "6.10", "7.04"]:
+        if self.tdl.update in ["6.06", "6.10", "7.04"]:
             if os.path.isdir(os.path.join(self.iso_contents, "casper")):
                 raise oz.OzException.OzException("Ubuntu %s installs can only be done using the alternate or server CDs" % (self.tdl.update))
 
@@ -87,7 +94,7 @@ class UbuntuGuest(oz.Guest.CDGuest):
             f.write("  append file=/cdrom/preseed/customiso.seed boot=casper automatic-ubiquity noprompt keyboard-configuration/layoutcode=us initrd=/casper/" + self.casper_initrd + "\n")
         else:
             keyboard = "console-setup/layoutcode=us"
-            if self.tdl.update in ["6.06", "6.06.1", "6.06.2"]:
+            if self.tdl.update == "6.06":
                 keyboard = "kbd-chooser/method=us"
             f.write("  kernel /install/vmlinuz\n")
             f.write("  append preseed/file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US " + keyboard + " netcfg/choose_interface=auto keyboard-configuration/layoutcode=us priority=critical initrd=/install/initrd.gz --\n")
@@ -111,7 +118,7 @@ class UbuntuGuest(oz.Guest.CDGuest):
         """
         Method to run the operating system installation.
         """
-        if self.tdl.update in ["6.06", "6.06.1", "6.06.2", "6.10", "7.04"]:
+        if self.tdl.update in ["6.06", "6.10", "7.04"]:
             if not timeout:
                 timeout = 3000
         return self._do_install(timeout, force, 0)
