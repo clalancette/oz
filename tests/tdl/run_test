@@ -72,7 +72,7 @@ def failed():
     print "FAIL"
     fail += 1
 
-def validate_ozlib(tdl, schema):
+def validate_ozlib(tdl, succeed):
     print "Testing Parsing " + tdl + "...",
     try:
         oz.TDL.TDL(open(tdl, 'r').read())
@@ -123,9 +123,7 @@ def validate_schema(tdl, succeed):
             succeeded()
 
 for tdl in sorted(tests.iterkeys()):
-    succeed = tests[tdl]
-
-    validate_schema(tdl, succeed)
-    validate_ozlib(tdl, succeed)
+    validate_schema(tdl, tests[tdl])
+    validate_ozlib(tdl, tests[tdl])
 
 print "SUCCESS: %d, FAIL: %d" % (success, fail)
