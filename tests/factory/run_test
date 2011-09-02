@@ -1,10 +1,14 @@
+#!/usr/bin/python
+
+import sys
+sys.path.insert(0, "../..")
+
 import oz.TDL
 import oz.GuestFactory
 import ConfigParser
 import StringIO
 import logging
 import os
-import sys
 
 success = 0
 fail = 0

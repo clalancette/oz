@@ -1,0 +1,131 @@
+#!/usr/bin/python
+
+import sys
+sys.path.insert(0, "../..")
+
+import libxml2
+import os
+import traceback
+
+import oz.TDL
+
+debug = os.getenv('DEBUG')
+
+# the tests dictionary lists all of the test we will run.  The key for the
+# dictionary is the filename of the test, and the value is whether the test
+# is expected to succeed (True) or not (False)
+tests = {
+    "test-01-simple-iso.tdl": True,
+    "test-02-simple-url.tdl": True,
+    "test-03-empty-template.tdl": False,
+    "test-04-no-os.tdl": False,
+    "test-05-no-name.tdl": False,
+    "test-06-simple-iso-description.tdl": True,
+    "test-07-packages-no-package.tdl": True,
+    "test-08-repositories-no-repository.tdl": True,
+    "test-09-os-invalid-arch.tdl": False,
+    "test-10-os-invalid-install-type.tdl": False,
+    "test-11-description-packages-repositories.tdl": True,
+    "test-12-os-no-name.tdl": False,
+    "test-13-os-no-version.tdl": False,
+    "test-14-os-no-arch.tdl": False,
+    "test-15-os-no-install.tdl": False,
+    "test-16-signed-repository.tdl": True,
+    "test-17-repo-invalid-signed.tdl": False,
+    "test-18-rootpw.tdl": True,
+    "test-19-key.tdl": True,
+    "test-20-multiple-install.tdl": False,
+    "test-21-missing-install-type.tdl": False,
+    "test-22-md5sum.tdl": True,
+    "test-23-sha1sum.tdl": True,
+    "test-24-sha256sum.tdl": True,
+    "test-25-md5sum-and-sha1sum.tdl": False,
+    "test-26-md5sum-and-sha256sum.tdl": False,
+    "test-27-sha1sum-and-sha256sum.tdl": False,
+    "test-28-package-no-name.tdl": False,
+    "test-29-files.tdl": True,
+    "test-30-file-no-name.tdl": False,
+    "test-31-file-raw-type.tdl": True,
+    "test-32-file-base64-type.tdl": True,
+    "test-33-file-invalid-type.tdl": False,
+    "test-34-file-invalid-base64.tdl": False,
+    "test-35-repository-no-name.tdl": False,
+    "test-36-repository-no-url.tdl": False,
+    "test-37-command.tdl": True,
+    "test-38-command-no-name.tdl": False,
+    "test-39-command-raw-type.tdl": True,
+    "test-40-command-base64-type.tdl": True,
+    "test-41-command-bogus-base64.tdl": False,
+    "test-42-command-bogus-type.tdl": False,
+}
+
+success = 0
+fail = 0
+
+def succeeded():
+    global success
+    print "OK"
+    success += 1
+
+def failed():
+    global fail
+    print "FAIL"
+    fail += 1
+
+def validate_ozlib(tdl, schema):
+    print "Testing Parsing " + tdl + "...",
+    try:
+        oz.TDL.TDL(open(tdl, 'r').read())
+        if succeed:
+            succeeded()
+        else:
+            failed()
+    except Exception, e:
+        if debug:
+            traceback.print_exc(file=sys.stdout)
+        if succeed:
+            failed()
+        else:
+            succeeded()
+
+def validate_schema(tdl, succeed):
+    errout = ['']
+
+    def libxml2_relaxng_errcb(msg, item):
+        errout[0] = errout[0] + msg
+
+    print "Testing Schema " + tdl + "...",
+
+    schema = open('../../docs/tdl.rng', 'r').read()
+    rngp = libxml2.relaxNGNewMemParserCtxt(schema, len(schema))
+    rngs = rngp.relaxNGParse()
+    rngctxt = rngs.relaxNGNewValidCtxt()
+    rngctxt.setValidityErrorHandler(libxml2_relaxng_errcb, None)
+
+    xml = open(tdl, 'r').read()
+    if debug:
+        print xml
+
+    doc = libxml2.parseDoc(xml)
+    ret = doc.relaxNGValidateDoc(rngctxt)
+    if debug:
+        print errout[0]
+
+    if ret == 0:
+        if succeed:
+            succeeded()
+        else:
+            failed()
+    else:
+        if succeed:
+            failed()
+        else:
+            succeeded()
+
+for tdl in sorted(tests.iterkeys()):
+    succeed = tests[tdl]
+
+    validate_schema(tdl, succeed)
+    validate_ozlib(tdl, succeed)
+
+print "SUCCESS: %d, FAIL: %d" % (success, fail)

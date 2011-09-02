@@ -28,8 +28,8 @@ man2html:
 	@groff -mandoc man/oz-cleanup-cache.1 -T html > man/oz-cleanup-cache.html
 
 unittests:
-	@cd tests/tdl ; ./run.sh
-	@cd tests/factory ; ./run.sh
+	@cd tests/tdl ; ./run_test
+	@cd tests/factory ; ./run_test
 
 pylint:
 	pylint --rcfile=pylint.conf oz oz-install oz-customize oz-cleanup-cache oz-generate-icicle
