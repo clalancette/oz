@@ -179,25 +179,8 @@ class TDL(object):
                                 optional=not rootpw_required)
 
         self.packages = []
-        for package in self.doc.xpathEval('/template/packages/package'):
-            # package name
-            name = package.prop('name')
-            if name is None:
-                raise oz.OzException.OzException("Package without a name was given")
-
-            # repository that the package lives in (optional)
-            repo = get_value(package, 'repository',
-                             "package repository section", optional=True)
-
-            # filename of the package (optional)
-            filename = get_value(package, 'file', "package filename",
-                                 optional=True)
-
-            # arguments to install package (optional)
-            args = get_value(package, 'arguments', "package arguments",
-                             optional=True)
-
-            self.packages.append(Package(name, repo, filename, args))
+        packageslist = self.doc.xpathEval('/template/packages/package')
+        self._add_packages(packageslist)
 
         self.files = {}
         for afile in self.doc.xpathEval('/template/files/file'):
@@ -220,25 +203,8 @@ class TDL(object):
                 raise oz.OzException.OzException("File type for %s must be 'raw' or 'base64'" % (name))
 
         self.repositories = {}
-        for repo in self.doc.xpathEval('/template/repositories/repository'):
-            name = repo.prop('name')
-            if name is None:
-                raise oz.OzException.OzException("Repository without a name was given")
-            url = get_value(repo, 'url', 'repository url')
-
-            if urlparse.urlparse(url)[1] in ["localhost", "127.0.0.1",
-                                             "localhost.localdomain"]:
-                raise oz.OzException.OzException("Repositories cannot be localhost, since they must be reachable from the guest operating system")
-
-            signstr = get_value(repo, 'signed', 'signed', optional=True)
-            if signstr is None:
-                signstr = 'no'
-
-            signed = oz.ozutil.string_to_bool(signstr)
-            if signed is None:
-                raise oz.OzException.OzException("Repository signed property must be 'true', 'yes', 'false', or 'no'")
-
-            self.repositories[name] = Repository(name, url, signed)
+        repositorieslist = self.doc.xpathEval('/template/repositories/repository')
+        self._add_repositories(repositorieslist)
 
         self.commands = {}
         for command in self.doc.xpathEval('/template/commands/command'):
@@ -259,6 +225,91 @@ class TDL(object):
                     self.commands[name] = base64.b64decode(content)
             else:
                 raise oz.OzException.OzException("File type for %s must be 'raw' or 'base64'" % (name))
+
+    def merge_packages(self, packages):
+        """
+        Method to merge additional packages into an existing TDL.  The packages
+        argument should be a properly structured <packages/> string as explained
+        in the TDL documentation.  If a package with the same name is in the
+        existing TDL and in packages, the value in packages overrides.
+        """
+        packsdoc = libxml2.parseDoc(packages)
+        packslist = packsdoc.xpathEval('/packages/package')
+        self._add_packages(packslist, True)
+
+    def _add_packages(self, packslist, remove_duplicates = False):
+        """
+        Internal method to add the list of libxml2 nodes from packslist into
+        the self.packages array.  If remove_duplicates is False (the default),
+        then a package that is listed both in packslist and in the initial
+        TDL is listed twice.  If it is set to True, then a package that is
+        listed both in packslist and the initial TDL is listed only once,
+        from the packslist.
+        """
+        for package in packslist:
+            # package name
+            name = package.prop('name')
+
+            if name is None:
+                raise oz.OzException.OzException("Package without a name was given")
+
+            # repository that the package lives in (optional)
+            repo = get_value(package, 'repository',
+                             "package repository section", optional=True)
+
+            # filename of the package (optional)
+            filename = get_value(package, 'file', "package filename",
+                                 optional=True)
+
+            # arguments to install package (optional)
+            args = get_value(package, 'arguments', "package arguments",
+                             optional=True)
+
+            if remove_duplicates:
+                # delete any existing packages with this name
+                for package in filter(lambda package: package.name == name,
+                                      self.packages):
+                    self.packages.remove(package)
+
+            # now add in our new package def
+            self.packages.append(Package(name, repo, filename, args))
+
+    def merge_repositories(self, repos):
+        """
+        Method to merge additional repositories into an existing TDL.  The
+        repos argument should be a properly structured <repositories/> string
+        as explained in the TDL documentation.  If a repository with the same
+        name is in the existing TDL and in repos, the value in repos overrides.
+        """
+        reposdoc = libxml2.parseDoc(repos)
+        reposlist = reposdoc.xpathEval('/repositories/repository')
+        self._add_repositories(reposlist)
+
+    def _add_repositories(self, reposlist):
+        """
+        Internal method to add the list of libxml2 nodes from reposlist into
+        the self.repositories dictionary.
+        """
+        for repo in reposlist:
+            name = repo.prop('name')
+            if name is None:
+                raise oz.OzException.OzException("Repository without a name was given")
+            url = get_value(repo, 'url', 'repository url')
+
+            if urlparse.urlparse(url)[1] in ["localhost", "127.0.0.1",
+                                             "localhost.localdomain"]:
+                raise oz.OzException.OzException("Repositories cannot be localhost, since they must be reachable from the guest operating system")
+
+            signstr = get_value(repo, 'signed', 'signed', optional=True)
+            if signstr is None:
+                signstr = 'no'
+
+            signed = oz.ozutil.string_to_bool(signstr)
+            if signed is None:
+                raise oz.OzException.OzException("Repository signed property must be 'true', 'yes', 'false', or 'no'")
+
+            # no need to delete - if the name matches we just overwrite here
+            self.repositories[name] = Repository(name, url, signed)
 
     def __del__(self):
         if self.doc is not None:
