@@ -54,8 +54,6 @@ mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/kernels/
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/oz
 cp oz.cfg $RPM_BUILD_ROOT%{_sysconfdir}/oz
 
-chmod 755 $RPM_BUILD_ROOT%{python_sitelib}/oz/guesttools/*
-
 %post
 if [ ! -f %{_sysconfdir}/oz/id_rsa-icicle-gen ]; then
    ssh-keygen -t rsa -b 2048 -N "" -f %{_sysconfdir}/oz/id_rsa-icicle-gen >& /dev/null

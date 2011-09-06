@@ -43,6 +43,7 @@ import base64
 import parted
 import hashlib
 import errno
+import re
 
 import oz.ozutil
 import oz.OzException
@@ -391,6 +392,17 @@ class Guest(object):
         console.setProp("type", "pty")
         consoleTarget = console.newChild(None, "target", None)
         consoleTarget.setProp("port", "0")
+        # serial
+        serial = devices.newChild(None, "serial", None)
+        serial.setProp("type", "tcp")
+        serialSource = serial.newChild(None, "source", None)
+        serialSource.setProp("mode", "bind")
+        serialSource.setProp("host", "127.0.0.1")
+        serialSource.setProp("service", str(self.listen_port))
+        serialProtocol = serial.newChild(None, "protocol", None)
+        serialProtocol.setProp("type", "raw")
+        serialTarget = serial.newChild(None, "target", None)
+        serialTarget.setProp("port", "1")
         # boot disk
         bootDisk = devices.newChild(None, "disk", None)
         bootDisk.setProp("device", "disk")
@@ -862,6 +874,50 @@ class Guest(object):
         self.log.debug("Killing guestfs subprocess")
         g_handle.kill_subprocess()
 
+    def _modify_libvirt_xml_for_serial(self, libvirt_xml):
+        """
+        Internal method to take input libvirt XML (which may have been provided
+        by the user) and add an appropriate serial section so that guest
+        announcement works properly.
+        """
+        input_doc = libxml2.parseDoc(libvirt_xml)
+        serialNode = input_doc.xpathEval("/domain/devices/serial")
+
+        # we first go looking through the existing <serial> elements (if any);
+        # if any exist on port 1, we delete it from the working XML and re-add
+        # it below
+        for serial in serialNode:
+            target = serial.xpathEval('target')
+            if len(target) != 1:
+                raise oz.OzException.OzException("libvirt XML has a serial port with %d target(s), it is invalid" % (len(target)))
+            if target[0].prop('port') == "1":
+                serial.unlinkNode()
+                break
+
+        # at this point, the XML should be clean of any serial port=1 entries
+        # and we can add the one we want
+        devices = input_doc.xpathEval("/domain/devices")
+        devlen = len(devices)
+        if devlen == 0:
+            raise oz.OzException.OzException("No devices section specified, something is wrong with the libvirt XML")
+        elif devlen > 1:
+            raise oz.OzException.OzException("%d devices sections specified, something is wrong with the libvirt XML" % (devlen))
+
+        serial = devices[0].newChild(None, "serial", None)
+        serial.setProp("type", "tcp")
+        serialSource = serial.newChild(None, "source", None)
+        serialSource.setProp("mode", "bind")
+        serialSource.setProp("host", "127.0.0.1")
+        serialSource.setProp("service", str(self.listen_port))
+        serialProtocol = serial.newChild(None, "protocol", None)
+        serialProtocol.setProp("type", "raw")
+        serialTarget = serial.newChild(None, "target", None)
+        serialTarget.setProp("port", "1")
+
+        xml = input_doc.serialize(None, 1)
+        self.log.debug("Generated XML:\n%s" % (xml))
+        return xml
+
     def _wait_for_guest_boot(self, libvirt_dom):
         """
         Method to wait around for a guest to boot.  Orderly guests will boot
@@ -871,70 +927,69 @@ class Guest(object):
         """
         self.log.info("Waiting for guest %s to boot" % (self.tdl.name))
 
-        listen = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect(('127.0.0.1', self.listen_port))
+        sock.settimeout(1)
 
         addr = None
-        try:
-            listen.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            listen.bind((self.host_bridge_ip, self.listen_port))
-            listen.listen(1)
-
-            while True:
-                try:
-                    oz.ozutil.subprocess_check_output(["iptables", "-I", "INPUT", "1",
-                                                       "-p", "tcp", "-m", "tcp",
-                                                       "-d", self.host_bridge_ip,
-                                                       "--dport", str(self.listen_port),
-                                                       "-j", "ACCEPT"])
-                    break
-                except oz.ozutil.SubprocessException, err:
-                    if err.retcode == errno.EINTR:
-                        continue
-                    else:
-                        raise
-
+        count = 300
+        data = ''
+        while count > 0:
+            do_sleep = True
+            if count % 10 == 0:
+                self.log.debug("Waiting for guest %s to boot, %d/300" % (self.tdl.name, count))
             try:
-                count = 300
-                while count > 0:
-                    if count % 10 == 0:
-                        self.log.debug("Waiting for guest %s to boot, %d/300" % (self.tdl.name, count))
-                    rlist, wlist, xlist = select.select([listen], [], [], 1)
-                    if len(rlist) > 0:
-                        # OK, something connected to the socket.  Read some
-                        # data from the socket and make sure it matches the
-                        # 'secret' (i.e. the guest UUID).  If it does, the
-                        # guest checked in.  If not, this is a connection from
-                        # something else, and we should ignore it.
-                        new_sock, addr = listen.accept()
-                        new_sock.settimeout(10)
-                        data = new_sock.recv(len(str(self.uuid)))
-                        new_sock.close()
+                # note that we have to build the data up here, since there is
+                # no guarantee that we will get the whole write in one go
+                data += sock.recv(100)
+            except socket.timeout:
+                # the socket times out after 1 second.  We can just fall
+                # through to the below code because it is a noop, *except* that
+                # we don't want to sleep.  Set the flag
+                do_sleep = False
+                pass
 
-                        if data == str(self.uuid):
-                            break
-
-                    # OK, the guest hasn't checked in yet.  Do an "info" on
-                    # the domain just to make sure it is still alive.  If it
-                    # isn't, this will throw an exception (which is what
-                    # we want)
-                    libvirt_dom.info()
-
-                    count -= 1
-            finally:
+            # OK, we got data back from the socket.  Check to see if the data
+            # is what we expect; essentially, some up-front hex-garbage,
+            # followed by a !<ip>,<uuid>!
+            match = re.search("!(.*?,.*?)!$", data)
+            if match is not None:
+                if len(match.groups()) != 1:
+                    raise oz.OzException.OzException("Guest checked in with no data")
+                split = match.group(1).split(',')
+                if len(split) != 2:
+                    raise oz.OzException.OzException("Guest checked in with bogus data")
+                addr = split[0]
+                uuid = split[1]
                 try:
-                    oz.ozutil.subprocess_check_output(["iptables", "-D",
-                                                       "INPUT", "1"])
-                except:
-                    self.log.warn("Failed to delete iptables rule")
-        finally:
-            listen.close()
+                    # we use socket.inet_aton() to validate the IP address
+                    socket.inet_aton(addr)
+                except socket.error:
+                    raise oz.OzException.OzException("Guest checked in with invalid IP address")
+
+                # FIXME: this is slightly different semantics than before.
+                # Previously, if we saw a bogus UUID, we would ignore it and
+                # continue waiting for the "right" one.  Now we are throwing
+                # an exception.  I kind of like the previous behavior better
+                if uuid != str(self.uuid):
+                    raise oz.OzException.OzException("Guest checked in with unknown UUID")
+                break
+
+            # if the data we got didn't match, we need to continue waiting.
+            # before going to sleep, make sure that the domain is still around
+            libvirt_dom.info()
+            if do_sleep:
+                time.sleep(1)
+            count -= 1
+
+        sock.close()
 
         if addr is None:
-            raise oz.OzException.OzException("Timed out waiting for domain to boot")
+            raise oz.OzException.OzException("Timed out waiting for guest to boot")
 
-        self.log.debug("IP address of guest is %s" % (addr[0]))
+        self.log.debug("IP address of guest is %s" % (addr))
 
-        return addr[0]
+        return addr
 
     def _output_icicle_xml(self, lines, description):
         """

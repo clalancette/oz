@@ -37,13 +37,6 @@ def generate_full_auto_path(relative):
     pkg_path = os.path.dirname(__file__)
     return os.path.abspath(os.path.join(pkg_path, "auto", relative))
 
-def generate_full_guesttools_path(relative):
-    """
-    Function to find the absolute path to a guest tools executable.
-    """
-    pkg_path = os.path.dirname(__file__)
-    return os.path.abspath(os.path.join(pkg_path, "guesttools", relative))
-
 def executable_exists(program):
     """
     Function to find out whether an executable exists in the PATH

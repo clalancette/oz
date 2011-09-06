@@ -1,2 +1,2 @@
 include README COPYING examples/* man/*
-include oz.cfg oz/auto/* oz/guesttools/*
+include oz.cfg oz/auto/*

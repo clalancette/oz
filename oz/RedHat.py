@@ -26,6 +26,7 @@ import libvirt
 import ConfigParser
 import gzip
 import guestfs
+import libxml2
 
 import oz.Guest
 import oz.ozutil
@@ -222,10 +223,10 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         if g_handle.exists('/etc/cron.d/announce'):
             g_handle.rm('/etc/cron.d/announce')
 
-        # remove icicle-nc binary
-        self.log.debug("Removing icicle-nc binary")
-        if g_handle.exists('/root/icicle-nc'):
-            g_handle.rm('/root/icicle-nc')
+        # remove reportip
+        self.log.debug("Removing reportip")
+        if g_handle.exists('/root/reportip'):
+            g_handle.rm('/root/reportip')
 
         # reset the service link
         self.log.debug("Resetting crond service")
@@ -335,16 +336,30 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         if not g_handle.exists('/usr/sbin/crond'):
             raise oz.OzException.OzException("cron not installed on the image, cannot continue")
 
-        iciclepath = oz.ozutil.generate_full_guesttools_path('icicle-nc')
-        g_handle.upload(iciclepath, '/root/icicle-nc')
-        g_handle.chmod(0755, '/root/icicle-nc')
-
-        announcefile = self.icicle_tmp + "/announce"
-        f = open(announcefile, 'w')
-        f.write('*/1 * * * * root /bin/bash -c "/root/icicle-nc ' + self.host_bridge_ip + ' ' + str(self.listen_port) + ' ' + str(self.uuid) + '"\n')
+        scriptfile = os.path.join(self.icicle_tmp, "script")
+        f = open(scriptfile, 'w')
+        f.write("#!/bin/bash\n")
+        f.write("DEV=$(/bin/awk '{if ($2 == 0) print $1}' /proc/net/route) &&\n")
+        f.write('[ -z "$DEV" ] && exit 0\n')
+        f.write("ADDR=$(/sbin/ip -4 -o addr show dev $DEV | /bin/awk '{print $4}' | /bin/cut -d/ -f1) &&\n")
+        f.write('[ -z "$ADDR" ] && exit 0\n')
+        f.write('echo -n "!$ADDR,%s!" > /dev/ttyS0\n' % (self.uuid))
         f.close()
 
-        g_handle.upload(announcefile, '/etc/cron.d/announce')
+        try:
+            announcefile = os.path.join(self.icicle_tmp, "announce")
+            f = open(announcefile, 'w')
+            f.write('*/1 * * * * root /bin/bash -c "/root/reportip"\n')
+            f.close()
+
+            try:
+                g_handle.upload(scriptfile, '/root/reportip')
+                g_handle.chmod(0755, '/root/reportip')
+                g_handle.upload(announcefile, '/etc/cron.d/announce')
+            finally:
+                os.unlink(announcefile)
+        finally:
+            os.unlink(scriptfile)
 
         if g_handle.exists('/lib/systemd/system/crond.service'):
             if g_handle.exists('/etc/systemd/system/multi-user.target.wants/crond.service'):
@@ -357,8 +372,6 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             if g_handle.exists(startuplink):
                 g_handle.mv(startuplink, startuplink + ".icicle")
             g_handle.ln_sf('/etc/init.d/crond', startuplink)
-
-        os.unlink(announcefile)
 
     def _image_ssh_setup_step_5(self, g_handle):
         """
@@ -456,12 +469,18 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         """
         self.log.info("Generating ICICLE")
 
-        self._collect_setup(libvirt_xml)
+        # when doing an oz-install with -g, this isn't necessary as it will
+        # just replace the port with the same port.  However, it is very
+        # necessary when doing an oz-customize since the serial port might
+        # not match what is specified in the libvirt XML
+        modified_xml = self._modify_libvirt_xml_for_serial(libvirt_xml)
+
+        self._collect_setup(modified_xml)
 
         icicle_output = ''
         libvirt_dom = None
         try:
-            libvirt_dom = self.libvirt_conn.createXML(libvirt_xml, 0)
+            libvirt_dom = self.libvirt_conn.createXML(modified_xml, 0)
 
             try:
                 guestaddr = None
@@ -471,7 +490,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                 self._shutdown_guest(guestaddr, libvirt_dom)
 
         finally:
-            self._collect_teardown(libvirt_xml)
+            self._collect_teardown(modified_xml)
 
         return icicle_output
 
@@ -851,11 +870,17 @@ class RedHatCDYumGuest(RedHatCDGuest):
             self.log.info("No additional packages, files, or commands to install, and icicle generation not requested, skipping customization")
             return
 
-        self._collect_setup(libvirt_xml)
+        # when doing an oz-install with -g, this isn't necessary as it will
+        # just replace the port with the same port.  However, it is very
+        # necessary when doing an oz-customize since the serial port might
+        # not match what is specified in the libvirt XML
+        modified_xml = self._modify_libvirt_xml_for_serial(libvirt_xml)
+
+        self._collect_setup(modified_xml)
 
         icicle = None
         try:
-            libvirt_dom = self.libvirt_conn.createXML(libvirt_xml, 0)
+            libvirt_dom = self.libvirt_conn.createXML(modified_xml, 0)
 
             try:
                 guestaddr = None
@@ -870,7 +895,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
             finally:
                 self._shutdown_guest(guestaddr, libvirt_dom)
         finally:
-            self._collect_teardown(libvirt_xml)
+            self._collect_teardown(modified_xml)
 
         return icicle
 

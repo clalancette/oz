@@ -181,10 +181,10 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         if g_handle.exists('/etc/cron.d/announce'):
             g_handle.rm('/etc/cron.d/announce')
 
-        # remove icicle-nc binary
-        self.log.debug("Removing icicle-nc binary")
-        if g_handle.exists('/root/icicle-nc'):
-            g_handle.rm('/root/icicle-nc')
+        # remove reportip
+        self.log.debug("Removing reportip")
+        if g_handle.exists('/root/reportip'):
+            g_handle.rm('/root/reportip')
 
         # reset the service link
         self.log.debug("Resetting cron service")
@@ -231,12 +231,18 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         """
         self.log.info("Generating ICICLE")
 
-        self._collect_setup(libvirt_xml)
+        # when doing an oz-install with -g, this isn't necessary as it will
+        # just replace the port with the same port.  However, it is very
+        # necessary when doing an oz-customize since the serial port might
+        # not match what is specified in the libvirt XML
+        modified_xml = self._modify_libvirt_xml_for_serial(libvirt_xml)
+
+        self._collect_setup(modified_xml)
 
         icicle_output = ''
         libvirt_dom = None
         try:
-            libvirt_dom = self.libvirt_conn.createXML(libvirt_xml, 0)
+            libvirt_dom = self.libvirt_conn.createXML(modified_xml, 0)
 
             try:
                 guestaddr = None
@@ -246,7 +252,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
                 self._shutdown_guest(guestaddr, libvirt_dom)
 
         finally:
-            self._collect_teardown(libvirt_xml)
+            self._collect_teardown(modified_xml)
 
         return icicle_output
 
@@ -337,24 +343,36 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         if not g_handle.exists('/etc/init.d/cron') or not g_handle.exists('/usr/sbin/cron'):
             raise oz.OzException.OzException("cron not installed on the image, cannot continue")
 
-        iciclepath = oz.ozutil.generate_full_guesttools_path('icicle-nc')
-        g_handle.upload(iciclepath, '/root/icicle-nc')
-        g_handle.chmod(0755, '/root/icicle-nc')
-
-        announcefile = self.icicle_tmp + "/announce"
-        f = open(announcefile, 'w')
-        f.write('*/1 * * * * root /bin/bash -c "/root/icicle-nc ' + self.host_bridge_ip + ' ' + str(self.listen_port) + ' ' + str(self.uuid) + '"\n')
+        scriptfile = os.path.join(self.icicle_tmp, "script")
+        f = open(scriptfile, 'w')
+        f.write("#!/bin/bash\n")
+        f.write("DEV=$(/bin/awk '{if ($2 == 0) print $1}' /proc/net/route) &&\n")
+        f.write('[ -z "$DEV" ] && exit 0\n')
+        f.write("ADDR=$(/sbin/ip -4 -o addr show dev $DEV | /bin/awk '{print $4}' | /usr/bin/cut -d/ -f1) &&\n")
+        f.write('[ -z "$ADDR" ] && exit 0\n')
+        f.write('echo -n "!$ADDR,%s!" > /dev/ttyS0\n' % (self.uuid))
         f.close()
 
-        g_handle.upload(announcefile, '/etc/cron.d/announce')
+        try:
+            announcefile = os.path.join(self.icicle_tmp, "announce")
+            f = open(announcefile, 'w')
+            f.write('*/1 * * * * root /bin/bash -c "/root/reportip"\n')
+            f.close()
+
+            try:
+                g_handle.upload(scriptfile, '/root/reportip')
+                g_handle.chmod(0755, '/root/reportip')
+                g_handle.upload(announcefile, '/etc/cron.d/announce')
+            finally:
+                os.unlink(announcefile)
+        finally:
+            os.unlink(scriptfile)
 
         runlevel = self._get_default_runlevel(g_handle)
         startuplink = '/etc/rc.d/rc' + runlevel + ".d/S06cron"
         if g_handle.exists(startuplink):
             g_handle.mv(startuplink, startuplink + ".icicle")
         g_handle.ln_sf('/etc/init.d/cron', startuplink)
-
-        os.unlink(announcefile)
 
     def _collect_setup(self, libvirt_xml):
         """
@@ -474,11 +492,17 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
             self.log.info("No additional packages or files to install, and icicle generation not requested, skipping customization")
             return
 
-        self._collect_setup(libvirt_xml)
+        # when doing an oz-install with -g, this isn't necessary as it will
+        # just replace the port with the same port.  However, it is very
+        # necessary when doing an oz-customize since the serial port might
+        # not match what is specified in the libvirt XML
+        modified_xml = self._modify_libvirt_xml_for_serial(libvirt_xml)
+
+        self._collect_setup(modified_xml)
 
         icicle = None
         try:
-            libvirt_dom = self.libvirt_conn.createXML(libvirt_xml, 0)
+            libvirt_dom = self.libvirt_conn.createXML(modified_xml, 0)
 
             try:
                 guestaddr = None
@@ -493,7 +517,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
             finally:
                 self._shutdown_guest(guestaddr, libvirt_dom)
         finally:
-            self._collect_teardown(libvirt_xml)
+            self._collect_teardown(modified_xml)
 
         return icicle
 
