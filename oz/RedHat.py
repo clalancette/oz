@@ -26,7 +26,6 @@ import libvirt
 import ConfigParser
 import gzip
 import guestfs
-import libxml2
 
 import oz.Guest
 import oz.ozutil
