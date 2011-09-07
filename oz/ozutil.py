@@ -19,9 +19,6 @@ Miscellaneous utility functions.
 """
 
 import os
-import socket
-import fcntl
-import struct
 import random
 import subprocess
 import tempfile
@@ -258,21 +255,6 @@ def string_to_bool(instr):
     if lower == 'yes' or lower == 'true':
         return True
     return None
-
-def get_ip_from_interface(ifname):
-    """
-    Function to take an interface name and discover the IPv4 address that is
-    connected with that interface.
-    """
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    # 0x8915 is SIOCGIFADDR
-    ipaddr = socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x8915,
-                                          struct.pack('256s',
-                                                      ifname[:15]))[20:24])
-
-    s.close()
-
-    return ipaddr
 
 def generate_macaddress():
     """

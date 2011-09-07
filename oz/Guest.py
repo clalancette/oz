@@ -80,11 +80,7 @@ class Guest(object):
         """
         Internal method to discover a libvirt bridge (if necessary).
         """
-        if self.bridge_name is not None:
-            # if the bridge name was specified in the config file, just detect
-            # the IP address here
-            self.host_bridge_ip = oz.ozutil.get_ip_from_interface(self.bridge_name)
-        else:
+        if self.bridge_name is None:
             # otherwise, try to detect a private libvirt bridge
             for netname in self.libvirt_conn.listNetworks():
                 network = self.libvirt_conn.networkLookupByName(netname)
@@ -102,14 +98,13 @@ class Guest(object):
                     if len(ip) != 1:
                         self.log.warn("Libvirt network without an IP, skipping")
                         continue
-                    self.host_bridge_ip = ip[0].prop('address')
                     self.bridge_name = network.bridgeName()
                     break
 
-        if self.bridge_name is None or self.host_bridge_ip is None:
+        if self.bridge_name is None:
             raise oz.OzException.OzException("Could not find a viable libvirt NAT bridge, install cannot continue")
 
-        self.log.debug("libvirt bridge name is %s, host_bridge_ip is %s" % (self.bridge_name, self.host_bridge_ip))
+        self.log.debug("libvirt bridge name is %s" % (self.bridge_name))
 
     def connect_to_libvirt(self):
         """
