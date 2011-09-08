@@ -41,6 +41,7 @@ class RedHatCDGuest(oz.Guest.CDGuest):
                                   config, iso_allowed, url_allowed)
         self.sshprivkey = os.path.join('/etc', 'oz', 'id_rsa-icicle-gen')
         self.crond_was_active = False
+        self.sshd_was_active = False
         self.sshd_config = \
 """SyslogFacility AUTHPRIV
 PasswordAuthentication yes
@@ -193,11 +194,15 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
         # reset the service link
         self.log.debug("Resetting sshd service")
-        startuplink = self._get_service_runlevel_link(g_handle, 'sshd')
-        if g_handle.exists(startuplink):
-            g_handle.rm(startuplink)
-        if g_handle.exists(startuplink + ".icicle"):
-            g_handle.mv(startuplink + ".icicle", startuplink)
+        if g_handle.exists('/lib/systemd/system/sshd.service'):
+            if not self.sshd_was_active:
+                g_handle.rm('/etc/systemd/system/multi-user.target.wants/sshd.service')
+        else:
+            startuplink = self._get_service_runlevel_link(g_handle, 'sshd')
+            if g_handle.exists(startuplink):
+                g_handle.rm(startuplink)
+            if g_handle.exists(startuplink + ".icicle"):
+                g_handle.mv(startuplink + ".icicle", startuplink)
 
     def _image_ssh_teardown_step_3(self, g_handle):
         """
@@ -296,13 +301,20 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         """
         # part 2; check and setup sshd
         self.log.debug("Step 2: setup sshd")
-        if not g_handle.exists('/etc/init.d/sshd') or not g_handle.exists('/usr/sbin/sshd'):
+        if not g_handle.exists('/usr/sbin/sshd'):
             raise oz.OzException.OzException("ssh not installed on the image, cannot continue")
 
-        startuplink = self._get_service_runlevel_link(g_handle, 'sshd')
-        if g_handle.exists(startuplink):
-            g_handle.mv(startuplink, startuplink + ".icicle")
-        g_handle.ln_sf('/etc/init.d/sshd', startuplink)
+        if g_handle.exists('/lib/systemd/system/sshd.service'):
+            if g_handle.exists('/etc/systemd/system/multi-user.target.wants/sshd.service'):
+                self.sshd_was_active = True
+            else:
+                g_handle.ln_sf('/lib/systemd/system/sshd.service',
+                               '/etc/systemd/system/multi-user.target.wants/sshd.service')
+        else:
+            startuplink = self._get_service_runlevel_link(g_handle, 'sshd')
+            if g_handle.exists(startuplink):
+                g_handle.mv(startuplink, startuplink + ".icicle")
+            g_handle.ln_sf('/etc/init.d/sshd', startuplink)
 
         sshd_config_file = self.icicle_tmp + "/sshd_config"
         f = open(sshd_config_file, 'w')
