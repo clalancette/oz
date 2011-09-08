@@ -19,14 +19,10 @@ srpm: sdist
 release: signed-rpm signed-tarball
 
 man2html:
-	@echo "Generating oz-install HTML page from man"
-	@groff -mandoc man/oz-install.1 -T html > man/oz-install.html
-	@echo "Generating oz-customize HTML page from man"
-	@groff -mandoc man/oz-customize.1 -T html > man/oz-customize.html
-	@echo "Generating oz-generate-icicle HTML page from man"
-	@groff -mandoc man/oz-generate-icicle.1 -T html > man/oz-generate-icicle.html
-	@echo "Generating oz-cleanup-cache HTML page from man"
-	@groff -mandoc man/oz-cleanup-cache.1 -T html > man/oz-cleanup-cache.html
+	@for file in oz-install oz-customize oz-generate-icicle oz-cleanup-cache; do \
+		echo "Generating $$file HTML page from man" ; \
+		groff -mandoc man/$$file.1 -T html > man/$$file.html ; \
+	done
 
 $(VENV_DIR):
 	@virtualenv $(VENV_DIR)
