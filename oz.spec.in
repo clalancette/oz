@@ -39,6 +39,7 @@ installations, with minimal input from the user.
 python setup.py build
 
 %install
+# generate the oz-examples man page
 python setup.py install --root=$RPM_BUILD_ROOT --skip-build
 
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/
@@ -53,11 +54,15 @@ mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/kernels/
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/oz
 cp oz.cfg $RPM_BUILD_ROOT%{_sysconfdir}/oz
 
+# generate the oz-examples.1 man page and copy it into place
+make examples-manpage
+cp man/oz-examples.1 $RPM_BUILD_ROOT%{_mandir}/man1
+gzip $RPM_BUILD_ROOT%{_mandir}/man1/oz-examples.1
+
 %post
 if [ ! -f %{_sysconfdir}/oz/id_rsa-icicle-gen ]; then
    ssh-keygen -t rsa -b 2048 -N "" -f %{_sysconfdir}/oz/id_rsa-icicle-gen >& /dev/null
 fi
-
 
 %files
 %doc README COPYING examples docs
@@ -78,7 +83,6 @@ fi
 %{_bindir}/oz-cleanup-cache
 %{python_sitelib}/oz-*.egg-info
 %{_mandir}/man1/*
-
 
 %changelog
 * Mon Sep 12 2011 Chris Lalancette <clalance@redhat.com> - 0.7.0-1

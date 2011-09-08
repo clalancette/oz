@@ -18,10 +18,19 @@ srpm: sdist
 
 release: signed-rpm signed-tarball
 
-man2html:
-	@for file in oz-install oz-customize oz-generate-icicle oz-cleanup-cache; do \
+examples-manpage:
+	echo "Generating oz-examples man page"
+	@(cat man/examples/header ; \
+	for example in $$( ls man/examples/*.example ) ; do \
+	    sed -e 's/^EXAMPLE \(.*\)/.SH EXAMPLE \1/' \
+		-e 's/^#\(.*\)/.RS\n#\1\n.RE/' $$example ; \
+	done ; \
+	cat man/examples/footer) > man/oz-examples.1
+
+man2html: examples-manpage
+	@for file in oz-install oz-customize oz-generate-icicle oz-cleanup-cache oz-examples; do \
 		echo "Generating $$file HTML page from man" ; \
-		groff -mandoc man/$$file.1 -T html > man/$$file.html ; \
+		groff -mandoc -mwww man/$$file.1 -T html > man/$$file.html ; \
 	done
 
 $(VENV_DIR):
@@ -37,4 +46,4 @@ pylint:
 	pylint --rcfile=pylint.conf oz oz-install oz-customize oz-cleanup-cache oz-generate-icicle
 
 clean:
-	rm -rf MANIFEST build dist usr *~ oz.spec *.pyc oz/*~ oz/*.pyc examples/*~ oz/auto/*~ man/*~ docs/*~ man/*.html $(VENV_DIR) tests/tdl/*~ tests/factory/*~
+	rm -rf MANIFEST build dist usr *~ oz.spec *.pyc oz/*~ oz/*.pyc examples/*~ oz/auto/*~ man/*~ docs/*~ man/*.html $(VENV_DIR) tests/tdl/*~ tests/factory/*~ man/oz-examples.1

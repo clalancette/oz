@@ -1,0 +1,37 @@
+EXAMPLE 1 - Minimal guest
+Assume we want to install a minimal Fedora 13 x86_64 operating system from a Fedora 13 DVD ISO located at http://example.org/fedora-13-x86_64.iso
+
+To do this install we first build a TDL XML file, then feed it to oz-install.  The TDL file would look like:
+
+.CDS
+ <template>
+   <name>fedora13_x86_64</name>
+     <os>
+       <name>Fedora</name>
+       <version>13</version>
+       <arch>x86_64</arch>
+       <install type='iso'>
+         <iso>http://example.org/fedora-13-x86_64.iso</iso>
+       </install>
+     </os>
+   <description>My Fedora 13 x86_64 template</description>
+ </template>
+.CDE
+
+/template/name is a user-defined name.  This can be anything the user wants, but must be unique among all TDLs the user wants to build.
+
+/template/os/name is the name of the operating system we want to install, /template/os/version is the version we want, and /template/os/arch is the architecture we want.  A full list of supported operating systems can be obtained by running:
+
+# oz-install -h
+
+/template/os/install tells Oz where to get the installation media from.  In this example, we set type to 'iso' which means that we need an <iso> element in the XML pointing to the ISO install media (install methods other than ISO are supported, and described in other examples).
+
+/template/description is an optional, human-readable description of the template.  This can be anything the user wants, and is ignored by Oz.
+
+That's all of the input that Oz needs.  To actually do the installation, save the above to a file (say fedora13.tdl), and then run oz-install:
+
+# oz-install /path/to/fedora13.tdl
+
+(for the time being, all of the oz commands need to be run as root, although we are working on making it work for normal users)
+
+Running this command will download and prepare the installation media, then run an automated install in a KVM guest.  Assuming the install succeeds, the minimal operating system will be installed on a file in /var/lib/libvirt/images/fedora13_x86_64.dsk (by default, the output location can be overridden in the configuration file).

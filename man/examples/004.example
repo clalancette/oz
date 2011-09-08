@@ -1,0 +1,38 @@
+EXAMPLE 4 - Install a package from an alternate repository
+Assume we want to install a RHEL-6 x86_64 operating system from a RHEL-6 DVD ISO located at http://example.org/rhel-6-x86_64.iso
+
+Additionally assume that we want to install the ccache package from the EPEL-6 repositories on the operating system.  To do this install, we first need to build a TDL XML file and then feed that to oz-install.  The TDL file would look like:
+
+.CDS
+ <template>
+   <name>rhel6_ccache</name>
+   <os>
+     <name>RHEL-6</name>
+     <version>1</version>
+     <arch>x86_64</arch>
+     <install type='iso'>
+       <iso>http://example.org/rhel-6-x86_64.iso</iso>
+     </install>
+   </os>
+   <description>RHEL-6 x86_64 with ccache</description>
+   <repositories>
+     <repository name='epel-6'>
+       <url>http://download.fedoraproject.org/pub/epel/6/$basearch</url>
+       <signed>yes</signed>
+     </repository>
+   </repositories>
+   <packages>
+     <package name='ccache'/>
+   </packages>
+ </template>
+.CDE
+
+Notice that this is very similar to Example 2, except we have specified an additional repository from which to download packages.  The /repositories/repository section of the TDL specified the URL to the package repository along with whether the packages in the repository are signed.  Running the installation is done the same way as in Example 2:
+
+# oz-install -u /path/to/rhel6_ccache.tdl
+
+Running this command will download and prepare the installation media, then run an automated install in a KVM guest.
+
+Assuming the initial install succeeds, Oz will then boot the operating system and run native commands to setup the additional repositories and install the additional packages.  For more information about why this approach is used, please see the Oz Architecture document at http://aeolusproject.org/oz-architecture.html
+
+Assuming this final step succeeds, the operating system with the additional packages will be installed on a file in /var/lib/libvirt/images/rhel6_ccache.dsk (by default, the output location can be overridden in the configuration file).
