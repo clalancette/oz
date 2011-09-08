@@ -26,14 +26,17 @@ import oz.OzException
 
 class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
     """
-    Class for Fedora 7, 8, 9, 10, 11, 12, 13, and 14 installation.
+    Class for Fedora 7, 8, 9, 10, 11, 12, 13, 14, 15, and 16 installation.
     """
     def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,
                  brokenisomethod):
+        directkernel = "cpio"
+        if tdl.update == "16":
+            directkernel = None
         oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, nicmodel, diskbus,
                                             config,
                                             "fedora-" + tdl.update + "-jeos.ks",
-                                            True, True, "cpio")
+                                            True, True, directkernel)
 
         self.auto = auto
 
@@ -86,7 +89,7 @@ def get_class(tdl, config, auto):
     """
     Factory method for Fedora installs.
     """
-    if tdl.update in ["10", "11", "12", "13", "14", "15"]:
+    if tdl.update in ["10", "11", "12", "13", "14", "15", "16"]:
         return FedoraGuest(tdl, config, auto, "virtio", True, "virtio", True)
     if tdl.update in ["7", "8", "9"]:
         return FedoraGuest(tdl, config, auto, "rtl8139", False, None, False)
