@@ -44,7 +44,6 @@ python setup.py install --root=$RPM_BUILD_ROOT --skip-build
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/isocontent/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/isos/
-mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/mnt/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/floppycontent/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/floppies/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/icicletmp/
