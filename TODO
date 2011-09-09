@@ -126,3 +126,6 @@ anything).  This isn't really an issue when doing oz-install -g -u, but if you
 use the short-circuit oz-customize or oz-generate-icicle, the user could have
 fed us bad data.
 24.  In TDL.py, do a real schema validation using tdl.rng
+25.  Allow a URL argument for both <files> and <commands>, where the user gives
+us a URL with file contents or commands, and Oz assumes the responsibility for
+downloading the file and then uploading it into the guest.
