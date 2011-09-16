@@ -121,8 +121,8 @@ class Guest(object):
         self._discover_libvirt_bridge()
         self._discover_libvirt_type()
 
-    def __init__(self, tdl, config, nicmodel, clockoffset, mousetype, diskbus,
-                 iso_allowed, url_allowed):
+    def __init__(self, tdl, config, output_disk, nicmodel, clockoffset,
+                 mousetype, diskbus, iso_allowed, url_allowed):
         self.tdl = tdl
 
         # for backwards compatibility
@@ -168,7 +168,10 @@ class Guest(object):
         self.jeos_filename = os.path.join(self.jeos_cache_dir,
                                           self.tdl.distro + self.tdl.update + self.tdl.arch + ".dsk")
 
-        self.diskimage = os.path.join(self.output_dir, self.tdl.name + ".dsk")
+        self.diskimage = output_disk
+        if self.diskimage is None:
+            self.diskimage = os.path.join(self.output_dir,
+                                          self.tdl.name + ".dsk")
         self.icicle_tmp = os.path.join(self.data_dir, "icicletmp",
                                        self.tdl.name)
         self.listen_port = random.randrange(1024, 65535)
@@ -1109,10 +1112,10 @@ class CDGuest(Guest):
             self.set_size = set_size
             self.seqnum = seqnum
 
-    def __init__(self, tdl, config, nicmodel, clockoffset, mousetype, diskbus,
-                 iso_allowed, url_allowed):
-        Guest.__init__(self, tdl, config, nicmodel, clockoffset, mousetype,
-                       diskbus, iso_allowed, url_allowed)
+    def __init__(self, tdl, config, output_disk, nicmodel, clockoffset,
+                 mousetype, diskbus, iso_allowed, url_allowed):
+        Guest.__init__(self, tdl, config, output_disk, nicmodel, clockoffset,
+                       mousetype, diskbus, iso_allowed, url_allowed)
 
         self.orig_iso = os.path.join(self.data_dir, "isos",
                                      self.tdl.distro + self.tdl.update + self.tdl.arch + "-" + self.tdl.installtype + ".iso")
@@ -1488,9 +1491,10 @@ class FDGuest(Guest):
     """
     Class for guest installation via floppy disk.
     """
-    def __init__(self, tdl, config, nicmodel, clockoffset, mousetype, diskbus):
-        Guest.__init__(self, tdl, config, nicmodel, clockoffset, mousetype,
-                       diskbus, False, True)
+    def __init__(self, tdl, config, output_disk, nicmodel, clockoffset,
+                 mousetype, diskbus):
+        Guest.__init__(self, tdl, config, output_disk, nicmodel, clockoffset,
+                       mousetype, diskbus, False, True)
         self.orig_floppy = os.path.join(self.data_dir, "floppies",
                                         self.tdl.distro + self.tdl.update + self.tdl.arch + ".img")
         self.modified_floppy_cache = os.path.join(self.data_dir, "floppies",

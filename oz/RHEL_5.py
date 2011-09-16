@@ -29,10 +29,10 @@ class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
     """
     Class for RHEL-5 installation.
     """
-    def __init__(self, tdl, config, auto, nicmodel, diskbus):
-        oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, nicmodel,
-                                            diskbus, "rhel-5-jeos.ks", True,
-                                            True, "cpio")
+    def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus):
+        oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, output_disk,
+                                            nicmodel, diskbus, "rhel-5-jeos.ks",
+                                            True, True, "cpio")
 
         self.auto = auto
 
@@ -86,11 +86,11 @@ class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
                 if not re.match("CentOS *", pvd.volume_identifier):
                     raise oz.OzException.OzException("Invalid boot.iso for CentOS-5 URL install")
 
-def get_class(tdl, config, auto):
+def get_class(tdl, config, auto, output_disk):
     """
     Factory method for RHEL-5 installs.
     """
     if tdl.update in ["GOLD", "U1", "U2", "U3"]:
-        return RHEL5Guest(tdl, config, auto, "rtl8139", None)
+        return RHEL5Guest(tdl, config, auto, output_disk, "rtl8139", None)
     if tdl.update in ["U4", "U5", "U6", "U7"]:
-        return RHEL5Guest(tdl, config, auto, "virtio", "virtio")
+        return RHEL5Guest(tdl, config, auto, output_disk, "virtio", "virtio")

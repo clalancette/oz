@@ -30,10 +30,11 @@ class RHL9Guest(oz.RedHat.RedHatCDGuest):
     """
     Class for RHL-9 installation.
     """
-    def __init__(self, tdl, config, auto):
+    def __init__(self, tdl, config, auto, output_disk):
         # RHL-9 doesn't support direct kernel/initrd booting; it hangs right
         # after unpacking the initrd
-        oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, "rtl8139", None,
+        oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, output_disk,
+                                         "rtl8139", None,
                                          "rhl-" + tdl.update + "-jeos.ks",
                                          False, True, None)
 
@@ -77,18 +78,20 @@ class RHL70and71and72and73and8Guest(oz.RedHat.RedHatFDGuest):
     """
     Class for RHL 7.0, 7.1, 7.2, and 8 installation.
     """
-    def __init__(self, tdl, config, auto, nicmodel):
-        oz.RedHat.RedHatFDGuest.__init__(self, tdl, config, auto,
+    def __init__(self, tdl, config, auto, output_disk, nicmodel):
+        oz.RedHat.RedHatFDGuest.__init__(self, tdl, config, auto, output_disk,
                                          "rhl-" + tdl.update + "-jeos.ks",
                                          nicmodel)
 
-def get_class(tdl, config, auto):
+def get_class(tdl, config, auto, output_disk):
     """
     Factory method for RHL installs.
     """
     if tdl.update in ["9"]:
         return RHL9Guest(tdl, config, auto)
     if tdl.update in ["7.2", "7.3", "8"]:
-        return RHL70and71and72and73and8Guest(tdl, config, auto, "rtl8139")
+        return RHL70and71and72and73and8Guest(tdl, config, auto, output_disk,
+                                             "rtl8139")
     if tdl.update in ["7.0", "7.1"]:
-        return RHL70and71and72and73and8Guest(tdl, config, auto, "ne2k_pci")
+        return RHL70and71and72and73and8Guest(tdl, config, auto, output_disk,
+                                             "ne2k_pci")

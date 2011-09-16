@@ -30,7 +30,8 @@ class UbuntuGuest(oz.Guest.CDGuest):
     """
     Class for Ubuntu 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, and 11.04 installation.
     """
-    def __init__(self, tdl, config, auto, initrd, nicmodel, diskbus):
+    def __init__(self, tdl, config, auto, output_disk, initrd, nicmodel,
+                 diskbus):
         if tdl.update in ["6.06", "6.06.1", "6.06.2"]:
             tdl.update = "6.06"
         elif tdl.update in ["8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4"]:
@@ -38,8 +39,8 @@ class UbuntuGuest(oz.Guest.CDGuest):
         elif tdl.update in ["10.04", "10.04.1", "10.04.2", "10.04.3"]:
             tdl.update = "10.04"
 
-        oz.Guest.CDGuest.__init__(self, tdl, config, nicmodel, None, None,
-                                  diskbus, True, False)
+        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, nicmodel,
+                                  None, None, diskbus, True, False)
 
         self.casper_initrd = initrd
 
@@ -123,15 +124,18 @@ class UbuntuGuest(oz.Guest.CDGuest):
                 timeout = 3000
         return self._do_install(timeout, force, 0)
 
-def get_class(tdl, config, auto):
+def get_class(tdl, config, auto, output_disk):
     """
     Factory method for Ubuntu installs.
     """
     if tdl.update in ["6.06", "6.06.1", "6.06.2", "6.10", "7.04", "7.10"]:
-        return UbuntuGuest(tdl, config, auto, "initrd.gz", "rtl8139", None)
+        return UbuntuGuest(tdl, config, auto, output_disk, "initrd.gz",
+                           "rtl8139", None)
     if tdl.update in ["8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4", "8.10",
                       "9.04"]:
-        return UbuntuGuest(tdl, config, auto, "initrd.gz", "virtio", "virtio")
+        return UbuntuGuest(tdl, config, auto, output_disk, "initrd.gz",
+                           "virtio", "virtio")
     if tdl.update in ["9.10", "10.04", "10.04.1", "10.04.2", "10.04.3", "10.10",
                       "11.04"]:
-        return UbuntuGuest(tdl, config, auto, "initrd.lz", "virtio", "virtio")
+        return UbuntuGuest(tdl, config, auto, output_disk, "initrd.lz",
+                           "virtio", "virtio")

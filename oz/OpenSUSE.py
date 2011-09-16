@@ -32,9 +32,9 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
     """
     Class for OpenSUSE installation.
     """
-    def __init__(self, tdl, config, auto):
-        oz.Guest.CDGuest.__init__(self, tdl, config, "virtio", None, None,
-                                  "virtio", True, False)
+    def __init__(self, tdl, config, auto, output_disk):
+        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, "virtio",
+                                  None, None, "virtio", True, False)
 
         self.autoyast = auto
         if self.autoyast is None:
@@ -526,9 +526,9 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
 
         return self._internal_customize(libvirt_xml, "only")
 
-def get_class(tdl, config, auto):
+def get_class(tdl, config, auto, output_disk):
     """
     Factory method for OpenSUSE installs.
     """
     if tdl.update in ["11.0", "11.1", "11.2", "11.3", "11.4"]:
-        return OpenSUSEGuest(tdl, config, auto)
+        return OpenSUSEGuest(tdl, config, auto, output_disk)

@@ -44,6 +44,7 @@ def usage():
     print "  -h\t\tPrint this help message"
     print "  -i <icicle>\tWrite the ICICLE to <icicle> (only valid with -g)"
     print "  -p\t\tCleanup old guests with the same name before installation"
+    print "  -s <disk>\tWrite the output to <disk> (default is the TDL name tag)"
     print "  -t <timeout>\tWait <timeout> seconds for installation, rather than the default"
     print "  -u\t\tAfter installation, do the customization"
     print "  -x <xmlfile>\tWrite libvirt XML to <xmlfile>"
@@ -54,10 +55,10 @@ def usage():
     sys.exit(1)
 
 try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], 'a:c:d:fghi:pt:ux:',
+    opts, args = getopt.gnu_getopt(sys.argv[1:], 'a:c:d:fghi:ps:t:ux:',
                                    ['auto', 'config', 'debug', 'force-download',
                                     'generate-icicle', 'help', 'icicle',
-                                    'cleanup', 'timeout', 'customize',
+                                    'cleanup', 'disk', 'timeout', 'customize',
                                     'xmlfile'])
 except getopt.GetoptError, err:
     print str(err)
@@ -74,6 +75,7 @@ cleanup = False
 auto = None
 timeout = None
 icicle_file = None
+output_disk = None
 for o, a in opts:
     if o in ("-a", "--auto"):
         auto = a
@@ -105,6 +107,8 @@ for o, a in opts:
         icicle_file = a
     elif o in ("-p", "--cleanup"):
         cleanup = True
+    elif o in ("-s", "--disk"):
+        output_disk = a
     elif o in ("-t", "--timeout"):
         timeout = int(a)
     elif o in ("-u", "--customize"):
@@ -134,7 +138,7 @@ try:
     if os.access(config_file, os.F_OK):
         config.read(config_file)
 
-    guest = oz.GuestFactory.guest_factory(tdl, config, auto)
+    guest = oz.GuestFactory.guest_factory(tdl, config, auto, output_disk)
 
     if cleanup:
         guest.cleanup_old_guest()

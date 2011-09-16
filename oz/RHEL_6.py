@@ -28,10 +28,11 @@ class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
     """
     Class for RHEL-6 installation.
     """
-    def __init__(self, tdl, config, auto):
-        oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, "virtio",
-                                            "virtio", "rhel-6-jeos.ks", True,
-                                            True, "cpio")
+    def __init__(self, tdl, config, auto, output_disk):
+        oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, output_disk,
+                                            "virtio", "virtio",
+                                            "rhel-6-jeos.ks", True, True,
+                                            "cpio")
 
         self.auto = auto
 
@@ -48,9 +49,9 @@ class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
             initrdline += "\n"
         self._modify_isolinux(initrdline)
 
-def get_class(tdl, config, auto):
+def get_class(tdl, config, auto, output_disk):
     """
     Factory method for RHEL-6 installs.
     """
     if tdl.update in ["0", "1"]:
-        return RHEL6Guest(tdl, config, auto)
+        return RHEL6Guest(tdl, config, auto, output_disk)

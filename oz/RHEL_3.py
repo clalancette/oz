@@ -29,7 +29,7 @@ class RHEL3Guest(oz.RedHat.RedHatCDGuest):
     """
     Class for RHEL-3 installation.
     """
-    def __init__(self, tdl, config, auto):
+    def __init__(self, tdl, config, auto, output_disk):
         iso_support = True
         if tdl.distro == "RHEL-3":
             iso_support = False
@@ -37,9 +37,9 @@ class RHEL3Guest(oz.RedHat.RedHatCDGuest):
         # although we could use ext2 for the initrdtype here (and hence get
         # fast initial installs), it isn't super reliable on RHEL-3.  Just
         # disable it and fall back to the boot.iso method which is more reliable
-        oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, 'rtl8139', None,
-                                         "rhel-3-jeos.ks", iso_support, True,
-                                         None)
+        oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, output_disk,
+                                         'rtl8139', None, "rhel-3-jeos.ks",
+                                         iso_support, True, None)
 
         self.auto = auto
 
@@ -89,9 +89,9 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             # The boot ISOs for CentOS-3 don't have a whole lot of identifying
             # information.  We just pass through here, doing nothing
 
-def get_class(tdl, config, auto):
+def get_class(tdl, config, auto, output_disk):
     """
     Factory method for RHEL-3 installs.
     """
     if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9"]:
-        return RHEL3Guest(tdl, config, auto)
+        return RHEL3Guest(tdl, config, auto, output_disk)

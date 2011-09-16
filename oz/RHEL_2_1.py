@@ -25,13 +25,13 @@ class RHEL21Guest(oz.RedHat.RedHatFDGuest):
     """
     Class for RHEL-2.1 installation.
     """
-    def __init__(self, tdl, config, auto):
-        oz.RedHat.RedHatFDGuest.__init__(self, tdl, config, auto,
+    def __init__(self, tdl, config, auto, output_disk):
+        oz.RedHat.RedHatFDGuest.__init__(self, tdl, config, auto, output_disk,
                                          "rhel-2.1-jeos.ks", "pcnet")
 
-def get_class(tdl, config, auto):
+def get_class(tdl, config, auto, output_disk):
     """
     Factory method for RHEL-2.1 installs.
     """
     if tdl.update in ["GOLD", "U2", "U3", "U4", "U5", "U6"]:
-        return RHEL21Guest(tdl, config, auto)
+        return RHEL21Guest(tdl, config, auto, output_disk)

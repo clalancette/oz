@@ -29,12 +29,13 @@ class RHEL4Guest(oz.RedHat.RedHatCDGuest):
     """
     Class for RHEL-4 installation.
     """
-    def __init__(self, tdl, config, auto, nicmodel, diskbus):
+    def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus):
         # we set initrdtype to None because RHEL-4 spews errors using direct
         # kernel/initrd booting.  The odd part is that it actually works, but
         # it looks ugly so for now we will just always use the boot.iso method
-        oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, nicmodel, diskbus,
-                                         "rhel-4-jeos.ks", True, True, None)
+        oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, output_disk,
+                                         nicmodel, diskbus, "rhel-4-jeos.ks",
+                                         True, True, None)
 
         self.auto = auto
 
@@ -86,11 +87,11 @@ class RHEL4Guest(oz.RedHat.RedHatCDGuest):
                 if not re.match("CentOS *", pvd.volume_identifier):
                     raise oz.OzException.OzException("Invalid boot.iso for CentOS-4 URL install")
 
-def get_class(tdl, config, auto):
+def get_class(tdl, config, auto, output_disk):
     """
     Factory method for RHEL-4 installs.
     """
     if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7"]:
-        return RHEL4Guest(tdl, config, auto, "rtl8139", None)
+        return RHEL4Guest(tdl, config, auto, output_disk, "rtl8139", None)
     if tdl.update in ["U8", "U9"]:
-        return RHEL4Guest(tdl, config, auto, "virtio", "virtio")
+        return RHEL4Guest(tdl, config, auto, output_disk, "virtio", "virtio")
