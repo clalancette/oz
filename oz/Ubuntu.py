@@ -38,8 +38,8 @@ class UbuntuGuest(oz.Guest.CDGuest):
         elif tdl.update in ["10.04", "10.04.1", "10.04.2", "10.04.3"]:
             tdl.update = "10.04"
 
-        oz.Guest.CDGuest.__init__(self, tdl, nicmodel, None, None, diskbus,
-                                  config, True, False)
+        oz.Guest.CDGuest.__init__(self, tdl, config, nicmodel, None, None,
+                                  diskbus, True, False)
 
         self.casper_initrd = initrd
 

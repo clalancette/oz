@@ -32,7 +32,7 @@ class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
         initrdtype = "cpio"
         if tdl.update in ["1", "2", "3"]:
             initrdtype = "ext2"
-        oz.RedHat.RedHatCDGuest.__init__(self, tdl, 'rtl8139', None, config,
+        oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, 'rtl8139', None,
                                          "fedoracore-" + tdl.update + "-jeos.ks",
                                          True, True, initrdtype)
 

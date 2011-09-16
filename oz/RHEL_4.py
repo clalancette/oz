@@ -33,7 +33,7 @@ class RHEL4Guest(oz.RedHat.RedHatCDGuest):
         # we set initrdtype to None because RHEL-4 spews errors using direct
         # kernel/initrd booting.  The odd part is that it actually works, but
         # it looks ugly so for now we will just always use the boot.iso method
-        oz.RedHat.RedHatCDGuest.__init__(self, tdl, nicmodel, diskbus, config,
+        oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, nicmodel, diskbus,
                                          "rhel-4-jeos.ks", True, True, None)
 
         self.auto = auto

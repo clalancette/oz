@@ -30,8 +30,8 @@ class DebianGuest(oz.Guest.CDGuest):
     Class for Debian installation.
     """
     def __init__(self, tdl, config, auto):
-        oz.Guest.CDGuest.__init__(self, tdl, 'virtio', None, None, 'virtio',
-                                  config, True, False)
+        oz.Guest.CDGuest.__init__(self, tdl, config, 'virtio', None, None,
+                                  'virtio', True, False)
 
         self.preseed_file = auto
         if self.preseed_file is None:

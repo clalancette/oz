@@ -122,7 +122,7 @@ class Guest(object):
         self._discover_libvirt_bridge()
         self._discover_libvirt_type()
 
-    def __init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus, config,
+    def __init__(self, tdl, config, nicmodel, clockoffset, mousetype, diskbus,
                  iso_allowed, url_allowed):
         self.tdl = tdl
 
@@ -1111,10 +1111,10 @@ class CDGuest(Guest):
             self.set_size = set_size
             self.seqnum = seqnum
 
-    def __init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus, config,
+    def __init__(self, tdl, config, nicmodel, clockoffset, mousetype, diskbus,
                  iso_allowed, url_allowed):
-        Guest.__init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus,
-                       config, iso_allowed, url_allowed)
+        Guest.__init__(self, tdl, config, nicmodel, clockoffset, mousetype,
+                       diskbus, iso_allowed, url_allowed)
 
         self.orig_iso = os.path.join(self.data_dir, "isos",
                                      self.tdl.distro + self.tdl.update + self.tdl.arch + "-" + self.tdl.installtype + ".iso")
@@ -1484,9 +1484,9 @@ class FDGuest(Guest):
     """
     Class for guest installation via floppy disk.
     """
-    def __init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus, config):
-        Guest.__init__(self, tdl, nicmodel, clockoffset, mousetype, diskbus,
-                       config, False, True)
+    def __init__(self, tdl, config, nicmodel, clockoffset, mousetype, diskbus):
+        Guest.__init__(self, tdl, config, nicmodel, clockoffset, mousetype,
+                       diskbus, False, True)
         self.orig_floppy = os.path.join(self.data_dir, "floppies",
                                         self.tdl.distro + self.tdl.update + self.tdl.arch + ".img")
         self.modified_floppy_cache = os.path.join(self.data_dir, "floppies",

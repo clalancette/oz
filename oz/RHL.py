@@ -33,7 +33,7 @@ class RHL9Guest(oz.RedHat.RedHatCDGuest):
     def __init__(self, tdl, config, auto):
         # RHL-9 doesn't support direct kernel/initrd booting; it hangs right
         # after unpacking the initrd
-        oz.RedHat.RedHatCDGuest.__init__(self, tdl, "rtl8139", None, config,
+        oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, "rtl8139", None,
                                          "rhl-" + tdl.update + "-jeos.ks",
                                          False, True, None)
 

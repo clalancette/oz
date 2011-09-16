@@ -37,7 +37,7 @@ class RHEL3Guest(oz.RedHat.RedHatCDGuest):
         # although we could use ext2 for the initrdtype here (and hence get
         # fast initial installs), it isn't super reliable on RHEL-3.  Just
         # disable it and fall back to the boot.iso method which is more reliable
-        oz.RedHat.RedHatCDGuest.__init__(self, tdl, 'rtl8139', None, config,
+        oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, 'rtl8139', None,
                                          "rhel-3-jeos.ks", iso_support, True,
                                          None)
 

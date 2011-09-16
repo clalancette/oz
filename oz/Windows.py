@@ -33,8 +33,8 @@ class Windows(oz.Guest.CDGuest):
     Shared Windows base class.
     """
     def __init__(self, tdl, config):
-        oz.Guest.CDGuest.__init__(self, tdl, "rtl8139", "localtime", "usb",
-                                  None, config, True, False)
+        oz.Guest.CDGuest.__init__(self, tdl, config, "rtl8139", "localtime",
+                                  "usb", None, True, False)
 
         if self.tdl.key is None:
             raise oz.OzException.OzException("A key is required when installing Windows")

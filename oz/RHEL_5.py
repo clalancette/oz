@@ -30,8 +30,8 @@ class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
     Class for RHEL-5 installation.
     """
     def __init__(self, tdl, config, auto, nicmodel, diskbus):
-        oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, nicmodel, diskbus,
-                                            config, "rhel-5-jeos.ks", True,
+        oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, nicmodel,
+                                            diskbus, "rhel-5-jeos.ks", True,
                                             True, "cpio")
 
         self.auto = auto

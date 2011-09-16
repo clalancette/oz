@@ -33,8 +33,8 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
     Class for OpenSUSE installation.
     """
     def __init__(self, tdl, config, auto):
-        oz.Guest.CDGuest.__init__(self, tdl, "virtio", None, None, "virtio",
-                                  config, True, False)
+        oz.Guest.CDGuest.__init__(self, tdl, config, "virtio", None, None,
+                                  "virtio", True, False)
 
         self.autoyast = auto
         if self.autoyast is None:
