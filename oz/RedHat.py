@@ -71,6 +71,11 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                                         self.tdl.name + "-kernel")
         self.initrdfname = os.path.join(self.output_dir,
                                         self.tdl.name + "-ramdisk")
+        self.kernelcache = os.path.join(self.data_dir, "kernels",
+                                        self.tdl.distro + self.tdl.update + self.tdl.arch + "-kernel")
+        self.initrdcache = os.path.join(self.data_dir, "kernels",
+                                        self.tdl.distro + self.tdl.update + self.tdl.arch + "-ramdisk")
+
         self.cmdline = "method=" + self.url + " ks=file:/ks.cfg"
 
     def _generate_new_iso(self):
@@ -629,25 +634,20 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             # hard-coded path
             initrd = "images/pxeboot/initrd.img"
 
-        kernelcache = os.path.join(self.data_dir, "kernels",
-                                   self.tdl.distro + self.tdl.update + self.tdl.arch + "-kernel")
-        initrdcache = os.path.join(self.data_dir, "kernels",
-                                   self.tdl.distro + self.tdl.update + self.tdl.arch + "-ramdisk")
-
         self._get_original_media('/'.join([self.url.rstrip('/'),
                                            kernel.lstrip('/')]),
-                                 kernelcache, force_download)
+                                 self.kernelcache, force_download)
 
         try:
             self._get_original_media('/'.join([self.url.rstrip('/'),
                                                initrd.lstrip('/')]),
-                                     initrdcache, force_download)
+                                     self.initrdcache, force_download)
         except:
             os.unlink(self.kernelfname)
             raise
 
         # if we made it here, then we can copy the kernel into place
-        shutil.copyfile(kernelcache, self.kernelfname)
+        shutil.copyfile(self.kernelcache, self.kernelfname)
 
         try:
             kspath = os.path.join(self.icicle_tmp, self.stock_ks)
@@ -664,7 +664,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                     oz.ozutil.write_cpio(cpiofiledict, extrafname)
 
                     try:
-                        shutil.copyfile(initrdcache, self.initrdfname)
+                        shutil.copyfile(self.initrdcache, self.initrdfname)
                         self._gzip_file(extrafname, 'ab')
                     finally:
                         os.unlink(extrafname)
@@ -677,7 +677,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
                     ext2file = os.path.join(tmpdir, "initrd.ext2")
                     self.log.debug("Uncompressing initrd %s to %s" % (self.initrdfname, ext2file))
-                    inf = gzip.open(initrdcache, 'rb')
+                    inf = gzip.open(self.initrdcache, 'rb')
                     outf = open(ext2file, "w")
                     try:
                         outf.writelines(inf)
@@ -749,10 +749,11 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                 pass
 
         if not self.cache_original_media:
-            try:
-                os.unlink(self.orig_iso)
-            except:
-                pass
+            for fname in [self.orig_iso, self.kernelcache, self.initrdcache]:
+                try:
+                    os.unlink(fname)
+                except:
+                    pass
 
 class RedHatCDYumGuest(RedHatCDGuest):
     """
