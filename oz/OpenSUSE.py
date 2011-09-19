@@ -270,13 +270,15 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
             g_handle.mv("/etc/init.d/after.local",
                         "/etc/init.d/after.local.icicle")
 
-        local = self.icicle_tmp + "/after.local"
+        local = os.path.join(self.icicle_tmp, "after.local")
         f = open(local, "w")
         f.write("/sbin/service sshd start\n")
         f.close()
 
-        g_handle.upload(local, "/etc/init.d/after.local")
-        os.unlink(local)
+        try:
+            g_handle.upload(local, "/etc/init.d/after.local")
+        finally:
+            os.unlink(local)
 
         sshd_config = \
 """PasswordAuthentication no
@@ -295,10 +297,12 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         f.write(sshd_config)
         f.close()
 
-        if g_handle.exists('/etc/ssh/sshd_config'):
-            g_handle.mv('/etc/ssh/sshd_config', '/etc/ssh/sshd_config.icicle')
-        g_handle.upload(sshd_config_file, '/etc/ssh/sshd_config')
-        os.unlink(sshd_config_file)
+        try:
+            if g_handle.exists('/etc/ssh/sshd_config'):
+                g_handle.mv('/etc/ssh/sshd_config', '/etc/ssh/sshd_config.icicle')
+            g_handle.upload(sshd_config_file, '/etc/ssh/sshd_config')
+        finally:
+            os.unlink(sshd_config_file)
 
     def _image_ssh_setup_step_3(self, g_handle):
         """
@@ -319,21 +323,20 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         f.write('[ -z "$ADDR" ] && exit 0\n')
         f.write('echo -n "!$ADDR,%s!" > /dev/ttyS0\n' % (self.uuid))
         f.close()
-
         try:
-            announcefile = os.path.join(self.icicle_tmp, "announce")
-            f = open(announcefile, 'w')
-            f.write('*/1 * * * * root /bin/bash -c "/root/reportip"\n')
-            f.close()
-
-            try:
-                g_handle.upload(scriptfile, '/root/reportip')
-                g_handle.chmod(0755, '/root/reportip')
-                g_handle.upload(announcefile, '/etc/cron.d/announce')
-            finally:
-                os.unlink(announcefile)
+            g_handle.upload(scriptfile, '/root/reportip')
+            g_handle.chmod(0755, '/root/reportip')
         finally:
             os.unlink(scriptfile)
+
+        announcefile = os.path.join(self.icicle_tmp, "announce")
+        f = open(announcefile, 'w')
+        f.write('*/1 * * * * root /bin/bash -c "/root/reportip"\n')
+        f.close()
+        try:
+            g_handle.upload(announcefile, '/etc/cron.d/announce')
+        finally:
+            os.unlink(announcefile)
 
         runlevel = self._get_default_runlevel(g_handle)
         startuplink = '/etc/rc.d/rc' + runlevel + ".d/S06cron"
@@ -406,8 +409,10 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
             f = open(localname, 'w')
             f.write(content)
             f.close()
-            self.guest_live_upload(guestaddr, localname, name)
-            os.unlink(localname)
+            try:
+                self.guest_live_upload(guestaddr, localname, name)
+            finally:
+                os.unlink(localname)
 
     def do_customize(self, guestaddr):
         """

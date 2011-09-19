@@ -316,15 +316,18 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                 g_handle.mv(startuplink, startuplink + ".icicle")
             g_handle.ln_sf('/etc/init.d/sshd', startuplink)
 
-        sshd_config_file = self.icicle_tmp + "/sshd_config"
+        sshd_config_file = os.path.join(self.icicle_tmp, "sshd_config")
         f = open(sshd_config_file, 'w')
         f.write(self.sshd_config)
         f.close()
 
-        if g_handle.exists('/etc/ssh/sshd_config'):
-            g_handle.mv('/etc/ssh/sshd_config', '/etc/ssh/sshd_config.icicle')
-        g_handle.upload(sshd_config_file, '/etc/ssh/sshd_config')
-        os.unlink(sshd_config_file)
+        try:
+            if g_handle.exists('/etc/ssh/sshd_config'):
+                g_handle.mv('/etc/ssh/sshd_config',
+                            '/etc/ssh/sshd_config.icicle')
+            g_handle.upload(sshd_config_file, '/etc/ssh/sshd_config')
+        finally:
+            os.unlink(sshd_config_file)
 
     def _image_ssh_setup_step_3(self, g_handle):
         """
@@ -356,21 +359,20 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         f.write('[ -z "$ADDR" ] && exit 0\n')
         f.write('echo -n "!$ADDR,%s!" > /dev/ttyS0\n' % (self.uuid))
         f.close()
-
         try:
-            announcefile = os.path.join(self.icicle_tmp, "announce")
-            f = open(announcefile, 'w')
-            f.write('*/1 * * * * root /bin/bash -c "/root/reportip"\n')
-            f.close()
-
-            try:
-                g_handle.upload(scriptfile, '/root/reportip')
-                g_handle.chmod(0755, '/root/reportip')
-                g_handle.upload(announcefile, '/etc/cron.d/announce')
-            finally:
-                os.unlink(announcefile)
+            g_handle.upload(scriptfile, '/root/reportip')
+            g_handle.chmod(0755, '/root/reportip')
         finally:
             os.unlink(scriptfile)
+
+        announcefile = os.path.join(self.icicle_tmp, "announce")
+        f = open(announcefile, 'w')
+        f.write('*/1 * * * * root /bin/bash -c "/root/reportip"\n')
+        f.close()
+        try:
+            g_handle.upload(announcefile, '/etc/cron.d/announce')
+        finally:
+            os.unlink(announcefile)
 
         if g_handle.exists('/lib/systemd/system/crond.service'):
             if g_handle.exists('/etc/systemd/system/multi-user.target.wants/crond.service'):
@@ -523,8 +525,10 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             f = open(localname, 'w')
             f.write(content)
             f.close()
-            self.guest_live_upload(guestaddr, localname, name)
-            os.unlink(localname)
+            try:
+                self.guest_live_upload(guestaddr, localname, name)
+            finally:
+                os.unlink(localname)
 
     def _shutdown_guest(self, guestaddr, libvirt_dom):
         """
