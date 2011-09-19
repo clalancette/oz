@@ -2,3 +2,5 @@
 *.pyc
 *.sw[po]
 *~
+tests/.venv
+tests/results.xml
