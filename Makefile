@@ -1,4 +1,5 @@
 VERSION = $(shell egrep "^VERSION" setup.py | awk '{print $$3}')
+VENV_DIR = tests/.venv
 
 sdist:
 	python setup.py sdist
@@ -27,12 +28,17 @@ man2html:
 	@echo "Generating oz-cleanup-cache HTML page from man"
 	@groff -mandoc man/oz-cleanup-cache.1 -T html > man/oz-cleanup-cache.html
 
+$(VENV_DIR):
+	@virtualenv $(VENV_DIR)
+	@pip-python -E $(VENV_DIR) install pytest
+virtualenv: $(VENV_DIR)
+
 unittests:
-	@cd tests/tdl ; ./run_test
-	@cd tests/factory ; ./run_test
+	@[ -f $(VENV_DIR)/bin/activate ] && source $(VENV_DIR)/bin/activate ; python setup.py test
+	@(type deactivate 2>/dev/null | grep -q 'function') && deactivate || true
 
 pylint:
 	pylint --rcfile=pylint.conf oz oz-install oz-customize oz-cleanup-cache oz-generate-icicle
 
 clean:
-	rm -rf MANIFEST build dist usr *~ oz.spec *.pyc oz/*~ oz/*.pyc examples/*~ oz/auto/*~ man/*~ docs/*~ man/*.html tests/tdl/*~ tests/factory/*~
+	rm -rf MANIFEST build dist usr *~ oz.spec *.pyc oz/*~ oz/*.pyc examples/*~ oz/auto/*~ man/*~ docs/*~ man/*.html $(VENV_DIR) tests/tdl/*~ tests/factory/*~

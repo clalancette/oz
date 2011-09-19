@@ -1,4 +1,4 @@
-from distutils.core import setup, Extension
+from distutils.core import setup, Extension, Command
 from distutils.command.sdist import sdist as _sdist
 import os
 
@@ -19,6 +19,15 @@ class sdist(_sdist):
 
         _sdist.run(self)
 
+class pytest(Command):
+    user_options = []
+    def initialize_options(self): pass
+    def finalize_options(self): pass
+    def run(self):
+        import subprocess
+        errno = subprocess.call('py.test tests --verbose --tb=short --junitxml=tests/results.xml'.split())
+        raise SystemExit(errno)
+
 setup(name='oz',
       version=VERSION,
       description='Oz automated installer',
@@ -31,6 +40,7 @@ setup(name='oz',
       packages=['oz'],
       scripts=['oz-install', 'oz-generate-icicle', 'oz-customize',
                'oz-cleanup-cache'],
-      cmdclass={'sdist': sdist},
+      cmdclass={'sdist': sdist,
+                'test' : pytest },
       data_files = datafiles,
       )
