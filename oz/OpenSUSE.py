@@ -87,7 +87,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         Method to create a new ISO based on the modified CD/DVD.
         """
         self.log.info("Generating new ISO")
-        oz.ozutil.subprocess_check_output(["mkisofs", "-r", "-V", "Custom",
+        oz.ozutil.subprocess_check_output(["genisoimage", "-r", "-V", "Custom",
                                            "-J", "-no-emul-boot",
                                            "-b", "boot/" + self.tdl.arch + "/loader/isolinux.bin",
                                            "-c", "boot/" + self.tdl.arch + "/loader/boot.cat",

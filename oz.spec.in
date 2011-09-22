@@ -18,7 +18,7 @@ Requires: libvirt-python
 # unless/until we are able to make it really be remote.
 Requires: libvirt
 Requires: python-pycurl
-Requires: mkisofs
+Requires: genisoimage
 Requires: numpy
 Requires: mtools
 Requires: python-uuid
