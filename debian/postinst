@@ -1,0 +1,4 @@
+#!/bin/sh -
+if [ ! -f /etc/oz/id_rsa-icicle-gen ]; then
+   ssh-keygen -t rsa -b 2048 -N "" -f /etc/oz/id_rsa-icicle-gen >/dev/null 2>&1
+fi
