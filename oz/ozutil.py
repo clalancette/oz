@@ -31,6 +31,9 @@ def generate_full_auto_path(relative):
     """
     # all of the automated installation paths are installed to $pkg_path/auto,
     # so we just need to find it and generate the right path here
+    if relative is None:
+        raise Exception, "The relative path cannot be None"
+
     pkg_path = os.path.dirname(__file__)
     return os.path.abspath(os.path.join(pkg_path, "auto", relative))
 
@@ -45,6 +48,9 @@ def executable_exists(program):
         Helper method to check if a file exists and is executable
         """
         return os.path.exists(fpath) and os.access(fpath, os.X_OK)
+
+    if program is None:
+        raise Exception, "Invalid program name passed"
 
     fpath, fname = os.path.split(program)
     if fpath:
@@ -63,6 +69,11 @@ def copyfile_sparse(src, dest):
     Function to copy a file sparsely if possible.  The logic here is
     all taken from coreutils cp, specifically the 'sparse_copy' function.
     """
+    if src is None:
+        raise Exception, "Source of copy cannot be None"
+    if dest is None:
+        raise Exception, "Destination of copy cannot be None"
+
     src_fd = os.open(src, os.O_RDONLY)
     dest_fd = os.open(dest, os.O_WRONLY|os.O_CREAT|os.O_TRUNC)
 
@@ -249,6 +260,8 @@ def string_to_bool(instr):
     Returns True if instr is "Yes" or "True", False if instr is "No"
     or "False", and None otherwise.
     """
+    if instr is None:
+        raise Exception, "Input string was None!"
     lower = instr.lower()
     if lower == 'no' or lower == 'false':
         return False
@@ -363,6 +376,9 @@ def mkdir_p(path):
     The functionality differs from os.makedirs slightly, in that this function
     does *not* raise an error if the directory already exists.
     """
+    if path is None:
+        raise Exception, "Path cannot be None"
+
     try:
         os.makedirs(path)
     except OSError, err:
