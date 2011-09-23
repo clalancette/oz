@@ -392,6 +392,15 @@ def copy_modify_file(inname, outname, subfunc):
     argument in (the next line), and returns a string to be written to the
     output file after modification (if any).
     """
+    if inname is None:
+        raise Exception, "input filename is None"
+    if outname is None:
+        raise Exception, "output filename is None"
+    if subfunc is None:
+        raise Exception, "subfunction is None"
+    if not callable(subfunc):
+        raise Exception, "subfunction is not callable"
+
     infile = open(inname, 'r')
     outfile = open(outname, 'w')
 
@@ -409,6 +418,11 @@ def write_cpio(inputdict, outputfile):
     is the location that the file should have in the cpio archive.  The
     outputfile is the location of the final cpio archive that will be written.
     """
+    if inputdict is None:
+        raise Exception, "input dictionary was None"
+    if outputfile is None:
+        raise Exception, "output file was None"
+
     outf = open(outputfile, "w")
 
     try:
