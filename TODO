@@ -41,32 +41,31 @@ i386/txtsetup.sif [SetupData]: SetupSourcePath = "\".  See
 http://old.bink.nu/bootcd/
 7. Write a boxgrinder plugin.  This requires implementing a ruby class
 for it, and implementing .after_init, .deliverables_exists?, .run, .deliverables.
-8. Debian/Ubuntu packages.
-9. Take a screen shot if some customization or generate-icicle steps time out.
-10. Try to do automatic detection of distro/version/architecture from the ISO
+8. Take a screen shot if some customization or generate-icicle steps time out.
+9. Try to do automatic detection of distro/version/architecture from the ISO
 that are provided to us.  That will make it so that a minimal TDL will only
 include the path to the ISO, and we can figure out the rest of the information.
-11. Add support for additional drivers during install (needed for Windows virtio
+10. Add support for additional drivers during install (needed for Windows virtio
 support).
-12. Make "python setup.py bdist_rpm" work.  The problem is that bdist_rpm
+11. Make "python setup.py bdist_rpm" work.  The problem is that bdist_rpm
 generates its own SPEC file based on the information in setup.py.  When it
 does this, it somehow messes up the %description (minor, probably a change to
 the setup macro), fails to create the /var/lib/oz subdirectories (which could
 be moved into setup.py as well), and also fails to find the gzipped man page
 files (which is what eventually causes the build to fail).
-13. RHL 6.2 does not work via HTTP because of a bug in the installer; when
+12. RHL 6.2 does not work via HTTP because of a bug in the installer; when
 parsing a URL passed in via "method", it fails to put a / at the beginning of
 the URL.  What this means is that when the installer goes to fetch the install
 images via "GET path/to/netstg2.img HTTP/0.9", the web server then returns an
 error.  To do a fully automated install, we need to use an ISO, NFS or FTP
 install method; I could not get FTP to work, but I did not try that hard.
-14. RHL 6.1 fails because there is no netstg2.img available in the distribution
+13. RHL 6.1 fails because there is no netstg2.img available in the distribution
 I have.  Unfortunately, I have not been able to find the netstg2.img, nor an
 ISO of 6.1 to do an alternate install.  NFS may still work here.
-15. RHL 6.0 fails because the kernel panics on boot:
+14. RHL 6.0 fails because the kernel panics on boot:
      VFS: Cannot open root device 08:21
      Kernel panic: VFS: Unable to mount root fs on 08:21
-16.  Enable SELinux in enforcing mode inside of Fedora/RHEL guests.  The current
+15.  Enable SELinux in enforcing mode inside of Fedora/RHEL guests.  The current
 problem with this is that prior to launching the customize step, we upload files
 like ssh keys via libguestfs.  In the default mode libguestfs uploads them with
 no SELinux context, which means reads are denied.
@@ -79,7 +78,7 @@ the wrong context that we have to deal with, and 2) there is a race condition
 between icicle-nc checking in and this restorecon script finishing.  Neither
 problem is insurmountable, but we should make the effort to get this working.
 
-17.  Do preflight checks on detected bridges.  That is, if we detected the
+16.  Do preflight checks on detected bridges.  That is, if we detected the
 bridge (i.e. it was not specified by the user), then we should do some basic
 checks to make sure that we think it will work.  We should check the state
 of at least:
@@ -91,11 +90,11 @@ of at least:
     iptables -t filter -L -v
     iptables -t nat -L -v
 
-18.  We should add a mode where we assume the responsibility for uploading RPMs
+17.  We should add a mode where we assume the responsibility for uploading RPMs
 into the guest (via ssh) and then doing a yum localinstall on those RPMs.
-19.  We should add additional commands section.  In particular, we should have
+18.  We should add additional commands section.  In particular, we should have
 "pre" package installation and "post" package installation command sections.
-20.  On distributions that use NetworkManager, we can speed up the customization
+19.  On distributions that use NetworkManager, we can speed up the customization
 and ICICLE generation step by using dbus-monitor to monitor when NetworkManager
 has brought up the network.  This should save us an average of 30 seconds per
 customization.  The script to do this would look something like:
@@ -116,16 +115,16 @@ fi
 sleep 1
 done
 
-21.  Support hashes for the root password support.
-22.  Add a mode where we use a reverse ssh tunnel with a SOCKS proxy to
+20.  Support hashes for the root password support.
+21.  Add a mode where we use a reverse ssh tunnel with a SOCKS proxy to
 download the packages.  This means that the packages need to be visible to the
 imagefactory machine, but not necessarily to the instance.
-23.  During customization/icicle generation, we should check to make sure that
+22.  During customization/icicle generation, we should check to make sure that
 the bridge listed in the libvirt XML matches up with what we detected (if
 anything).  This isn't really an issue when doing oz-install -g -u, but if you
 use the short-circuit oz-customize or oz-generate-icicle, the user could have
 fed us bad data.
-24.  In TDL.py, do a real schema validation using tdl.rng
-25.  Allow a URL argument for both <files> and <commands>, where the user gives
+23.  In TDL.py, do a real schema validation using tdl.rng
+24.  Allow a URL argument for both <files> and <commands>, where the user gives
 us a URL with file contents or commands, and Oz assumes the responsibility for
 downloading the file and then uploading it into the guest.
