@@ -20,6 +20,7 @@ Debian installation
 
 import shutil
 import os
+import re
 
 import oz.Guest
 import oz.ozutil
@@ -45,9 +46,26 @@ class DebianGuest(oz.Guest.CDGuest):
 
         self.log.debug("Copying preseed file")
         oz.ozutil.mkdir_p(os.path.join(self.iso_contents, "preseed"))
-        shutil.copy(self.preseed_file, os.path.join(self.iso_contents,
-                                                    "preseed",
-                                                    "customiso.seed"))
+
+        outname = os.path.join(self.iso_contents, "preseed", "customiso.seed")
+
+        if self.preseed_file == oz.ozutil.generate_full_auto_path("debian-" + self.tdl.update + "-jeos.preseed"):
+
+            def _preseed_sub(line):
+                """
+                Method that is called back from oz.ozutil.copy_modify_file() to
+                modify preseed files as appropriate for Ubuntu.
+                """
+                if re.match('d-i passwd/root-password password', line):
+                    return 'd-i passwd/root-password password ' + self.rootpw + '\n'
+                elif re.match('d-i passwd/root-password-again password', line):
+                    return 'd-i passwd/root-password-again password ' + self.rootpw + '\n'
+                else:
+                    return line
+
+            oz.ozutil.copy_modify_file(self.preseed_file, outname, _preseed_sub)
+        else:
+            shutil.copy(self.preseed_file, outname)
 
         if self.tdl.arch == "x86_64":
             installdir = "/install.amd"
@@ -58,7 +76,6 @@ class DebianGuest(oz.Guest.CDGuest):
         self.log.debug("Modifying isolinux.cfg")
         isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
                                    "isolinux.cfg")
-        os.unlink(isolinuxcfg)
         f = open(isolinuxcfg, 'w')
         f.write("default customiso\n")
         f.write("timeout 1\n")
