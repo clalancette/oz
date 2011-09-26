@@ -5,7 +5,6 @@ import ConfigParser
 import StringIO
 import logging
 import os
-import collections
 
 # Find oz library
 prefix = '.'
