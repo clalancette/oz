@@ -33,7 +33,6 @@ import logging
 import random
 import guestfs
 import socket
-import select
 import struct
 import numpy
 import tempfile
