@@ -299,7 +299,8 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
 
         try:
             if g_handle.exists('/etc/ssh/sshd_config'):
-                g_handle.mv('/etc/ssh/sshd_config', '/etc/ssh/sshd_config.icicle')
+                g_handle.mv('/etc/ssh/sshd_config',
+                            '/etc/ssh/sshd_config.icicle')
             g_handle.upload(sshd_config_file, '/etc/ssh/sshd_config')
         finally:
             os.unlink(sshd_config_file)
