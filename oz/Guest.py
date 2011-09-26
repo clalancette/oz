@@ -1212,17 +1212,14 @@ class CDGuest(Guest):
             gfs.umount_all()
             gfs.kill_subprocess()
 
-    def _get_primary_volume_descriptor(self, cdfile):
+    def _get_primary_volume_descriptor(self, cdfd):
         """
         Method to extract the primary volume descriptor from a CD.
         """
-        cdfile = open(cdfile, "r")
-
         # check out the primary volume descriptor to make sure it is sane
-        cdfile.seek(16*2048)
+        cdfd.seek(16*2048)
         fmt = "=B5sBB32s32sQLL32sHHHH"
-        (desc_type, identifier, version, unused1, system_identifier, volume_identifier, unused2, space_size_le, space_size_be, unused3, set_size_le, set_size_be, seqnum_le, seqnum_be) = struct.unpack(fmt, cdfile.read(struct.calcsize(fmt)))
-        cdfile.close()
+        (desc_type, identifier, version, unused1, system_identifier, volume_identifier, unused2, space_size_le, space_size_be, unused3, set_size_le, set_size_be, seqnum_le, seqnum_be) = struct.unpack(fmt, cdfd.read(struct.calcsize(fmt)))
 
         if desc_type != 0x1:
             raise oz.OzException.OzException("Invalid primary volume descriptor")
@@ -1242,34 +1239,39 @@ class CDGuest(Guest):
         Method to extract the El-Torito boot sector off of a CD and write it
         to a file.
         """
-        self._get_primary_volume_descriptor(cdfile)
+        if cdfile is None:
+            raise oz.OzException.OzException("input iso is None")
+        if outfile is None:
+            raise oz.OzException.OzException("output file is None")
 
-        cdfile = open(cdfile, "r")
+        cdfd = open(cdfile, "r")
+
+        self._get_primary_volume_descriptor(cdfd)
 
         # the 17th sector contains the boot specification and the offset of the
         # boot sector
-        cdfile.seek(17*2048)
+        cdfd.seek(17*2048)
 
         # NOTE: With "native" alignment (the default for struct), there is
         # some padding that happens that causes the unpacking to fail.
         # Instead we force "standard" alignment, which has no padding
         fmt = "=B5sB23s41sI"
         (boot, isoIdent, version, toritoSpec, unused, bootP) = struct.unpack(fmt,
-                                                                             cdfile.read(struct.calcsize(fmt)))
+                                                                             cdfd.read(struct.calcsize(fmt)))
         if boot != 0x0:
             raise oz.OzException.OzException("invalid CD boot sector")
-        if version != 0x1:
-            raise oz.OzException.OzException("invalid CD version")
         if isoIdent != "CD001":
             raise oz.OzException.OzException("invalid CD isoIdentification")
+        if version != 0x1:
+            raise oz.OzException.OzException("invalid CD version")
         if toritoSpec != "EL TORITO SPECIFICATION":
             raise oz.OzException.OzException("invalid CD torito specification")
 
         # OK, this looks like a bootable CD.  Seek to the boot sector, and
         # look for the header, 0x55, and 0xaa in the first 32 bytes
-        cdfile.seek(bootP*2048)
+        cdfd.seek(bootP*2048)
         fmt = "=BBH24sHBB"
-        bootdata = cdfile.read(struct.calcsize(fmt))
+        bootdata = cdfd.read(struct.calcsize(fmt))
         (header, platform, unused, manu, unused2, five, aa) = struct.unpack(fmt,
                                                                             bootdata)
         if header != 0x1:
@@ -1297,9 +1299,9 @@ class CDGuest(Guest):
 
         # OK, everything so far has checked out.  Read the default/initial
         # boot entry
-        cdfile.seek(bootP*2048+32)
+        cdfd.seek(bootP*2048+32)
         fmt = "=BBHBBHIB"
-        (boot, media, loadsegment, systemtype, unused, scount, imgstart, unused2) = struct.unpack(fmt, cdfile.read(struct.calcsize(fmt)))
+        (boot, media, loadsegment, systemtype, unused, scount, imgstart, unused2) = struct.unpack(fmt, cdfd.read(struct.calcsize(fmt)))
 
         if boot != 0x88:
             raise oz.OzException.OzException("invalid CD initial boot indicator")
@@ -1322,7 +1324,7 @@ class CDGuest(Guest):
 
         # finally, seek to "imgstart", and read "count" sectors, which
         # contains the boot image
-        cdfile.seek(imgstart*2048)
+        cdfd.seek(imgstart*2048)
 
         # The eltorito specification section 2.5 says:
         #
@@ -1337,8 +1339,8 @@ class CDGuest(Guest):
         # are 4 virtual sectors found in each sector on a CD.
         #
         # (note that the bytes above are in hex).  So we read count*512
-        eltoritodata = cdfile.read(count*512)
-        cdfile.close()
+        eltoritodata = cdfd.read(count*512)
+        cdfd.close()
 
         out = open(outfile, "w")
         out.write(eltoritodata)
