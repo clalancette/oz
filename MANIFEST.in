@@ -1,2 +1,1 @@
-include README COPYING examples/* man/*
-include oz.cfg oz/auto/*
+include README COPYING examples/*.tdl man/*.1 oz.cfg docs/*.rng

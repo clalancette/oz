@@ -60,7 +60,7 @@ fi
 
 
 %files
-%doc README COPYING examples
+%doc README COPYING examples docs
 %dir %attr(0755, root, root) %{_sysconfdir}/oz/
 %config(noreplace) %{_sysconfdir}/oz/oz.cfg
 %dir %attr(0755, root, root) %{_localstatedir}/lib/oz/
