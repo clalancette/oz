@@ -26,6 +26,7 @@ import libvirt
 import ConfigParser
 import gzip
 import guestfs
+import pycurl
 
 import oz.Guest
 import oz.ozutil
@@ -77,6 +78,10 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                                         self.tdl.distro + self.tdl.update + self.tdl.arch + "-ramdisk")
 
         self.cmdline = "method=" + self.url + " ks=file:/ks.cfg"
+
+        # two layer dict to track required tunnels
+        # self.tunnels[hostname][port]
+        self.tunnels = {}
 
     def _generate_new_iso(self):
         """
@@ -462,12 +467,13 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         finally:
             self._guestfs_handle_cleanup(g_handle)
 
-    def guest_execute_command(self, guestaddr, command, timeout=10):
+    def guest_execute_command(self, guestaddr, command, timeout=10,
+                              tunnels=None):
         """
         Method to execute a command on the guest and return the output.
         """
         return oz.ozutil.ssh_execute_command(guestaddr, self.sshprivkey,
-                                             command, timeout)
+                                             command, timeout, tunnels)
 
     def do_icicle(self, guestaddr):
         """
@@ -827,19 +833,119 @@ class RedHatCDYumGuest(RedHatCDGuest):
 
         return url
 
+    protocol_to_default_port = {
+        'http': '80',
+        'https': '443',
+        'ftp': '21',
+        }
+
+    def _deconstruct_repo_url(self, repourl):
+        """
+        Method to extract the protocol, port and other details from a repo URL
+        returns tuple: (protocol, hostname, port, path)
+        """
+        # TODO: Make an offering to the regex gods to simplify this
+        url_regex = r"^(.*)(://)([^/:]+)(:)([0-9]+)([/]+)(.*)$|^(.*)(://)([^/:]+)([/]+)(.*)$"
+
+        sr = re.search(url_regex, repourl)
+        if sr:
+            if sr.group(1):
+                # URL with port in it
+                (protocol, hostname, port, path) = sr.group(1, 3, 5, 7)
+            else:
+                # URL without port
+                (protocol, hostname, path) = sr.group(8, 10, 12)
+                port = self.protocol_to_default_port[protocol]
+            return (protocol, hostname, port, path)
+        else:
+            raise oz.OzException.OzException("Could not decode URL (%s) for port forwarding" % (repourl))
+
+    def _discover_repo_locality(self, repo_url, guestaddr):
+        # this is the path to the metadata XML
+        full_url = repo_url + "/repodata/repomd.xml"
+
+        # first, check if we can access it from the host
+        self.data = ''
+        def _writefunc(buf):
+            self.data += buf
+
+        c = pycurl.Curl()
+        c.setopt(c.URL, full_url)
+        c.setopt(c.CONNECTTIMEOUT, 5)
+        c.setopt(c.WRITEFUNCTION, _writefunc)
+        try:
+            c.perform()
+            # if we reach here, then the perform succeeded, which means we
+            # could reach the repo from the host
+            host = True
+        except pycurl.error:
+            # if we got an exception, then we could not reach the repo from
+            # the host
+            host = False
+        c.close()
+
+        # now check if we can access it remotely
+        try:
+            self.guest_execute_command(guestaddr, "curl " + full_url)
+            # if we reach here, then the perform succeeded, which means we
+            # could reach the repo from the guest
+            guest = True
+        except oz.ozutil.SubprocessException:
+            # if we got an exception, then we could not reach the repo from
+            # the guest
+            guest = False
+
+        return host, guest
+
     def _customize_repos(self, guestaddr):
         """
         Method to generate and upload custom repository files based on the TDL.
         """
+
+        # Starting point for our tunnels - this is the port used on our
+        # remote instance
+        tunport = 50000
+
         self.log.debug("Installing additional repository files")
         for repo in self.tdl.repositories.values():
+            # here we go through a repo and check if it is accessible from the
+            # host and/or the guest.  If a repository is available from the
+            # guest, we use the repository directly from the guest.  If the
+            # repository is *only* available from the host, then we tunnel it
+            # through to the guest.  If it is available from neither, we raise
+            # an exception
+            host, guest = self._discover_repo_locality(repo.url, guestaddr)
+            if not host and not guest:
+                raise oz.OzException.OzException("Could not reach repository %s from the host or the guest, aborting" % (repo.url))
+
             filename = repo.name + ".repo"
             localname = os.path.join(self.icicle_tmp, filename)
             f = open(localname, 'w')
             f.write("[%s]\n" % repo.name)
             f.write("name=%s\n" % repo.name)
-            f.write("baseurl=%s\n" % repo.url)
+            if host and not guest:
+                remote_tun_port = tunport
+                (protocol, hostname, port, path) = self._deconstruct_repo_url(repo.url)
+                if (hostname in self.tunnels) and (port in self.tunnels[hostname]):
+                    # We are already tunneling this hostname and port - use the
+                    # existing one
+                    remote_tun_port = self.tunnels[hostname][port]
+                else:
+                    # New tunnel required
+                    if not (hostname in self.tunnels):
+                        self.tunnels[hostname] = {}
+                    self.tunnels[hostname][port] = str(remote_tun_port)
+                    tunport = tunport + 1
+                remote_url = "%s://localhost:%s/%s" % (protocol,
+                                                       remote_tun_port, path)
+                f.write("# This is a tunneled version of local repo: (%s)\n" % (repo.url))
+                f.write("baseurl=%s\n" % remote_url)
+            else:
+                f.write("baseurl=%s\n" % repo.url)
+
+            f.write("skip_if_unavailable=1\n")
             f.write("enabled=1\n")
+
             if repo.signed:
                 f.write("gpgcheck=1\n")
             else:
@@ -864,7 +970,8 @@ class RedHatCDYumGuest(RedHatCDGuest):
 
         if packstr != '':
             self.guest_execute_command(guestaddr,
-                                       'yum -y install %s' % (packstr))
+                                       'yum -y install %s' % (packstr),
+                                       tunnels=self.tunnels)
 
         self._customize_files(guestaddr)
 

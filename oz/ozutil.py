@@ -323,7 +323,8 @@ def subprocess_check_output(*popenargs, **kwargs):
         raise SubprocessException("'%s' failed(%d): %s" % (cmd, retcode, stderr), retcode)
     return (stdout, stderr, retcode)
 
-def ssh_execute_command(guestaddr, sshprivkey, command, timeout=10):
+def ssh_execute_command(guestaddr, sshprivkey, command, timeout=10,
+                        tunnels=None):
     """
     Function to execute a command on the guest using SSH and return the output.
     """
@@ -335,14 +336,23 @@ def ssh_execute_command(guestaddr, sshprivkey, command, timeout=10):
     #
     # -F /dev/null makes sure that we don't use the global or per-user
     # configuration files
-    return subprocess_check_output(["ssh", "-i", sshprivkey,
-                                    "-F", "/dev/null",
-                                    "-o", "ServerAliveInterval=30",
-                                    "-o", "StrictHostKeyChecking=no",
-                                    "-o", "ConnectTimeout=" + str(timeout),
-                                    "-o", "UserKnownHostsFile=/dev/null",
-                                    "-o", "PasswordAuthentication=no",
-                                    "root@" + guestaddr, command])
+
+    cmd = ["ssh", "-i", sshprivkey,
+           "-F", "/dev/null",
+           "-o", "ServerAliveInterval=30",
+           "-o", "StrictHostKeyChecking=no",
+           "-o", "ConnectTimeout=" + str(timeout),
+           "-o", "UserKnownHostsFile=/dev/null",
+           "-o", "PasswordAuthentication=no"]
+
+    if tunnels:
+        for host in tunnels:
+            for port in tunnels[host]:
+                cmd.append("-R %s:%s:%s" % (tunnels[host][port], host, port))
+
+    cmd.extend( ["root@" + guestaddr, command] )
+
+    return subprocess_check_output(cmd)
 
 def scp_copy_file(guestaddr, sshprivkey, file_to_upload, destination,
                   timeout=10):
