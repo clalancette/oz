@@ -1360,6 +1360,10 @@ class CDGuest(Guest):
                 timeout = 1200
 
             def exists(name):
+                """
+                Internal utility method to check if an attribute exists and is
+                a path to a valid filename.
+                """
                 return hasattr(self, name) and os.access(getattr(self, name), os.F_OK)
 
             if exists("kernelfname") and exists("initrdfname") and hasattr(self, "cmdline"):
