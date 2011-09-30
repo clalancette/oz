@@ -69,7 +69,9 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         """
         Method to ensure the the boot ISO for an ISO install is a DVD
         """
-        pvd = self._get_primary_volume_descriptor(self.orig_iso)
+        cdfd = open(self.orig_iso, "r")
+        pvd = self._get_primary_volume_descriptor(cdfd)
+        cdfd.close()
 
         if pvd.system_identifier != "LINUX                           ":
             raise oz.OzException.OzException("Invalid system identifier on ISO for " + self.tdl.distro + " install")
