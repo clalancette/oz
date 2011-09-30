@@ -55,7 +55,9 @@ class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
         install RHEL-5/CentOS-5 since it requires a switch during install,
         which we cannot detect).
         """
-        pvd = self._get_primary_volume_descriptor(self.orig_iso)
+        cdfd = open(self.orig_iso, "r")
+        pvd = self._get_primary_volume_descriptor(cdfd)
+        cdfd.close()
 
         # all of the below should have "LINUX" as their system_identifier,
         # so check it here
