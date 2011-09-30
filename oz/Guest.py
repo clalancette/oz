@@ -941,7 +941,6 @@ class Guest(object):
                 # through to the below code because it is a noop, *except* that
                 # we don't want to sleep.  Set the flag
                 do_sleep = False
-                pass
 
             # OK, we got data back from the socket.  Check to see if the data
             # is what we expect; essentially, some up-front hex-garbage,
