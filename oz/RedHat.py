@@ -861,12 +861,20 @@ class RedHatCDYumGuest(RedHatCDGuest):
             raise oz.OzException.OzException("Could not decode URL (%s) for port forwarding" % (repourl))
 
     def _discover_repo_locality(self, repo_url, guestaddr):
+        """
+        Internal method to discover whether a repository is reachable from the
+        guest or not.  It is used by customize_repos to decide which method to
+        use to reach the repository.
+        """
         # this is the path to the metadata XML
         full_url = repo_url + "/repodata/repomd.xml"
 
         # first, check if we can access it from the host
         self.data = ''
         def _writefunc(buf):
+            """
+            pycurl callback to store the data
+            """
             self.data += buf
 
         c = pycurl.Curl()
