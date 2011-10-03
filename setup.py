@@ -1,8 +1,11 @@
 from distutils.core import setup, Extension, Command
 from distutils.command.sdist import sdist as _sdist
 import os
+import subprocess
+import time
 
-VERSION = '0.7.0'
+VERSION = '0.8.0'
+RELEASE = '0'
 
 datafiles = [('share/man/man1', ['man/oz-install.1', 'man/oz-customize.1',
                                  'man/oz-generate-icicle.1',
@@ -13,10 +16,32 @@ class sdist(_sdist):
     """ custom sdist command, to prep oz.spec file for inclusion """
 
     def run(self):
-        cmd = (""" sed -e "s/@VERSION@/%s/g" < oz.spec.in """ %
-               VERSION) + " > oz.spec"
-        os.system(cmd)
+        global VERSION
+        global RELEASE
 
+        # Create a development release string for later use
+        git_head = subprocess.Popen("git log -1 --pretty=format:%h",
+                                    shell=True,
+                                    stdout=subprocess.PIPE).communicate()[0].strip()
+        date = time.strftime("%Y%m%d%H%M%S", time.gmtime())
+        git_release = "%sgit%s" % (date, git_head)
+
+        # Expand macros in oz.spec.in and create oz.spec
+        spec_in = open('oz.spec.in', 'r')
+        spec = open('oz.spec', 'w')
+        for line in spec_in.xreadlines():
+            if "@VERSION@" in line:
+                line = line.replace("@VERSION@", VERSION)
+            elif "@RELEASE@" in line:
+                # If development release, include date+githash in %{release}
+                if RELEASE.startswith('0'):
+                    RELEASE += '.' + git_release
+                line = line.replace("@RELEASE@", RELEASE)
+            spec.write(line)
+        spec_in.close()
+        spec.close()
+
+        # Run parent constructor
         _sdist.run(self)
 
 class pytest(Command):

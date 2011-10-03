@@ -1,7 +1,7 @@
 Summary: Library and utilities for automated guest OS installs
 Name: oz
 Version: @VERSION@
-Release: 1%{?dist}
+Release: @RELEASE@%{?dist}
 License: LGPLv2
 Group: Development/Libraries
 URL: http://aeolusproject.org/oz.html
