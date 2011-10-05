@@ -88,7 +88,7 @@ def get_class(tdl, config, auto, output_disk):
     Factory method for RHL installs.
     """
     if tdl.update in ["9"]:
-        return RHL9Guest(tdl, config, auto)
+        return RHL9Guest(tdl, config, auto, output_disk)
     if tdl.update in ["7.2", "7.3", "8"]:
         return RHL70and71and72and73and8Guest(tdl, config, auto, output_disk,
                                              "rtl8139")
