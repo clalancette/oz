@@ -19,8 +19,9 @@
 import sys
 import getopt
 import os
-import ConfigParser
 import shutil
+
+import oz.ozutil
 
 def usage():
     print "Usage: oz-cleanup-cache [OPTIONS]"
@@ -37,7 +38,7 @@ except getopt.GetoptError, err:
     usage()
 
 force = False
-config_file = "/etc/oz/oz.cfg"
+config_file = None
 for o, a in opts:
     if o in ("-c", "--config"):
         config_file = a
@@ -48,22 +49,13 @@ for o, a in opts:
     else:
         assert False, "unhandled option"
 
-if os.geteuid() != 0:
-    print "%s must be run as root" % (sys.argv[0])
-    sys.exit(2)
-
 if len(args) != 0:
     usage()
 
-config = ConfigParser.SafeConfigParser()
-if os.access(config_file, os.F_OK):
-    config.read(config_file)
+config = oz.ozutil.parse_config(config_file)
 
-# FIXME: we really shouldn't hard-code this here; instead we should share
-# this location with oz/Guest.py
-data_dir = "/var/lib/oz"
-if config is not None and config.has_section('paths') and config.has_option('paths', 'data_dir'):
-    data_dir = config.get('paths', 'data_dir')
+data_dir = oz.ozutil.config_get_key(config, 'paths', 'data_dir',
+                                    oz.ozutil.default_data_dir())
 
 dirs = ["floppies", "floppycontent", "icicletmp", "isocontent", "isos", "jeos",
         "kernels"]

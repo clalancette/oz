@@ -21,10 +21,10 @@ import getopt
 import os
 import logging
 import stat
-import ConfigParser
 
 import oz.TDL
 import oz.GuestFactory
+import oz.ozutil
 
 def usage():
     print "Usage: oz-customize [OPTIONS] <tdl> <libvirt_xml_file>"
@@ -52,7 +52,7 @@ except getopt.GetoptError, err:
 
 loglevel = logging.ERROR
 logformat = "%(message)s"
-config_file = "/etc/oz/oz.cfg"
+config_file = None
 for o, a in opts:
     if o in ("-c", "--config"):
         config_file = a
@@ -77,24 +77,18 @@ for o, a in opts:
     else:
         assert False, "unhandled option"
 
-if os.geteuid() != 0:
-    print "%s must be run as root" % (sys.argv[0])
-    sys.exit(2)
-
 if len(args) != 2:
     usage()
 
 try:
+    config = oz.ozutil.parse_config(config_file)
+
     tdlfile = args[0]
     libvirt_xml_file = args[1]
 
     logging.basicConfig(level=loglevel, format=logformat)
 
     tdl = oz.TDL.TDL(open(tdlfile, 'r').read())
-
-    config = ConfigParser.SafeConfigParser()
-    if os.access(config_file, os.F_OK):
-        config.read(config_file)
 
     guest = oz.GuestFactory.guest_factory(tdl, config, None)
 

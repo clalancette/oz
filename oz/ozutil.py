@@ -25,6 +25,7 @@ import tempfile
 import errno
 import stat
 import shutil
+import ConfigParser
 
 def generate_full_auto_path(relative):
     """
@@ -571,3 +572,36 @@ def rmtree_and_sync(directory):
     fd = os.open(os.path.dirname(directory), os.O_RDONLY)
     os.fsync(fd)
     os.close(fd)
+
+def parse_config(config_file):
+    if config_file is None:
+        if os.geteuid() == 0:
+            config_file = "/etc/oz/oz.cfg"
+        else:
+            config_file = "~/.oz/oz.cfg"
+    # if config_file was not None on input, then it was provided by the caller
+    # and we use that instead
+
+    config_file = os.path.expanduser(config_file)
+
+    config = ConfigParser.SafeConfigParser()
+    if os.access(config_file, os.F_OK):
+        config.read(config_file)
+
+    return config
+
+def default_output_dir():
+    if os.geteuid() == 0:
+        directory = "/var/lib/libvirt/images"
+    else:
+        directory = "~/.oz/images"
+
+    return os.path.expanduser(directory)
+
+def default_data_dir():
+    if os.geteuid() == 0:
+        directory = "/var/lib/oz"
+    else:
+        directory = "~/.oz"
+
+    return os.path.expanduser(directory)

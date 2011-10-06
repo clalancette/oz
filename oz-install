@@ -21,10 +21,10 @@ import getopt
 import os
 import logging
 import time
-import ConfigParser
 
 import oz.TDL
 import oz.GuestFactory
+import oz.ozutil
 
 def usage():
     print "Usage: oz-install [OPTIONS] <tdl>"
@@ -67,7 +67,7 @@ except getopt.GetoptError, err:
 loglevel = logging.ERROR
 logformat = "%(message)s"
 force_download = False
-config_file = "/etc/oz/oz.cfg"
+config_file = None
 generate_icicle = False
 filename = None
 customize = False
@@ -118,10 +118,6 @@ for o, a in opts:
     else:
         assert False, "unhandled option"
 
-if os.geteuid() != 0:
-    print "%s must be run as root" % (sys.argv[0])
-    sys.exit(2)
-
 if len(args) != 1:
     usage()
 
@@ -130,13 +126,11 @@ if not generate_icicle and icicle_file is not None:
     sys.exit(3)
 
 try:
+    config = oz.ozutil.parse_config(config_file)
+
     logging.basicConfig(level=loglevel, format=logformat)
 
     tdl = oz.TDL.TDL(open(args[0], 'r').read())
-
-    config = ConfigParser.SafeConfigParser()
-    if os.access(config_file, os.F_OK):
-        config.read(config_file)
 
     guest = oz.GuestFactory.guest_factory(tdl, config, auto, output_disk)
 
