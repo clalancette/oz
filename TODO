@@ -133,3 +133,13 @@ internally.  Since 0.9.2, libvirt has a native mechanism to take a screenshot
 of a guest, so we should use that.  The downside is that this will require a
 very new libvirt, so we should probably wait until most of the major
 distributions have caught up before going this route.
+26.  Currently we use libguestfs to extract the installation ISO, make changes
+to it, and then rebundle the ISO using mkisofs.  This is time consuming,
+partially because we are doing two copies of the ISO (once from the ISO to the
+filesystem, and once from the filesystem to the new ISO), and partially because
+we are only modifying a very small portion of the ISO.  We can improve this
+situation and get rid of one whole copy by mounting the ISO with
+fuseiso/guestmount, symlinking most of the contents to a temporary directory,
+and only modifying the small bits we need to.  Then we can pack the whole thing
+back up using mkisofs.  This gets rid of the first copy, so it should cut our
+initial time in half (plus or minus the page cache).
