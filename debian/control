@@ -12,15 +12,13 @@ Package: oz
 Architecture: all
 Depends: ${misc:Depends}, ${python:Depends},
  python (>= 2.5),
-# for gvnccapture, but only packaged in Sid:
  genisoimage,
- gvncviewer,
- libvirt-dev,
+ libvirt-dev (>= 0.9.7),
  mtools,
  openssh-client,
  python-guestfs | python-libguestfs,
  python-libxml2,
- python-libvirt,
+ python-libvirt (>= 0.9.7),
  python-pycurl,
  python-m2crypto,
  python-parted

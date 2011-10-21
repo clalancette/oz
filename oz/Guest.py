@@ -649,12 +649,12 @@ class Guest(object):
         # an I/O timeout; we sort this out below
         if count == 0:
             # if we timed out, then let's make sure to take a screenshot.
-            screenshot_text = self._capture_screenshot(libvirt_dom.XMLDesc(0))
+            screenshot_text = self._capture_screenshot(libvirt_dom)
             raise oz.OzException.OzException("Timed out waiting for install to finish.  %s" % (screenshot_text))
         elif inactivity_countdown == 0:
             # if we saw no disk or network activity in the countdown window,
             # we presume the install has hung.  Fail here
-            screenshot_text = self._capture_screenshot(libvirt_dom.XMLDesc(0))
+            screenshot_text = self._capture_screenshot(libvirt_dom)
             raise oz.OzException.OzException("No disk activity in %d seconds, failing.  %s" % (inactivity_timeout, screenshot_text))
 
         # We get here only if we got a libvirt exception
@@ -805,37 +805,42 @@ class Guest(object):
         finally:
             os.close(fd)
 
-    def _capture_screenshot(self, xml):
+    def _capture_screenshot(self, libvirt_dom):
         """
         Method to capture a screenshot of the VM.
         """
         oz.ozutil.mkdir_p(self.screenshot_dir)
-        screenshot = os.path.realpath(os.path.join(self.screenshot_dir,
-                                                   self.tdl.name + "-" + str(time.time()) + ".png"))
+        # create a new stream
+        st = libvirt_dom.connect().newStream(0)
 
-        graphics = libxml2.parseDoc(xml).xpathEval('/domain/devices/graphics')
-        if len(graphics) != 1:
-            self.log.error("Could not find the VNC port, not take screenshot")
-            return None
+        # start the screenshot
+        mimetype = libvirt_dom.screenshot(st, 0, 0)
 
-        if graphics[0].prop('type') != 'vnc':
-            self.log.error("Graphics type is not VNC, not taking screenshot")
-            return None
-
-        port = graphics[0].prop('port')
-
-        if port is None:
-            self.log.error("Port is not specified, not taking screenshot")
-            return None
-
-        vnc = "localhost:%s" % (int(port) - 5900)
+        if mimetype == "image/x-portable-pixmap":
+            ext = ".ppm"
+        elif mimetype == "image/png":
+            ext = ".png"
+        else:
+            return "Unknown screenshot type, failed to take screenshot"
 
         try:
-            oz.ozutil.subprocess_check_output(['gvnccapture', vnc, screenshot])
-            return "Check screenshot at %s for more detail" % (screenshot)
+            screenshot = os.path.realpath(os.path.join(self.screenshot_dir,
+                                                       self.tdl.name + "-" + str(time.time()) + ext))
+
+            def sink(stream, buf, opaque):
+                # opaque is the open file object
+                return os.write(opaque, buf)
+
+            fd = os.open(screenshot, os.O_RDWR|os.O_CREAT)
+            st.recvAll(sink, fd)
+            os.close(fd)
+
+            st.finish()
+            text = "Check screenshot at %s for more detail" % (screenshot)
         except:
-            self.log.error("Failed to take screenshot")
-            return "Failed to take screenshot"
+            text = "Failed to take screenshot"
+
+        return text
 
     def _guestfs_handle_setup(self, libvirt_xml):
         """

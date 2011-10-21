@@ -8,10 +8,9 @@ URL: http://aeolusproject.org/oz.html
 Source0: http://repos.fedorapeople.org/repos/aeolus/oz/%{version}/tarball/%{name}-%{version}.tar.gz
 BuildArch: noarch
 Requires: python >= 2.5
-Requires: gvnc-tools
 Requires: python-libguestfs
 Requires: libxml2-python
-Requires: libvirt-python
+Requires: libvirt-python >= 0.9.7
 # in theory, oz doesn't really require libvirtd to be local to operate
 # properly.  However, because of the libguestfs manipulations, in practice
 # it really does.  Make it depend on libvirt (so we get libvirtd) for now,
@@ -20,7 +19,7 @@ Requires: libvirt-python
 Requires: libvirt-daemon-kvm
 Requires: libvirt-daemon-qemu
 %else
-Requires: libvirt
+Requires: libvirt >= 0.9.7
 %endif
 Requires: python-pycurl
 Requires: genisoimage

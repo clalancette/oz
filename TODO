@@ -124,12 +124,7 @@ fed us bad data.
 23.  Allow a URL argument for both <files> and <commands>, where the user gives
 us a URL with file contents or commands, and Oz assumes the responsibility for
 downloading the file and then uploading it into the guest.
-24.  Switch the screenshot taking mechanism from gvnccapture to using libvirt
-internally.  Since 0.9.2, libvirt has a native mechanism to take a screenshot
-of a guest, so we should use that.  The downside is that this will require a
-very new libvirt, so we should probably wait until most of the major
-distributions have caught up before going this route.
-25.  Currently we use libguestfs to extract the installation ISO, make changes
+24.  Currently we use libguestfs to extract the installation ISO, make changes
 to it, and then rebundle the ISO using mkisofs.  This is time consuming,
 partially because we are doing two copies of the ISO (once from the ISO to the
 filesystem, and once from the filesystem to the new ISO), and partially because
