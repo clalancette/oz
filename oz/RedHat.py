@@ -860,7 +860,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
         else:
             raise oz.OzException.OzException("Could not decode URL (%s) for port forwarding" % (repourl))
 
-    def _discover_repo_locality(self, repo_url, guestaddr):
+    def _discover_repo_locality(self, repo_url, guestaddr, certdict):
         """
         Internal method to discover whether a repository is reachable from the
         guest or not.  It is used by customize_repos to decide which method to
@@ -881,6 +881,23 @@ class RedHatCDYumGuest(RedHatCDGuest):
         c.setopt(c.URL, full_url)
         c.setopt(c.CONNECTTIMEOUT, 5)
         c.setopt(c.WRITEFUNCTION, _writefunc)
+
+        curlargs = ""
+        if "sslclientcert" in certdict:
+            c.setopt(c.SSLCERT, certdict["sslclientcert"]["localname"])
+            curlargs += "--cert %s " % (certdict["sslclientcert"]["remotename"])
+        if "sslclientkey" in certdict:
+            c.setopt(c.SSLKEY,  certdict["sslclientkey"]["localname"])
+            curlargs += "--key %s " % (certdict["sslclientkey"]["remotename"])
+        if "sslcacert" in certdict:
+            c.setopt(c.CAINFO,  certdict["sslcacert"]["localname"])
+            curlargs += "--cacert %s " % (certdict["sslcacert"]["remotename"])
+        else:
+            # We enforce either setting a ca cert or setting no verify in TDL
+            # If this is a non-SSL connection setting this option is benign
+            c.setopt(c.SSL_VERIFYHOST, 0)
+            curlargs += "--insecure "
+
         try:
             c.perform()
             # if we reach here, then the perform succeeded, which means we
@@ -894,7 +911,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
 
         # now check if we can access it remotely
         try:
-            self.guest_execute_command(guestaddr, "curl " + full_url)
+            self.guest_execute_command(guestaddr, "curl %s %s" % (curlargs, full_url))
             # if we reach here, then the perform succeeded, which means we
             # could reach the repo from the guest
             guest = True
@@ -905,6 +922,15 @@ class RedHatCDYumGuest(RedHatCDGuest):
 
         return host, guest
 
+    def _remove_repos(self, guestaddr):
+        """
+        Method to remove all files associated with non-persistent repos
+        """
+        for repo in self.tdl.repositories.values():
+            if not repo.persistent:
+                for remotefile in repo.remotefiles:
+                    self.guest_execute_command(guestaddr, "rm -f %s" % (remotefile))
+    
     def _customize_repos(self, guestaddr):
         """
         Method to generate and upload custom repository files based on the TDL.
@@ -915,14 +941,49 @@ class RedHatCDYumGuest(RedHatCDGuest):
         tunport = 50000
 
         self.log.debug("Installing additional repository files")
+
+        remotecertdir = "/etc/pki/ozrepos"
+        remotecertdir_created = False
+
         for repo in self.tdl.repositories.values():
+            # Add a property to track remote files that may need deleting if the repo is not persistent
+            repo.remotefiles = []
+
+            # before we can do the locality check below we need to be sure any 
+            # required cert material is already available in file form on both
+            # the guest and the host - do that here and remember the lines
+            # we need to add to the repo file
+            # Create the local copies of any needed SSL files
+            def create_certfiles(repo, cert, fileext, propname, certdict):
+                certdict[propname] = {}
+                filename = "%s-%s" % (repo.name, fileext)
+                localname = os.path.join(self.icicle_tmp, filename)
+                certdict[propname]["localname"] = localname
+                f = open(localname, 'w')
+                f.write(cert)
+                f.close()
+                remotename = remotecertdir + "/" + filename
+                certdict[propname]["remotename"] = remotename
+                if not remotecertdir_created:
+                    self.guest_execute_command(guestaddr, "mkdir -p %s" % (remotecertdir))
+                self.guest_live_upload(guestaddr, localname, remotename)
+                repo.remotefiles.append(remotename)
+                #os.unlink(localname)
+                certdict[propname]["repoline"] = "%s=%s\n" % (propname, remotename)
+
+            certdict = {}
+
+            if repo.clientcert: create_certfiles(repo, repo.clientcert, "client.crt", "sslclientcert", certdict)
+            if repo.clientkey:  create_certfiles(repo, repo.clientkey,  "client.key", "sslclientkey" , certdict)
+            if repo.cacert:     create_certfiles(repo, repo.cacert,     "ca.pem"    , "sslcacert"    , certdict)
+
             # here we go through a repo and check if it is accessible from the
             # host and/or the guest.  If a repository is available from the
             # guest, we use the repository directly from the guest.  If the
             # repository is *only* available from the host, then we tunnel it
             # through to the guest.  If it is available from neither, we raise
             # an exception
-            host, guest = self._discover_repo_locality(repo.url, guestaddr)
+            host, guest = self._discover_repo_locality(repo.url, guestaddr, certdict)
             if not host and not guest:
                 raise oz.OzException.OzException("Could not reach repository %s from the host or the guest, aborting" % (repo.url))
 
@@ -954,14 +1015,29 @@ class RedHatCDYumGuest(RedHatCDGuest):
             f.write("skip_if_unavailable=1\n")
             f.write("enabled=1\n")
 
+            # Now write in any remembered repo lines from our earlier SSL cert activities
+            for cert in certdict:
+                f.write(certdict[cert]["repoline"])
+
+            if repo.sslverify:
+                f.write("sslverify=1\n")
+            else:
+                f.write("sslverify=0\n")
+
             if repo.signed:
                 f.write("gpgcheck=1\n")
             else:
                 f.write("gpgcheck=0\n")
+
             f.close()
 
-            self.guest_live_upload(guestaddr, localname,
-                                   "/etc/yum.repos.d/" + filename)
+            remotename = "/etc/yum.repos.d/" + filename
+            self.guest_live_upload(guestaddr, localname, remotename)
+            repo.remotefiles.append(remotename)
+
+            # Clean up any local copies of the cert files
+            for cert in certdict:
+                os.unlink(certdict[cert]["localname"])
 
             os.unlink(localname)
 
@@ -986,6 +1062,8 @@ class RedHatCDYumGuest(RedHatCDGuest):
         self.log.debug("Running custom commands")
         for content in self.tdl.commands.values():
             self.guest_execute_command(guestaddr, content)
+
+        self._remove_repos(guestaddr)
 
         self.log.debug("Syncing")
         self.guest_execute_command(guestaddr, 'sync')
