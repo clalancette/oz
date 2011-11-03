@@ -905,9 +905,6 @@ class Guest(object):
         self.log.debug("Unmounting all")
         g_handle.umount_all()
 
-        self.log.debug("Killing guestfs subprocess")
-        g_handle.kill_subprocess()
-
     def _modify_libvirt_xml_for_serial(self, libvirt_xml):
         """
         Internal method to take input libvirt XML (which may have been provided
