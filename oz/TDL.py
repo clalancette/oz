@@ -57,14 +57,25 @@ class Repository(object):
     Class that represents a single repository to be used for installing
     packages.  Objects of this type contain 3 pieces of information:
 
-    name   - The name of this repository.
-    url    - The URL of this repository.
-    signed - Whether this repository is signed (optional).
+    name       - The name of this repository.
+    url        - The URL of this repository.
+    (all remaining properties are optional with defaults in parens)
+    signed     - Whether this repository is signed (no)
+    persistent - Whether this repository should remain in the final image (yes)
+    clientcert - An SSL client certificate to access protected pulp content (None)
+    clientkey  - An SSL key to access protected pulp content (None)
+    cacert     - A CA cert to be used to validate an https repository (None)
+    sslverify  - Whether yum should check the server cert against known CA certs (no)
     """
-    def __init__(self, name, url, signed):
+    def __init__(self, name, url, signed, persistent, clientcert, clientkey, cacert, sslverify):
         self.name = name
         self.url = url
         self.signed = signed
+        self.persistent = persistent
+        self.clientcert = clientcert
+        self.clientkey = clientkey
+        self.cacert = cacert
+        self.sslverify = sslverify
 
 class Package(object):
     """
@@ -308,8 +319,39 @@ class TDL(object):
             if signed is None:
                 raise oz.OzException.OzException("Repository signed property must be 'true', 'yes', 'false', or 'no'")
 
+            persiststr = get_value(repo, 'persistent', 'persistent', optional=True)
+            if persiststr is None:
+                persiststr = 'yes'
+
+            persist = oz.ozutil.string_to_bool(persiststr)
+            if persist is None:
+                raise oz.OzException.OzException("Repository persistent property must be 'true', 'yes', 'false', or 'no'")
+
+            sslverifystr = get_value(repo, 'sslverify', 'sslverify', optional=True)
+            if sslverifystr is None:
+                sslverifystr = 'no'
+
+            sslverify = oz.ozutil.string_to_bool(sslverifystr)
+            if sslverifystr is None:
+                raise oz.OzException.OzException("Repository sslverify property must be 'true', 'yes', 'false', or 'no'")
+
+            clientcert = get_value(repo, 'clientcert', 'clientcert', optional=True)
+            if clientcert: clientcert = clientcert.strip()
+
+            clientkey = get_value(repo, 'clientkey', 'clientkey', optional=True)
+            if clientkey: clientkey = clientkey.strip()
+
+            if bool(clientcert) ^ bool(clientkey):
+                raise oz.OzException.OzException("Must specify both a clientcert and clientkey for a repo or neither")
+
+            cacert = get_value(repo, 'cacert', 'cacert', optional=True)
+            if cacert: cacert = cacert.strip()
+
+            if sslverify and not cacert:
+                raise oz.OzException.OzException("If sslverify is true you must also provide a ca cert")
+
             # no need to delete - if the name matches we just overwrite here
-            self.repositories[name] = Repository(name, url, signed)
+            self.repositories[name] = Repository(name, url, signed, persist, clientcert, clientkey, cacert, sslverify)
 
     def __del__(self):
         if self.doc is not None:
