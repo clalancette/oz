@@ -411,10 +411,10 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         f.write("SELINUX=permissive\n")
         f.write("SELINUXTYPE=targeted\n")
         f.close()
-
-        g_handle.upload(selinuxfile, "/etc/selinux/config")
-
-        os.unlink(selinuxfile)
+        try:
+            g_handle.upload(selinuxfile, "/etc/selinux/config")
+        finally:
+            os.unlink(selinuxfile)
 
     def _collect_setup(self, libvirt_xml):
         """
