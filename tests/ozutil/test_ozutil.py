@@ -195,11 +195,13 @@ def test_genmac():
 
 # test oz.ozutil.mkdir_p
 def test_mkdir_p(tmpdir):
-    oz.ozutil.mkdir_p('foo')
+    fullname = os.path.join(str(tmpdir), 'foo')
+    oz.ozutil.mkdir_p(fullname)
 
 def test_mkdir_p_twice(tmpdir):
-    oz.ozutil.mkdir_p('foo')
-    oz.ozutil.mkdir_p('foo')
+    fullname = os.path.join(str(tmpdir), 'foo')
+    oz.ozutil.mkdir_p(fullname)
+    oz.ozutil.mkdir_p(fullname)
 
 def test_mkdir_p_file_exists(tmpdir):
     fullname = os.path.join(str(tmpdir), 'file_exists')
