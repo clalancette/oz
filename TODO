@@ -143,3 +143,6 @@ fuseiso/guestmount, symlinking most of the contents to a temporary directory,
 and only modifying the small bits we need to.  Then we can pack the whole thing
 back up using mkisofs.  This gets rid of the first copy, so it should cut our
 initial time in half (plus or minus the page cache).
+27.  Change setup.py to make the directories /var/lib/oz/*.  Since that is
+repeated in both of the RPM and deb building stuff, it would be better to just
+do it on python setup.py install instead.
