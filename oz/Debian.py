@@ -54,7 +54,7 @@ class DebianGuest(oz.Guest.CDGuest):
             def _preseed_sub(line):
                 """
                 Method that is called back from oz.ozutil.copy_modify_file() to
-                modify preseed files as appropriate for Ubuntu.
+                modify preseed files as appropriate for Debian.
                 """
                 if re.match('d-i passwd/root-password password', line):
                     return 'd-i passwd/root-password password ' + self.rootpw + '\n'
