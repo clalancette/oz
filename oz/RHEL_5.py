@@ -29,7 +29,11 @@ class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
     """
     Class for RHEL-5 installation.
     """
-    def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus):
+    # FIXME: For consistency most of the __init__ functions take self, tdl,
+    # config, auto, output_disk (in that order).  However, in order to not break
+    # imagefactory, we want to make output_disk have a default of None, and we
+    # can't do that without putting output_disk at the end.
+    def __init__(self, tdl, config, auto, nicmodel, diskbus, output_disk=None):
         oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, output_disk,
                                             nicmodel, diskbus, "rhel-5-jeos.ks",
                                             True, True, "cpio")
@@ -91,6 +95,6 @@ def get_class(tdl, config, auto, output_disk):
     Factory method for RHEL-5 installs.
     """
     if tdl.update in ["GOLD", "U1", "U2", "U3"]:
-        return RHEL5Guest(tdl, config, auto, output_disk, "rtl8139", None)
+        return RHEL5Guest(tdl, config, auto, "rtl8139", None, output_disk)
     if tdl.update in ["U4", "U5", "U6", "U7"]:
-        return RHEL5Guest(tdl, config, auto, output_disk, "virtio", "virtio")
+        return RHEL5Guest(tdl, config, auto, "virtio", "virtio", output_disk)

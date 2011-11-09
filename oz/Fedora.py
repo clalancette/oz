@@ -28,8 +28,12 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
     """
     Class for Fedora 7, 8, 9, 10, 11, 12, 13, 14, 15, and 16 installation.
     """
-    def __init__(self, tdl, config, auto, output_disk, nicmodel, haverepo,
-                 diskbus, brokenisomethod):
+    # FIXME: For consistency most of the __init__ functions take self, tdl,
+    # config, auto, output_disk (in that order).  However, in order to not break
+    # imagefactory, we want to make output_disk have a default of None, and we
+    # can't do that without putting output_disk at the end.
+    def __init__(self, tdl, config, auto, nicmodel, haverepo,
+                 diskbus, brokenisomethod, output_disk=None):
         directkernel = "cpio"
         if tdl.update == "16":
             directkernel = None
@@ -90,8 +94,8 @@ def get_class(tdl, config, auto, output_disk):
     Factory method for Fedora installs.
     """
     if tdl.update in ["10", "11", "12", "13", "14", "15", "16"]:
-        return FedoraGuest(tdl, config, auto, output_disk, "virtio", True,
-                           "virtio", True)
+        return FedoraGuest(tdl, config, auto, "virtio", True, "virtio", True,
+                           output_disk)
     if tdl.update in ["7", "8", "9"]:
-        return FedoraGuest(tdl, config, auto, output_disk, "rtl8139", False,
-                           None, False)
+        return FedoraGuest(tdl, config, auto, "rtl8139", False, None, False,
+                           output_disk)

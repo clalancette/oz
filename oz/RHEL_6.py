@@ -28,7 +28,7 @@ class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
     """
     Class for RHEL-6 installation.
     """
-    def __init__(self, tdl, config, auto, output_disk):
+    def __init__(self, tdl, config, auto, output_disk=None):
         oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, output_disk,
                                             "virtio", "virtio",
                                             "rhel-6-jeos.ks", True, True,
