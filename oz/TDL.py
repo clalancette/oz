@@ -59,7 +59,7 @@ class Repository(object):
 
     name       - The name of this repository.
     url        - The URL of this repository.
-    (all remaining properties are optional with defaults in parentheses)
+    (all remaining properties are optional with defaults in parens)
     signed     - Whether this repository is signed (no)
     persistent - Whether this repository should remain in the final image (yes)
     clientcert - An SSL client certificate to access protected content - eg pulp repos (None)
@@ -123,10 +123,18 @@ class TDL(object):
                    dictionary is indexed by commands.  This dictionary may be
                    empty.
     """
-    def __init__(self, xmlstring, rootpw_required=False):
+    def __init__(self, xmlstring, rootpw_required=False, validate_tdl_version = False):
         self.doc = None
 
         self.doc = libxml2.parseDoc(xmlstring)
+
+        template = self.doc.xpathEval('/template')
+        if len(template) != 1:
+            raise oz.OzException.OzException("Expected 1 template section in TDL, saw %d" % (len(template)))
+        self.version = template[0].prop('tdl_version')
+
+        if validate_tdl_version:
+            self._validate_tdl_version()
 
         self.name = get_value(self.doc, '/template/name', 'template name')
 
@@ -352,6 +360,18 @@ class TDL(object):
                                                  clientcert, clientkey, cacert,
                                                  sslverify)
 
+    # I declare we will use a 2 element version string with a dot
+    # This allows simple comparison by conversion to float
+    schema_version = "0.1"
+
+    def _validate_tdl_version(self):
+        if not self.version:
+            raise oz.OzException.OzException("TDL schema validation requested but no tdl_version found in template")
+
+        if float(self.version) > float(self.schema_version):
+            raise oz.OzException.OzException("TDL version (%s) is higher than our known version (%s)" % 
+                                                                   (self.version, self.schema_version) )
+                                    
     def __del__(self):
         if self.doc is not None:
             self.doc.freeDoc()
