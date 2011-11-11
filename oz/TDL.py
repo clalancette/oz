@@ -128,6 +128,14 @@ class TDL(object):
 
         self.doc = libxml2.parseDoc(xmlstring)
 
+        template = self.doc.xpathEval('/template')
+        if len(template) != 1:
+            raise oz.OzException.OzException("Expected 1 template section in TDL, saw %d" % (len(template)))
+        self.version = template[0].prop('tdl_version')
+
+        if self.version:
+            self._validate_tdl_version()
+
         self.name = get_value(self.doc, '/template/name', 'template name')
 
         self.distro = get_value(self.doc, '/template/os/name', 'OS name')
@@ -352,6 +360,15 @@ class TDL(object):
                                                  clientcert, clientkey, cacert,
                                                  sslverify)
 
+    # I declare we will use a 2 element version string with a dot
+    # This allows simple comparison by conversion to float
+    schema_version = "0.1"
+
+    def _validate_tdl_version(self):
+        if float(self.version) > float(self.schema_version):
+            raise oz.OzException.OzException("TDL version (%s) is higher than our known version (%s)" % 
+                                                                   (self.version, self.schema_version) )
+                                    
     def __del__(self):
         if self.doc is not None:
             self.doc.freeDoc()
