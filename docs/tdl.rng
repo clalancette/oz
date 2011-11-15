@@ -117,9 +117,18 @@
                   <element name='url'>
                     <text/>
                   </element>
+                  <element name='persisted'>
+                    <ref name='bool'/>
+                  </element>
                   <optional>
                     <element name='signed'>
                       <ref name='bool'/>
+                    </element>
+                    <element name='clientcert'>
+                      <ref name='cert'/>
+                    </element>
+                     <element name='clientkey'>
+                      <ref name='key'/>
                     </element>
                   </optional>
                 </interleave>
@@ -138,6 +147,16 @@
     <element name='url'>
       <text/>
     </element>
+  </define>
+
+  <define name='cert'>
+    <data type="string">
+    </data>
+  </define>
+
+  <define name='key'>
+    <data type="string">
+    </data>
   </define>
 
   <define name='iso'>
