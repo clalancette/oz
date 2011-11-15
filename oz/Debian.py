@@ -101,7 +101,7 @@ class DebianGuest(oz.Guest.CDGuest):
                                            "-v", "-v", "-o", self.output_iso,
                                            self.iso_contents])
 
-def get_class(tdl, config, auto, output_disk):
+def get_class(tdl, config, auto, output_disk = None):
     """
     Factory method for Debian installs.
     """

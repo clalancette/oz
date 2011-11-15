@@ -526,7 +526,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
 
         return self._internal_customize(libvirt_xml, "only")
 
-def get_class(tdl, config, auto, output_disk):
+def get_class(tdl, config, auto, output_disk = None):
     """
     Factory method for OpenSUSE installs.
     """
