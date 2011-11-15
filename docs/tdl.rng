@@ -117,19 +117,37 @@
                   <element name='url'>
                     <text/>
                   </element>
-                  <element name='persisted'>
-                    <ref name='bool'/>
-                  </element>
                   <optional>
                     <element name='signed'>
                       <ref name='bool'/>
                     </element>
-                    <element name='clientcert'>
-                      <text/>
+                  </optional>
+                  <optional>
+                    <element name='persisted'>
+                      <ref name='bool'/>
                     </element>
-                    <element name='clientkey'>
-                      <text/>
-                    </element>
+                  </optional>
+                  <optional>
+                    <interleave>
+                      <element name='clientcert'>
+                        <text/>
+                      </element>
+                      <optional>
+                        <element name='clientkey'>
+                          <text/>
+                        </element>
+                      </optional>
+                    </interleave>
+                  </optional>
+                  <optional>
+                    <interleave>
+                      <element name='sslverify'>
+                        <ref name='bool'/>
+                      </element>
+                      <element name='cacert'>
+                        <text/>
+                      </element>
+                    </interleave>
                   </optional>
                 </interleave>
               </element>
