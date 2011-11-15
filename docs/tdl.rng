@@ -7,6 +7,11 @@
 
   <define name='template'>
     <element name='template'>
+      <optional>
+        <attribute name='version'>
+          <text/>
+        </attribute>
+      </optional>
       <interleave>
         <element name='name'>
           <text/>
