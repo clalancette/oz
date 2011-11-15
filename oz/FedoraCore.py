@@ -55,7 +55,7 @@ class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
             initrdline += "cdrom:/dev/cdrom\n"
         self._modify_isolinux(initrdline)
 
-def get_class(tdl, config, auto, output_disk):
+def get_class(tdl, config, auto, output_disk=None):
     """
     Factory method for Fedora Core installs.
     """

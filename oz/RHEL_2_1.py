@@ -29,7 +29,7 @@ class RHEL21Guest(oz.RedHat.RedHatFDGuest):
         oz.RedHat.RedHatFDGuest.__init__(self, tdl, config, auto, output_disk,
                                          "rhel-2.1-jeos.ks", "pcnet")
 
-def get_class(tdl, config, auto, output_disk):
+def get_class(tdl, config, auto, output_disk=None):
     """
     Factory method for RHEL-2.1 installs.
     """

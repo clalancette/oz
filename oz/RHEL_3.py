@@ -89,7 +89,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             # The boot ISOs for CentOS-3 don't have a whole lot of identifying
             # information.  We just pass through here, doing nothing
 
-def get_class(tdl, config, auto, output_disk):
+def get_class(tdl, config, auto, output_disk=None):
     """
     Factory method for RHEL-3 installs.
     """

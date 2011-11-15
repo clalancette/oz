@@ -87,7 +87,7 @@ class RHEL4Guest(oz.RedHat.RedHatCDGuest):
                 if not re.match("CentOS *", pvd.volume_identifier):
                     raise oz.OzException.OzException("Invalid boot.iso for CentOS-4 URL install")
 
-def get_class(tdl, config, auto, output_disk):
+def get_class(tdl, config, auto, output_disk=None):
     """
     Factory method for RHEL-4 installs.
     """

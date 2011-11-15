@@ -234,7 +234,7 @@ class Windows2008and7(Windows):
             internal_timeout = 6000
         return self._do_install(internal_timeout, force, 2)
 
-def get_class(tdl, config, auto, output_disk):
+def get_class(tdl, config, auto, output_disk=None):
     """
     Factory method for Windows installs.
     """

@@ -83,7 +83,7 @@ class RHL70and71and72and73and8Guest(oz.RedHat.RedHatFDGuest):
                                          "rhl-" + tdl.update + "-jeos.ks",
                                          nicmodel)
 
-def get_class(tdl, config, auto, output_disk):
+def get_class(tdl, config, auto, output_disk=None):
     """
     Factory method for RHL installs.
     """

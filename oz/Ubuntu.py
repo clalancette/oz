@@ -124,7 +124,7 @@ class UbuntuGuest(oz.Guest.CDGuest):
                 timeout = 3000
         return self._do_install(timeout, force, 0)
 
-def get_class(tdl, config, auto, output_disk):
+def get_class(tdl, config, auto, output_disk=None):
     """
     Factory method for Ubuntu installs.
     """

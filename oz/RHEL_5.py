@@ -90,7 +90,7 @@ class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
                 if not re.match("CentOS *", pvd.volume_identifier):
                     raise oz.OzException.OzException("Invalid boot.iso for CentOS-5 URL install")
 
-def get_class(tdl, config, auto, output_disk):
+def get_class(tdl, config, auto, output_disk=None):
     """
     Factory method for RHEL-5 installs.
     """
