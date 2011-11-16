@@ -94,5 +94,5 @@ def get_class(tdl, config, auto, output_disk=None):
     """
     Factory method for Mandrake installs.
     """
-    if tdl.update in ["9.2"]:
+    if tdl.update in ["9.2", "10.0"]:
         return MandrakeGuest(tdl, config, auto, output_disk)
