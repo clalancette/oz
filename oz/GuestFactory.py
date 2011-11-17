@@ -108,4 +108,4 @@ def distrolist():
     print "   Scientific Linux 6: 0"
     print "   OEL 6: 0, 1"
     print "   Debian: 5, 6"
-    print "   Mandrake: 9.2, 10.0, 10.1"
+    print "   Mandrake: 9.2, 10.0, 10.1, 10.2"
