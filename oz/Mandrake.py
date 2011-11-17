@@ -73,7 +73,7 @@ class MandrakeGuest(oz.Guest.CDGuest):
         f.write("prompt 0\n")
         f.write("label customiso\n")
         f.write("  kernel alt0/vmlinuz\n")
-        f.write("  append initrd=alt0/all.rdz ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom kickstart=/auto_inst.cfg\n")
+        f.write("  append initrd=alt0/all.rdz ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom kickstart=auto_inst.cfg\n")
         f.close()
 
     def _generate_new_iso(self):
@@ -94,5 +94,5 @@ def get_class(tdl, config, auto, output_disk=None):
     """
     Factory method for Mandrake installs.
     """
-    if tdl.update in ["9.2", "10.0"]:
+    if tdl.update in ["9.2", "10.0", "10.1"]:
         return MandrakeGuest(tdl, config, auto, output_disk)
