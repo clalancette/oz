@@ -1,4 +1,5 @@
 # Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2012  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -37,9 +38,8 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
                                   None, None, diskbus, True, False)
 
         self.reboots = 1
-        if self.tdl.update == "10.3":
-            # for 10.3, we don't have a 2-stage install process so don't do
-            # additional reboots
+        if self.tdl.update in ["10.3"]:
+            # for 10.3 we don't have a 2-stage install process so don't reboot
             self.reboots = 0
 
         self.autoyast = auto
@@ -536,5 +536,5 @@ def get_class(tdl, config, auto, output_disk=None):
     """
     if tdl.update in ["10.3"]:
         return OpenSUSEGuest(tdl, config, auto, output_disk, "rtl8139", "ide")
-    if tdl.update in ["11.0", "11.1", "11.2", "11.3", "11.4"]:
+    if tdl.update in ["11.0", "11.1", "11.2", "11.3", "11.4", "12.1"]:
         return OpenSUSEGuest(tdl, config, auto, output_disk, "virtio", "virtio")
