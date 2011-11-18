@@ -23,6 +23,9 @@ d-i passwd/root-password password %ROOTPW%
 d-i passwd/root-password-again password %ROOTPW%
 
 tasksel tasksel/first multiselect standard
+d-i	pkgsel/include/install-recommends	boolean true
+d-i	pkgsel/include	string ltsp-server-standalone openssh-server python-software-properties
+d-i	preseed/late_command	string chroot /target /usr/sbin/ltsp-update-sshkeys
 
 d-i grub-installer/only_debian boolean true
 d-i grub-installer/with_other_os boolean true
