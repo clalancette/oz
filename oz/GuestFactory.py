@@ -31,6 +31,7 @@ import oz.Windows
 import oz.OpenSUSE
 import oz.Debian
 import oz.Mandrake
+import oz.Mandriva
 import oz.OzException
 
 def guest_factory(tdl, config, auto, output_disk=None):
@@ -78,6 +79,8 @@ def guest_factory(tdl, config, auto, output_disk=None):
         klass = oz.Debian.get_class(tdl, config, auto, output_disk)
     elif tdl.distro == "Mandrake":
         klass = oz.Mandrake.get_class(tdl, config, auto, output_disk)
+    elif tdl.distro == "Mandriva":
+        klass = oz.Mandriva.get_class(tdl, config, auto, output_disk)
 
     if klass is None:
         raise oz.OzException.OzException("Unsupported " + tdl.distro + " update " + tdl.update)
@@ -109,3 +112,4 @@ def distrolist():
     print "   OEL 6: 0, 1"
     print "   Debian: 5, 6"
     print "   Mandrake: 9.2, 10.0, 10.1, 10.2"
+    print "   Mandriva: 2006.0"

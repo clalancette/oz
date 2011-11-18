@@ -15,7 +15,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 """
-Mandrake installation
+Mandriva installation
 """
 
 import shutil
@@ -26,20 +26,17 @@ import oz.Guest
 import oz.ozutil
 import oz.OzException
 
-class MandrakeGuest(oz.Guest.CDGuest):
+class MandrivaGuest(oz.Guest.CDGuest):
     """
-    Class for Mandrake installation.
+    Class for Mandriva installation.
     """
     def __init__(self, tdl, config, auto, output_disk):
         oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, None,
                                   None, None, None, True, False)
 
-        if self.tdl.arch != "i386":
-            raise oz.OzException.OzException("Mandrake only supports i386 architecture")
-
         self.auto = auto
         if self.auto is None:
-            self.auto = oz.ozutil.generate_full_auto_path("mandrake-" + self.tdl.update + "-jeos.cfg")
+            self.auto = oz.ozutil.generate_full_auto_path("mandriva-" + self.tdl.update + "-jeos.cfg")
 
     def _modify_iso(self):
         """
@@ -51,12 +48,12 @@ class MandrakeGuest(oz.Guest.CDGuest):
 
         outname = os.path.join(self.iso_contents, "auto_inst.cfg")
 
-        if self.auto == oz.ozutil.generate_full_auto_path("mandrake-" + self.tdl.update + "-jeos.cfg"):
+        if self.auto == oz.ozutil.generate_full_auto_path("mandriva-" + self.tdl.update + "-jeos.cfg"):
 
             def _cfg_sub(line):
                 """
                 Method that is called back from oz.ozutil.copy_modify_file() to
-                modify preseed files as appropriate for Mandrake.
+                modify preseed files as appropriate for Mandriva.
                 """
                 if re.search("'password' =>", line):
                     return "			'password' => '" + self.rootpw + "',\n"
@@ -95,7 +92,7 @@ class MandrakeGuest(oz.Guest.CDGuest):
 
 def get_class(tdl, config, auto, output_disk=None):
     """
-    Factory method for Mandrake installs.
+    Factory method for Mandriva installs.
     """
-    if tdl.update in ["9.2", "10.0", "10.1"]:
-        return MandrakeGuest(tdl, config, auto, output_disk)
+    if tdl.update in ["2005", "2006.0"]:
+        return MandrivaGuest(tdl, config, auto, output_disk)
