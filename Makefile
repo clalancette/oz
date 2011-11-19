@@ -21,7 +21,7 @@ release: signed-rpm signed-tarball
 examples-manpage:
 	echo "Generating oz-examples man page"
 	@(cat man/examples/header ; \
-	for example in $$( ls man/examples/*.example ) ; do \
+	for example in man/examples/*.example ; do \
 	    sed -e 's/^EXAMPLE \(.*\)/.SH EXAMPLE \1/' \
 		-e 's/^#\(.*\)/.RS\n#\1\n.RE/' $$example ; \
 	done ; \
