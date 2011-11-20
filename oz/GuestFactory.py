@@ -112,4 +112,4 @@ def distrolist():
     print "   OEL 6: 0, 1"
     print "   Debian: 5, 6"
     print "   Mandrake: 9.2, 10.0, 10.1, 10.2"
-    print "   Mandriva: 2006.0"
+    print "   Mandriva: 2005, 2006.0, 2007.0"

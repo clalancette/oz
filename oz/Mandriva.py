@@ -38,6 +38,10 @@ class MandrivaGuest(oz.Guest.CDGuest):
         if self.auto is None:
             self.auto = oz.ozutil.generate_full_auto_path("mandriva-" + self.tdl.update + "-jeos.cfg")
 
+        self.mandriva_arch = self.tdl.arch
+        if self.mandriva_arch == "i386":
+            self.mandriva_arch = "i586"
+
     def _modify_iso(self):
         """
         Method to make the boot ISO auto-boot with appropriate parameters.
@@ -46,7 +50,12 @@ class MandrivaGuest(oz.Guest.CDGuest):
 
         self.log.debug("Copying cfg file")
 
-        outname = os.path.join(self.iso_contents, "auto_inst.cfg")
+        if self.tdl.update == "2007.0":
+            pathdir = os.path.join(self.iso_contents, self.mandriva_arch)
+        else:
+            pathdir = self.iso_contents
+
+        outname = os.path.join(pathdir, "auto_inst.cfg")
 
         if self.auto == oz.ozutil.generate_full_auto_path("mandriva-" + self.tdl.update + "-jeos.cfg"):
 
@@ -65,8 +74,7 @@ class MandrivaGuest(oz.Guest.CDGuest):
             shutil.copy(self.auto, outname)
 
         self.log.debug("Modifying isolinux.cfg")
-        isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
-                                   "isolinux.cfg")
+        isolinuxcfg = os.path.join(pathdir, "isolinux", "isolinux.cfg")
         f = open(isolinuxcfg, 'w')
         f.write("default customiso\n")
         f.write("timeout 1\n")
@@ -81,10 +89,18 @@ class MandrivaGuest(oz.Guest.CDGuest):
         Method to create a new ISO based on the modified CD/DVD.
         """
         self.log.info("Generating new ISO")
+
+        isolinuxdir = ""
+        if self.tdl.update == "2007.0":
+            isolinuxdir = self.mandriva_arch
+
+        isolinuxbin = os.path.join(isolinuxdir, "isolinux/isolinux.bin")
+        isolinuxboot = os.path.join(isolinuxdir, "isolinux/boot.cat")
+
         oz.ozutil.subprocess_check_output(["genisoimage", "-r", "-V", "Custom",
                                            "-J", "-l", "-no-emul-boot",
-                                           "-b", "isolinux/isolinux.bin",
-                                           "-c", "isolinux/boot.cat",
+                                           "-b", isolinuxbin,
+                                           "-c", isolinuxboot,
                                            "-boot-load-size", "4",
                                            "-cache-inodes", "-boot-info-table",
                                            "-v", "-v", "-o", self.output_iso,
@@ -94,5 +110,5 @@ def get_class(tdl, config, auto, output_disk=None):
     """
     Factory method for Mandriva installs.
     """
-    if tdl.update in ["2005", "2006.0"]:
+    if tdl.update in ["2005", "2006.0", "2007.0"]:
         return MandrivaGuest(tdl, config, auto, output_disk)
