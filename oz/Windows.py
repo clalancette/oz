@@ -53,6 +53,10 @@ class Windows2000andXPand2003(Windows):
         if self.siffile is None:
             self.siffile = oz.ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif")
 
+        self.winarch = self.tdl.arch
+        if self.winarch == "x86_64":
+            self.winarch = "amd64"
+
     def _generate_new_iso(self):
         """
         Method to create a new ISO based on the modified CD/DVD.
@@ -92,16 +96,6 @@ class Windows2000andXPand2003(Windows):
             createpart = True
         return self._internal_generate_diskimage(size, force, createpart)
 
-    def _get_windows_arch(self):
-        """
-        Convert a TDL arch (i386 or x86_64) to a Windows 2000/XP/2003 compatible
-        arch (i386 or amd64).
-        """
-        arch = self.tdl.arch
-        if arch == "x86_64":
-            arch = "amd64"
-        return arch
-
     def _modify_iso(self):
         """
         Method to make the boot ISO auto-boot with appropriate parameters.
@@ -112,8 +106,7 @@ class Windows2000andXPand2003(Windows):
         self._geteltorito(self.orig_iso, os.path.join(self.iso_contents,
                                                       "cdboot", "boot.bin"))
 
-        outname = os.path.join(self.iso_contents, self._get_windows_arch(),
-                               "winnt.sif")
+        outname = os.path.join(self.iso_contents, self.winarch, "winnt.sif")
 
         if self.siffile == oz.ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif"):
             # if this is the oz default siffile, we modify certain parameters
@@ -162,6 +155,10 @@ class Windows2008and7(Windows):
         if self.unattendfile is None:
             self.unattendfile = oz.ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.xml")
 
+        self.winarch = "x86"
+        if self.tdl.arch == "x86_64":
+            self.winarch = "amd64"
+
     def _generate_new_iso(self):
         """
         Method to create a new ISO based on the modified CD/DVD.
@@ -178,16 +175,6 @@ class Windows2008and7(Windows):
                                            "-V", "Custom", "-udf",
                                            "-o", self.output_iso,
                                            self.iso_contents])
-
-    def _get_windows_arch(self):
-        """
-        Convert a TDL arch (i386 or x86_64) to a Windows 2008/7 compatible
-        arch (x86 or amd64).
-        """
-        arch = "x86"
-        if self.tdl.arch == "x86_64":
-            arch = "amd64"
-        return arch
 
     def _modify_iso(self):
         """
@@ -209,8 +196,7 @@ class Windows2008and7(Windows):
             xp.xpathRegisterNs("ms", "urn:schemas-microsoft-com:unattend")
 
             for component in xp.xpathEval('/ms:unattend/ms:settings/ms:component'):
-                component.setProp('processorArchitecture',
-                                  self._get_windows_arch())
+                component.setProp('processorArchitecture', self.winarch)
 
             keys = xp.xpathEval('/ms:unattend/ms:settings/ms:component/ms:ProductKey')
             keys[0].setContent(self.tdl.key)
