@@ -93,9 +93,83 @@ class MandrakeGuest(oz.Guest.CDGuest):
                                            "-v", "-v", "-o", self.output_iso,
                                            self.iso_contents])
 
+class Mandrake82Guest(oz.Guest.CDGuest):
+    """
+    Class for Mandrake installation.
+    """
+    def __init__(self, tdl, config, auto, output_disk):
+        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, None,
+                                  None, None, None, True, False)
+
+        if self.tdl.arch != "i386":
+            raise oz.OzException.OzException("Mandrake only supports i386 architecture")
+
+        self.auto = auto
+        if self.auto is None:
+            self.auto = oz.ozutil.generate_full_auto_path("mandrake-" + self.tdl.update + "-jeos.cfg")
+
+    def _modify_iso(self):
+        """
+        Method to make the boot ISO auto-boot with appropriate parameters.
+        """
+        self.log.debug("Modifying ISO")
+
+        outname = os.path.join(self.iso_contents, "auto_inst.cfg")
+        if self.auto == oz.ozutil.generate_full_auto_path("mandrake-" + self.tdl.update + "-jeos.cfg"):
+
+            def _cfg_sub(line):
+                """
+                Method that is called back from oz.ozutil.copy_modify_file() to
+                modify preseed files as appropriate for Mandrake.
+                """
+                if re.search("'password' =>", line):
+                    return "			'password' => '" + self.rootpw + "',\n"
+                else:
+                    return line
+
+            oz.ozutil.copy_modify_file(self.auto, outname, _cfg_sub)
+        else:
+            shutil.copy(self.auto, outname)
+
+        oz.ozutil.mkdir_p(self.icicle_tmp)
+        syslinux = os.path.join(self.icicle_tmp, 'syslinux.cfg')
+        f = open(syslinux, 'w')
+        f.write("default customiso\n")
+        f.write("timeout 1\n")
+        f.write("prompt 0\n")
+        f.write("label customiso\n")
+        f.write("  kernel vmlinuz\n")
+        f.write("  append initrd=cdrom.rdz ramdisk_size=32000 root=/dev/ram3 automatic=method:cdrom vga=788 auto_install=auto_inst.cfg\n")
+        f.close()
+
+        cdromimg = os.path.join(self.iso_contents, "Boot", "cdrom.img")
+        oz.ozutil.subprocess_check_output(["mcopy", "-n", "-o", "-i",
+                                           cdromimg, syslinux,
+                                           "::SYSLINUX.CFG"])
+
+    def _generate_new_iso(self):
+        """
+        Method to create a new ISO based on the modified CD/DVD.
+        """
+        self.log.info("Generating new ISO")
+        oz.ozutil.subprocess_check_output(["genisoimage", "-r", "-V", "Custom",
+                                           "-J", "-cache-inodes",
+                                           "-b", "Boot/cdrom.img",
+                                           "-c", "Boot/boot.cat",
+                                           "-v", "-v", "-o", self.output_iso,
+                                           self.iso_contents])
+
+    def install(self, timeout=None, force=False):
+        internal_timeout = timeout
+        if internal_timeout is None:
+            internal_timeout = 2500
+        return self._do_install(internal_timeout, force, 0)
+
 def get_class(tdl, config, auto, output_disk=None):
     """
     Factory method for Mandrake installs.
     """
+    if tdl.update in ["8.2"]:
+        return Mandrake82Guest(tdl, config, auto, output_disk)
     if tdl.update in ["9.1", "9.2", "10.0", "10.1"]:
         return MandrakeGuest(tdl, config, auto, output_disk)
