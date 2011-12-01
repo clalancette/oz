@@ -962,7 +962,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
             # Create the local copies of any needed SSL files
             def _create_certfiles(repo, cert, fileext, propname):
                 certdict[propname] = {}
-                filename = "%s-%s" % (repo.name, fileext)
+                filename = "%s-%s" % (repo.name.replace(" ", "_"), fileext)
                 localname = os.path.join(self.icicle_tmp, filename)
                 certdict[propname]["localname"] = localname
                 f = open(localname, 'w')
@@ -1013,7 +1013,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
             if not host and not guest:
                 raise oz.OzException.OzException("Could not reach repository %s from the host or the guest, aborting" % (repo.url))
 
-            filename = repo.name + ".repo"
+            filename = repo.name.replace(" ", "_") + ".repo"
             localname = os.path.join(self.icicle_tmp, filename)
             f = open(localname, 'w')
             f.write("[%s]\n" % repo.name)
