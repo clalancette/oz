@@ -982,7 +982,9 @@ class Guest(object):
             # OK, we got data back from the socket.  Check to see if the data
             # is what we expect; essentially, some up-front hex-garbage,
             # followed by a !<ip>,<uuid>!
-            match = re.search("!(.*?,.*?)!$", data)
+            # Exclude ! from the wildcard to avoid errors when rx-ing two
+            # announce messages in the same string
+            match = re.search("!([^!]*?,[^!]*?)!$", data)
             if match is not None:
                 if len(match.groups()) != 1:
                     raise oz.OzException.OzException("Guest checked in with no data")
