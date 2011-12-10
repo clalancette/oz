@@ -50,7 +50,7 @@ class MandrivaGuest(oz.Guest.CDGuest):
 
         self.log.debug("Copying cfg file")
 
-        if self.tdl.update == "2007.0":
+        if self.tdl.update in ["2007.0", "2008.0"]:
             pathdir = os.path.join(self.iso_contents, self.mandriva_arch)
         else:
             pathdir = self.iso_contents
@@ -91,7 +91,7 @@ class MandrivaGuest(oz.Guest.CDGuest):
         self.log.info("Generating new ISO")
 
         isolinuxdir = ""
-        if self.tdl.update == "2007.0":
+        if self.tdl.update in ["2007.0", "2008.0"]:
             isolinuxdir = self.mandriva_arch
 
         isolinuxbin = os.path.join(isolinuxdir, "isolinux/isolinux.bin")
@@ -110,5 +110,5 @@ def get_class(tdl, config, auto, output_disk=None):
     """
     Factory method for Mandriva installs.
     """
-    if tdl.update in ["2005", "2006.0", "2007.0"]:
+    if tdl.update in ["2005", "2006.0", "2007.0", "2008.0"]:
         return MandrivaGuest(tdl, config, auto, output_disk)
