@@ -1,0 +1,64 @@
+<template>
+  <name>rhel5-u7</name>
+  <os>
+    <name>RHEL-5</name>
+    <version>U7</version>
+    <arch>i386</arch>
+    <install type='url'>
+      <url>http://someserver/path/to/installation</url>
+    </install>
+  </os>
+  <description>A RHEL5 Update 7 image</description>
+  <repositories>
+    <!-- Different ways to represent persistent=False -->
+    <repository name='persist-1-false'>
+      <url>http://path/to/my/repo-1</url>
+      <persisted>No</persisted>
+    </repository>
+    <repository name='persist-2-false'>
+      <url>http://path/to/my/repo-2</url>
+      <persisted>no</persisted>
+    </repository>
+    <repository name='persist-3-false'>
+      <url>http://path/to/my/repo-3</url>
+      <persisted>NO</persisted>
+    </repository>
+    <repository name='persist-4-false'>
+      <url>http://path/to/my/repo-4</url>
+      <persisted>false</persisted>
+    </repository>
+    <repository name='persist-5-false'>
+      <url>http://path/to/my/repo-5</url>
+      <persisted>FALSE</persisted>
+    </repository>
+    <repository name='persist-6-false'>
+      <url>http://path/to/my/repo-6</url>
+      <persisted>False</persisted>
+    </repository>
+    <!-- Different ways to represent persistent -->
+    <repository name='persist-7-true'>
+      <url>http://path/to/my/repo-7</url>
+      <persisted>Yes</persisted>
+    </repository>
+    <repository name='persist-8-true'>
+      <url>http://path/to/my/repo-8</url>
+      <persisted>yes</persisted>
+    </repository>
+    <repository name='persist-9-true'>
+      <url>http://path/to/my/repo-9</url>
+      <persisted>YES</persisted>
+    </repository>
+    <repository name='persist-10-true'>
+      <url>http://path/to/my/repo-10</url>
+      <persisted>True</persisted>
+    </repository>
+    <repository name='persist-11-true'>
+      <url>http://path/to/my/repo-11</url>
+      <persisted>true</persisted>
+    </repository>
+    <repository name='persist-12-true'>
+      <url>http://path/to/my/repo-12</url>
+      <persisted>TRUE</persisted>
+    </repository>
+  </repositories>
+</template>

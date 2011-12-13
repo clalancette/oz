@@ -19,6 +19,7 @@ try:
     import oz.TDL
     import oz.GuestFactory
 except ImportError, e:
+    print e
     print 'Unable to import oz.  Is oz installed or in your PYTHONPATH?'
     sys.exit(1)
 
