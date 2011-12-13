@@ -868,7 +868,6 @@ class RedHatCDYumGuest(RedHatCDGuest):
         """
         # this is the path to the metadata XML
         full_url = repo_url + "/repodata/repomd.xml"
-
         # first, check if we can access it from the host
         self.data = ''
         def _writefunc(buf):
@@ -877,37 +876,40 @@ class RedHatCDYumGuest(RedHatCDGuest):
             """
             self.data += buf
 
-        c = pycurl.Curl()
-        c.setopt(c.URL, full_url)
-        c.setopt(c.CONNECTTIMEOUT, 5)
-        c.setopt(c.WRITEFUNCTION, _writefunc)
+        crl = pycurl.Curl()
+        crl.setopt(crl.URL, full_url)
+        crl.setopt(crl.CONNECTTIMEOUT, 5)
+        crl.setopt(crl.WRITEFUNCTION, _writefunc)
 
         curlargs = ""
         if "sslclientcert" in certdict:
-            c.setopt(c.SSLCERT, certdict["sslclientcert"]["localname"])
+            crl.setopt(crl.SSLCERT, certdict["sslclientcert"]["localname"])
             curlargs += "--cert %s " % (certdict["sslclientcert"]["remotename"])
         if "sslclientkey" in certdict:
-            c.setopt(c.SSLKEY,  certdict["sslclientkey"]["localname"])
+            crl.setopt(crl.SSLKEY,  certdict["sslclientkey"]["localname"])
             curlargs += "--key %s " % (certdict["sslclientkey"]["remotename"])
         if "sslcacert" in certdict:
-            c.setopt(c.CAINFO,  certdict["sslcacert"]["localname"])
+            crl.setopt(crl.CAINFO,  certdict["sslcacert"]["localname"])
             curlargs += "--cacert %s " % (certdict["sslcacert"]["remotename"])
         else:
             # We enforce either setting a ca cert or setting no verify in TDL
             # If this is a non-SSL connection setting this option is benign
-            c.setopt(c.SSL_VERIFYHOST, 0)
+            crl.setopt(crl.SSL_VERIFYPEER, 0)
+            crl.setopt(crl.SSL_VERIFYHOST, 0)
             curlargs += "--insecure "
 
         try:
-            c.perform()
+            crl.perform()
             # if we reach here, then the perform succeeded, which means we
             # could reach the repo from the host
             host = True
-        except pycurl.error:
+        except pycurl.error, err:
             # if we got an exception, then we could not reach the repo from
             # the host
+            self.log.debug("Unable to route to the repo host from here, and SSH tunnel will never be established")
+            self.log.debug(err)
             host = False
-        c.close()
+        crl.close()
 
         # now check if we can access it remotely
         try:
@@ -916,8 +918,10 @@ class RedHatCDYumGuest(RedHatCDGuest):
             # if we reach here, then the perform succeeded, which means we
             # could reach the repo from the guest
             guest = True
-        except oz.ozutil.SubprocessException:
+        except oz.ozutil.SubprocessException, err:
             # if we got an exception, then we could not reach the repo from
+            self.log.debug("Unable to route to the repo host from the guest, will attempt to establish an SSH tunnel")
+            self.log.debug(err)
             # the guest
             guest = False
 
@@ -932,6 +936,22 @@ class RedHatCDYumGuest(RedHatCDGuest):
                 for remotefile in repo.remotefiles:
                     self.guest_execute_command(guestaddr,
                                                "rm -f %s" % (remotefile))
+            else:
+            	if len(self.tunnels) > 0:
+                   for remotefile in repo.remotefiles:
+                       (protocol, hostname, port, path) = self._deconstruct_repo_url(repo.url)
+                       if (hostname in self.tunnels) and (port in self.tunnels[hostname]):
+                           remote_tun_port = self.tunnels[hostname][port]                       
+                           self.guest_execute_command(guestaddr,
+                                                      "sed -i -e 's|^baseurl=.*$|baseurl=%s|' %s" % (repo.url, remotefile))
+   
+    def _remove_host_aliases(self, guestaddr):
+        if len(self.tunnels) > 0:
+            for repo in self.tdl.repositories.values():
+                (protocol, hostname, port, path) = self._deconstruct_repo_url(repo.url)
+                self.log.debug("Removing tunnel host entry for %s from host %s" % (hostname, guestaddr))
+                self.guest_execute_command(guestaddr,
+                                           "mv -f /etc/hosts.backup /etc/hosts; restorecon /etc/hosts")
 
     def _customize_repos(self, guestaddr):
         """
@@ -954,6 +974,11 @@ class RedHatCDYumGuest(RedHatCDGuest):
             # Add a property to track remote files that may need deleting if
             # the repo is not persistent
             repo.remotefiles = []
+
+            def _add_remote_host_alias(hostname):
+                self.log.debug("Modifying /etc/hosts on %s to make %s resolve to localhost tunnel port" % (guestaddr, hostname))
+                self.guest_execute_command(guestaddr, 
+                                           "test -f /etc/hosts.backup || cp /etc/hosts /etc/hosts.backup; sed -i -e 's/localhost.localdomain/localhost.localdomain %s/g' /etc/hosts" % hostname) 
 
             # before we can do the locality check below we need to be sure any
             # required cert material is already available in file form on both
@@ -1028,10 +1053,11 @@ class RedHatCDYumGuest(RedHatCDGuest):
                 else:
                     # New tunnel required
                     if not (hostname in self.tunnels):
+                    	_add_remote_host_alias(hostname)
                         self.tunnels[hostname] = {}
                     self.tunnels[hostname][port] = str(remote_tun_port)
                     tunport = tunport + 1
-                remote_url = "%s://localhost:%s/%s" % (protocol,
+                remote_url = "%s://%s:%s/%s" % (hostname, protocol,
                                                        remote_tun_port, path)
                 f.write("# This is a tunneled version of local repo: (%s)\n" % (repo.url))
                 f.write("baseurl=%s\n" % remote_url)
@@ -1087,6 +1113,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
         for content in self.tdl.commands.values():
             self.guest_execute_command(guestaddr, content)
 
+        self._remove_host_aliases(guestaddr)
         self._remove_repos(guestaddr)
 
         self.log.debug("Syncing")
