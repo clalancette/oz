@@ -77,12 +77,13 @@ tests = {
     "test-40-command-base64-type.tdl": True,
     "test-41-command-bogus-base64.tdl": False,
     "test-42-command-bogus-type.tdl": False,
+    "test-43-persistent-repos.tdl": True,
 }
 
 # Validate oz handling of tdl file
 def validate_ozlib(tdl_file):
     xmldata = open(tdl_file, 'r').read()
-    tdl = oz.TDL.TDL(xmldata)
+    return oz.TDL.TDL(xmldata)
 
 # Validate schema
 def validate_schema(tdl_file):
@@ -153,3 +154,27 @@ def test():
             else:
                 yield '%s_%s' % (test_name, tst.func_name), handle_exception,\
                     tst, tdl_file
+
+def test_persistent(tdl='test-43-persistent-repos.tdl'):
+    # locate full path for tdl file
+    tdl_prefix = ''
+    for tdl_prefix in ['tests/tdl/', 'tdl/', '']:
+        if os.path.isfile(tdl_prefix + tdl):
+            break
+    if not os.path.isfile(tdl_prefix + tdl):
+        raise Exception('Unable to locate TDL: %s' % tdl)
+    tdl_file = tdl_prefix + tdl
+    test_name = os.path.splitext(tdl,)[0]
+
+    # Grab TDL object
+    tdl = validate_ozlib(tdl_file)
+
+    def assert_persistent_value(persistent, value):
+        assert persistent == value, \
+            "expected %s, got %s" % (value, persistent)
+
+    for repo in tdl.repositories.values():
+        if repo.name.endswith('true'):
+            yield '%s_%s' % (test_name, repo.name), assert_persistent_value, repo.persistent, True
+        else:
+            yield '%s_%s' % (test_name, repo.name), assert_persistent_value, repo.persistent, False
