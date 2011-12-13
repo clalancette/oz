@@ -1087,6 +1087,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
         for content in self.tdl.commands.values():
             self.guest_execute_command(guestaddr, content)
 
+        self.log.debug("Removing non-persisted repos")
         self._remove_repos(guestaddr)
 
         self.log.debug("Syncing")
