@@ -332,7 +332,7 @@ class TDL(object):
 
             signed = get_optional_repo_bool(repo, 'signed')
 
-            persist = get_optional_repo_bool(repo, 'persistent', default='yes')
+            persist = get_optional_repo_bool(repo, 'persisted', default='yes')
 
             sslverify = get_optional_repo_bool(repo, 'sslverify')
 
