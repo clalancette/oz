@@ -912,7 +912,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
         # now check if we can access it remotely
         try:
             self.guest_execute_command(guestaddr,
-                                       "curl %s %s" % (curlargs, full_url))
+                                       "curl --silent %s %s" % (curlargs, full_url))
             # if we reach here, then the perform succeeded, which means we
             # could reach the repo from the guest
             guest = True
