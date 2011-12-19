@@ -186,8 +186,8 @@ def test_stb_none():
 
 
 def test_stb_invalid():
-    if oz.ozutil.string_to_bool('foobar') != None:
-        raise Exception, "Expected None return from string_to_bool"
+    with py.test.raises(Exception):
+        oz.ozutil.string_to_bool('foobar')
 
 # test oz.ozutil.generate_macaddress
 def test_genmac():

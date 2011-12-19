@@ -265,9 +265,10 @@ def string_to_bool(instr):
     lower = instr.lower()
     if lower == 'no' or lower == 'false':
         return False
-    if lower == 'yes' or lower == 'true':
+    elif lower == 'yes' or lower == 'true':
         return True
-    return None
+    else:
+        raise Exception, "Unhandled input string: %s" % instr
 
 def generate_macaddress():
     """
