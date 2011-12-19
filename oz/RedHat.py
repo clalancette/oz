@@ -877,29 +877,30 @@ class RedHatCDYumGuest(RedHatCDGuest):
             """
             self.data += buf
 
-        c = pycurl.Curl()
-        c.setopt(c.URL, full_url)
-        c.setopt(c.CONNECTTIMEOUT, 5)
-        c.setopt(c.WRITEFUNCTION, _writefunc)
+        crl = pycurl.Curl()
+        crl.setopt(crl.URL, full_url)
+        crl.setopt(crl.CONNECTTIMEOUT, 5)
+        crl.setopt(crl.WRITEFUNCTION, _writefunc)
 
         curlargs = ""
         if "sslclientcert" in certdict:
-            c.setopt(c.SSLCERT, certdict["sslclientcert"]["localname"])
+            crl.setopt(crl.SSLCERT, certdict["sslclientcert"]["localname"])
             curlargs += "--cert %s " % (certdict["sslclientcert"]["remotename"])
         if "sslclientkey" in certdict:
-            c.setopt(c.SSLKEY,  certdict["sslclientkey"]["localname"])
+            crl.setopt(crl.SSLKEY,  certdict["sslclientkey"]["localname"])
             curlargs += "--key %s " % (certdict["sslclientkey"]["remotename"])
         if "sslcacert" in certdict:
-            c.setopt(c.CAINFO,  certdict["sslcacert"]["localname"])
+            crl.setopt(crl.CAINFO,  certdict["sslcacert"]["localname"])
             curlargs += "--cacert %s " % (certdict["sslcacert"]["remotename"])
         else:
             # We enforce either setting a ca cert or setting no verify in TDL
             # If this is a non-SSL connection setting this option is benign
-            c.setopt(c.SSL_VERIFYHOST, 0)
+            crl.setopt(crl.SSL_VERIFYPEER, 0)
+            crl.setopt(crl.SSL_VERIFYHOST, 0)
             curlargs += "--insecure "
 
         try:
-            c.perform()
+            crl.perform()
             # if we reach here, then the perform succeeded, which means we
             # could reach the repo from the host
             host = True
@@ -907,7 +908,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
             # if we got an exception, then we could not reach the repo from
             # the host
             host = False
-        c.close()
+        crl.close()
 
         # now check if we can access it remotely
         try:
