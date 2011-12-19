@@ -904,9 +904,11 @@ class RedHatCDYumGuest(RedHatCDGuest):
             # if we reach here, then the perform succeeded, which means we
             # could reach the repo from the host
             host = True
-        except pycurl.error:
+        except pycurl.error, err:
             # if we got an exception, then we could not reach the repo from
             # the host
+            self.log.debug("Unable to route to the repo host from here, and SSH tunnel will never be established")
+            self.log.debug(err)
             host = False
         crl.close()
 
@@ -917,8 +919,10 @@ class RedHatCDYumGuest(RedHatCDGuest):
             # if we reach here, then the perform succeeded, which means we
             # could reach the repo from the guest
             guest = True
-        except oz.ozutil.SubprocessException:
+        except oz.ozutil.SubprocessException, err:
             # if we got an exception, then we could not reach the repo from
+            self.log.debug("Unable to route to the repo host from the guest, will attempt to establish an SSH tunnel")
+            self.log.debug(err)
             # the guest
             guest = False
 
