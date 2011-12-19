@@ -1042,7 +1042,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
             filename = repo.name.replace(" ", "_") + ".repo"
             localname = os.path.join(self.icicle_tmp, filename)
             f = open(localname, 'w')
-            f.write("[%s]\n" % repo.name)
+            f.write("[%s]\n" % repo.name.replace(" ", "_"))
             f.write("name=%s\n" % repo.name)
             if host and not guest:
                 remote_tun_port = tunport
