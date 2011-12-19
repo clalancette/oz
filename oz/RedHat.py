@@ -937,6 +937,22 @@ class RedHatCDYumGuest(RedHatCDGuest):
                 for remotefile in repo.remotefiles:
                     self.guest_execute_command(guestaddr,
                                                "rm -f %s" % (remotefile))
+            else:
+                if len(self.tunnels) > 0:
+                    for remotefile in repo.remotefiles:
+                        (protocol, hostname, port, path) = self._deconstruct_repo_url(repo.url)
+                        if (hostname in self.tunnels) and (port in self.tunnels[hostname]):
+                            remote_tun_port = self.tunnels[hostname][port]
+                            self.guest_execute_command(guestaddr,
+                                                       "sed -i -e 's|^baseurl=.*$|baseurl=%s|' %s" % (repo.url, remotefile))
+
+    def _remove_host_aliases(self, guestaddr):
+        if len(self.tunnels) > 0:
+            for repo in self.tdl.repositories.values():
+                (protocol, hostname, port, path) = self._deconstruct_repo_url(repo.url)
+                self.log.debug("Removing tunnel host entry for %s from host %s" % (hostname, guestaddr))
+                self.guest_execute_command(guestaddr,
+                                           "mv -f /etc/hosts.backup /etc/hosts; restorecon /etc/hosts")
 
     def _customize_repos(self, guestaddr):
         """
@@ -959,6 +975,11 @@ class RedHatCDYumGuest(RedHatCDGuest):
             # Add a property to track remote files that may need deleting if
             # the repo is not persistent
             repo.remotefiles = []
+
+            def _add_remote_host_alias(hostname):
+                self.log.debug("Modifying /etc/hosts on %s to make %s resolve to localhost tunnel port" % (guestaddr, hostname))
+                self.guest_execute_command(guestaddr,
+                                           "test -f /etc/hosts.backup || cp /etc/hosts /etc/hosts.backup; sed -i -e 's/localhost.localdomain/localhost.localdomain %s/g' /etc/hosts" % hostname)
 
             # before we can do the locality check below we need to be sure any
             # required cert material is already available in file form on both
@@ -1033,11 +1054,12 @@ class RedHatCDYumGuest(RedHatCDGuest):
                 else:
                     # New tunnel required
                     if not (hostname in self.tunnels):
+                        _add_remote_host_alias(hostname)
                         self.tunnels[hostname] = {}
                     self.tunnels[hostname][port] = str(remote_tun_port)
                     tunport = tunport + 1
-                remote_url = "%s://localhost:%s/%s" % (protocol,
-                                                       remote_tun_port, path)
+                remote_url = "%s://%s:%s/%s" % (protocol, hostname,
+                                                remote_tun_port, path)
                 f.write("# This is a tunneled version of local repo: (%s)\n" % (repo.url))
                 f.write("baseurl=%s\n" % remote_url)
             else:
@@ -1091,6 +1113,8 @@ class RedHatCDYumGuest(RedHatCDGuest):
         self.log.debug("Running custom commands")
         for content in self.tdl.commands.values():
             self.guest_execute_command(guestaddr, content)
+
+        self._remove_host_aliases(guestaddr)
 
         self.log.debug("Removing non-persisted repos")
         self._remove_repos(guestaddr)
