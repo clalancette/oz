@@ -360,9 +360,6 @@ class Guest(object):
 
         # create devices
         devices = domain.newChild(None, "devices", None)
-        # console
-        console = devices.newChild(None, "console", None)
-        console.setProp("device", "pty")
         # graphics
         graphics = devices.newChild(None, "graphics", None)
         graphics.setProp("port", "-1")
