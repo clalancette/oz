@@ -85,6 +85,9 @@ fi
 %{_mandir}/man1/*
 
 %changelog
+* Wed Jan 11 2012 Chris Lalancette <clalancette@gmail.om> - 0.8.0-1
+- Release 0.8.0
+
 * Mon Sep 12 2011 Chris Lalancette <clalance@redhat.com> - 0.7.0-1
 - Release 0.7.0
 
