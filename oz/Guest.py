@@ -508,7 +508,7 @@ class Guest(object):
                     total_net_bytes += rx_bytes + tx_bytes
 
             except libvirt.libvirtError, e:
-                if e.get_error_domain() == libvirt.VIR_FROM_QEMU and (e.get_error_code() in [libvirt.VIR_ERR_NO_DOMAIN, libvirt.VIR_ERR_SYSTEM_ERROR, libvirt.VIR_ERR_OPERATION_FAILED]):
+                if e.get_error_domain() == libvirt.VIR_FROM_QEMU and (e.get_error_code() in [libvirt.VIR_ERR_NO_DOMAIN, libvirt.VIR_ERR_SYSTEM_ERROR, libvirt.VIR_ERR_OPERATION_FAILED, libvirt.VIR_ERR_OPERATION_INVALID]):
                     break
                 else:
                     self.log.debug("Libvirt Block Stats Failed:")
