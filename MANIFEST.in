@@ -1,2 +1,3 @@
 include README COPYING examples/*.tdl man/*.1 oz.cfg docs/*.rng Makefile
 include man/examples/*.example man/examples/header man/examples/footer
+include oz/auto/*
