@@ -480,7 +480,8 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         Method to collect the package information and generate the ICICLE XML.
         """
         stdout, stderr, retcode = self.guest_execute_command(guestaddr,
-                                                             'rpm -qa')
+                                                             'rpm -qa',
+                                                             timeout=30)
 
         return self._output_icicle_xml(stdout.split("\n"),
                                        self.tdl.description)

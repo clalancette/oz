@@ -474,7 +474,8 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         Method to collect the package information and generate the ICICLE XML.
         """
         stdout, stderr, retcode = self.guest_execute_command(guestaddr,
-                                                             'dpkg --get-selections')
+                                                             'dpkg --get-selections',
+                                                             timeout=30)
 
         # the data we get back from dpkg is in the form of:
         #
