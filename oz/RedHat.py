@@ -1102,7 +1102,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
         self.log.debug("Installing custom packages")
         packstr = ''
         for package in self.tdl.packages:
-            packstr += package.name + ' '
+            packstr += '"' + package.name + '" '
 
         if packstr != '':
             self.guest_execute_command(guestaddr,
