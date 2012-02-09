@@ -200,7 +200,11 @@ class Guest(object):
         if self.rootpw is None:
             self.rootpw = "ozrootpw"
 
-        self.url = self._check_url(iso=iso_allowed, url=url_allowed)
+        try:
+            self.url = self._check_url(iso=iso_allowed, url=url_allowed)
+        except:
+            self.log.debug("Install URL validation failed on exception", exc_info = True)
+            raise oz.OzException.OzException("Install URL validation failed")
 
         self.log.debug("Name: %s, UUID: %s" % (self.tdl.name, self.uuid))
         self.log.debug("MAC: %s, distro: %s" % (self.macaddr, self.tdl.distro))
