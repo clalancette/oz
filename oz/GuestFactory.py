@@ -96,7 +96,7 @@ def distrolist():
     print "   RHEL 2.1: GOLD, U2, U3, U4, U5, U6"
     print "   RHEL 3: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9"
     print "   RHEL 4: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9"
-    print "   RHEL 5: GOLD, U1, U2, U3, U4, U5, U6, U7"
+    print "   RHEL 5: GOLD, U1, U2, U3, U4, U5, U6, U7, U8"
     print "   RHEL 6: 0, 1, 2"
     print "   Ubuntu: 6.06[.1,.2], 6.10, 7.04, 7.10, 8.04[.1,.2,.3,.4], 8.10, 9.04, 9.10, 10.04[.1,.2,.3], 10.10, 11.04, 11.10"
     print "   Windows: 2000, XP, 2003, 7, 2008"
