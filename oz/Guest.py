@@ -821,7 +821,12 @@ class Guest(object):
             raise oz.OzException.OzException("invalid <disk> entry without a driver")
 
         for domid in self.libvirt_conn.listDomainsID():
-            doc = libxml2.parseDoc(self.libvirt_conn.lookupByID(domid).XMLDesc(0))
+            try:
+                doc = libxml2.parseDoc(self.libvirt_conn.lookupByID(domid).XMLDesc(0))
+            except:
+                self.log.debug("Could not get XML for domain ID (%s) - it may have disappeared (continuing)" % (domid))
+                continue
+
             namenode = doc.xpathEval('/domain/name')
             if len(namenode) != 1:
                 # hm, odd, a domain without a name?
