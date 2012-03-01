@@ -530,13 +530,8 @@ class Guest(object):
             # if we saw no disk or network activity in the countdown window,
             # we presume the install has hung.  Fail here
             if inactivity_countdown == 0:
-                screenshot_path = self._capture_screenshot(libvirt_dom.XMLDesc(0))
-                exc_str = "No disk activity in %d seconds, failing.  " % (inactivity_timeout)
-                if screenshot_path is not None:
-                    exc_str += "Check screenshot at %s for more detail" % (screenshot_path)
-                else:
-                    exc_str += "Failed to take screenshot"
-                raise oz.OzException.OzException(exc_str)
+                screenshot_text = self._capture_screenshot(libvirt_dom.XMLDesc(0))
+                raise oz.OzException.OzException("No disk activity in %d seconds, failing.  %s" % (inactivity_timeout, screenshot_text))
 
             # rd_req and wr_req are the *total* number of disk read requests and
             # write requests ever made for this domain.  Similarly rd_bytes and
@@ -568,13 +563,8 @@ class Guest(object):
 
         if count == 0:
             # if we timed out, then let's make sure to take a screenshot.
-            screenshot_path = self._capture_screenshot(libvirt_dom.XMLDesc(0))
-            exc_str = "Timed out waiting for install to finish.  "
-            if screenshot_path is not None:
-                exc_str += "Check screenshot at %s for more detail" % (screenshot_path)
-            else:
-                exc_str += "Failed to take screenshot"
-            raise oz.OzException.OzException(exc_str)
+            screenshot_text = self._capture_screenshot(libvirt_dom.XMLDesc(0))
+            raise oz.OzException.OzException("Timed out waiting for install to finish.  %s" % (screenshot_text))
 
         self.log.info("Install of %s succeeded" % (self.tdl.name))
 
@@ -795,10 +785,10 @@ class Guest(object):
 
         try:
             oz.ozutil.subprocess_check_output(['gvnccapture', vnc, screenshot])
-            return screenshot
+            return "Check screenshot at %s for more detail" % (screenshot)
         except:
             self.log.error("Failed to take screenshot")
-            return None
+            return "Failed to take screenshot"
 
     def _guestfs_handle_setup(self, libvirt_xml):
         """
