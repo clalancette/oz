@@ -2,4 +2,4 @@
 oz-install(1), oz-generate-icicle(1), oz-customize(1), oz-cleanup-cache(1)
 
 .SH AUTHOR
-Chris Lalancette <clalance@redhat.com>
+Chris Lalancette <clalancette@gmail.com>
