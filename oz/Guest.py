@@ -465,6 +465,52 @@ class Guest(object):
         """
         return self._internal_generate_diskimage(size, force, False)
 
+    def _get_disks_and_interfaces(self, libvirt_dom):
+        """
+        Method to figure out the disks and interfaces attached to a domain.
+        The method returns two lists: the first is a list of disk devices (like
+        hda, hdb, etc), and the second is a list of network devices (like vnet0,
+        vnet1, etc).
+        """
+        doc = libxml2.parseDoc(libvirt_dom.XMLDesc(0))
+        disktargets = doc.xpathEval("/domain/devices/disk/target")
+        if len(disktargets) < 1:
+            raise oz.OzException.OzException("Could not find disk target")
+        disks = []
+        for target in disktargets:
+            disks.append(target.prop('dev'))
+        if not disks:
+            raise oz.OzException.OzException("Could not find disk target device")
+        inttargets = doc.xpathEval("/domain/devices/interface/target")
+        if len(inttargets) < 1:
+            raise oz.OzException.OzException("Could not find interface target")
+        interfaces = []
+        for target in inttargets:
+            interfaces.append(target.prop('dev'))
+        if not interfaces:
+            raise oz.OzException.OzException("Could not find interface target device")
+
+        return disks, interfaces
+
+    def _get_disk_and_net_activity(self, libvirt_dom, disks, interfaces):
+        """
+        Method to collect the disk and network activity by the domain.  The
+        method returns two numbers: the first is the sum of all disk activity
+        from all disks, and the second is the sum of all network traffic from
+        all network devices.
+        """
+        total_disk_req = 0
+        for dev in disks:
+            rd_req, rd_bytes, wr_req, wr_bytes, errs = libvirt_dom.blockStats(dev)
+            total_disk_req += rd_req + wr_req
+
+        total_net_bytes = 0
+        for dev in interfaces:
+            rx_bytes, rx_packets, rx_errs, rx_drop, tx_bytes, tx_packets, tx_errs, tx_drop = libvirt_dom.interfaceStats(dev)
+            total_net_bytes += rx_bytes + tx_bytes
+
+        return total_disk_req, total_net_bytes
+
     def _wait_for_install_finish(self, libvirt_dom, count,
                                  inactivity_timeout=300):
         """
@@ -473,25 +519,8 @@ class Guest(object):
         install was successful), or until the timeout is reached (at which
         point it is assumed the install failed and raise an exception).
         """
-        # first find the disk device we are installing to; this will be
-        # monitored for activity during the installation
-        doc = libxml2.parseDoc(libvirt_dom.XMLDesc(0))
-        disktargets = doc.xpathEval("/domain/devices/disk/target")
-        if len(disktargets) < 1:
-            raise oz.OzException.OzException("Could not find disk target")
-        diskdevs = []
-        for target in disktargets:
-            diskdevs.append(target.prop('dev'))
-        if not diskdevs:
-            raise oz.OzException.OzException("Could not find disk target device")
-        inttargets = doc.xpathEval("/domain/devices/interface/target")
-        if len(inttargets) < 1:
-            raise oz.OzException.OzException("Could not find interface target")
-        intdevs = []
-        for target in inttargets:
-            intdevs.append(target.prop('dev'))
-        if not intdevs:
-            raise oz.OzException.OzException("Could not find interface target device")
+
+        disks, interfaces = self._get_disks_and_interfaces(libvirt_dom)
 
         last_disk_activity = 0
         last_network_activity = 0
@@ -501,16 +530,7 @@ class Guest(object):
             if count % 10 == 0:
                 self.log.debug("Waiting for %s to finish installing, %d/%d" % (self.tdl.name, count, origcount))
             try:
-                total_disk_req = 0
-                for dev in diskdevs:
-                    rd_req, rd_bytes, wr_req, wr_bytes, errs = libvirt_dom.blockStats(dev)
-                    total_disk_req += rd_req + wr_req
-
-                total_net_bytes = 0
-                for dev in intdevs:
-                    rx_bytes, rx_packets, rx_errs, rx_drop, tx_bytes, tx_packets, tx_errs, tx_drop = libvirt_dom.interfaceStats(dev)
-                    total_net_bytes += rx_bytes + tx_bytes
-
+                total_disk_req, total_net_bytes = self._get_disk_and_net_activity(libvirt_dom, disks, interfaces)
             except libvirt.libvirtError, e:
                 if e.get_error_domain() == libvirt.VIR_FROM_QEMU and (e.get_error_code() in [libvirt.VIR_ERR_NO_DOMAIN, libvirt.VIR_ERR_SYSTEM_ERROR, libvirt.VIR_ERR_OPERATION_FAILED, libvirt.VIR_ERR_OPERATION_INVALID]):
                     break
