@@ -1406,39 +1406,40 @@ class CDGuest(Guest):
         if not force and os.access(self.jeos_filename, os.F_OK):
             self.log.info("Found cached JEOS, using it")
             oz.ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
+            return self._generate_xml("hd", None)
+
+        self.log.info("Running install for %s" % (self.tdl.name))
+
+        cddev = self._InstallDev("cdrom", self.output_iso, "hdc")
+
+        if timeout is None:
+            timeout = 1200
+
+        def exists(name):
+            """
+            Internal utility method to check if an attribute exists and is
+            a path to a valid filename.
+            """
+            return hasattr(self, name) and os.access(getattr(self, name), os.F_OK)
+
+        if exists("kernelfname") and exists("initrdfname") and hasattr(self, "cmdline"):
+            xml = self._generate_xml(None, None, self.kernelfname,
+                                     self.initrdfname, self.cmdline)
         else:
-            self.log.info("Running install for %s" % (self.tdl.name))
+            xml = self._generate_xml("cdrom", cddev)
 
-            cddev = self._InstallDev("cdrom", self.output_iso, "hdc")
+        dom = self.libvirt_conn.createXML(xml, 0)
+        self._wait_for_install_finish(dom, timeout)
 
-            if timeout is None:
-                timeout = 1200
-
-            def exists(name):
-                """
-                Internal utility method to check if an attribute exists and is
-                a path to a valid filename.
-                """
-                return hasattr(self, name) and os.access(getattr(self, name), os.F_OK)
-
-            if exists("kernelfname") and exists("initrdfname") and hasattr(self, "cmdline"):
-                xml = self._generate_xml(None, None, self.kernelfname,
-                                         self.initrdfname, self.cmdline)
-            else:
-                xml = self._generate_xml("cdrom", cddev)
-
-            dom = self.libvirt_conn.createXML(xml, 0)
+        for i in range(0, reboots):
+            dom = self.libvirt_conn.createXML(self._generate_xml("hd", cddev),
+                                              0)
             self._wait_for_install_finish(dom, timeout)
 
-            for i in range(0, reboots):
-                dom = self.libvirt_conn.createXML(self._generate_xml("hd",
-                                                                     cddev), 0)
-                self._wait_for_install_finish(dom, timeout)
-
-            if self.cache_jeos:
-                self.log.info("Caching JEOS")
-                oz.ozutil.mkdir_p(self.jeos_cache_dir)
-                oz.ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
+        if self.cache_jeos:
+            self.log.info("Caching JEOS")
+            oz.ozutil.mkdir_p(self.jeos_cache_dir)
+            oz.ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
 
         return self._generate_xml("hd", None)
 
@@ -1581,22 +1582,23 @@ class FDGuest(Guest):
         if not force and os.access(self.jeos_filename, os.F_OK):
             self.log.info("Found cached JEOS, using it")
             oz.ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
-        else:
-            self.log.info("Running install for %s" % (self.tdl.name))
+            return self._generate_xml("hd", None)
 
-            fddev = self._InstallDev("floppy", self.output_floppy, "fda")
+        self.log.info("Running install for %s" % (self.tdl.name))
 
-            if timeout is None:
-                timeout = 1200
+        fddev = self._InstallDev("floppy", self.output_floppy, "fda")
 
-            dom = self.libvirt_conn.createXML(self._generate_xml("fd", fddev),
-                                              0)
-            self._wait_for_install_finish(dom, timeout)
+        if timeout is None:
+            timeout = 1200
 
-            if self.cache_jeos:
-                self.log.info("Caching JEOS")
-                oz.ozutil.mkdir_p(self.jeos_cache_dir)
-                oz.ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
+        dom = self.libvirt_conn.createXML(self._generate_xml("fd", fddev),
+                                          0)
+        self._wait_for_install_finish(dom, timeout)
+
+        if self.cache_jeos:
+            self.log.info("Caching JEOS")
+            oz.ozutil.mkdir_p(self.jeos_cache_dir)
+            oz.ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
 
         return self._generate_xml("hd", None)
 
