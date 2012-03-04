@@ -1008,7 +1008,7 @@ class Guest(object):
                 if len(split) != 2:
                     raise oz.OzException.OzException("Guest checked in with bogus data")
                 addr = split[0]
-                uuid = split[1]
+                uuidstr = split[1]
                 try:
                     # we use socket.inet_aton() to validate the IP address
                     socket.inet_aton(addr)
@@ -1019,7 +1019,7 @@ class Guest(object):
                 # Previously, if we saw a bogus UUID, we would ignore it and
                 # continue waiting for the "right" one.  Now we are throwing
                 # an exception.  I kind of like the previous behavior better
-                if uuid != str(self.uuid):
+                if uuidstr != str(self.uuid):
                     raise oz.OzException.OzException("Guest checked in with unknown UUID")
                 break
 
