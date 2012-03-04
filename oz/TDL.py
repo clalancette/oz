@@ -311,6 +311,9 @@ class TDL(object):
         the self.repositories dictionary.
         """
         def get_optional_repo_bool(repo, name, default='no'):
+            """
+            Internal method to get an option boolean from a repo XML section.
+            """
             xmlstr = get_value(repo, name, name, optional=True)
             if xmlstr is None:
                 xmlstr = default
@@ -365,6 +368,9 @@ class TDL(object):
     schema_version = "1.0"
 
     def _validate_tdl_version(self):
+        """
+        Internal method to validate that we support the TDL version.
+        """
         if float(self.version) > float(self.schema_version):
             raise oz.OzException.OzException("TDL version (%s) is higher than our known version (%s)" % (self.version, self.schema_version))
 

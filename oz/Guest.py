@@ -1466,14 +1466,15 @@ class CDGuest(Guest):
 
     def _modify_iso(self):
         """
-        Base method to modify the ISO.  Subclasses are expected to override this
+        Base method to modify the ISO.  Subclasses are expected to override
+        this.
         """
         raise oz.OzException.OzException("Internal error, subclass didn't override modify_iso")
 
     def _generate_new_iso(self):
         """
         Base method to generate the new ISO.  Subclasses are expected to
-        override this
+        override this.
         """
         raise oz.OzException.OzException("Internal error, subclass didn't override generate_new_iso")
 
