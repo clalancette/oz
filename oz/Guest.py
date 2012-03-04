@@ -1096,7 +1096,7 @@ class Guest(object):
             elif url:
                 raise oz.OzException.OzException("%s installs must be done via url" % (self.tdl.distro))
             else:
-                raise oz.OzException.OzException("Unknown error occured while determining install URL")
+                raise oz.OzException.OzException("Unknown error occurred while determining install URL")
 
         return url
 
