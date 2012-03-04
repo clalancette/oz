@@ -432,9 +432,6 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
 
         self.log.debug("Installing additional repository files")
 
-        self._remotecertdir = "/etc/pki/ozrepos"
-        self._remotecertdir_created = False
-
         for repo in self.tdl.repositories.values():
             self.guest_execute_command(guestaddr, "apt-add-repository %s" % (repo.url))
             self.guest_execute_command(guestaddr, "apt-get update")
