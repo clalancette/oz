@@ -313,7 +313,7 @@ class TDL(object):
         Internal method to add the list of libxml2 nodes from reposlist into
         the self.repositories dictionary.
         """
-        def get_optional_repo_bool(repo, name, default='no'):
+        def _get_optional_repo_bool(repo, name, default='no'):
             """
             Internal method to get an option boolean from a repo XML section.
             """
@@ -336,11 +336,11 @@ class TDL(object):
                                              "localhost.localdomain"]:
                 raise oz.OzException.OzException("Repositories cannot be localhost, since they must be reachable from the guest operating system")
 
-            signed = get_optional_repo_bool(repo, 'signed')
+            signed = _get_optional_repo_bool(repo, 'signed')
 
-            persist = get_optional_repo_bool(repo, 'persisted', default='yes')
+            persist = _get_optional_repo_bool(repo, 'persisted', default='yes')
 
-            sslverify = get_optional_repo_bool(repo, 'sslverify')
+            sslverify = _get_optional_repo_bool(repo, 'sslverify')
 
             clientcert = _xml_get_value(repo, 'clientcert', 'clientcert',
                                         optional=True)
