@@ -206,6 +206,8 @@ class Guest(object):
             self.log.debug("Install URL validation failed:", exc_info=True)
             raise
 
+        oz.ozutil.mkdir_p(self.icicle_tmp)
+
         self.log.debug("Name: %s, UUID: %s" % (self.tdl.name, self.uuid))
         self.log.debug("MAC: %s, distro: %s" % (self.macaddr, self.tdl.distro))
         self.log.debug("update: %s, arch: %s, diskimage: %s" % (self.tdl.update, self.tdl.arch, self.diskimage))

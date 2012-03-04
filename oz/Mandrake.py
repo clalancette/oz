@@ -131,7 +131,6 @@ class Mandrake82Guest(oz.Guest.CDGuest):
         else:
             shutil.copy(self.auto, outname)
 
-        oz.ozutil.mkdir_p(self.icicle_tmp)
         syslinux = os.path.join(self.icicle_tmp, 'syslinux.cfg')
         f = open(syslinux, 'w')
         f.write("default customiso\n")

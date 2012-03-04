@@ -422,8 +422,6 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         """
         self.log.info("Collection Setup")
 
-        oz.ozutil.mkdir_p(self.icicle_tmp)
-
         g_handle = self._guestfs_handle_setup(libvirt_xml)
 
         # we have to do 5 things to make sure we can ssh into RHEL/Fedora:
@@ -582,7 +580,6 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         response = urllib2.urlopen(treeinfourl)
         response.close()
 
-        oz.ozutil.mkdir_p(self.icicle_tmp)
         treeinfo = os.path.join(self.icicle_tmp, "treeinfo")
         self.log.debug("Going to write treeinfo to %s" % (treeinfo))
         treeinfofd = os.open(treeinfo, os.O_RDWR | os.O_CREAT | os.O_TRUNC)

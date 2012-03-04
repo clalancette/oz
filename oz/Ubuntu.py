@@ -327,8 +327,6 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         """
         self.log.info("Collection Setup")
 
-        oz.ozutil.mkdir_p(self.icicle_tmp)
-
         g_handle = self._guestfs_handle_setup(libvirt_xml)
 
         # we have to do 3 things to make sure we can ssh into Ubuntu
