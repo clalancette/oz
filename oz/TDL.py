@@ -25,7 +25,7 @@ import urlparse
 import oz.ozutil
 import oz.OzException
 
-def get_value(doc, xmlstring, component, optional=False):
+def _xml_get_value(doc, xmlstring, component, optional=False):
     """
     Function to get the contents from an XML node.  It takes 4 arguments:
 
@@ -136,22 +136,24 @@ class TDL(object):
         if self.version:
             self._validate_tdl_version()
 
-        self.name = get_value(self.doc, '/template/name', 'template name')
+        self.name = _xml_get_value(self.doc, '/template/name', 'template name')
 
-        self.distro = get_value(self.doc, '/template/os/name', 'OS name')
+        self.distro = _xml_get_value(self.doc, '/template/os/name', 'OS name')
 
-        self.update = get_value(self.doc, '/template/os/version', 'OS version')
+        self.update = _xml_get_value(self.doc, '/template/os/version',
+                                     'OS version')
 
-        self.arch = get_value(self.doc, '/template/os/arch', 'OS architecture')
+        self.arch = _xml_get_value(self.doc, '/template/os/arch',
+                                   'OS architecture')
         if self.arch != "i386" and self.arch != "x86_64":
             raise oz.OzException.OzException("Architecture must be one of 'i386' or 'x86_64'")
 
-        self.key = get_value(self.doc, '/template/os/key', 'OS key',
-                             optional=True)
+        self.key = _xml_get_value(self.doc, '/template/os/key', 'OS key',
+                                  optional=True)
         # key is not required, so it is not fatal if it is None
 
-        self.description = get_value(self.doc, '/template/description',
-                                     'description', optional=True)
+        self.description = _xml_get_value(self.doc, '/template/description',
+                                          'description', optional=True)
         # description is not required, so it is not fatal if it is None
 
         install = self.doc.xpathEval('/template/os/install')
@@ -171,22 +173,23 @@ class TDL(object):
         self.iso_sha256_url = None
 
         if self.installtype == "url":
-            self.url = get_value(self.doc, '/template/os/install/url',
-                                 'OS install URL')
+            self.url = _xml_get_value(self.doc, '/template/os/install/url',
+                                      'OS install URL')
         elif self.installtype == "iso":
-            self.iso = get_value(self.doc, '/template/os/install/iso',
-                                 'OS install ISO')
-            self.iso_md5_url = get_value(self.doc,
-                                         '/template/os/install/md5sum',
-                                         'OS install ISO MD5SUM', optional=True)
-            self.iso_sha1_url = get_value(self.doc,
-                                          '/template/os/install/sha1sum',
-                                          'OS install ISO SHA1SUM',
-                                          optional=True)
-            self.iso_sha256_url = get_value(self.doc,
-                                            '/template/os/install/sha256sum',
-                                            'OS install ISO SHA256SUM',
-                                            optional=True)
+            self.iso = _xml_get_value(self.doc, '/template/os/install/iso',
+                                      'OS install ISO')
+            self.iso_md5_url = _xml_get_value(self.doc,
+                                              '/template/os/install/md5sum',
+                                              'OS install ISO MD5SUM',
+                                              optional=True)
+            self.iso_sha1_url = _xml_get_value(self.doc,
+                                               '/template/os/install/sha1sum',
+                                               'OS install ISO SHA1SUM',
+                                               optional=True)
+            self.iso_sha256_url = _xml_get_value(self.doc,
+                                                 '/template/os/install/sha256sum',
+                                                 'OS install ISO SHA256SUM',
+                                                 optional=True)
             # only one of md5, sha1, or sha256 can be specified; raise an error
             # if multiple are
             if (self.iso_md5_url and self.iso_sha1_url) or (self.iso_md5_url and self.iso_sha256_url) or (self.iso_sha1_url and self.iso_sha256_url):
@@ -194,9 +197,9 @@ class TDL(object):
         else:
             raise oz.OzException.OzException("Unknown install type " + self.installtype + " in TDL")
 
-        self.rootpw = get_value(self.doc, '/template/os/rootpw',
-                                "root/Administrator password",
-                                optional=not rootpw_required)
+        self.rootpw = _xml_get_value(self.doc, '/template/os/rootpw',
+                                     "root/Administrator password",
+                                     optional=not rootpw_required)
 
         self.packages = []
         packageslist = self.doc.xpathEval('/template/packages/package')
@@ -274,16 +277,16 @@ class TDL(object):
                 raise oz.OzException.OzException("Package without a name was given")
 
             # repository that the package lives in (optional)
-            repo = get_value(package, 'repository',
-                             "package repository section", optional=True)
+            repo = _xml_get_value(package, 'repository',
+                                  "package repository section", optional=True)
 
             # filename of the package (optional)
-            filename = get_value(package, 'file', "package filename",
-                                 optional=True)
+            filename = _xml_get_value(package, 'file', "package filename",
+                                      optional=True)
 
             # arguments to install package (optional)
-            args = get_value(package, 'arguments', "package arguments",
-                             optional=True)
+            args = _xml_get_value(package, 'arguments', "package arguments",
+                                  optional=True)
 
             if remove_duplicates:
                 # delete any existing packages with this name
@@ -314,7 +317,7 @@ class TDL(object):
             """
             Internal method to get an option boolean from a repo XML section.
             """
-            xmlstr = get_value(repo, name, name, optional=True)
+            xmlstr = _xml_get_value(repo, name, name, optional=True)
             if xmlstr is None:
                 xmlstr = default
 
@@ -327,7 +330,7 @@ class TDL(object):
             name = repo.prop('name')
             if name is None:
                 raise oz.OzException.OzException("Repository without a name was given")
-            url = get_value(repo, 'url', 'repository url')
+            url = _xml_get_value(repo, 'url', 'repository url')
 
             if urlparse.urlparse(url)[1] in ["localhost", "127.0.0.1",
                                              "localhost.localdomain"]:
@@ -339,19 +342,20 @@ class TDL(object):
 
             sslverify = get_optional_repo_bool(repo, 'sslverify')
 
-            clientcert = get_value(repo, 'clientcert', 'clientcert',
-                                   optional=True)
+            clientcert = _xml_get_value(repo, 'clientcert', 'clientcert',
+                                        optional=True)
             if clientcert:
                 clientcert = clientcert.strip()
 
-            clientkey = get_value(repo, 'clientkey', 'clientkey', optional=True)
+            clientkey = _xml_get_value(repo, 'clientkey', 'clientkey',
+                                       optional=True)
             if clientkey:
                 clientkey = clientkey.strip()
 
             if clientkey and not clientcert:
                 raise oz.OzException.OzException("You cannot specify a clientkey without a clientcert")
 
-            cacert = get_value(repo, 'cacert', 'cacert', optional=True)
+            cacert = _xml_get_value(repo, 'cacert', 'cacert', optional=True)
             if cacert:
                 cacert = cacert.strip()
 
