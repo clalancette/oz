@@ -2,7 +2,7 @@
      - Ubuntu 5.04 and 5.10
      - Debian Etch, Lenny, Squeeze
      - SUSE Linux 10.0, 10.1
-     - openSUSE 10.2, 10.3 (autoyast)
+     - openSUSE 10.2
      - OpenBSD (http://people.cs.uchicago.edu/~brendan/howtos/openbsd_install/)
      - NetBSD (anita)
      - FreeBSD

@@ -32,9 +32,15 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
     """
     Class for OpenSUSE installation.
     """
-    def __init__(self, tdl, config, auto, output_disk):
-        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, "virtio",
-                                  None, None, "virtio", True, False)
+    def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus):
+        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, nicmodel,
+                                  None, None, diskbus, True, False)
+
+        self.reboots = 1
+        if self.tdl.update == "10.3":
+            # for 10.3, we don't have a 2-stage install process so don't do
+            # additional reboots
+            self.reboots = 0
 
         self.autoyast = auto
         if self.autoyast is None:
@@ -102,7 +108,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         """
         Method to run the operating system installation.
         """
-        return self._do_install(timeout, force, 1)
+        return self._do_install(timeout, force, self.reboots)
 
     def _shutdown_guest(self, guestaddr, libvirt_dom):
         """
@@ -529,5 +535,7 @@ def get_class(tdl, config, auto, output_disk=None):
     """
     Factory method for OpenSUSE installs.
     """
+    if tdl.update in ["10.3"]:
+        return OpenSUSEGuest(tdl, config, auto, output_disk, "rtl8139", "ide")
     if tdl.update in ["11.0", "11.1", "11.2", "11.3", "11.4"]:
-        return OpenSUSEGuest(tdl, config, auto, output_disk)
+        return OpenSUSEGuest(tdl, config, auto, output_disk, "virtio", "virtio")
