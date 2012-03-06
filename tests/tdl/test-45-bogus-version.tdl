@@ -1,0 +1,12 @@
+<template version="2.0">
+  <name>rhel5-u7</name>
+  <os>
+    <name>RHEL-5</name>
+    <version>U7</version>
+    <arch>i386</arch>
+    <install type='url'>
+      <url>http://someserver/path/to/installation</url>
+    </install>
+  </os>
+  <description>A RHEL5 Update 7 image</description>
+</template>

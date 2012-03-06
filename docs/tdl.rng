@@ -9,7 +9,9 @@
     <element name='template'>
       <optional>
         <attribute name='version'>
-          <text/>
+	  <choice>
+	    <value>1.0</value>
+	  </choice>
         </attribute>
       </optional>
       <interleave>

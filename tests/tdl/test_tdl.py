@@ -78,6 +78,8 @@ tests = {
     "test-41-command-bogus-base64.tdl": False,
     "test-42-command-bogus-type.tdl": False,
     "test-43-persistent-repos.tdl": True,
+    "test-44-version.tdl": True,
+    "test-45-bogus-version.tdl": False,
 }
 
 # Validate oz handling of tdl file
