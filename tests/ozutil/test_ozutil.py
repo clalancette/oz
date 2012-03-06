@@ -74,6 +74,9 @@ def test_copy_sparse_none_dst(tmpdir):
         oz.ozutil.copyfile_sparse(fullname, None)
 
 def test_copy_sparse_bad_src_mode(tmpdir):
+    if os.geteuid() == 0:
+        # this test won't work as root, since root can copy any mode files
+        return
     fullname = os.path.join(str(tmpdir), 'writeonly')
     open(fullname, 'w').write('writeonly')
     os.chmod(fullname, 0000)
@@ -83,6 +86,9 @@ def test_copy_sparse_bad_src_mode(tmpdir):
         oz.ozutil.copyfile_sparse(fullname, 'output')
 
 def test_copy_sparse_bad_dst_mode(tmpdir):
+    if os.geteuid() == 0:
+        # this test won't work as root, since root can copy any mode files
+        return
     srcname = os.path.join(str(tmpdir), 'src')
     open(srcname, 'w').write('src')
     dstname = os.path.join(str(tmpdir), 'dst')
@@ -232,6 +238,9 @@ def test_copy_modify_none_subfunc(tmpdir):
         oz.ozutil.copy_modify_file(src, dst, None)
 
 def test_copy_modify_bad_src_mode(tmpdir):
+    if os.geteuid() == 0:
+        # this test won't work as root, since root can copy any mode files
+        return
     def sub(line):
         return line
     fullname = os.path.join(str(tmpdir), 'writeonly')
@@ -275,6 +284,9 @@ def test_write_cpio_empty_dict(tmpdir):
     oz.ozutil.write_cpio({}, dst)
 
 def test_write_cpio_existing_file(tmpdir):
+    if os.geteuid() == 0:
+        # this test won't work as root, since root can copy any mode files
+        return
     dst = os.path.join(str(tmpdir), 'dst')
     open(dst, 'w').write('hello')
     os.chmod(dst, 0000)
@@ -302,6 +314,9 @@ def test_write_cpio_not_multiple_of_4(tmpdir):
     oz.ozutil.write_cpio({src: 'src'}, dst)
 
 def test_write_cpio_exception(tmpdir):
+    if os.geteuid() == 0:
+        # this test won't work as root, since root can copy any mode files
+        return
     src = os.path.join(str(tmpdir), 'src')
     open(src, 'w').write('src')
     os.chmod(src, 0000)
