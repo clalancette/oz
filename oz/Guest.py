@@ -513,6 +513,46 @@ class Guest(object):
 
         return total_disk_req, total_net_bytes
 
+    def _wait_for_clean_shutdown(self, libvirt_dom, saved_exception):
+        """
+        Internal method to wait for a clean shutdown of a libvirt domain that
+        is suspected to have cleanly quit.  If that domain did cleanly quit,
+        then we will hit a libvirt VIR_ERR_NO_DOMAIN exception on the very
+        first libvirt call and return with no delay.  If no exception, or some
+        other exception occurs, we wait up to 10 seconds for the domain to go
+        away.  If the domain is still there after 10 seconds then we raise the
+        original exception that was passed in.
+        """
+        count = 10
+        while count > 0:
+            self.log.debug("Waiting for %s to complete shutdown, %d/10" % (self.tdl.name, count))
+            try:
+                libvirt_dom.info()
+            except libvirt.libvirtError, e:
+                if e.get_error_code() == libvirt.VIR_ERR_NO_DOMAIN:
+                    break
+            count -= 1
+            time.sleep(1)
+
+        if count == 0:
+            # Got something other than the expected exception even after 10
+            # seconds - re-raise
+            if saved_exception:
+                self.log.debug("Libvirt Domain Info Failed:")
+                self.log.debug(" code is %d" % saved_exception.get_error_code())
+                self.log.debug(" domain is %d" % saved_exception.get_error_domain())
+                self.log.debug(" message is %s" % saved_exception.get_error_message())
+                self.log.debug(" level is %d" % saved_exception.get_error_level())
+                self.log.debug(" str1 is %s" % saved_exception.get_str1())
+                self.log.debug(" str2 is %s" % saved_exception.get_str2())
+                self.log.debug(" str3 is %s" % saved_exception.get_str3())
+                self.log.debug(" int1 is %d" % saved_exception.get_int1())
+                self.log.debug(" int2 is %d" % saved_exception.get_int2())
+                raise saved_exception
+            else:
+                # the passed in exception was None, just raise a generic error
+                raise oz.OzException.OzException("Unknown libvirt error")
+
     def _wait_for_install_finish(self, libvirt_dom, count,
                                  inactivity_timeout=300):
         """
@@ -528,32 +568,17 @@ class Guest(object):
         last_network_activity = 0
         inactivity_countdown = inactivity_timeout
         origcount = count
-        while count > 0:
+        saved_exception = None
+        while count > 0 and inactivity_countdown > 0:
             if count % 10 == 0:
                 self.log.debug("Waiting for %s to finish installing, %d/%d" % (self.tdl.name, count, origcount))
             try:
                 total_disk_req, total_net_bytes = self._get_disk_and_net_activity(libvirt_dom, disks, interfaces)
             except libvirt.libvirtError, e:
-                if e.get_error_domain() == libvirt.VIR_FROM_QEMU and (e.get_error_code() in [libvirt.VIR_ERR_NO_DOMAIN, libvirt.VIR_ERR_SYSTEM_ERROR, libvirt.VIR_ERR_OPERATION_FAILED, libvirt.VIR_ERR_OPERATION_INVALID]):
-                    break
-                else:
-                    self.log.debug("Libvirt Block Stats Failed:")
-                    self.log.debug(" code is %d" % e.get_error_code())
-                    self.log.debug(" domain is %d" % e.get_error_domain())
-                    self.log.debug(" message is %s" % e.get_error_message())
-                    self.log.debug(" level is %d" % e.get_error_level())
-                    self.log.debug(" str1 is %s" % e.get_str1())
-                    self.log.debug(" str2 is %s" % e.get_str2())
-                    self.log.debug(" str3 is %s" % e.get_str3())
-                    self.log.debug(" int1 is %d" % e.get_int1())
-                    self.log.debug(" int2 is %d" % e.get_int2())
-                    raise
-
-            # if we saw no disk or network activity in the countdown window,
-            # we presume the install has hung.  Fail here
-            if inactivity_countdown == 0:
-                screenshot_text = self._capture_screenshot(libvirt_dom.XMLDesc(0))
-                raise oz.OzException.OzException("No disk activity in %d seconds, failing.  %s" % (inactivity_timeout, screenshot_text))
+                # we save the exception here because we want to raise it later
+                # if this was a "real" exception
+                saved_exception = e
+                break
 
             # rd_req and wr_req are the *total* number of disk read requests and
             # write requests ever made for this domain.  Similarly rd_bytes and
@@ -583,10 +608,20 @@ class Guest(object):
             count -= 1
             time.sleep(1)
 
+        # We get here because of a libvirt exception, an absolute timeout, or
+        # an I/O timeout; we sort this out below
         if count == 0:
             # if we timed out, then let's make sure to take a screenshot.
             screenshot_text = self._capture_screenshot(libvirt_dom.XMLDesc(0))
             raise oz.OzException.OzException("Timed out waiting for install to finish.  %s" % (screenshot_text))
+        elif inactivity_countdown == 0:
+            # if we saw no disk or network activity in the countdown window,
+            # we presume the install has hung.  Fail here
+            screenshot_text = self._capture_screenshot(libvirt_dom.XMLDesc(0))
+            raise oz.OzException.OzException("No disk activity in %d seconds, failing.  %s" % (inactivity_timeout, screenshot_text))
+
+        # We get here only if we got a libvirt exception
+        self._wait_for_clean_shutdown(libvirt_dom, saved_exception)
 
         self.log.info("Install of %s succeeded" % (self.tdl.name))
 
@@ -596,31 +631,26 @@ class Guest(object):
         True if the guest shutdown in the specified time, False otherwise.
         """
         origcount = count
+        saved_exception = None
         while count > 0:
             if count % 10 == 0:
                 self.log.debug("Waiting for %s to shutdown, %d/%d" % (self.tdl.name, count, origcount))
             try:
                 libvirt_dom.info()
             except libvirt.libvirtError, e:
-                if e.get_error_domain() == libvirt.VIR_FROM_QEMU and (e.get_error_code() in [libvirt.VIR_ERR_NO_DOMAIN, libvirt.VIR_ERR_SYSTEM_ERROR, libvirt.VIR_ERR_OPERATION_FAILED]):
-                    break
-                else:
-                    self.log.debug("Libvirt Domain Info Failed:")
-                    self.log.debug(" code is %d" % e.get_error_code())
-                    self.log.debug(" domain is %d" % e.get_error_domain())
-                    self.log.debug(" message is %s" % e.get_error_message())
-                    self.log.debug(" level is %d" % e.get_error_level())
-                    self.log.debug(" str1 is %s" % e.get_str1())
-                    self.log.debug(" str2 is %s" % e.get_str2())
-                    self.log.debug(" str3 is %s" % e.get_str3())
-                    self.log.debug(" int1 is %d" % e.get_int1())
-                    self.log.debug(" int2 is %d" % e.get_int2())
-                    raise
-
+                saved_exception = e
+                break
             count -= 1
             time.sleep(1)
 
-        return count != 0
+        # Timed Out
+        if count == 0:
+            return False
+
+        # We get here only if we got a libvirt exception
+        self._wait_for_clean_shutdown(libvirt_dom, saved_exception)
+
+        return True
 
     def _download_file(self, from_url, fd, show_progress):
         """
