@@ -150,7 +150,7 @@ def test_all():
     expect_fail("FedoraCore", "24", "x86_64", "iso")
 
     # Fedora
-    for version in ["7", "8", "9", "10", "11", "12", "13", "14", "15"]:
+    for version in ["7", "8", "9", "10", "11", "12", "13", "14", "15", "16"]:
         for arch in ["i386", "x86_64"]:
             for installtype in ["url", "iso"]:
                 expect_success("Fedora", version, arch, installtype)
@@ -177,17 +177,18 @@ def test_all():
     # bad RHEL-2.1 installtype
     expect_fail("RHEL-2.1", "U6", "i386", "iso")
 
-    # RHEL-3
-    for version in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9"]:
-        for arch in ["i386", "x86_64"]:
-            expect_success("RHEL-3", version, arch, "url")
+    # RHEL-3/CentOS-3
+    for distro in ["RHEL-3", "CentOS-3"]:
+        for version in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9"]:
+            for arch in ["i386", "x86_64"]:
+                expect_success(distro, version, arch, "url")
     # bad RHEL-3 version
     expect_fail("RHEL-3", "U10", "x86_64", "url")
     # invalid RHEL-3 installtype
     expect_fail("RHEL-3", "U9", "x86_64", "iso")
 
     # RHEL-4/CentOS-4
-    for distro in ["RHEL-4", "CentOS-4"]:
+    for distro in ["RHEL-4", "CentOS-4", "ScientificLinux-4"]:
         for version in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9"]:
             for arch in ["i386", "x86_64"]:
                 for installtype in ["url", "iso"]:
@@ -196,8 +197,8 @@ def test_all():
     expect_fail("RHEL-4", "U10", "x86_64", "url")
 
     # RHEL-5/CentOS-5
-    for distro in ["RHEL-5", "CentOS-5"]:
-        for version in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7"]:
+    for distro in ["RHEL-5", "CentOS-5", "ScientificLinux-5"]:
+        for version in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8"]:
             for arch in ["i386", "x86_64"]:
                 for installtype in ["url", "iso"]:
                     expect_success(distro, version, arch, installtype)
@@ -205,10 +206,11 @@ def test_all():
     expect_fail("RHEL-5", "U10", "x86_64", "url")
 
     # RHEL-6
-    for version in ["0", "1"]:
-        for arch in ["i386", "x86_64"]:
-            for installtype in ["url", "iso"]:
-                expect_success("RHEL-6", version, arch, installtype)
+    for distro in ["RHEL-6", "CentOS-6", "ScientificLinux-6", "OEL-6"]:
+        for version in ["0", "1", "2"]:
+            for arch in ["i386", "x86_64"]:
+                for installtype in ["url", "iso"]:
+                    expect_success(distro, version, arch, installtype)
     # bad RHEL-6 version
     expect_fail("RHEL-6", "U10", "x86_64", "url")
 
@@ -234,7 +236,7 @@ def test_all():
     expect_fail("Windows", "2008", "x86_64", "url")
 
     # OpenSUSE
-    for version in ["11.0", "11.1", "11.2", "11.3", "11.4"]:
+    for version in ["10.3", "11.0", "11.1", "11.2", "11.3", "11.4"]:
         for arch in ["i386", "x86_64"]:
             expect_success("OpenSUSE", version, arch, "iso")
     # bad OpenSUSE version
@@ -253,6 +255,25 @@ def test_all():
     expect_fail("Ubuntu", "10.9", "i386", "iso")
     # bad Ubuntu installtype
     expect_fail("Ubuntu", "10.10", "i386", "url")
+
+    # Mandrake
+    for version in ["8.2", "9.1", "9.2", "10.0", "10.1"]:
+        expect_success("Mandrake", version, "i386", "iso")
+    # bad Mandrake version
+    expect_fail("Mandrake", "11", "i386", "iso")
+    # bad Mandrake arch
+    expect_fail("Mandrake", "8.2", "x86_64", "iso")
+    # bad Mandrake installtype
+    expect_fail("Mandrake", "8.2", "i386", "url")
+
+    # Mandriva
+    for version in ["2005", "2006.0", "2007.0", "2008.0"]:
+        for arch in ["i386", "x86_64"]:
+            expect_success("Mandriva", version, arch, "iso")
+    # bad Mandriva version
+    expect_fail("Mandriva", "80", "i386", "iso")
+    # bad Mandriva installtype
+    expect_fail("Mandriva", "2005", "i386", "url")
 
     # Now run all the tests
     for tst in alltests:
