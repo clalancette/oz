@@ -243,7 +243,7 @@ class TDL(object):
                 self.commands[name] = content
             elif contenttype == 'base64':
                 if len(content) == 0:
-                    self.commands[name] = ""
+                    raise oz.OzException.OzException("Empty commands are not allowed")
                 else:
                     self.commands[name] = base64.b64decode(content)
             else:

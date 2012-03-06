@@ -80,6 +80,11 @@ tests = {
     "test-43-persistent-repos.tdl": True,
     "test-44-version.tdl": True,
     "test-45-bogus-version.tdl": False,
+    "test-46-duplicate-name.tdl": False,
+    "test-47-invalid-template.tdl": False,
+    "test-48-file-empty-base64.tdl": True,
+    "test-49-file-empty-raw.tdl": True,
+    "test-50-command-base64-empty.tdl": False,
 }
 
 # Validate oz handling of tdl file
@@ -115,7 +120,6 @@ def validate_schema(tdl_file):
 
     # Attempt to validate
     reader = libxml2.newTextReaderFilename(tdl_file)
-    #reader.SetParserProp(libxml2.PARSER_VALIDATE, 1)
     reader.RelaxNGSetSchema(rngs)
     ret = reader.Read()
     while ret == 1:

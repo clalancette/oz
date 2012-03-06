@@ -92,7 +92,7 @@
                 </attribute>
                 <choice>
                   <ref name='rawtype'/>
-                  <ref name='base64type'/>
+                  <ref name='base64_or_emptytype'/>
                 </choice>
               </element>
             </zeroOrMore>
@@ -228,6 +228,20 @@
     <data type="string">
       <param name="pattern">[a-zA-Z0-9+/]+={0,2}</param>
     </data>
+  </define>
+
+  <define name='base64_or_empty'>
+    <choice>
+      <ref name='base64'/>
+      <empty/>
+    </choice>
+  </define>
+
+  <define name='base64_or_emptytype'>
+    <attribute name='type'>
+      <value>base64</value>
+    </attribute>
+    <ref name='base64_or_empty'/>
   </define>
 
   <define name='base64type'>
