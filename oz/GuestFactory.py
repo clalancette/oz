@@ -111,5 +111,5 @@ def distrolist():
     print "   Scientific Linux 6: 0"
     print "   OEL 6: 0, 1"
     print "   Debian: 5, 6"
-    print "   Mandrake: 8.2, 9.1, 9.2, 10.0, 10.1, 10.2"
+    print "   Mandrake: 8.2, 9.1, 9.2, 10.0, 10.1"
     print "   Mandriva: 2005, 2006.0, 2007.0, 2008.0"
