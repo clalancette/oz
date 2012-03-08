@@ -1,4 +1,4 @@
-# Copyright (C) 2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2011,2012  Chris Lalancette <clalance@redhat.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -28,7 +28,7 @@ import oz.OzException
 
 class MandrakeGuest(oz.Guest.CDGuest):
     """
-    Class for Mandrake installation.
+    Class for Mandrake 9.1, 9.2, 10.0, and 10.1 installation.
     """
     def __init__(self, tdl, config, auto, output_disk):
         oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, None,
@@ -95,7 +95,7 @@ class MandrakeGuest(oz.Guest.CDGuest):
 
 class Mandrake82Guest(oz.Guest.CDGuest):
     """
-    Class for Mandrake installation.
+    Class for Mandrake 8.2 installation.
     """
     def __init__(self, tdl, config, auto, output_disk):
         oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, None,

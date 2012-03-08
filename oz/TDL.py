@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -61,11 +61,15 @@ class Repository(object):
     url        - The URL of this repository.
     (all remaining properties are optional with defaults in parentheses)
     signed     - Whether this repository is signed (no)
-    persistent - Whether this repository should remain in the final image (yes)
-    clientcert - An SSL client certificate to access protected content - eg pulp repos (None)
-    clientkey  - An SSL client key to access protected content - eg pulp repos (None)
+    persistent - Whether this repository should remain in the final
+                 image (yes)
+    clientcert - An SSL client certificate to access protected content -
+                 e.g. pulp repos (None)
+    clientkey  - An SSL client key to access protected content - e.g. pulp
+                 repos (None)
     cacert     - A CA cert to be used to validate an https repository (None)
-    sslverify  - Whether yum should check the server cert against known CA certs (no)
+    sslverify  - Whether yum should check the server cert against known CA
+                 certs (no)
     """
     def __init__(self, name, url, signed, persistent, clientcert, clientkey,
                  cacert, sslverify):
@@ -120,8 +124,8 @@ class TDL(object):
     files        - A dictionary of file contents to be added to the
                    operating system.  The dictionary is indexed by filename.
     commands     - A dictionary of commands to run inside the guest VM.  The
-                   dictionary is indexed by commands.  This dictionary may be
-                   empty.
+                   dictionary is indexed by commands.  This dictionary may
+                   be empty.
     """
     def __init__(self, xmlstring, rootpw_required=False):
         self.doc = None
@@ -251,10 +255,11 @@ class TDL(object):
 
     def merge_packages(self, packages):
         """
-        Method to merge additional packages into an existing TDL.  The packages
-        argument should be a properly structured <packages/> string as explained
-        in the TDL documentation.  If a package with the same name is in the
-        existing TDL and in packages, the value in packages overrides.
+        Method to merge additional packages into an existing TDL.  The
+        packages argument should be a properly structured <packages/> string
+        as explained in the TDL documentation.  If a package with the same
+        name is in the existing TDL and in packages, the value in packages
+        overrides.
         """
         packsdoc = libxml2.parseDoc(packages)
         packslist = packsdoc.xpathEval('/packages/package')
@@ -300,9 +305,10 @@ class TDL(object):
     def merge_repositories(self, repos):
         """
         Method to merge additional repositories into an existing TDL.  The
-        repos argument should be a properly structured <repositories/> string
-        as explained in the TDL documentation.  If a repository with the same
-        name is in the existing TDL and in repos, the value in repos overrides.
+        repos argument should be a properly structured <repositories/>
+        string as explained in the TDL documentation.  If a repository with
+        the same name is in the existing TDL and in repos, the value in
+        repos overrides.
         """
         reposdoc = libxml2.parseDoc(repos)
         reposlist = reposdoc.xpathEval('/repositories/repository')

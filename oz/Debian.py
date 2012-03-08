@@ -1,4 +1,4 @@
-# Copyright (C) 2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2011,2012  Chris Lalancette <clalance@redhat.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -28,7 +28,7 @@ import oz.OzException
 
 class DebianGuest(oz.Guest.CDGuest):
     """
-    Class for Debian installation.
+    Class for Debian 5 and 6 installation.
     """
     def __init__(self, tdl, config, auto, output_disk):
         oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, 'virtio',

@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -49,8 +49,9 @@ import oz.OzException
 
 def subprocess_check_output(*popenargs, **kwargs):
     """
-    Function to call a subprocess and gather the output.  Deprecated; slated to
-    be removed in Oz version 0.7.0.  See oz.ozutil.subprocess_check_output().
+    Function to call a subprocess and gather the output.  Deprecated; slated
+    to be removed in Oz version 0.7.0. See
+    oz.ozutil.subprocess_check_output().
     """
     return oz.ozutil.subprocess_check_output(*popenargs, **kwargs)
 
@@ -462,8 +463,8 @@ class Guest(object):
         parameter, specified in GB.  If force is False (the default), then
         a diskimage will not be created if a cached JEOS is found.  If
         force is True, a diskimage will be created regardless of whether a
-        cached JEOS exists.  See the oz-install man page for more information
-        about JEOS caching.
+        cached JEOS exists.  See the oz-install man page for more
+        information about JEOS caching.
         """
         return self._internal_generate_diskimage(size, force, False)
 
@@ -1093,7 +1094,7 @@ class Guest(object):
     def mkdir_p(self, path):
         """
         Create a directory and all of its parents.
-        Deprecated; slated for removal in Oz 0.7.0.  See oz.ozutil.mkdir_p().
+        Deprecated; slated for removal in Oz 0.7.0. See oz.ozutil.mkdir_p().
         """
         return oz.ozutil.mkdir_p(path)
 

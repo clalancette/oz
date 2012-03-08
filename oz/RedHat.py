@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -475,7 +475,8 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
     def do_icicle(self, guestaddr):
         """
-        Method to collect the package information and generate the ICICLE XML.
+        Method to collect the package information and generate the ICICLE
+        XML.
         """
         stdout, stderr, retcode = self.guest_execute_command(guestaddr,
                                                              'rpm -qa',
@@ -854,7 +855,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
 
         return url
 
-    protocol_to_default_port = {
+    _protocol_to_default_port = {
         'http': '80',
         'https': '443',
         'ftp': '21',
@@ -876,7 +877,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
             else:
                 # URL without port
                 (protocol, hostname, path) = sr.group(8, 10, 12)
-                port = self.protocol_to_default_port[protocol]
+                port = self._protocol_to_default_port[protocol]
             return (protocol, hostname, port, path)
         else:
             raise oz.OzException.OzException("Could not decode URL (%s) for port forwarding" % (repourl))

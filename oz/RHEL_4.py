@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -27,7 +27,7 @@ import oz.OzException
 
 class RHEL4Guest(oz.RedHat.RedHatCDGuest):
     """
-    Class for RHEL-4 installation.
+    Class for RHEL-4 GOLD, U1, U2, U3, U4, U5, U6, U7, U8, and U9 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus):
         # we set initrdtype to None because RHEL-4 spews errors using direct

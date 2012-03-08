@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -107,7 +107,8 @@ def copyfile_sparse(src, dest):
 
 def bsd_split(line, digest_type):
     """
-    Function to split a BSD-style checksum line into a filename and checksum.
+    Function to split a BSD-style checksum line into a filename and
+    checksum.
     """
     current = len(digest_type)
 
@@ -144,7 +145,8 @@ def bsd_split(line, digest_type):
 
 def sum_split(line, digest_bits):
     """
-    Function to split a normal Linux checksum line into a filename and checksum.
+    Function to split a normal Linux checksum line into a filename and
+    checksum.
     """
     digest_hex_bytes = digest_bits / 4
     min_digest_line_length = digest_hex_bytes + 2 + 1 # length of hex message digest + blank and binary indicator (2 bytes) + minimum file length (1 byte)
@@ -196,7 +198,8 @@ def sum_split(line, digest_bits):
 
 def get_sum_from_file(sumfile, file_to_find, digest_bits, digest_type):
     """
-    Function to get a checksum digest out of a checksum file given a filename.
+    Function to get a checksum digest out of a checksum file given a
+    filename.
     """
     retval = None
 
@@ -248,7 +251,8 @@ def get_sha1sum_from_file(sumfile, file_to_find):
 
 def get_sha256sum_from_file(sumfile, file_to_find):
     """
-    Function to get a SHA256 checksum out of a checksum file given a filename.
+    Function to get a SHA256 checksum out of a checksum file given a
+    filename.
     """
     return get_sum_from_file(sumfile, file_to_find, 256, "SHA256")
 
@@ -279,8 +283,8 @@ def generate_macaddress():
 
 class SubprocessException(Exception):
     """
-    Class for subprocess exceptions.  In addition to a error message, it also
-    has a retcode member that has the returncode from the command.
+    Class for subprocess exceptions.  In addition to a error message, it
+    also has a retcode member that has the returncode from the command.
     """
     def __init__(self, msg, retcode):
         Exception.__init__(self, msg)
@@ -326,7 +330,8 @@ def subprocess_check_output(*popenargs, **kwargs):
 def ssh_execute_command(guestaddr, sshprivkey, command, timeout=10,
                         tunnels=None):
     """
-    Function to execute a command on the guest using SSH and return the output.
+    Function to execute a command on the guest using SSH and return the
+    output.
     """
     # ServerAliveInterval protects against NAT firewall timeouts
     # on long-running commands with no output
@@ -382,9 +387,10 @@ def scp_copy_file(guestaddr, sshprivkey, file_to_upload, destination,
 
 def mkdir_p(path):
     """
-    Function to make a directory and all intermediate directories as necessary.
-    The functionality differs from os.makedirs slightly, in that this function
-    does *not* raise an error if the directory already exists.
+    Function to make a directory and all intermediate directories as
+    necessary.  The functionality differs from os.makedirs slightly, in
+    that this function does *not* raise an error if the directory already
+    exists.
     """
     if path is None:
         raise Exception, "Path cannot be None"
@@ -397,10 +403,10 @@ def mkdir_p(path):
 
 def copy_modify_file(inname, outname, subfunc):
     """
-    Function to copy a file from inname to outname, passing each line through
-    subfunc first.  subfunc is expected to be a method that takes a single
-    argument in (the next line), and returns a string to be written to the
-    output file after modification (if any).
+    Function to copy a file from inname to outname, passing each line
+    through subfunc first.  subfunc is expected to be a method that takes
+    a single argument in (the next line), and returns a string to be
+    written to the output file after modification (if any).
     """
     if inname is None:
         raise Exception, "input filename is None"
@@ -422,11 +428,12 @@ def copy_modify_file(inname, outname, subfunc):
 
 def write_cpio(inputdict, outputfile):
     """
-    Function to write a CPIO archive in the "New ASCII Format".  The inputlist
-    is a dictionary of files to put in the archive, where the dictionary key
-    is the path to the file on the local filesystem and the dictionary value
-    is the location that the file should have in the cpio archive.  The
-    outputfile is the location of the final cpio archive that will be written.
+    Function to write a CPIO archive in the "New ASCII Format".  The
+    inputlist is a dictionary of files to put in the archive, where the
+    dictionary key is the path to the file on the local filesystem and the
+    dictionary value is the location that the file should have in the cpio
+    archive.  The outputfile is the location of the final cpio archive that
+    will be written.
     """
     if inputdict is None:
         raise Exception, "input dictionary was None"

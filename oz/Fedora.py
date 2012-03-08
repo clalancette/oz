@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -28,12 +28,12 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
     """
     Class for Fedora 7, 8, 9, 10, 11, 12, 13, 14, 15, and 16 installation.
     """
-    # FIXME: For consistency most of the __init__ functions take self, tdl,
-    # config, auto, output_disk (in that order).  However, in order to not break
-    # imagefactory, we want to make output_disk have a default of None, and we
-    # can't do that without putting output_disk at the end.
     def __init__(self, tdl, config, auto, nicmodel, haverepo,
                  diskbus, brokenisomethod, output_disk=None):
+        # FIXME: For consistency most of the __init__ functions take self, tdl,
+        # config, auto, output_disk (in that order).  However, in order to not
+        # break imagefactory, we want to make output_disk have a default of
+        # None, and we can't do that without putting output_disk at the end.
         directkernel = "cpio"
         if tdl.update == "16":
             directkernel = None

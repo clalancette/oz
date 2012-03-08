@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -26,7 +26,7 @@ import oz.OzException
 
 class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
     """
-    Class for RHEL-6 installation.
+    Class for RHEL-6 0, 1, and 2 installation.
     """
     def __init__(self, tdl, config, auto, output_disk=None):
         oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, output_disk,

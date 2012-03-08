@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -23,7 +23,7 @@ import oz.OzException
 
 class RHEL21Guest(oz.RedHat.RedHatFDGuest):
     """
-    Class for RHEL-2.1 installation.
+    Class for RHEL-2.1 GOLD, U2, U3, U4, U5, and U6 installation.
     """
     def __init__(self, tdl, config, auto, output_disk):
         oz.RedHat.RedHatFDGuest.__init__(self, tdl, config, auto, output_disk,

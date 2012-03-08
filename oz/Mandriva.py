@@ -1,4 +1,4 @@
-# Copyright (C) 2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2011,2012  Chris Lalancette <clalance@redhat.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -28,7 +28,7 @@ import oz.OzException
 
 class MandrivaGuest(oz.Guest.CDGuest):
     """
-    Class for Mandriva installation.
+    Class for Mandriva 2005, 2006.0, 2007.0, and 2008.0 installation.
     """
     def __init__(self, tdl, config, auto, output_disk):
         oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, None,

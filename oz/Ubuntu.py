@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -466,7 +466,8 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
 
     def do_icicle(self, guestaddr):
         """
-        Method to collect the package information and generate the ICICLE XML.
+        Method to collect the package information and generate the ICICLE
+        XML.
         """
         stdout, stderr, retcode = self.guest_execute_command(guestaddr,
                                                              'dpkg --get-selections',
