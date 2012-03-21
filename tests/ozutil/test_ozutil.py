@@ -323,3 +323,97 @@ def test_write_cpio_exception(tmpdir):
     dst = os.path.join(str(tmpdir), 'dst')
     with py.test.raises(IOError):
         oz.ozutil.write_cpio({src: 'src'}, dst)
+
+def test_md5sum_regular(tmpdir):
+    src = os.path.join(str(tmpdir), 'md5sum')
+    f = open(src, 'w')
+    f.write('# this is a comment line, followed by a blank line\n\n6e812e782e52b536c0307bb26b3c244e *Fedora-11-i386-DVD.iso\n')
+    f.close()
+
+    oz.ozutil.get_md5sum_from_file(src, 'Fedora-11-i386-DVD.iso')
+
+def test_sha1sum_regular(tmpdir):
+    src = os.path.join(str(tmpdir), 'md5sum')
+    f = open(src, 'w')
+    f.write('6e812e782e52b536c0307bb26b3c244e1c42b644 *Fedora-11-i386-DVD.iso\n')
+    f.close()
+
+    oz.ozutil.get_sha1sum_from_file(src, 'Fedora-11-i386-DVD.iso')
+
+def test_sha256sum_regular(tmpdir):
+    src = os.path.join(str(tmpdir), 'md5sum')
+    f = open(src, 'w')
+    f.write('6e812e782e52b536c0307bb26b3c244e1c42b644235f5a4b242786b1ef375358 *Fedora-11-i386-DVD.iso\n')
+    f.close()
+
+    oz.ozutil.get_sha256sum_from_file(src, 'Fedora-11-i386-DVD.iso')
+
+def test_md5sum_bsd(tmpdir):
+    src = os.path.join(str(tmpdir), 'md5sum')
+    f = open(src, 'w')
+    f.write('MD5 (Fedora-11-i386-DVD.iso)=6e812e782e52b536c0307bb26b3c244e1c42b644235f5a4b242786b1ef375358\n')
+    f.close()
+
+    oz.ozutil.get_md5sum_from_file(src, 'Fedora-11-i386-DVD.iso')
+
+def test_md5sum_bsd_no_start_paren(tmpdir):
+    src = os.path.join(str(tmpdir), 'md5sum')
+    f = open(src, 'w')
+    # if BSD is missing a paren, we don't raise an exception, just ignore and
+    # continue
+    f.write('MD5 Fedora-11-i386-DVD.iso)=6e812e782e52b536c0307bb26b3c244e1c42b644235f5a4b242786b1ef375358\n')
+    f.close()
+
+    oz.ozutil.get_md5sum_from_file(src, 'Fedora-11-i386-DVD.iso')
+
+def test_md5sum_bsd_no_end_paren(tmpdir):
+    src = os.path.join(str(tmpdir), 'md5sum')
+    f = open(src, 'w')
+    # if BSD is missing a paren, we don't raise an exception, just ignore and
+    # continue
+    f.write('MD5 (Fedora-11-i386-DVD.iso=6e812e782e52b536c0307bb26b3c244e1c42b644235f5a4b242786b1ef375358\n')
+    f.close()
+
+    oz.ozutil.get_md5sum_from_file(src, 'Fedora-11-i386-DVD.iso')
+
+def test_md5sum_bsd_no_equal(tmpdir):
+    src = os.path.join(str(tmpdir), 'md5sum')
+    f = open(src, 'w')
+    # if BSD is missing a paren, we don't raise an exception, just ignore and
+    # continue
+    f.write('MD5 (Fedora-11-i386-DVD.iso) 6e812e782e52b536c0307bb26b3c244e1c42b644235f5a4b242786b1ef375358\n')
+    f.close()
+
+    oz.ozutil.get_md5sum_from_file(src, 'Fedora-11-i386-DVD.iso')
+
+def test_md5sum_regular_escaped(tmpdir):
+    src = os.path.join(str(tmpdir), 'md5sum')
+    f = open(src, 'w')
+    f.write('\\6e812e782e52b536c0307bb26b3c244e *Fedora-11-i386-DVD.iso\n')
+    f.close()
+
+    oz.ozutil.get_md5sum_from_file(src, 'Fedora-11-i386-DVD.iso')
+
+def test_md5sum_regular_too_short(tmpdir):
+    src = os.path.join(str(tmpdir), 'md5sum')
+    f = open(src, 'w')
+    f.write('6e *F\n')
+    f.close()
+
+    oz.ozutil.get_md5sum_from_file(src, 'Fedora-11-i386-DVD.iso')
+
+def test_md5sum_regular_no_star(tmpdir):
+    src = os.path.join(str(tmpdir), 'md5sum')
+    f = open(src, 'w')
+    f.write('6e812e782e52b536c0307bb26b3c244e Fedora-11-i386-DVD.iso\n')
+    f.close()
+
+    oz.ozutil.get_md5sum_from_file(src, 'Fedora-11-i386-DVD.iso')
+
+def test_md5sum_regular_no_newline(tmpdir):
+    src = os.path.join(str(tmpdir), 'md5sum')
+    f = open(src, 'w')
+    f.write('6e812e782e52b536c0307bb26b3c244e *Fedora-11-i386-DVD.iso')
+    f.close()
+
+    oz.ozutil.get_md5sum_from_file(src, 'Fedora-11-i386-DVD.iso')
