@@ -417,3 +417,11 @@ def test_md5sum_regular_no_newline(tmpdir):
     f.close()
 
     oz.ozutil.get_md5sum_from_file(src, 'Fedora-11-i386-DVD.iso')
+
+def test_md5sum_regular_no_space(tmpdir):
+    src = os.path.join(str(tmpdir), 'md5sum')
+    f = open(src, 'w')
+    f.write('6e812e782e52b536c0307bb26b3c244e_*Fedora-11-i386-DVD.iso\n')
+    f.close()
+
+    oz.ozutil.get_md5sum_from_file(src, 'Fedora-11-i386-DVD.iso')
