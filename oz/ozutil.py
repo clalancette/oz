@@ -24,6 +24,7 @@ import subprocess
 import tempfile
 import errno
 import stat
+import shutil
 
 def generate_full_auto_path(relative):
     """
@@ -557,3 +558,16 @@ def config_get_boolean_key(config, section, key, default):
         raise Exception, "Configuration parameter '%s' must be True, Yes, False, or No" % (key)
 
     return retval
+
+def rmtree_and_sync(directory):
+    shutil.rmtree(directory)
+    # after we do the rmtree, there are usually a lot of metadata updates
+    # pending.  This can cause the next steps (especially the steps where
+    # libvirt is launching the guest) to fail, just because they timeout.  To
+    # try to workaround this, fsync the directory, which will cause us to wait
+    # until those updates have made it to disk.  Note that this cannot save us
+    # if the system is extremely busy for other reasons, but at least the
+    # problem won't be self-inflicted.
+    fd = os.open(os.path.dirname(directory), os.O_RDONLY)
+    os.fsync(fd)
+    os.close(fd)

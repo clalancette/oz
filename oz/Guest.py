@@ -1555,7 +1555,7 @@ class CDGuest(Guest):
         Method to cleanup the local ISO contents.
         """
         self.log.info("Cleaning up old ISO data")
-        shutil.rmtree(self.iso_contents)
+        oz.ozutil.rmtree_and_sync(self.iso_contents)
 
     def cleanup_install(self):
         """
@@ -1641,7 +1641,7 @@ class FDGuest(Guest):
         Method to cleanup the temporary floppy data.
         """
         self.log.info("Cleaning up floppy data")
-        shutil.rmtree(self.floppy_contents)
+        oz.ozutil.rmtree_and_sync(self.floppy_contents)
 
     def cleanup_install(self):
         """
