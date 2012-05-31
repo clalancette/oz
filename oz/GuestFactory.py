@@ -61,10 +61,12 @@ def guest_factory(tdl, config, auto, output_disk=None):
                         "ScientificLinux-4", "SL-4"]:
         klass = oz.RHEL_4.get_class(tdl, config, auto, output_disk)
     elif tdl.distro in ["RedHatEnterpriseLinux-5", "RHEL-5", "CentOS-5",
-                        "ScientificLinux-5", "SL-5"]:
+                        "ScientificLinux-5", "SL-5",
+                        "ScientificLinuxCern-5", "SLC-5"]:
         klass = oz.RHEL_5.get_class(tdl, config, auto, output_disk)
     elif tdl.distro in ["RedHatEnterpriseLinux-6", "RHEL-6", "CentOS-6",
                         "ScientificLinux-6", "SL-6",
+                        "ScientificLinuxCern-6", "SLC-6",
                         "OracleEnterpriseLinux-6", "OEL-6"]:
         klass = oz.RHEL_6.get_class(tdl, config, auto, output_disk)
     elif tdl.distro == "Ubuntu":
@@ -109,6 +111,8 @@ def distrolist():
     print "   Scientific Linux 4: U9"
     print "   Scientific Linux 5: U6"
     print "   Scientific Linux 6: 0"
+    print "   Scientific Linux CERN 5: U7, U8"
+    print "   Scientific Linux CERN 6: 2"
     print "   OEL 6: 0, 1"
     print "   Debian: 5, 6"
     print "   Mandrake: 8.2, 9.1, 9.2, 10.0, 10.1"

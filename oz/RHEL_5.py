@@ -89,6 +89,15 @@ class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
                 # url installs
                 if not re.match("CentOS *", pvd.volume_identifier):
                     raise oz.OzException.OzException("Invalid boot.iso for CentOS-5 URL install")
+        elif self.tdl.distro == "SLC-5":
+            # SLC-5
+            if self.tdl.installtype == 'iso':
+                if not re.match("Scientific Linux CERN 5.[0-9]", pvd.volume_identifier):
+                    raise oz.OzException.OzException("Only DVDs are supported for SLC-5 ISO installs")
+            else:
+                # url installs
+                if not re.match("CentOS *", pvd.volume_identifier):
+                    raise oz.OzException.OzException("Invalid boot.iso for SLC-5 URL install")
 
 def get_class(tdl, config, auto, output_disk=None):
     """
