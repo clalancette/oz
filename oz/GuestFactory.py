@@ -93,7 +93,7 @@ def distrolist():
     """
     Function to print out a list of supported distributions.
     """
-    print "   Fedora: 7, 8, 9, 10, 11, 12, 13, 14, 15, 16"
+    print "   Fedora: 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17"
     print "   Fedora Core: 1, 2, 3, 4, 5, 6"
     print "   RHEL 2.1: GOLD, U2, U3, U4, U5, U6"
     print "   RHEL 3: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9"
