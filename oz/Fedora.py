@@ -26,7 +26,7 @@ import oz.OzException
 
 class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
     """
-    Class for Fedora 7, 8, 9, 10, 11, 12, 13, 14, 15, and 16 installation.
+    Class for Fedora 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, and 17 installation.
     """
     def __init__(self, tdl, config, auto, nicmodel, haverepo,
                  diskbus, brokenisomethod, output_disk=None):
@@ -35,7 +35,7 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
         # break imagefactory, we want to make output_disk have a default of
         # None, and we can't do that without putting output_disk at the end.
         directkernel = "cpio"
-        if tdl.update == "16":
+        if tdl.update in ["16", "17"]:
             directkernel = None
         oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, output_disk,
                                             nicmodel, diskbus,
@@ -53,7 +53,7 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
         """
         self._copy_kickstart(os.path.join(self.iso_contents, "ks.cfg"))
 
-        initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
+        initrdline = "  append initrd=initrd.img ks=cdrom:/dev/cdrom:/ks.cfg"
         if self.tdl.installtype == "url":
             if self.haverepo:
                 initrdline += " repo="
@@ -93,7 +93,7 @@ def get_class(tdl, config, auto, output_disk=None):
     """
     Factory method for Fedora installs.
     """
-    if tdl.update in ["10", "11", "12", "13", "14", "15", "16"]:
+    if tdl.update in ["10", "11", "12", "13", "14", "15", "16", "17"]:
         return FedoraGuest(tdl, config, auto, "virtio", True, "virtio", True,
                            output_disk)
     if tdl.update in ["7", "8", "9"]:
