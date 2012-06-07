@@ -53,7 +53,7 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
         """
         self._copy_kickstart(os.path.join(self.iso_contents, "ks.cfg"))
 
-        initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
+        initrdline = "  append initrd=initrd.img ks=cdrom:/dev/cdrom:/ks.cfg"
         if self.tdl.installtype == "url":
             if self.haverepo:
                 initrdline += " repo="
