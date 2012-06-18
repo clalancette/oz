@@ -1,3 +1,9 @@
+oz (0.8.0-1) unstable; urgency=low
+
+  * Update to Oz 0.8.0
+
+ -- Chris Lalancette <clalancette@gmail.com>  Thu, 21 May 2012 09:36:00	-0500
+
 oz (0.7.0-5) unstable; urgency=low
 
   * Initial Release.

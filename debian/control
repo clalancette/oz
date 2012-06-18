@@ -2,20 +2,20 @@ Source: oz
 Section: utils
 Priority: extra
 Maintainer: Richard Jones <rjones@redhat.com>
-Build-Depends: debhelper (>= 7.0.50~), cdbs,
- python (>= 2.5)
+Build-Depends: debhelper (>= 7.0.50~), cdbs (>=0.4.90~),
+ python-all (>= 2.6.6-3~)
 Standards-Version: 3.8.4
 Homepage: http://aeolusproject.org/oz.html
 Vcs-Git: git://github.com/clalancette/oz.git
 #Vcs-Browser: http://git.debian.org/?p=collab-maint/oz.git;a=summary
-XS-Python-Version: ${python:Versions}
+X-Python-Version: ${python:Versions}
 
 Package: oz
 Architecture: all
 Depends: ${misc:Depends}, ${python:Depends},
  python (>= 2.5),
-# for gvnccapture, but only packaged in Sid:
  genisoimage,
+# for gvnccapture, but only packaged in Sid:
  gvncviewer,
  libvirt-dev,
  mtools,
@@ -27,6 +27,6 @@ Depends: ${misc:Depends}, ${python:Depends},
  python-numpy,
  python-m2crypto,
  python-parted
-Description: installing guest OSs with only minimal input the user
+Description: Installing guest OSs with only minimal input the user
  Oz is a tool for automatically installing guest OSs with only minimal
  up-front input from the user.
