@@ -1,11 +1,17 @@
 #!/usr/bin/make -f
 
-DEB_PYTHON_SYSTEM=pysupport
+#DH_VERBOSE=1
 
-include /usr/share/cdbs/1/rules/debhelper.mk
-include /usr/share/cdbs/1/class/python-distutils.mk
+PYTHON2=$(shell pyversions -vr)
 
-# Add here any variable or target overrides you need.
+%:
+	dh $@ --buildsystem=python_distutils --with=python2
+
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -rf build
+	rm -rf *.egg-info
+
 install/oz::
 	mkdir -p debian/oz/var/lib/oz/isocontent/
 	mkdir -p debian/oz/var/lib/oz/isos/
@@ -16,3 +22,4 @@ install/oz::
 	mkdir -p debian/oz/var/lib/oz/kernels/
 	mkdir -p debian/oz/etc/oz
 	install -m 0644 oz.cfg debian/oz/etc/oz/
+

@@ -1,3 +1,8 @@
+oz (0.9.0-1) unstable; urgency=low
+  * Updated to match more modern ubuntu packaging standards.
+
+ -- Steven Dake <sdake@redhat.com>  Mon, 18 Jun 2012 19:14:25 -0700
+  
 oz (0.7.0-5) unstable; urgency=low
 
   * Initial Release.
