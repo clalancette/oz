@@ -65,12 +65,15 @@ data_dir = "/var/lib/oz"
 if config is not None and config.has_section('paths') and config.has_option('paths', 'data_dir'):
     data_dir = config.get('paths', 'data_dir')
 
-floppy_cache = os.path.join(data_dir, "floppies")
-iso_cache = os.path.join(data_dir, "isos")
+dirs = ["floppies", "floppycontent", "icicletmp", "isocontent", "isos", "jeos",
+        "kernels"]
+caches = []
+for path in dirs:
+    caches.append(os.path.join(data_dir, path))
 
 if not force:
     while True:
-        response = raw_input("Going to remove all content from %s and %s; continue? (y/N) " % (floppy_cache, iso_cache))
+        response = raw_input("Going to remove all content from %s; continue? (y/N) " % (', '.join(caches)))
         if len(response) == 0 or response.lower() == 'n':
             sys.exit(0)
         elif response.lower() == 'y':
@@ -78,9 +81,10 @@ if not force:
         else:
             print "Please enter 'y' or 'n'"
 
-print "Removing all cached content from %s and %s" % (floppy_cache, iso_cache)
-
-if os.access(floppy_cache, os.F_OK):
-    shutil.rmtree(floppy_cache)
-if os.access(iso_cache, os.F_OK):
-    shutil.rmtree(iso_cache)
+for cache in caches:
+    print "Removing cached content from %s" % (cache)
+    for root,dirs,files in os.walk(cache):
+        for f in files:
+            os.unlink(os.path.join(root, f))
+        for d in dirs:
+            shutil.rmtree(os.path.join(root, d))
