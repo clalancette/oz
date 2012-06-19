@@ -16,7 +16,10 @@ rpm: sdist
 srpm: sdist
 	rpmbuild -bs oz.spec --define "_sourcedir `pwd`/dist"
 
-release: signed-rpm signed-tarball
+deb:
+	debuild -i -uc -us -b
+
+release: signed-rpm signed-tarball deb
 
 examples-manpage:
 	echo "Generating oz-examples man page"
