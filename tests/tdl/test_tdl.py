@@ -85,6 +85,7 @@ tests = {
     "test-48-file-empty-base64.tdl": True,
     "test-49-file-empty-raw.tdl": True,
     "test-50-command-base64-empty.tdl": False,
+    "test-51-disk-size.tdl": True,
 }
 
 # Validate oz handling of tdl file
