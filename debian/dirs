@@ -1,0 +1,8 @@
+etc/oz
+var/lib/oz/isocontent
+var/lib/oz/isos
+var/lib/oz/floppycontent
+var/lib/oz/floppies
+var/lib/oz/icicletmp
+var/lib/oz/jeos
+var/lib/oz/kernels
