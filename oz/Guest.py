@@ -209,6 +209,12 @@ class Guest(object):
 
         oz.ozutil.mkdir_p(self.icicle_tmp)
 
+        self.disksize = self.tdl.disksize
+        if self.disksize is None:
+            self.disksize = 10
+        else:
+            self.disksize = int(self.disksize)
+
         self.log.debug("Name: %s, UUID: %s" % (self.tdl.name, self.uuid))
         self.log.debug("MAC: %s, distro: %s" % (self.macaddr, self.tdl.distro))
         self.log.debug("update: %s, arch: %s, diskimage: %s" % (self.tdl.update, self.tdl.arch, self.diskimage))

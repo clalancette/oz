@@ -148,7 +148,7 @@ try:
     try:
         guest.generate_install_media(force_download)
         try:
-            guest.generate_diskimage(force=force_download)
+            guest.generate_diskimage(size=guest.disksize, force=force_download)
             libvirt_xml = guest.install(timeout, force_download)
         except:
             guest.cleanup_old_guest()

@@ -9,7 +9,7 @@
      - Dragonfly BSD
      - Windows Vista, 98, 95, ME
      - RHL 5.2, 6.0, 6.1, 6.2 (only nfs installs work)
-2.  Add partition/disk size support to the TDL.
+2.  Add partition support to the TDL.
 3.  Add improved error logging to guest installation.  That is, if the guest
 installation fails, we want to get detailed error information out of the
 installer to find out why.  Fedora/RHEL support doing remote syslog via

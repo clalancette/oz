@@ -253,6 +253,9 @@ class TDL(object):
             else:
                 raise oz.OzException.OzException("File type for %s must be 'raw' or 'base64'" % (name))
 
+        self.disksize = _xml_get_value(self.doc, '/template/disk/size',
+                                       'disk size', optional=True)
+
     def merge_packages(self, packages):
         """
         Method to merge additional packages into an existing TDL.  The
