@@ -1,18 +1,4 @@
 #!/usr/bin/make -f
 
-DEB_PYTHON2_MODULE_PACKAGES=oz
-
-include /usr/share/cdbs/1/rules/debhelper.mk
-include /usr/share/cdbs/1/class/python-distutils.mk
-
-# Add here any variable or target overrides you need.
-install/oz::
-	mkdir -p debian/oz/var/lib/oz/isocontent/
-	mkdir -p debian/oz/var/lib/oz/isos/
-	mkdir -p debian/oz/var/lib/oz/floppycontent/
-	mkdir -p debian/oz/var/lib/oz/floppies/
-	mkdir -p debian/oz/var/lib/oz/icicletmp/
-	mkdir -p debian/oz/var/lib/oz/jeos/
-	mkdir -p debian/oz/var/lib/oz/kernels/
-	mkdir -p debian/oz/etc/oz
-	install -m 0644 oz.cfg debian/oz/etc/oz/
+%:
+	dh $@ --buildsystem=python_distutils --with=python2
