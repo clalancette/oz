@@ -63,6 +63,8 @@ screenshot_dir = .
 uri = qemu:///system
 type = kvm
 bridge_name = virbr0
+cpus = 1
+memory = 1024
 
 [cache]
 original_media = yes
@@ -83,7 +85,9 @@ The \fBlibvirt\fR section allows some manipulation of how Oz uses libvirt.
 The \fBuri\fR key describes the libvirt URI to use to do the guest
 installation.  The \fBtype\fR key defines what type of virtualization
 to use.  The \fBbridge_name\fR key defines which bridge Oz should
-place the guests that it launches on.
+place the guests that it launches on.  The \fBcpus\fR key defines how
+many cpus should be used inside the virtual machine.  The \fBmemory\fR
+key defines how much memory should be used inside the virtual machine.
 
 The \fBcache\fR section allows some manipulation of how Oz caches
 data.  The caching of data in Oz is a tradeoff between installation

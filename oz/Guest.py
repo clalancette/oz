@@ -152,6 +152,12 @@ class Guest(object):
                                                      None)
         self.bridge_name = oz.ozutil.config_get_key(config, 'libvirt',
                                                     'bridge_name', None)
+        self.install_cpus = oz.ozutil.config_get_key(config, 'libvirt', 'cpus',
+                                                     1)
+        # the memory in the configuration file is specified in megabytes, but
+        # libvirt expects kilobytes, so multiply by 1024
+        self.install_memory = oz.ozutil.config_get_key(config, 'libvirt',
+                                                       'memory', 1024) * 1024
 
         # configuration from 'cache' section
         self.cache_original_media = oz.ozutil.config_get_boolean_key(config,
@@ -332,8 +338,8 @@ class Guest(object):
         domain.newChild(None, "name", self.tdl.name)
 
         # create memory elements
-        domain.newChild(None, "memory", "1048576")
-        domain.newChild(None, "currentMemory", "1048576")
+        domain.newChild(None, "memory", str(self.install_memory))
+        domain.newChild(None, "currentMemory", str(self.install_memory))
 
         # create uuid
         domain.newChild(None, "uuid", str(self.uuid))
@@ -343,7 +349,7 @@ class Guest(object):
         clock.setProp("offset", self.clockoffset)
 
         # create vcpu
-        domain.newChild(None, "vcpu", "1")
+        domain.newChild(None, "vcpu", str(self.install_cpus))
 
         # create features
         features = domain.newChild(None, "features", None)
