@@ -68,6 +68,9 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
             self.preseed_file = oz.ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed")
         self.tunnels = {}
 
+        self.ssh_startuplink = None
+        self.cron_startuplink = None
+
     def _check_iso_tree(self):
         if self.tdl.update in ["6.06", "6.10", "7.04"]:
             if os.path.isdir(os.path.join(self.iso_contents, "casper")):
@@ -207,11 +210,12 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
 
         # reset the service link
         self.log.debug("Resetting sshd service")
-        startuplink = self._get_service_runlevel_link(g_handle, 'ssh')
-        if g_handle.exists(startuplink):
-            g_handle.rm(startuplink)
-        if g_handle.exists(startuplink + ".icicle"):
-            g_handle.mv(startuplink + ".icicle", startuplink)
+        if self.ssh_startuplink:
+            if g_handle.exists(self.ssh_startuplink):
+                g_handle.rm(self.ssh_startuplink)
+            if g_handle.exists(self.ssh_startuplink + ".icicle"):
+                g_handle.mv(self.ssh_startuplink + ".icicle",
+                            self.ssh_startuplink)
 
     def _image_ssh_teardown_step_3(self, g_handle):
         """
@@ -230,11 +234,12 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
 
         # reset the service link
         self.log.debug("Resetting cron service")
-        startuplink = self._get_service_runlevel_link(g_handle, 'cron')
-        if g_handle.exists(startuplink):
-            g_handle.rm(startuplink)
-        if g_handle.exists(startuplink + ".icicle"):
-            g_handle.mv(startuplink + ".icicle", startuplink)
+        if self.cron_startuplink:
+            if g_handle.exists(self.cron_startuplink):
+                g_handle.rm(self.cron_startuplink)
+            if g_handle.exists(self.cron_startuplink + ".icicle"):
+                g_handle.mv(self.cron_startuplink + ".icicle",
+                            self.cron_startuplink)
 
     def _image_ssh_setup_step_1(self, g_handle):
         """
@@ -263,10 +268,10 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         if not g_handle.exists('/usr/sbin/sshd'):
             raise oz.OzException.OzException("ssh not installed on the image, cannot continue")
 
-        startuplink = self._get_service_runlevel_link(g_handle, 'ssh')
-        if g_handle.exists(startuplink):
-            g_handle.mv(startuplink, startuplink + ".icicle")
-        g_handle.ln_sf('/etc/init.d/ssh', startuplink)
+        self.ssh_startuplink = self._get_service_runlevel_link(g_handle, 'ssh')
+        if g_handle.exists(self.ssh_startuplink):
+            g_handle.mv(self.ssh_startuplink, self.ssh_startuplink + ".icicle")
+        g_handle.ln_sf('/etc/init.d/ssh', self.ssh_startuplink)
 
         sshd_config_file = os.path.join(self.icicle_tmp, "sshd_config")
         f = open(sshd_config_file, 'w')
@@ -316,10 +321,12 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         finally:
             os.unlink(announcefile)
 
-        startuplink = self._get_service_runlevel_link(g_handle, 'cron')
-        if g_handle.exists(startuplink):
-            g_handle.mv(startuplink, startuplink + ".icicle")
-        g_handle.ln_sf('/etc/init.d/cron', startuplink)
+        self.cron_startuplink = self._get_service_runlevel_link(g_handle,
+                                                                'cron')
+        if g_handle.exists(self.cron_startuplink):
+            g_handle.mv(self.cron_startuplink,
+                        self.cron_startuplink + ".icicle")
+        g_handle.ln_sf('/etc/init.d/cron', self.cron_startuplink)
 
     def _collect_setup(self, libvirt_xml):
         """
