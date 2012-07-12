@@ -528,8 +528,6 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         installation.  The ICICLE contains information about packages and
         other configuration on the diskimage.
         """
-        self.log.info("Generating ICICLE")
-
         return self._internal_customize(libvirt_xml, "only")
 
 def get_class(tdl, config, auto, output_disk=None):
