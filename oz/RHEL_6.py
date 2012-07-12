@@ -53,5 +53,5 @@ def get_class(tdl, config, auto, output_disk=None):
     """
     Factory method for RHEL-6 installs.
     """
-    if tdl.update in ["0", "1", "2"]:
+    if tdl.update in ["0", "1", "2", "3"]:
         return RHEL6Guest(tdl, config, auto, output_disk)
