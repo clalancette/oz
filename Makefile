@@ -37,12 +37,13 @@ man2html: examples-manpage
 	done
 
 $(VENV_DIR):
-	@virtualenv $(VENV_DIR)
+	@virtualenv --system-site-packages $(VENV_DIR)
 	@pip-python -E $(VENV_DIR) install pytest
-	@echo "Resolving potential problems where \$PWD contains spaces"
-	@for MATCH in $$(grep '^#!"/' $(VENV_DIR)/bin/* -l) ; do \
+	@[[ "$$PWD" =~ \ |\' ]] && ( \
+	echo "Resolving potential problems where '$$PWD' contains spaces" ; \
+	for MATCH in $$(grep '^#!"/' $(VENV_DIR)/bin/* -l) ; do \
 		sed -i '1s|^#!".*/\([^/]*\)"|#!/usr/bin/env \1|' "$$MATCH" ; \
-	done
+	done ) || true
 
 virtualenv: $(VENV_DIR)
 
