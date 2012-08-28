@@ -34,7 +34,6 @@ import random
 import guestfs
 import socket
 import struct
-import numpy
 import tempfile
 import urlparse
 import M2Crypto
@@ -1406,10 +1405,14 @@ class CDGuest(Guest):
             """
             Method to compute the 1's complement checksum on the ISO.
             """
+            def carry_around_add(a, b):
+                c = a + b
+                return (c & 0xffff) + (c >> 16)
+
             s = 0
             for i in range(0, len(data), 2):
                 w = ord(data[i]) + (ord(data[i+1]) << 8)
-                s = numpy.uint16(numpy.uint16(s) + numpy.uint16(w))
+                s = carry_around_add(s, w)
             return s
 
         csum = _checksum(bootdata)

@@ -19,7 +19,6 @@ Requires: libvirt-python
 Requires: libvirt
 Requires: python-pycurl
 Requires: genisoimage
-Requires: numpy
 Requires: mtools
 Requires: python-uuid
 Requires: openssh-clients

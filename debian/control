@@ -22,7 +22,6 @@ Depends: ${misc:Depends}, ${python:Depends},
  python-libxml2,
  python-libvirt,
  python-pycurl,
- python-numpy,
  python-m2crypto,
  python-parted
 Description: installing guest OSs with only minimal input the user
