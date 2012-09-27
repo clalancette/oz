@@ -16,7 +16,8 @@ Requires: libvirt-python
 # properly.  However, because of the libguestfs manipulations, in practice
 # it really does.  Make it depend on libvirt (so we get libvirtd) for now,
 # unless/until we are able to make it really be remote.
-Requires: libvirt
+Requires: libvirt-daemon-kvm
+Requires: libvirt-daemon-qemu
 Requires: python-pycurl
 Requires: genisoimage
 Requires: mtools
