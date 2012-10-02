@@ -6,13 +6,13 @@ import os
 try:
     import libxml2
 except ImportError:
-    print 'Unable to import libxml2.  Is libxml2-python installed?'
+    print('Unable to import libxml2.  Is libxml2-python installed?')
     sys.exit(1)
 
 try:
     import py.test
 except ImportError:
-    print 'Unable to import py.test.  Is py.test installed?'
+    print('Unable to import py.test.  Is py.test installed?')
     sys.exit(1)
 
 # Find oz
@@ -28,7 +28,7 @@ try:
     import oz
     import oz.TDL
 except ImportError:
-    print 'Unable to import oz.  Is oz installed?'
+    print('Unable to import oz.  Is oz installed?')
     sys.exit(1)
 
 # the tests dictionary lists all of the test we will run.  The key for the
@@ -116,7 +116,7 @@ def validate_schema(tdl_file):
 
     # Define callback for error handling
     def error_cb(ctx, str):
-        print "%s: %s" % (ctx, str.strip())
+        print("%s: %s" % (ctx, str.strip()))
     libxml2.registerErrorHandler(error_cb, tdl_file)
 
     # Attempt to validate
@@ -140,7 +140,7 @@ def test():
             func(*args)
 
     # Sanity check to see if any tests are unaccounted for in the config file
-    for (tdl, expected_pass) in tests.items():
+    for (tdl, expected_pass) in list(tests.items()):
 
         # locate full path for tdl file
         tdl_prefix = ''
@@ -153,13 +153,13 @@ def test():
         # Generate a unique unittest test for each validate_* method
         for tst in (validate_ozlib, validate_schema, ):
             # We need a unique method name
-            unique_name = test_name + tst.func_name
+            unique_name = test_name + tst.__name__
 
             # Are we expecting the test to fail?
             if expected_pass:
-                yield '%s_%s' % (test_name, tst.func_name), tst, tdl_file
+                yield '%s_%s' % (test_name, tst.__name__), tst, tdl_file
             else:
-                yield '%s_%s' % (test_name, tst.func_name), handle_exception,\
+                yield '%s_%s' % (test_name, tst.__name__), handle_exception,\
                     tst, tdl_file
 
 def test_persistent(tdl='test-43-persistent-repos.tdl'):
@@ -180,7 +180,7 @@ def test_persistent(tdl='test-43-persistent-repos.tdl'):
         assert persistent == value, \
             "expected %s, got %s" % (value, persistent)
 
-    for repo in tdl.repositories.values():
+    for repo in list(tdl.repositories.values()):
         if repo.name.endswith('true'):
             yield '%s_%s' % (test_name, repo.name), assert_persistent_value, repo.persistent, True
         else:

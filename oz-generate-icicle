@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2012  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -27,28 +28,28 @@ import oz.GuestFactory
 import oz.ozutil
 
 def usage():
-    print "Usage: oz-generate-icicle [OPTIONS] <tdl> <libvirt_xml_file>"
-    print " OPTIONS:"
-    print "  -c <config>\tGet config from <config> (default is /etc/oz/oz.cfg)"
-    print "  -d <level>\tTurn up logging level.  The levels are:"
-    print "\t\t\t0 - errors only (this is the default)"
-    print "\t\t\t1 - errors and warnings"
-    print "\t\t\t2 - errors, warnings, and information"
-    print "\t\t\t3 - all messages"
-    print "\t\t\t4 - all messages, prepended with the level and classname"
-    print "  -h\t\tPrint this help message"
-    print "  -i <icicle>\tWrite the ICICLE to <icicle>"
-    print " Currently supported architectures are:"
-    print "   i386, x86_64"
-    print " Currently supported distros are:"
+    print("Usage: oz-generate-icicle [OPTIONS] <tdl> <libvirt_xml_file>")
+    print(" OPTIONS:")
+    print("  -c <config>\tGet config from <config> (default is /etc/oz/oz.cfg)")
+    print("  -d <level>\tTurn up logging level.  The levels are:")
+    print("\t\t\t0 - errors only (this is the default)")
+    print("\t\t\t1 - errors and warnings")
+    print("\t\t\t2 - errors, warnings, and information")
+    print("\t\t\t3 - all messages")
+    print("\t\t\t4 - all messages, prepended with the level and classname")
+    print("  -h\t\tPrint this help message")
+    print("  -i <icicle>\tWrite the ICICLE to <icicle>")
+    print(" Currently supported architectures are:")
+    print("   i386, x86_64")
+    print(" Currently supported distros are:")
     oz.GuestFactory.distrolist()
     sys.exit(1)
 
 try:
     opts, args = getopt.gnu_getopt(sys.argv[1:], 'c:d:hi:', ['config', 'debug',
                                                              'help', 'icicle'])
-except getopt.GetoptError, err:
-    print str(err)
+except getopt.GetoptError as err:
+    print(str(err))
     usage()
 
 loglevel = logging.ERROR
@@ -100,20 +101,20 @@ try:
     # this should be plenty for a normal libvirt XML, and this should prevent us
     # from causing OOMs on bogus files
     if os.stat(libvirt_xml_file)[stat.ST_SIZE] > (5 * 1024 * 1024):
-        raise Exception, "libvirt XML file is too big!"
+        raise Exception("libvirt XML file is too big!")
 
     icicle_xml = guest.generate_icicle(open(libvirt_xml_file, 'r').read())
     if icicle_file is None:
-        print icicle_xml
+        print(icicle_xml)
     else:
         open(icicle_file, 'w').write(icicle_xml)
-        print "ICICLE XML was written to " + icicle_file
-except Exception, exc:
+        print("ICICLE XML was written to " + icicle_file)
+except Exception as exc:
     if loglevel > logging.DEBUG:
-        print ""
-        print "ERROR: %s" % (str(exc))
-        print ""
-        print "(use -d3 to get the full backtrace)"
-        print ""
+        print("")
+        print("ERROR: %s" % (str(exc)))
+        print("")
+        print("(use -d3 to get the full backtrace)")
+        print("")
     else:
         raise

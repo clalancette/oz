@@ -1,4 +1,5 @@
 # Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2012  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -26,7 +27,14 @@ import subprocess
 import shutil
 import time
 import pycurl
-import urllib2
+try:
+    import urllib.request as urllib2
+except ImportError:
+    import urllib2
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
 import stat
 import libxml2
 import logging
@@ -35,7 +43,6 @@ import guestfs
 import socket
 import struct
 import tempfile
-import urlparse
 import M2Crypto
 import base64
 import parted
@@ -250,7 +257,7 @@ class Guest(object):
 
         try:
             os.unlink(self.diskimage)
-        except OSError, err:
+        except OSError as err:
             if err.errno == errno.ENOENT:
                 pass
             else:
@@ -550,7 +557,7 @@ class Guest(object):
             self.log.debug("Waiting for %s to complete shutdown, %d/10" % (self.tdl.name, count))
             try:
                 libvirt_dom.info()
-            except libvirt.libvirtError, e:
+            except libvirt.libvirtError as e:
                 if e.get_error_code() == libvirt.VIR_ERR_NO_DOMAIN:
                     break
             count -= 1
@@ -596,7 +603,7 @@ class Guest(object):
                 self.log.debug("Waiting for %s to finish installing, %d/%d" % (self.tdl.name, count, origcount))
             try:
                 total_disk_req, total_net_bytes = self._get_disk_and_net_activity(libvirt_dom, disks, interfaces)
-            except libvirt.libvirtError, e:
+            except libvirt.libvirtError as e:
                 # we save the exception here because we want to raise it later
                 # if this was a "real" exception
                 saved_exception = e
@@ -659,7 +666,7 @@ class Guest(object):
                 self.log.debug("Waiting for %s to shutdown, %d/%d" % (self.tdl.name, count, origcount))
             try:
                 libvirt_dom.info()
-            except libvirt.libvirtError, e:
+            except libvirt.libvirtError as e:
                 saved_exception = e
                 break
             count -= 1
@@ -794,7 +801,7 @@ class Guest(object):
             info = response.info()
             response.close()
 
-            if not info.has_key("Content-Length"):
+            if "Content-Length" not in info:
                 raise oz.OzException.OzException("Could not reach destination to fetch boot media")
             content_length = int(info["Content-Length"])
             if content_length == 0:
@@ -1198,9 +1205,9 @@ class Guest(object):
                                                 username, hostname)
 
             key.save_key(privname, cipher=None)
-            os.chmod(privname, 0600)
+            os.chmod(privname, 0o600)
             open(pubname, 'w').write(keystring)
-            os.chmod(pubname, 0644)
+            os.chmod(pubname, 0o644)
 
 class CDGuest(Guest):
     """
@@ -1250,7 +1257,7 @@ class CDGuest(Guest):
         self.log.info("Copying ISO contents for modification")
         try:
             shutil.rmtree(self.iso_contents)
-        except OSError, err:
+        except OSError as err:
             if err.errno == errno.ENOENT:
                 pass
             else:

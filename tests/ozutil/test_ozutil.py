@@ -7,13 +7,13 @@ import random
 try:
     import libxml2
 except ImportError:
-    print 'Unable to import libxml2.  Is libxml2-python installed?'
+    print('Unable to import libxml2.  Is libxml2-python installed?')
     sys.exit(1)
 
 try:
     import py.test
 except ImportError:
-    print 'Unable to import py.test.  Is py.test installed?'
+    print('Unable to import py.test.  Is py.test installed?')
     sys.exit(1)
 
 # Find oz
@@ -28,7 +28,7 @@ for i in range(0,3):
 try:
     import oz.ozutil
 except ImportError:
-    print 'Unable to import oz.  Is oz installed?'
+    print('Unable to import oz.  Is oz installed?')
     sys.exit(1)
 
 # test oz.ozutil.generate_full_auto_path
@@ -93,7 +93,7 @@ def test_copy_sparse_bad_dst_mode(tmpdir):
     open(srcname, 'w').write('src')
     dstname = os.path.join(str(tmpdir), 'dst')
     open(dstname, 'w').write('dst')
-    os.chmod(dstname, 0444)
+    os.chmod(dstname, 0o444)
     with py.test.raises(OSError):
         oz.ozutil.copyfile_sparse(srcname, dstname)
 
@@ -193,7 +193,7 @@ def test_stb_none():
 
 def test_stb_invalid():
     if oz.ozutil.string_to_bool('foobar') != None:
-        raise Exception, "Expected None return from string_to_bool"
+        raise Exception("Expected None return from string_to_bool")
 
 # test oz.ozutil.generate_macaddress
 def test_genmac():

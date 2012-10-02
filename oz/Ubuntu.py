@@ -1,4 +1,5 @@
 # Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2012  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -308,7 +309,7 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         f.close()
         try:
             g_handle.upload(scriptfile, '/root/reportip')
-            g_handle.chmod(0755, '/root/reportip')
+            g_handle.chmod(0o755, '/root/reportip')
         finally:
             os.unlink(scriptfile)
 
@@ -445,7 +446,7 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
 
         self.log.debug("Installing additional repository files")
 
-        for repo in self.tdl.repositories.values():
+        for repo in list(self.tdl.repositories.values()):
             self.guest_execute_command(guestaddr, "apt-add-repository %s" % (repo.url))
             self.guest_execute_command(guestaddr, "apt-get update")
 
@@ -468,7 +469,7 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         self._customize_files(guestaddr)
 
         self.log.debug("Running custom commands")
-        for content in self.tdl.commands.values():
+        for content in list(self.tdl.commands.values()):
             self.guest_execute_command(guestaddr, content)
 
     def guest_execute_command(self, guestaddr, command, timeout=10,
@@ -513,7 +514,7 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         Method to upload the custom files specified in the TDL to the guest.
         """
         self.log.info("Uploading custom files")
-        for name, content in self.tdl.files.items():
+        for name, content in list(self.tdl.files.items()):
             localname = os.path.join(self.icicle_tmp, "file")
             f = open(localname, 'w')
             f.write(content)

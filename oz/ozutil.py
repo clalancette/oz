@@ -1,4 +1,5 @@
 # Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2012  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -25,7 +26,11 @@ import tempfile
 import errno
 import stat
 import shutil
-import ConfigParser
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
+import collections
 
 def generate_full_auto_path(relative):
     """
@@ -34,7 +39,7 @@ def generate_full_auto_path(relative):
     # all of the automated installation paths are installed to $pkg_path/auto,
     # so we just need to find it and generate the right path here
     if relative is None:
-        raise Exception, "The relative path cannot be None"
+        raise Exception("The relative path cannot be None")
 
     pkg_path = os.path.dirname(__file__)
     return os.path.abspath(os.path.join(pkg_path, "auto", relative))
@@ -52,7 +57,7 @@ def executable_exists(program):
         return os.path.exists(fpath) and os.access(fpath, os.X_OK)
 
     if program is None:
-        raise Exception, "Invalid program name passed"
+        raise Exception("Invalid program name passed")
 
     fpath, fname = os.path.split(program)
     if fpath:
@@ -64,7 +69,7 @@ def executable_exists(program):
             if is_exe(exe_file):
                 return exe_file
 
-    raise Exception, "Could not find %s" % (program)
+    raise Exception("Could not find %s" % (program))
 
 def copyfile_sparse(src, dest):
     """
@@ -72,9 +77,9 @@ def copyfile_sparse(src, dest):
     all taken from coreutils cp, specifically the 'sparse_copy' function.
     """
     if src is None:
-        raise Exception, "Source of copy cannot be None"
+        raise Exception("Source of copy cannot be None")
     if dest is None:
-        raise Exception, "Destination of copy cannot be None"
+        raise Exception("Destination of copy cannot be None")
 
     src_fd = os.open(src, os.O_RDONLY)
     dest_fd = os.open(dest, os.O_WRONLY|os.O_CREAT|os.O_TRUNC)
@@ -206,7 +211,7 @@ def get_sum_from_file(sumfile, file_to_find, digest_bits, digest_type):
     retval = None
 
     f = open(sumfile, 'r')
-    for line in f.xreadlines():
+    for line in f:
         binary = False
 
         # remove any leading whitespace
@@ -267,7 +272,7 @@ def string_to_bool(instr):
     or "False", and None otherwise.
     """
     if instr is None:
-        raise Exception, "Input string was None!"
+        raise Exception("Input string was None!")
     lower = instr.lower()
     if lower == 'no' or lower == 'false':
         return False
@@ -281,7 +286,7 @@ def generate_macaddress():
     """
     mac = [0x52, 0x54, 0x00, random.randint(0x00, 0xff),
            random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
-    return ':'.join(map(lambda x:"%02x" % x, mac))
+    return ':'.join(["%02x" % x for x in mac])
 
 class SubprocessException(Exception):
     """
@@ -395,11 +400,11 @@ def mkdir_p(path):
     exists.
     """
     if path is None:
-        raise Exception, "Path cannot be None"
+        raise Exception("Path cannot be None")
 
     try:
         os.makedirs(path)
-    except OSError, err:
+    except OSError as err:
         if err.errno != errno.EEXIST or not os.path.isdir(path):
             raise
 
@@ -411,18 +416,18 @@ def copy_modify_file(inname, outname, subfunc):
     written to the output file after modification (if any).
     """
     if inname is None:
-        raise Exception, "input filename is None"
+        raise Exception("input filename is None")
     if outname is None:
-        raise Exception, "output filename is None"
+        raise Exception("output filename is None")
     if subfunc is None:
-        raise Exception, "subfunction is None"
-    if not callable(subfunc):
-        raise Exception, "subfunction is not callable"
+        raise Exception("subfunction is None")
+    if not isinstance(subfunc, collections.Callable):
+        raise Exception("subfunction is not callable")
 
     infile = open(inname, 'r')
     outfile = open(outname, 'w')
 
-    for line in infile.xreadlines():
+    for line in infile:
         outfile.write(subfunc(line))
 
     infile.close()
@@ -438,14 +443,14 @@ def write_cpio(inputdict, outputfile):
     will be written.
     """
     if inputdict is None:
-        raise Exception, "input dictionary was None"
+        raise Exception("input dictionary was None")
     if outputfile is None:
-        raise Exception, "output file was None"
+        raise Exception("output file was None")
 
     outf = open(outputfile, "w")
 
     try:
-        for inputfile, destfile in inputdict.items():
+        for inputfile, destfile in list(inputdict.items()):
             st = os.stat(inputfile)
 
             # 070701 is the magic for new CPIO (newc in cpio parlance)
@@ -556,7 +561,7 @@ def config_get_boolean_key(config, section, key, default):
 
     retval = string_to_bool(value)
     if retval is None:
-        raise Exception, "Configuration parameter '%s' must be True, Yes, False, or No" % (key)
+        raise Exception("Configuration parameter '%s' must be True, Yes, False, or No" % (key))
 
     return retval
 
@@ -584,7 +589,7 @@ def parse_config(config_file):
 
     config_file = os.path.expanduser(config_file)
 
-    config = ConfigParser.SafeConfigParser()
+    config = configparser.SafeConfigParser()
     if os.access(config_file, os.F_OK):
         config.read(config_file)
 

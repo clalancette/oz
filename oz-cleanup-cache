@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # Copyright (C) 2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2012  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -25,23 +26,23 @@ import logging
 import oz.ozutil
 
 def usage():
-    print "Usage: oz-cleanup-cache [OPTIONS]"
-    print "  -c <config>\tGet config from <config> (default is /etc/oz/oz.cfg)"
-    print "  -d <level>\tTurn up logging level.  The levels are:"
-    print "\t\t\t0 - errors only (this is the default)"
-    print "\t\t\t1 - errors and warnings"
-    print "\t\t\t2 - errors, warnings, and information"
-    print "\t\t\t3 - all messages"
-    print "\t\t\t4 - all messages, prepended with the level and classname"
-    print "  -f\t\tDon't ask any questions and just blindly remove all oz data"
-    print "  -h\t\tPrint this help message"
+    print("Usage: oz-cleanup-cache [OPTIONS]")
+    print("  -c <config>\tGet config from <config> (default is /etc/oz/oz.cfg)")
+    print("  -d <level>\tTurn up logging level.  The levels are:")
+    print("\t\t\t0 - errors only (this is the default)")
+    print("\t\t\t1 - errors and warnings")
+    print("\t\t\t2 - errors, warnings, and information")
+    print("\t\t\t3 - all messages")
+    print("\t\t\t4 - all messages, prepended with the level and classname")
+    print("  -f\t\tDon't ask any questions and just blindly remove all oz data")
+    print("  -h\t\tPrint this help message")
     sys.exit(1)
 
 try:
     opts, args = getopt.gnu_getopt(sys.argv[1:], 'c:d:fh',
                                    ['config', 'debug', 'force', 'help'])
-except getopt.GetoptError, err:
-    print str(err)
+except getopt.GetoptError as err:
+    print(str(err))
     usage()
 
 force = False
@@ -91,28 +92,28 @@ try:
 
     if not force:
         while True:
-            response = raw_input("Going to remove all content from %s; continue? (y/N) " % (', '.join(caches)))
+            response = input("Going to remove all content from %s; continue? (y/N) " % (', '.join(caches)))
             if len(response) == 0 or response.lower() == 'n':
                 sys.exit(0)
             elif response.lower() == 'y':
                 break
             else:
-                print "Please enter 'y' or 'n'"
+                print("Please enter 'y' or 'n'")
 
     for cache in caches:
-        print "Removing cached content from %s" % (cache)
+        print("Removing cached content from %s" % (cache))
         for root,dirs,files in os.walk(cache):
             for f in files:
                 os.unlink(os.path.join(root, f))
             for d in dirs:
                 shutil.rmtree(os.path.join(root, d))
 
-except Exception, exc:
+except Exception as exc:
     if loglevel > logging.DEBUG:
-        print ""
-        print "ERROR: %s" % (str(exc))
-        print ""
-        print "(use -d3 to get the full backtrace)"
-        print ""
+        print("")
+        print("ERROR: %s" % (str(exc)))
+        print("")
+        print("(use -d3 to get the full backtrace)")
+        print("")
     else:
         raise

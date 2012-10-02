@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2012  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -27,30 +28,30 @@ import oz.GuestFactory
 import oz.ozutil
 
 def usage():
-    print "Usage: oz-install [OPTIONS] <tdl>"
-    print " OPTIONS:"
-    print "  -a <auto>\tUse the guest configuration tool from <auto> instead"
-    print "\t\tof using the hard-coded one.  This is useful if you want to pass"
-    print "\t\ta custom kickstart/preseed/sif/etc for installation"
-    print "  -c <config>\tGet config from <config> (default is /etc/oz/oz.cfg)"
-    print "  -d <level>\tTurn up logging level.  The levels are:"
-    print "\t\t\t0 - errors only (this is the default)"
-    print "\t\t\t1 - errors and warnings"
-    print "\t\t\t2 - errors, warnings, and information"
-    print "\t\t\t3 - all messages"
-    print "\t\t\t4 - all messages, prepended with the level and classname"
-    print "  -f\t\tForce download of installation media even if already cached"
-    print "  -g\t\tGenerate the ICICLE after installation"
-    print "  -h\t\tPrint this help message"
-    print "  -i <icicle>\tWrite the ICICLE to <icicle> (only valid with -g)"
-    print "  -p\t\tCleanup old guests with the same name before installation"
-    print "  -s <disk>\tWrite the output to <disk> (default is the TDL name tag)"
-    print "  -t <timeout>\tWait <timeout> seconds for installation, rather than the default"
-    print "  -u\t\tAfter installation, do the customization"
-    print "  -x <xmlfile>\tWrite libvirt XML to <xmlfile>"
-    print " Currently supported architectures are:"
-    print "   i386, x86_64"
-    print " Currently supported distros are:"
+    print("Usage: oz-install [OPTIONS] <tdl>")
+    print(" OPTIONS:")
+    print("  -a <auto>\tUse the guest configuration tool from <auto> instead")
+    print("\t\tof using the hard-coded one.  This is useful if you want to pass")
+    print("\t\ta custom kickstart/preseed/sif/etc for installation")
+    print("  -c <config>\tGet config from <config> (default is /etc/oz/oz.cfg)")
+    print("  -d <level>\tTurn up logging level.  The levels are:")
+    print("\t\t\t0 - errors only (this is the default)")
+    print("\t\t\t1 - errors and warnings")
+    print("\t\t\t2 - errors, warnings, and information")
+    print("\t\t\t3 - all messages")
+    print("\t\t\t4 - all messages, prepended with the level and classname")
+    print("  -f\t\tForce download of installation media even if already cached")
+    print("  -g\t\tGenerate the ICICLE after installation")
+    print("  -h\t\tPrint this help message")
+    print("  -i <icicle>\tWrite the ICICLE to <icicle> (only valid with -g)")
+    print("  -p\t\tCleanup old guests with the same name before installation")
+    print("  -s <disk>\tWrite the output to <disk> (default is the TDL name tag)")
+    print("  -t <timeout>\tWait <timeout> seconds for installation, rather than the default")
+    print("  -u\t\tAfter installation, do the customization")
+    print("  -x <xmlfile>\tWrite libvirt XML to <xmlfile>")
+    print(" Currently supported architectures are:")
+    print("   i386, x86_64")
+    print(" Currently supported distros are:")
     oz.GuestFactory.distrolist()
     sys.exit(1)
 
@@ -60,8 +61,8 @@ try:
                                     'generate-icicle', 'help', 'icicle',
                                     'cleanup', 'disk', 'timeout', 'customize',
                                     'xmlfile'])
-except getopt.GetoptError, err:
-    print str(err)
+except getopt.GetoptError as err:
+    print(str(err))
     usage()
 
 loglevel = logging.ERROR
@@ -122,7 +123,7 @@ if len(args) != 1:
     usage()
 
 if not generate_icicle and icicle_file is not None:
-    print "The -i option must be combined with the -g option"
+    print("The -i option must be combined with the -g option")
     sys.exit(3)
 
 try:
@@ -151,27 +152,27 @@ try:
         guest.cleanup_install()
 
     if customize and generate_icicle:
-        print guest.customize_and_generate_icicle(libvirt_xml)
+        print(guest.customize_and_generate_icicle(libvirt_xml))
     elif customize:
         guest.customize(libvirt_xml)
     elif generate_icicle:
         icicle_xml = guest.generate_icicle(libvirt_xml)
         if icicle_file is None:
-            print icicle_xml
+            print(icicle_xml)
         else:
             open(icicle_file, 'w').write(icicle_xml)
-            print "ICICLE XML was written to " + icicle_file
+            print("ICICLE XML was written to " + icicle_file)
 
     if filename is None:
         filename = guest.name + time.strftime("%b_%d_%Y-%H:%M:%S")
     open(filename, 'w').write(libvirt_xml)
-    print "Libvirt XML was written to " + filename
-except Exception, exc:
+    print("Libvirt XML was written to " + filename)
+except Exception as exc:
     if loglevel > logging.DEBUG:
-        print ""
-        print "ERROR: %s" % (str(exc))
-        print ""
-        print "(use -d3 to get the full backtrace)"
-        print ""
+        print("")
+        print("ERROR: %s" % (str(exc)))
+        print("")
+        print("(use -d3 to get the full backtrace)")
+        print("")
     else:
         raise

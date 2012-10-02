@@ -1,4 +1,5 @@
 # Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2012  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -21,9 +22,15 @@ Common methods for installing and configuring RedHat-based guests
 import re
 import os
 import shutil
-import urllib2
+try:
+    import urllib.request as urllib2
+except ImportError:
+    import urllib2
 import libvirt
-import ConfigParser
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 import gzip
 import guestfs
 import pycurl
@@ -371,7 +378,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         f.close()
         try:
             g_handle.upload(scriptfile, '/root/reportip')
-            g_handle.chmod(0755, '/root/reportip')
+            g_handle.chmod(0o755, '/root/reportip')
         finally:
             os.unlink(scriptfile)
 
@@ -498,7 +505,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         Method to upload the custom files specified in the TDL to the guest.
         """
         self.log.info("Uploading custom files")
-        for name, content in self.tdl.files.items():
+        for name, content in list(self.tdl.files.items()):
             localname = os.path.join(self.icicle_tmp, "file")
             f = open(localname, 'w')
             f.write(content)
@@ -561,7 +568,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             # find out the location of the vmlinuz and initrd
             self.log.debug("Got treeinfo, parsing")
             os.lseek(treeinfofd, 0, os.SEEK_SET)
-            config = ConfigParser.SafeConfigParser()
+            config = configparser.SafeConfigParser()
             config.readfp(fp)
             section = "images-%s" % (self.tdl.arch)
             kernel = oz.ozutil.config_get_key(config, section, "kernel", None)
@@ -722,7 +729,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                 self.log.debug("Installtype is URL, trying to do direct kernel boot")
                 try:
                     return self._initrd_inject_ks(self.url, force_download)
-                except Exception, err:
+                except Exception as err:
                     # if any of the above failed, we couldn't use the direct
                     # kernel/initrd build method.  Fall back to trying to fetch
                     # the boot.iso instead
@@ -893,7 +900,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
             # if we reach here, then the perform succeeded, which means we
             # could reach the repo from the host
             host = True
-        except pycurl.error, err:
+        except pycurl.error as err:
             # if we got an exception, then we could not reach the repo from
             # the host
             self.log.debug("Unable to route to the repo host from here, and SSH tunnel will never be established")
@@ -908,7 +915,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
             # if we reach here, then the perform succeeded, which means we
             # could reach the repo from the guest
             guest = True
-        except oz.ozutil.SubprocessException, err:
+        except oz.ozutil.SubprocessException as err:
             # if we got an exception, then we could not reach the repo from
             self.log.debug("Unable to route to the repo host from the guest, will attempt to establish an SSH tunnel")
             self.log.debug(err)
@@ -921,7 +928,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
         """
         Method to remove all files associated with non-persistent repos
         """
-        for repo in self.tdl.repositories.values():
+        for repo in list(self.tdl.repositories.values()):
             if not repo.persistent:
                 for remotefile in repo.remotefiles:
                     self.guest_execute_command(guestaddr,
@@ -937,7 +944,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
 
     def _remove_host_aliases(self, guestaddr):
         if len(self.tunnels) > 0:
-            for repo in self.tdl.repositories.values():
+            for repo in list(self.tdl.repositories.values()):
                 (protocol, hostname, port, path) = self._deconstruct_repo_url(repo.url)
                 self.log.debug("Removing tunnel host entry for %s from host %s" % (hostname, guestaddr))
                 self.guest_execute_command(guestaddr,
@@ -957,7 +964,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
         self._remotecertdir = "/etc/pki/ozrepos"
         self._remotecertdir_created = False
 
-        for repo in self.tdl.repositories.values():
+        for repo in list(self.tdl.repositories.values()):
 
             certdict = {}
 
@@ -1100,7 +1107,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
         self._customize_files(guestaddr)
 
         self.log.debug("Running custom commands")
-        for content in self.tdl.commands.values():
+        for content in list(self.tdl.commands.values()):
             self.guest_execute_command(guestaddr, content)
 
         self._remove_host_aliases(guestaddr)

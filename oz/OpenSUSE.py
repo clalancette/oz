@@ -334,7 +334,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         f.close()
         try:
             g_handle.upload(scriptfile, '/root/reportip')
-            g_handle.chmod(0755, '/root/reportip')
+            g_handle.chmod(0o755, '/root/reportip')
         finally:
             os.unlink(scriptfile)
 
@@ -393,7 +393,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         Method to add user-provided repositories to the guest.
         """
         self.log.debug("Installing additional repository files")
-        for repo in self.tdl.repositories.values():
+        for repo in list(self.tdl.repositories.values()):
             self.guest_execute_command(guestaddr,
                                        "zypper addrepo %s %s" % (repo.url,
                                                                  repo.name))
@@ -411,7 +411,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         Method to upload the custom files specified in the TDL to the guest.
         """
         self.log.info("Uploading custom files")
-        for name, content in self.tdl.files.items():
+        for name, content in list(self.tdl.files.items()):
             localname = os.path.join(self.icicle_tmp, "file")
             f = open(localname, 'w')
             f.write(content)
@@ -454,7 +454,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         self._customize_files(guestaddr)
 
         self.log.debug("Running custom commands")
-        for content in self.tdl.commands.values():
+        for content in list(self.tdl.commands.values()):
             self.guest_execute_command(guestaddr, content)
 
         self.log.debug("Syncing")

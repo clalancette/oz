@@ -1,8 +1,11 @@
 #!/usr/bin/python
 
 import sys
-import ConfigParser
-import StringIO
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
+import io
 import logging
 import os
 
@@ -18,15 +21,15 @@ for i in range(0,3):
 try:
     import oz.TDL
     import oz.GuestFactory
-except ImportError, e:
-    print e
-    print 'Unable to import oz.  Is oz installed or in your PYTHONPATH?'
+except ImportError as e:
+    print(e)
+    print('Unable to import oz.  Is oz installed or in your PYTHONPATH?')
     sys.exit(1)
 
 try:
     import py.test
 except ImportError:
-    print 'Unable to import py.test.  Is py.test installed?'
+    print('Unable to import py.test.  Is py.test installed?')
     sys.exit(1)
 
 # Define a list to collect all tests
@@ -37,7 +40,7 @@ class TestResult(object):
     def __init__(self, *args, **kwargs):
         if len(args) == 4:
             (self.distro, self.version, self.arch, self.installtype) = args
-        for k,v in kwargs.items():
+        for k,v in list(kwargs.items()):
             setattr(self, k, v)
 
     def __repr__(self):
@@ -63,7 +66,7 @@ def default_route():
     d = file(route_file)
 
     defn = 0
-    for line in d.xreadlines():
+    for line in d:
         info = line.split()
         if (len(info) != 11): # 11 = typical num of fields in the file
             logging.warn(_("Invalid line length while parsing %s.") %
@@ -75,7 +78,7 @@ def default_route():
                 return info[0]
         except ValueError:
             continue
-    raise Exception, "Could not find default route"
+    raise Exception("Could not find default route")
 
 # we find the default route for this machine.  Note that this very well
 # may not be a bridge, but for the purposes of testing the factory, it
@@ -86,7 +89,7 @@ def runtest(args):
     global route
 
     (distro, version, arch, installtype) = args
-    print "Testing %s-%s-%s-%s..." % (distro, version, arch, installtype),
+    print("Testing %s-%s-%s-%s..." % (distro, version, arch, installtype), end=' ')
 
     tdlxml = """
 <template>
@@ -105,8 +108,8 @@ def runtest(args):
 
     tdl = oz.TDL.TDL(tdlxml)
 
-    config = ConfigParser.SafeConfigParser()
-    config.readfp(StringIO.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config = configparser.SafeConfigParser()
+    config.readfp(io.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
     if os.getenv('DEBUG') != None:
         logging.basicConfig(level=logging.DEBUG, format="%(message)s")

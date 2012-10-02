@@ -1,4 +1,5 @@
 # Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2012  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,8 +21,10 @@ Template Description Language (TDL)
 
 import libxml2
 import base64
-import urlparse
-
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
 import oz.ozutil
 import oz.OzException
 
@@ -298,8 +301,7 @@ class TDL(object):
 
             if remove_duplicates:
                 # delete any existing packages with this name
-                for package in filter(lambda package: package.name == name,
-                                      self.packages):
+                for package in [package for package in self.packages if package.name == name]:
                     self.packages.remove(package)
 
             # now add in our new package def
