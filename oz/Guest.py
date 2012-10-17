@@ -239,6 +239,18 @@ class Guest(object):
         self.log.debug("mousetype: %s, disk_bus: %s, disk_dev: %s" % (self.mousetype, self.disk_bus, self.disk_dev))
         self.log.debug("icicletmp: %s, listen_port: %d" % (self.icicle_tmp, self.listen_port))
 
+    def image_name(self):
+        """
+        Name of the image being built.
+        """
+        return self.name
+
+    def output_image_path(self):
+        """
+        Path to the created image file.
+        """
+        return self.diskimage
+
     def cleanup_old_guest(self):
         """
         Method to completely clean up an old guest, including deleting the
