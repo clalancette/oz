@@ -101,7 +101,7 @@ def distrolist():
     print("   RHEL/CentOS/Scientific Linux 4: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9")
     print("   RHEL/CentOS/Scientific Linux{,CERN} 5: GOLD, U1, U2, U3, U4, U5, U6, U7, U8")
     print("   RHEL/OEL/CentOS/Scientific Linux{,CERN} 6: 0, 1, 2, 3")
-    print("   Ubuntu: 6.06[.1,.2], 6.10, 7.04, 7.10, 8.04[.1,.2,.3,.4], 8.10, 9.04, 9.10, 10.04[.1,.2,.3], 10.10, 11.04, 11.10, 12.04")
+    print("   Ubuntu: 6.06[.1,.2], 6.10, 7.04, 7.10, 8.04[.1,.2,.3,.4], 8.10, 9.04, 9.10, 10.04[.1,.2,.3], 10.10, 11.04, 11.10, 12.04[.1]")
     print("   Windows: 2000, XP, 2003, 7, 2008")
     print("   RHL: 7.0, 7.1, 7.2, 7.3, 8, 9")
     print("   OpenSUSE: 10.3, 11.0, 11.1, 11.2, 11.3, 11.4, 12.1")

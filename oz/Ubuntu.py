@@ -585,6 +585,6 @@ def get_class(tdl, config, auto, output_disk=None):
         return UbuntuGuest(tdl, config, auto, output_disk, "initrd.gz",
                            "virtio", "virtio")
     if tdl.update in ["9.10", "10.04", "10.04.1", "10.04.2", "10.04.3", "10.10",
-                      "11.04", "11.10", "12.04"]:
+                      "11.04", "11.10", "12.04", "12.04.1"]:
         return UbuntuGuest(tdl, config, auto, output_disk, "initrd.lz",
                            "virtio", "virtio")
