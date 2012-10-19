@@ -30,7 +30,7 @@ import oz.OzException
 
 class UbuntuGuest(oz.Guest.CDGuest):
     """
-    Class for Ubuntu 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, 11.04, 11.10, and 12.04 installation.
+    Class for Ubuntu 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, 11.04, 11.10, 12.04, and 12.10 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, initrd, nicmodel,
                  diskbus):
@@ -585,6 +585,6 @@ def get_class(tdl, config, auto, output_disk=None):
         return UbuntuGuest(tdl, config, auto, output_disk, "initrd.gz",
                            "virtio", "virtio")
     if tdl.update in ["9.10", "10.04", "10.04.1", "10.04.2", "10.04.3", "10.10",
-                      "11.04", "11.10", "12.04", "12.04.1"]:
+                      "11.04", "11.10", "12.04", "12.04.1", "12.10"]:
         return UbuntuGuest(tdl, config, auto, output_disk, "initrd.lz",
                            "virtio", "virtio")
