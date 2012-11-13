@@ -236,7 +236,7 @@ class TDL(object):
         repositorieslist = self.doc.xpathEval('/template/repositories/repository')
         self._add_repositories(repositorieslist)
 
-        self.commands = {}
+        self.commands = []
         for command in self.doc.xpathEval('/template/commands/command'):
             name = command.prop('name')
             if name is None:
@@ -246,15 +246,15 @@ class TDL(object):
                 contenttype = 'raw'
 
             content = command.getContent().strip()
-            if contenttype == 'raw':
-                self.commands[name] = content
-            elif contenttype == 'base64':
-                if len(content) == 0:
-                    raise oz.OzException.OzException("Empty commands are not allowed")
-                else:
-                    self.commands[name] = base64.b64decode(content)
-            else:
+            if len(content) == 0:
+                raise oz.OzException.OzException("Empty commands are not allowed")
+
+            if contenttype == 'base64':
+                content = base64.b64decode(content)
+            elif contenttype != 'raw':
                 raise oz.OzException.OzException("File type for %s must be 'raw' or 'base64'" % (name))
+
+            self.commands.append(content)
 
         self.disksize = _xml_get_value(self.doc, '/template/disk/size',
                                        'disk size', optional=True)

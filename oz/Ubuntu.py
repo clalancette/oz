@@ -469,8 +469,8 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         self._customize_files(guestaddr)
 
         self.log.debug("Running custom commands")
-        for content in list(self.tdl.commands.values()):
-            self.guest_execute_command(guestaddr, content)
+        for cmd in self.tdl.commands:
+            self.guest_execute_command(guestaddr, cmd)
 
     def guest_execute_command(self, guestaddr, command, timeout=10,
                               tunnels=None):
