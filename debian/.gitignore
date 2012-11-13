@@ -1,9 +1,0 @@
-*.debhelper
-*.debhelper.log
-*.substvars
-files
-oz/
-python-module-stampdir/
-source/
-stamp-*
-tmp/

@@ -1,9 +1,9 @@
 Source: oz
-Maintainer: Richard Jones <rjones@redhat.com>
+Maintainer: Hideki Yamane <henrich@debian.org>
 Section: python
 Priority: optional
 Build-Depends: debhelper (>= 7.4.3), python-all (>= 2.6.6-3)
-Standards-Version: 3.8.4
+Standards-Version: 3.9.4
 Homepage: http://aeolusproject.org/oz.html
 Vcs-Git: git://github.com/clalancette/oz.git
 X-Python-Version: >= 2.6
@@ -11,8 +11,6 @@ X-Python-Version: >= 2.6
 Package: oz
 Architecture: all
 Depends: ${misc:Depends}, ${python:Depends},
- python (>= 2.5),
-# for gvnccapture, but only packaged in Sid:
  genisoimage,
  gvncviewer,
  libvirt-dev,
@@ -22,6 +20,7 @@ Depends: ${misc:Depends}, ${python:Depends},
  python-libxml2,
  python-libvirt,
  python-pycurl,
+ python-numpy,
  python-m2crypto,
  python-parted
 Description: installing guest OSs with only minimal input the user
