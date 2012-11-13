@@ -1,16 +1,22 @@
 oz (0.9.0-1) UNRELEASED; urgency=low
 
+  * New upstream release
   * set "3.0 (quilt)" to debian/source/format
   * debian/control
     - set Maintainer as me, thanks to Richard Jones for initial packaging.
     - set "Standards-Version: 3.9.4"
-    - drop "Depends: python (>= 2.5)" since it pulls by ${Python:Depends}
+    - drop "Depends: python (>= 2.5)" since it pulls by ${Python:Depends},
+      and X-Python-Version specifies 2.6
+    - "Depends: python-libguestfs", it's unnecessary since it is virtual
+      package and only python-guestfs provides it.
   * drop unnecessary debian/README* files
   * debian/docs
     - drop examples
   * add debian/examples
   * improve debian/postinst, use dehbelper token
   * update debian/copyright to copyright-format 1.0
+  * drop debian/pycompat since it is used for dh_python, not dh_python2,
+    now we can remove it.
 
  -- Hideki Yamane <henrich@debian.org>  Tue, 13 Nov 2012 00:14:02 +0900
 
