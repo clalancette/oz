@@ -105,6 +105,11 @@
                 <attribute name='name'>
                   <text/>
                 </attribute>
+                <optional>
+                  <attribute name='position'>
+                    <ref name='number'/>
+                  </attribute>
+                </optional>
                 <choice>
                   <ref name='rawtype'/>
                   <ref name='base64type'/>

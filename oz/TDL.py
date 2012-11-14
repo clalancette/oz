@@ -236,7 +236,14 @@ class TDL(object):
         repositorieslist = self.doc.xpathEval('/template/repositories/repository')
         self._add_repositories(repositorieslist)
 
-        self.commands = []
+        self.commands = self.parse_commands()
+
+        self.disksize = _xml_get_value(self.doc, '/template/disk/size',
+                                       'disk size', optional=True)
+
+    def parse_commands(self):
+        tmp = []
+        saw_position = False
         for command in self.doc.xpathEval('/template/commands/command'):
             name = command.prop('name')
             if name is None:
@@ -249,15 +256,44 @@ class TDL(object):
             if len(content) == 0:
                 raise oz.OzException.OzException("Empty commands are not allowed")
 
+            # since XML doesn't *guarantee* an order, the correct way to
+            # specify a particular order of commands is to use the "position"
+            # attribute.  For backwards compatibility, if the order is not
+            # specified, we just use the parse order.  That being said, we do
+            # not allow a mix of position attributes and implicit order.  If
+            # you use the position attribute on one command, you must use it
+            # on all commands, and vice-versa.
+
+            position = command.prop('position')
+            if position is not None:
+                saw_position = True
+                position = int(position)
+
             if contenttype == 'base64':
                 content = base64.b64decode(content)
             elif contenttype != 'raw':
                 raise oz.OzException.OzException("File type for %s must be 'raw' or 'base64'" % (name))
 
-            self.commands.append(content)
+            tmp.append((position, content))
 
-        self.disksize = _xml_get_value(self.doc, '/template/disk/size',
-                                       'disk size', optional=True)
+        commands = []
+        if not saw_position:
+            for pos,content in tmp:
+                commands.append(content)
+        else:
+            tmp.sort(cmp=lambda x,y: cmp(x[0], y[0]))
+            order = 1
+            for pos,content in tmp:
+                if pos is None:
+                    raise oz.OzException.OzException("All command elements must have a position (explicit order), or none of them may (implicit order)")
+                elif pos != order:
+                    # this handles both the case where there are duplicates and
+                    # the case where there is a missing number
+                    raise oz.OzException.OzException("Cannot have duplicate or sparse command position order!")
+                order += 1
+                commands.append(content)
+
+        return commands
 
     def merge_packages(self, packages):
         """
