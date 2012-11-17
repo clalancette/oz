@@ -92,7 +92,7 @@ try:
 
     if not force:
         while True:
-            response = input("Going to remove all content from %s; continue? (y/N) " % (', '.join(caches)))
+            response = raw_input("Going to remove all content from %s; continue? (y/N) " % (', '.join(caches)))
             if len(response) == 0 or response.lower() == 'n':
                 sys.exit(0)
             elif response.lower() == 'y':
