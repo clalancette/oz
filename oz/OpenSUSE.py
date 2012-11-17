@@ -536,5 +536,5 @@ def get_class(tdl, config, auto, output_disk=None):
     """
     if tdl.update in ["10.3"]:
         return OpenSUSEGuest(tdl, config, auto, output_disk, "rtl8139", "ide")
-    if tdl.update in ["11.0", "11.1", "11.2", "11.3", "11.4", "12.1"]:
+    if tdl.update in ["11.0", "11.1", "11.2", "11.3", "11.4", "12.1", "12.2"]:
         return OpenSUSEGuest(tdl, config, auto, output_disk, "virtio", "virtio")
