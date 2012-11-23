@@ -1,6 +1,7 @@
-oz (0.9.0-1) UNRELEASED; urgency=low
+oz (0.9.0-1) experimental; urgency=low
 
   * New upstream release
+  * upload to Debian repository (Closes: #694025)
   * set "3.0 (quilt)" to debian/source/format
   * debian/control
     - set Maintainer as me, thanks to Richard Jones for initial packaging.
