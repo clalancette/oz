@@ -236,12 +236,22 @@ class TDL(object):
         repositorieslist = self.doc.xpathEval('/template/repositories/repository')
         self._add_repositories(repositorieslist)
 
-        self.commands = self.parse_commands()
+        self.commands = self._parse_commands()
 
         self.disksize = _xml_get_value(self.doc, '/template/disk/size',
                                        'disk size', optional=True)
 
-    def parse_commands(self):
+    def _parse_commands(self):
+        """
+        Internal method to parse the commands XML and put it into order.  This
+        order can either be via parse order (implicit) or by using the
+        'position' attribute in the commands XML (explicit).  Note that the two
+        cannot be mixed; if position is specified on one node, it must be
+        specified on all of them.  Conversely, if position is *not* specified
+        on one node, it must *not* be specified on any of them.  Also note that
+        if explicit ordering is used, it must be strictly sequential, starting
+        at 1, with no duplicate numbers.
+        """
         tmp = []
         saw_position = False
         for command in self.doc.xpathEval('/template/commands/command'):
