@@ -21,10 +21,12 @@ Template Description Language (TDL)
 
 import libxml2
 import base64
+import re
 try:
     import urllib.parse as urlparse
 except ImportError:
     import urlparse
+
 import oz.ozutil
 import oz.OzException
 
@@ -238,8 +240,33 @@ class TDL(object):
 
         self.commands = self._parse_commands()
 
-        self.disksize = _xml_get_value(self.doc, '/template/disk/size',
-                                       'disk size', optional=True)
+        self.disksize = self._parse_disksize()
+
+    def _parse_disksize(self):
+        size = _xml_get_value(self.doc, '/template/disk/size', 'disk size',
+                              optional=True)
+
+        match = re.match(r'([0-9]*) *([GT]?)$', size)
+        if not match:
+            raise oz.OzException.OzException("Invalid disk size; it must be specified as a size in gigabytes, optionally suffixed with 'G' or 'T'")
+
+        number = match.group(1)
+        suffix = match.group(2)
+
+        if not number.isdigit():
+            raise oz.OzException.OzException("Invalid disk size; it must begin with a number")
+
+        if not suffix or suffix == 'G':
+            # for backwards compatibility, we assume G when there is no suffix
+            size = number
+        elif suffix == 'T':
+            size = str(int(number) * 1024)
+        else:
+            # note that this should never, ever happen; the regular expression
+            # should have failed the match earlier
+            raise oz.OzException.OzException("Invalid suffix; it must be 'G' or 'T'")
+
+        return size
 
     def _parse_commands(self):
         """
