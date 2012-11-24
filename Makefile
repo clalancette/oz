@@ -21,16 +21,7 @@ deb:
 
 release: signed-rpm signed-tarball deb
 
-examples-manpage:
-	echo "Generating oz-examples man page"
-	@(cat man/examples/header ; \
-	for example in man/examples/*.example ; do \
-	    sed -e 's/^EXAMPLE \(.*\)/.SH EXAMPLE \1/' \
-		-e 's/^#\(.*\)/.RS\n#\1\n.RE/' $$example ; \
-	done ; \
-	cat man/examples/footer) > man/oz-examples.1
-
-man2html: examples-manpage
+man2html:
 	@for file in oz-install oz-customize oz-generate-icicle oz-cleanup-cache oz-examples; do \
 		echo "Generating $$file HTML page from man" ; \
 		groff -mandoc -mwww man/$$file.1 -T html > man/$$file.html ; \
@@ -55,4 +46,4 @@ pylint:
 	pylint --rcfile=pylint.conf oz oz-install oz-customize oz-cleanup-cache oz-generate-icicle
 
 clean:
-	rm -rf MANIFEST build dist usr *~ oz.spec *.pyc oz/*~ oz/*.pyc examples/*~ oz/auto/*~ man/*~ docs/*~ man/*.html $(VENV_DIR) tests/tdl/*~ tests/factory/*~ man/oz-examples.1 tests/results.xml
+	rm -rf MANIFEST build dist usr *~ oz.spec *.pyc oz/*~ oz/*.pyc examples/*~ oz/auto/*~ man/*~ docs/*~ man/*.html $(VENV_DIR) tests/tdl/*~ tests/factory/*~ tests/results.xml

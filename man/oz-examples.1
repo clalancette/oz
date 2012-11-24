@@ -1,0 +1,173 @@
+.TH OZ-EXAMPLES 1 "Aug 2011" "oz-examples"
+
+.SH NAME
+oz-examples - example TDL files for Oz.
+
+.SH DESCRIPTION
+The
+.I oz-install(1)
+,
+.I oz-customize(1)
+, and
+.I oz-generate-icicle(1)
+man pages explain the command-line usage of the Oz commands.  One of
+the required input parameters to all of the above commands is a TDL
+(Template Description Language) file, which describes the OS the user
+wants to install, where to get the media from, and any additional
+packages or actions the user wants to take on the operating system.
+This man page describes a number of TDL examples and what happens when
+they are used.  Since the TDL is XML, standard XPath notation is used
+to describe various elements of the XML.
+.SH EXAMPLE 1 - Minimal guest
+Assume we want to install a minimal Fedora 13 x86_64 operating system from a Fedora 13 DVD ISO located at http://example.org/fedora-13-x86_64.iso
+
+To do this install we first build a TDL XML file, then feed it to oz-install.  The TDL file would look like:
+
+.CDS
+ <template>
+   <name>fedora13_x86_64</name>
+     <os>
+       <name>Fedora</name>
+       <version>13</version>
+       <arch>x86_64</arch>
+       <install type='iso'>
+         <iso>http://example.org/fedora-13-x86_64.iso</iso>
+       </install>
+     </os>
+   <description>My Fedora 13 x86_64 template</description>
+ </template>
+.CDE
+
+/template/name is a user-defined name.  This can be anything the user wants, but must be unique among all TDLs the user wants to build.
+
+/template/os/name is the name of the operating system we want to install, /template/os/version is the version we want, and /template/os/arch is the architecture we want.  A full list of supported operating systems can be obtained by running:
+
+.RS
+# oz-install -h
+.RE
+
+/template/os/install tells Oz where to get the installation media from.  In this example, we set type to 'iso' which means that we need an <iso> element in the XML pointing to the ISO install media (install methods other than ISO are supported, and described in other examples).
+
+/template/description is an optional, human-readable description of the template.  This can be anything the user wants, and is ignored by Oz.
+
+That's all of the input that Oz needs.  To actually do the installation, save the above to a file (say fedora13.tdl), and then run oz-install:
+
+.RS
+# oz-install /path/to/fedora13.tdl
+.RE
+
+(for the time being, all of the oz commands need to be run as root, although we are working on making it work for normal users)
+
+Running this command will download and prepare the installation media, then run an automated install in a KVM guest.  Assuming the install succeeds, the minimal operating system will be installed on a file in /var/lib/libvirt/images/fedora13_x86_64.dsk (by default, the output location can be overridden in the configuration file).
+.SH EXAMPLE 2 - Guest with additional packages
+Assume we want to install a Fedora 14 x86_64 operating system from a Fedora 14 DVD ISO located at http://example.org/fedora-14-x86_64.iso
+
+Additionally assume we want to install the postgresql-server package on the operating system.  To do this install, we first need to build a TDL XML file and then feed that to oz-install.  The TDL file would look like:
+
+.CDS
+ <template>
+   <name>fedora14_postgres</name>
+   <os>
+     <name>Fedora</name>
+     <version>14</version>
+     <arch>x86_64</arch>
+     <install type='iso'>
+       <iso>http://example.org/fedora-14-x86_64.iso</iso>
+     </install>
+   </os>
+   <description>Fedora 14 x86_64 with postgres</description>
+   <packages>
+     <package name='postgresql-server'/>
+   </packages>
+ </template>
+.CDE
+
+Notice that this is very similar to Example 1, except we specified an additional package to be installed in the /packages/package portion of the TDL.  Multiple packages can be specified here, and they will all be installed on the operating system.  In this example, all packages are downloaded and installed from the default operating system package repositories.  Running the installation is done the same way as in Example 1, except we have to add a command-line parameter to actually do the customization:
+
+.RS
+# oz-install -u /path/to/fedora14.tdl
+.RE
+
+Running this command will download and prepare the installation media, then run an automated install in a KVM guest.
+
+Assuming the initial install succeeds, Oz will then boot the operating system and run native commands to install the additional packages.  For more information about why this approach is used, please see the Oz Architecture document at http://aeolusproject.org/oz-architecture.html
+
+Assuming this final step succeeds, the operating system with the additional packages will be installed on a file in /var/lib/libvirt/images/fedora14_postgres.dsk (by default, the output location can be overridden in the configuration file).
+.SH EXAMPLE 3 - Generate a package manifest (ICICLE) after installation
+Assume we want to install a RHEL-5 x86_64 operating system from a RHEL-5 DVD ISO located at http://example.org/rhel-5-x86_64.iso
+
+Additionally assume we want to get a package manifest out of the operating system after the install is done.  To do this install, we first need to build a TDL XML file and then feed that to oz-install. The TDL file would look like:
+
+.CDS
+ <template>
+   <name>rhel5_x86_64</name>
+   <os>
+     <name>RHEL-5</name>
+     <version>U6</version>
+     <arch>x86_64</arch>
+     <install type='iso'>
+       <iso>http://example.org/rhel-5-x86_64.iso</iso>
+     </install>
+   </os>
+   <description>RHEL-5 x86_64</description>
+ </template>
+.CDE
+
+This is essentially the same as Example 1, except we want to install RHEL-5 instead of Fedora-13.
+
+Running the installation is done the same was as in Example 1, except we have to add a command-line parameter to generate the manifest at the end:
+
+.RS
+# oz-install -g /path/to/rhel5.tdl
+.RE
+
+Running this command will download and prepare the installation media, then run an automated install in a KVM guest.
+
+Assuming the initial install succeeds, Oz will then boot the operating system and run native commands to query all of the packages in the system.  It will then output an XML document (called an ICICLE) describing the entire manifest.
+
+Assuming this step succeeds, the minimal operating system will be install on a feil in /var/lib/libvirt/images/rhel5_x86_64.dsk (by default, the output location can be overridden in the configuration file).
+.SH EXAMPLE 4 - Install a package from an alternate repository
+Assume we want to install a RHEL-6 x86_64 operating system from a RHEL-6 DVD ISO located at http://example.org/rhel-6-x86_64.iso
+
+Additionally assume that we want to install the ccache package from the EPEL-6 repositories on the operating system.  To do this install, we first need to build a TDL XML file and then feed that to oz-install.  The TDL file would look like:
+
+.CDS
+ <template>
+   <name>rhel6_ccache</name>
+   <os>
+     <name>RHEL-6</name>
+     <version>1</version>
+     <arch>x86_64</arch>
+     <install type='iso'>
+       <iso>http://example.org/rhel-6-x86_64.iso</iso>
+     </install>
+   </os>
+   <description>RHEL-6 x86_64 with ccache</description>
+   <repositories>
+     <repository name='epel-6'>
+       <url>http://download.fedoraproject.org/pub/epel/6/$basearch</url>
+       <signed>yes</signed>
+     </repository>
+   </repositories>
+   <packages>
+     <package name='ccache'/>
+   </packages>
+ </template>
+.CDE
+
+Notice that this is very similar to Example 2, except we have specified an additional repository from which to download packages.  The /repositories/repository section of the TDL specified the URL to the package repository along with whether the packages in the repository are signed.  Running the installation is done the same way as in Example 2:
+
+.RS
+# oz-install -u /path/to/rhel6_ccache.tdl
+.RE
+
+Running this command will download and prepare the installation media, then run an automated install in a KVM guest.
+
+Assuming the initial install succeeds, Oz will then boot the operating system and run native commands to setup the additional repositories and install the additional packages.  For more information about why this approach is used, please see the Oz Architecture document at http://aeolusproject.org/oz-architecture.html
+
+Assuming this final step succeeds, the operating system with the additional packages will be installed on a file in /var/lib/libvirt/images/rhel6_ccache.dsk (by default, the output location can be overridden in the configuration file).
+.SH SEE ALSO
+oz-install(1), oz-generate-icicle(1), oz-customize(1), oz-cleanup-cache(1)
+
+.SH AUTHOR
+Chris Lalancette <clalancette@gmail.com>
