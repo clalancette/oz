@@ -19,7 +19,6 @@
 
 import sys
 import getopt
-import os
 import logging
 import time
 

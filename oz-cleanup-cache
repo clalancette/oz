@@ -102,7 +102,7 @@ try:
 
     for cache in caches:
         print("Removing cached content from %s" % (cache))
-        for root,dirs,files in os.walk(cache):
+        for root, dirs, files in os.walk(cache):
             for f in files:
                 os.unlink(os.path.join(root, f))
             for d in dirs:

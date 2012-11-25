@@ -319,12 +319,12 @@ class TDL(object):
 
         commands = []
         if not saw_position:
-            for pos,content in tmp:
+            for pos, content in tmp:
                 commands.append(content)
         else:
-            tmp.sort(cmp=lambda x,y: cmp(x[0], y[0]))
+            tmp.sort(cmp=lambda x, y: cmp(x[0], y[0]))
             order = 1
-            for pos,content in tmp:
+            for pos, content in tmp:
                 if pos is None:
                     raise oz.OzException.OzException("All command elements must have a position (explicit order), or none of them may (implicit order)")
                 elif pos != order:

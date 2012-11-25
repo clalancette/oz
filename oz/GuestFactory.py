@@ -75,7 +75,7 @@ def guest_factory(tdl, config, auto, output_disk=None):
     """
 
     klass = None
-    for name,importname in os_dict.items():
+    for name, importname in os_dict.items():
         if tdl.distro == name:
             # we found the matching module; import and call the get_class method
             module = __import__('oz.' + importname)
@@ -93,7 +93,7 @@ def distrolist():
     Function to print out a list of supported distributions.
     """
     strings = []
-    for name,importname in os_dict.items():
+    for importname in os_dict.values():
         module = __import__('oz.' + importname)
         support = getattr(module, importname).get_supported_string()
         tmp = '   ' + support
