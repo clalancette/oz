@@ -95,3 +95,9 @@ def get_class(tdl, config, auto, output_disk=None):
         return RHEL4Guest(tdl, config, auto, output_disk, "rtl8139", None)
     if tdl.update in ["U8", "U9"]:
         return RHEL4Guest(tdl, config, auto, output_disk, "virtio", "virtio")
+
+def get_supported_string():
+    """
+    Return supported versions as a string.
+    """
+    return "RHEL/CentOS/Scientific Linux 4: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9"

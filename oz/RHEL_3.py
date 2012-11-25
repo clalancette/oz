@@ -94,3 +94,9 @@ def get_class(tdl, config, auto, output_disk=None):
     """
     if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9"]:
         return RHEL3Guest(tdl, config, auto, output_disk)
+
+def get_supported_string():
+    """
+    Return supported versions as a string.
+    """
+    return "RHEL/CentOS 3: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9"

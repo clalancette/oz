@@ -35,3 +35,9 @@ def get_class(tdl, config, auto, output_disk=None):
     """
     if tdl.update in ["GOLD", "U2", "U3", "U4", "U5", "U6"]:
         return RHEL21Guest(tdl, config, auto, output_disk)
+
+def get_supported_string():
+    """
+    Return supported versions as a string.
+    """
+    return "RHEL 2.1: GOLD, U2, U3, U4, U5, U6"

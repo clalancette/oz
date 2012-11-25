@@ -228,3 +228,9 @@ def get_class(tdl, config, auto, output_disk=None):
         return Windows2000andXPand2003(tdl, config, auto, output_disk)
     if tdl.update in ["2008", "7"]:
         return Windows2008and7(tdl, config, auto, output_disk)
+
+def get_supported_string():
+    """
+    Return supported versions as a string.
+    """
+    return "Windows: 2000, XP, 2003, 7, 2008"

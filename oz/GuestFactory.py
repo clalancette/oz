@@ -19,21 +19,46 @@
 Factory functions.
 """
 
-import oz.Fedora
-import oz.FedoraCore
-import oz.RHEL_2_1
-import oz.RHEL_3
-import oz.RHEL_4
-import oz.RHEL_5
-import oz.RHEL_6
-import oz.RHL
-import oz.Ubuntu
-import oz.Windows
-import oz.OpenSUSE
-import oz.Debian
-import oz.Mandrake
-import oz.Mandriva
 import oz.OzException
+
+os_dict = { 'Fedora': 'Fedora',
+            'FedoraCore': 'FedoraCore',
+            'FC': 'FedoraCore',
+            'RedHatEnterpriseLinux-2.1': 'RHEL_2_1',
+            'RHEL-2.1': 'RHEL_2_1',
+            'RedHatEnterpriseLinux-3': 'RHEL_3',
+            'RHEL-3': 'RHEL_3',
+            'CentOS-3': 'RHEL_3',
+            'RedHatEnterpriseLinux-4': 'RHEL_4',
+            'RHEL-4': 'RHEL_4',
+            'CentOS-4': 'RHEL_4',
+            'ScientificLinux-4': 'RHEL_4',
+            'SL-4': 'RHEL_4',
+            'RedHatEnterpriseLinux-5': 'RHEL_5',
+            'RHEL-5': 'RHEL_5',
+            'CentOS-5': 'RHEL_5',
+            'ScientificLinux-5': 'RHEL_5',
+            'SL-5': 'RHEL_5',
+            'ScientificLinuxCern-5': 'RHEL_5',
+            'SLC-5': 'RHEL_5',
+            'RedHatEnterpriseLinux-6': 'RHEL_6',
+            'RHEL-6': 'RHEL_6',
+            'CentOS-6': 'RHEL_6',
+            'ScientificLinux-6': 'RHEL_6',
+            'SL-6': 'RHEL_6',
+            'ScientificLinuxCern-6': 'RHEL_6',
+            'SLC-6': 'RHEL_6',
+            'OracleEnterpriseLinux-6': 'RHEL_6',
+            'OEL-6': 'RHEL_6',
+            'Ubuntu': 'Ubuntu',
+            'Windows': 'Windows',
+            'RedHatLinux': 'RHL',
+            'RHL': 'RHL',
+            'OpenSUSE': 'OpenSUSE',
+            'Debian': 'Debian',
+            'Mandrake': 'Mandrake',
+            'Mandriva': 'Mandriva',
+}
 
 def guest_factory(tdl, config, auto, output_disk=None):
     """
@@ -50,40 +75,13 @@ def guest_factory(tdl, config, auto, output_disk=None):
     """
 
     klass = None
-    if tdl.distro == "Fedora":
-        klass = oz.Fedora.get_class(tdl, config, auto, output_disk)
-    elif tdl.distro in ["FedoraCore", "FC"]:
-        klass = oz.FedoraCore.get_class(tdl, config, auto, output_disk)
-    elif tdl.distro in ["RedHatEnterpriseLinux-2.1", "RHEL-2.1"]:
-        klass = oz.RHEL_2_1.get_class(tdl, config, auto, output_disk)
-    elif tdl.distro in ["RedHatEnterpriseLinux-3", "RHEL-3", "CentOS-3"]:
-        klass = oz.RHEL_3.get_class(tdl, config, auto, output_disk)
-    elif tdl.distro in ["RedHatEnterpriseLinux-4", "RHEL-4", "CentOS-4",
-                        "ScientificLinux-4", "SL-4"]:
-        klass = oz.RHEL_4.get_class(tdl, config, auto, output_disk)
-    elif tdl.distro in ["RedHatEnterpriseLinux-5", "RHEL-5", "CentOS-5",
-                        "ScientificLinux-5", "SL-5",
-                        "ScientificLinuxCern-5", "SLC-5"]:
-        klass = oz.RHEL_5.get_class(tdl, config, auto, output_disk)
-    elif tdl.distro in ["RedHatEnterpriseLinux-6", "RHEL-6", "CentOS-6",
-                        "ScientificLinux-6", "SL-6",
-                        "ScientificLinuxCern-6", "SLC-6",
-                        "OracleEnterpriseLinux-6", "OEL-6"]:
-        klass = oz.RHEL_6.get_class(tdl, config, auto, output_disk)
-    elif tdl.distro == "Ubuntu":
-        klass = oz.Ubuntu.get_class(tdl, config, auto, output_disk)
-    elif tdl.distro == "Windows":
-        klass = oz.Windows.get_class(tdl, config, auto, output_disk)
-    elif tdl.distro in ["RedHatLinux", "RHL"]:
-        klass = oz.RHL.get_class(tdl, config, auto, output_disk)
-    elif tdl.distro == "OpenSUSE":
-        klass = oz.OpenSUSE.get_class(tdl, config, auto, output_disk)
-    elif tdl.distro == "Debian":
-        klass = oz.Debian.get_class(tdl, config, auto, output_disk)
-    elif tdl.distro == "Mandrake":
-        klass = oz.Mandrake.get_class(tdl, config, auto, output_disk)
-    elif tdl.distro == "Mandriva":
-        klass = oz.Mandriva.get_class(tdl, config, auto, output_disk)
+    for name,importname in os_dict.items():
+        if tdl.distro == name:
+            # we found the matching module; import and call the get_class method
+            module = __import__('oz.' + importname)
+            klass = getattr(module, importname).get_class(tdl, config, auto,
+                                                          output_disk)
+            break
 
     if klass is None:
         raise oz.OzException.OzException("Unsupported " + tdl.distro + " update " + tdl.update)
@@ -94,17 +92,13 @@ def distrolist():
     """
     Function to print out a list of supported distributions.
     """
-    print("   Fedora: 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17")
-    print("   Fedora Core: 1, 2, 3, 4, 5, 6")
-    print("   RHEL 2.1: GOLD, U2, U3, U4, U5, U6")
-    print("   RHEL/CentOS 3: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9")
-    print("   RHEL/CentOS/Scientific Linux 4: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9")
-    print("   RHEL/CentOS/Scientific Linux{,CERN} 5: GOLD, U1, U2, U3, U4, U5, U6, U7, U8")
-    print("   RHEL/OEL/CentOS/Scientific Linux{,CERN} 6: 0, 1, 2, 3")
-    print("   Ubuntu: 6.06[.1,.2], 6.10, 7.04, 7.10, 8.04[.1,.2,.3,.4], 8.10, 9.04, 9.10, 10.04[.1,.2,.3], 10.10, 11.04, 11.10, 12.04[.1], 12.10")
-    print("   Windows: 2000, XP, 2003, 7, 2008")
-    print("   RHL: 7.0, 7.1, 7.2, 7.3, 8, 9")
-    print("   OpenSUSE: 10.3, 11.0, 11.1, 11.2, 11.3, 11.4, 12.1, 12.2")
-    print("   Debian: 5, 6")
-    print("   Mandrake: 8.2, 9.1, 9.2, 10.0, 10.1")
-    print("   Mandriva: 2005, 2006.0, 2007.0, 2008.0")
+    strings = []
+    for name,importname in os_dict.items():
+        module = __import__('oz.' + importname)
+        support = getattr(module, importname).get_supported_string()
+        tmp = '   ' + support
+        if not tmp in strings:
+            strings.append(tmp)
+
+    strings.sort()
+    print('\n'.join(strings))

@@ -61,3 +61,9 @@ def get_class(tdl, config, auto, output_disk=None):
     """
     if tdl.update in ["1", "2", "3", "4", "5", "6"]:
         return FedoraCoreGuest(tdl, config, auto, output_disk)
+
+def get_supported_string():
+    """
+    Return supported versions as a string.
+    """
+    return "Fedora Core: 1, 2, 3, 4, 5, 6"

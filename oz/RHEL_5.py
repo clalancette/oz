@@ -107,3 +107,9 @@ def get_class(tdl, config, auto, output_disk=None):
         return RHEL5Guest(tdl, config, auto, "rtl8139", None, output_disk)
     if tdl.update in ["U4", "U5", "U6", "U7", "U8"]:
         return RHEL5Guest(tdl, config, auto, "virtio", "virtio", output_disk)
+
+def get_supported_string():
+    """
+    Return supported versions as a string.
+    """
+    return "RHEL/CentOS/Scientific Linux{,CERN} 5: GOLD, U1, U2, U3, U4, U5, U6, U7, U8"

@@ -112,3 +112,9 @@ def get_class(tdl, config, auto, output_disk=None):
     """
     if tdl.update in ["2005", "2006.0", "2007.0", "2008.0"]:
         return MandrivaGuest(tdl, config, auto, output_disk)
+
+def get_supported_string():
+    """
+    Return supported versions as a string.
+    """
+    return "Mandriva: 2005, 2006.0, 2007.0, 2008.0"

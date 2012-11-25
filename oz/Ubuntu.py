@@ -588,3 +588,9 @@ def get_class(tdl, config, auto, output_disk=None):
                       "11.04", "11.10", "12.04", "12.04.1", "12.10"]:
         return UbuntuGuest(tdl, config, auto, output_disk, "initrd.lz",
                            "virtio", "virtio")
+
+def get_supported_string():
+    """
+    Return supported versions as a string.
+    """
+    return "Ubuntu: 6.06[.1,.2], 6.10, 7.04, 7.10, 8.04[.1,.2,.3,.4], 8.10, 9.04, 9.10, 10.04[.1,.2,.3], 10.10, 11.04, 11.10, 12.04[.1], 12.10"

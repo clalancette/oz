@@ -107,3 +107,9 @@ def get_class(tdl, config, auto, output_disk=None):
     """
     if tdl.update in ["5", "6"]:
         return DebianGuest(tdl, config, auto, output_disk)
+
+def get_supported_string():
+    """
+    Return supported versions as a string.
+    """
+    return "Debian: 5, 6"

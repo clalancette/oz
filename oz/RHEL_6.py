@@ -56,3 +56,9 @@ def get_class(tdl, config, auto, output_disk=None):
     """
     if tdl.update in ["0", "1", "2", "3"]:
         return RHEL6Guest(tdl, config, auto, output_disk)
+
+def get_supported_string():
+    """
+    Return supported versions as a string.
+    """
+    return "RHEL/OEL/CentOS/Scientific Linux{,CERN} 6: 0, 1, 2, 3"

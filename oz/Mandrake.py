@@ -172,3 +172,9 @@ def get_class(tdl, config, auto, output_disk=None):
         return Mandrake82Guest(tdl, config, auto, output_disk)
     if tdl.update in ["9.1", "9.2", "10.0", "10.1"]:
         return MandrakeGuest(tdl, config, auto, output_disk)
+
+def get_supported_string():
+    """
+    Return supported versions as a string.
+    """
+    return "Mandrake: 8.2, 9.1, 9.2, 10.0, 10.1"

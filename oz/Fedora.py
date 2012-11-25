@@ -102,3 +102,9 @@ def get_class(tdl, config, auto, output_disk=None):
     if tdl.update in ["7", "8", "9"]:
         return FedoraGuest(tdl, config, auto, "rtl8139", False, None, False,
                            output_disk)
+
+def get_supported_string():
+    """
+    Return supported versions as a string.
+    """
+    return "Fedora: 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17"

@@ -95,3 +95,9 @@ def get_class(tdl, config, auto, output_disk=None):
     if tdl.update in ["7.0", "7.1"]:
         return RHL70and71and72and73and8Guest(tdl, config, auto, output_disk,
                                              "ne2k_pci")
+
+def get_supported_string():
+    """
+    Return supported versions as a string.
+    """
+    return "RHL: 7.0, 7.1, 7.2, 7.3, 8, 9"
