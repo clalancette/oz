@@ -41,7 +41,7 @@ def usage():
     print("  -i <icicle>\tWrite the ICICLE to <icicle>")
     print(" Currently supported architectures are:")
     print("   i386, x86_64")
-    print(" Currently supported distros are:")
+    print(" Currently supported operating systems are:")
     oz.GuestFactory.distrolist()
     sys.exit(1)
 
