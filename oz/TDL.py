@@ -245,6 +245,10 @@ class TDL(object):
     def _parse_disksize(self):
         size = _xml_get_value(self.doc, '/template/disk/size', 'disk size',
                               optional=True)
+        if size is None:
+            # if it wasn't specified, return None; the Guest object will assign
+            # a sensible default
+            return None
 
         match = re.match(r'([0-9]*) *([GT]?)$', size)
         if not match:
