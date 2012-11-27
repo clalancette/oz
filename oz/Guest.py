@@ -722,6 +722,7 @@ class Guest(object):
         c.setopt(c.URL, from_url)
         c.setopt(c.CONNECTTIMEOUT, 5)
         c.setopt(c.WRITEFUNCTION, _data)
+        c.setopt(c.FOLLOWLOCATION, 1)
         if show_progress:
             c.setopt(c.NOPROGRESS, 0)
             c.setopt(c.PROGRESSFUNCTION, _progress)
