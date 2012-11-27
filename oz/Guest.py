@@ -734,7 +734,16 @@ class Guest(object):
         Internal method to fetch the checksum file and compute the checksum
         on the downloaded data.
         """
-        if not (self.tdl.iso_md5_url or self.tdl.iso_sha1_url or self.tdl.iso_sha256_url):
+        if self.tdl.iso_md5_url:
+            url = self.tdl.iso_md5_url
+            hashname = 'md5'
+        elif self.tdl.iso_sha1_url:
+            url = self.tdl.iso_sha1_url
+            hashname = 'sha1'
+        elif self.tdl.iso_sha256_url:
+            url = self.tdl.iso_sha256_url
+            hashname = 'sha256'
+        else:
             return True
 
         originalname = os.path.basename(urlparse.urlparse(original_url)[2])
@@ -743,34 +752,20 @@ class Guest(object):
                                 self.tdl.distro + self.tdl.update + self.tdl.arch + "-CHECKSUM")
         csumfd = os.open(csumname, os.O_WRONLY|os.O_CREAT|os.O_TRUNC)
 
-        # from this point forward, we need to close csumfd on success or failure
         try:
             self.log.debug("Attempting to get the lock for %s" % (csumname))
             fcntl.lockf(csumfd, fcntl.LOCK_EX)
             self.log.debug("Got the lock, doing the download")
 
-            if self.tdl.iso_md5_url:
-                self.log.debug("Checksum requested, fetching MD5 file")
-                self._download_file(self.tdl.iso_md5_url, csumfd, False)
-                upstream_sum = oz.ozutil.get_md5sum_from_file(csumname,
-                                                              originalname)
-                local_sum = hashlib.md5()
-            elif self.tdl.iso_sha1_url:
-                self.log.debug("Checksum requested, fetching SHA1 file")
-                self._download_file(self.tdl.iso_sha1_url, csumfd, False)
-                upstream_sum = oz.ozutil.get_sha1sum_from_file(csumname,
-                                                               originalname)
-                local_sum = hashlib.sha1()
-            else:
-                self.log.debug("Checksum requested, fetching SHA256 file")
-                self._download_file(self.tdl.iso_sha256_url, csumfd, False)
-                upstream_sum = oz.ozutil.get_sha256sum_from_file(csumname,
-                                                                 originalname)
-                local_sum = hashlib.sha256()
-
-            os.unlink(csumname)
+            self.log.debug("Checksum requested, fetching %s file" % (hashname))
+            self._download_file(url, csumfd, False)
         finally:
             os.close(csumfd)
+
+        upstream_sum = getattr(oz.ozutil,
+                               'get_' + hashname + 'sum_from_file')(csumname, originalname)
+
+        os.unlink(csumname)
 
         if not upstream_sum:
             raise oz.OzException.OzException("Could not find checksum for original file " + originalname)
@@ -778,16 +773,14 @@ class Guest(object):
         self.log.debug("Calculating checksum of downloaded file")
         os.lseek(outputfd, 0, os.SEEK_SET)
 
-        buf = os.read(outputfd, 1024)
+        local_sum = getattr(hashlib, hashname)()
+
+        buf = os.read(outputfd, 4096)
         while buf != '':
             local_sum.update(buf)
-            buf = os.read(outputfd, 1024)
+            buf = os.read(outputfd, 4096)
 
-        retval = local_sum.hexdigest() == upstream_sum
-
-        if retval:
-            self.log.debug("Checksum matches")
-        return retval
+        return local_sum.hexdigest() == upstream_sum
 
     def _get_original_media(self, url, output, force_download):
         """
