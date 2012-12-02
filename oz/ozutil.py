@@ -451,7 +451,8 @@ def write_cpio(inputdict, outputfile):
 
     try:
         for inputfile, destfile in list(inputdict.items()):
-            st = os.stat(inputfile)
+            inf = open(inputfile, 'r')
+            st = os.fstat(inf.fileno())
 
             # 070701 is the magic for new CPIO (newc in cpio parlance)
             outf.write("070701")
@@ -492,7 +493,6 @@ def write_cpio(inputdict, outputfile):
             outf.write("\x00"*(4 - ((110+len(stripped)) % 4)))
 
             # now write the data from the input file
-            inf = open(inputfile, 'r')
             outf.writelines(inf)
             inf.close()
 

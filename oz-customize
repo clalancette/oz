@@ -93,13 +93,16 @@ try:
 
     guest = oz.GuestFactory.guest_factory(tdl, config, None)
 
+    fp = open(libvirt_xml_file, 'r')
+
     # Arbitrarily limit the size of the XML file that we will support to 5MB.
-    # this should be plenty for a normal libvirt XML, and this should prevent us
-    # from causing OOMs on bogus files
-    if os.stat(libvirt_xml_file)[stat.ST_SIZE] > (5 * 1024 * 1024):
+    # this should be plenty for a normal libvirt XML, and this should prevent
+    # us from causing OOMs on bogus files
+    if os.fstat(fp.fileno())[stat.ST_SIZE] > (5 * 1024 * 1024):
         raise Exception("libvirt XML file is too big!")
 
-    guest.customize(open(libvirt_xml_file, 'r').read())
+    guest.customize(fp.read())
+    fp.close()
 except Exception as exc:
     if loglevel > logging.DEBUG:
         print("")
