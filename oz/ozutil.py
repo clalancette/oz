@@ -139,33 +139,38 @@ def copyfile_sparse(src, dest):
         mkdir_p(base)
 
     src_fd = os.open(src, os.O_RDONLY)
-    dest_fd = os.open(dest, os.O_WRONLY|os.O_CREAT|os.O_TRUNC)
 
-    sb = os.fstat(src_fd)
+    try:
+        dest_fd = os.open(dest, os.O_WRONLY|os.O_CREAT|os.O_TRUNC)
 
-    # See io_blksize() in coreutils for an explanation of why 32*1024
-    buf_size = max(32*1024, sb.st_blksize)
+        try:
+            sb = os.fstat(src_fd)
 
-    size = sb.st_size
-    destlen = 0
-    while size != 0:
-        buf = read_bytes_from_fd(src_fd, min(buf_size, size))
-        if len(buf) == 0:
-            break
+            # See io_blksize() in coreutils for an explanation of why 32*1024
+            buf_size = max(32*1024, sb.st_blksize)
 
-        buflen = len(buf)
-        if buf == '\0'*buflen:
-            os.lseek(dest_fd, buflen, os.SEEK_CUR)
-        else:
-            write_bytes_to_fd(dest_fd, buf)
+            size = sb.st_size
+            destlen = 0
+            while size != 0:
+                buf = read_bytes_from_fd(src_fd, min(buf_size, size))
+                if len(buf) == 0:
+                    break
 
-        destlen += buflen
-        size -= buflen
+                buflen = len(buf)
+                if buf == '\0'*buflen:
+                    os.lseek(dest_fd, buflen, os.SEEK_CUR)
+                else:
+                    write_bytes_to_fd(dest_fd, buf)
 
-    os.ftruncate(dest_fd, destlen)
+                destlen += buflen
+                size -= buflen
 
-    os.close(src_fd)
-    os.close(dest_fd)
+            os.ftruncate(dest_fd, destlen)
+
+        finally:
+            os.close(dest_fd)
+    finally:
+        os.close(src_fd)
 
 def bsd_split(line, digest_type):
     """
@@ -682,8 +687,10 @@ def rmtree_and_sync(directory):
     """
     shutil.rmtree(directory)
     fd = os.open(os.path.dirname(directory), os.O_RDONLY)
-    os.fsync(fd)
-    os.close(fd)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
 
 def parse_config(config_file):
     """

@@ -987,8 +987,10 @@ class Guest(object):
                 return oz.ozutil.write_bytes_to_fd(opaque, buf)
 
             fd = os.open(screenshot, os.O_RDWR|os.O_CREAT)
-            st.recvAll(sink, fd)
-            os.close(fd)
+            try:
+                st.recvAll(sink, fd)
+            finally:
+                os.close(fd)
 
             st.finish()
             text = "Check screenshot at %s for more detail" % (screenshot)
