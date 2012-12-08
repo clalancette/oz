@@ -866,12 +866,11 @@ class RedHatCDYumGuest(RedHatCDGuest):
         full_url = repo_url + "/repodata/repomd.xml"
 
         # first, check if we can access it from the host
-        self.data = ''
         def _writefunc(buf):
             """
             pycurl callback to store the data
             """
-            self.data += buf
+            pass
 
         crl = pycurl.Curl()
         crl.setopt(crl.URL, full_url)
