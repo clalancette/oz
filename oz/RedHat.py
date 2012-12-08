@@ -22,10 +22,6 @@ Common methods for installing and configuring RedHat-based guests
 import re
 import os
 import shutil
-try:
-    import urllib.request as urllib2
-except ImportError:
-    import urllib2
 import libvirt
 try:
     import configparser
@@ -552,8 +548,9 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
         # first we check if the .treeinfo exists; this throws an exception if
         # it is missing
-        response = urllib2.urlopen(treeinfourl)
-        response.close()
+        info = oz.ozutil.http_get_header(treeinfourl)
+        if info['HTTP-Code'] != 200:
+            raise oz.OzException.OzException("Could not find %s" % (treeinfourl))
 
         treeinfo = os.path.join(self.icicle_tmp, "treeinfo")
         self.log.debug("Going to write treeinfo to %s" % (treeinfo))
@@ -562,7 +559,8 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         fp = os.fdopen(treeinfofd)
         try:
             self.log.debug("Trying to get treeinfo from " + treeinfourl)
-            self._download_file(treeinfourl, treeinfofd, 0)
+            oz.ozutil.http_download_file(treeinfourl, treeinfofd,
+                                         False, self.log)
 
             # if we made it here, the .treeinfo existed.  Parse it and
             # find out the location of the vmlinuz and initrd
@@ -802,16 +800,10 @@ class RedHatCDYumGuest(RedHatCDGuest):
             # supports byte ranges, fail.
             count = 5
             while count > 0:
-                response = urllib2.urlopen(url)
-                info = response.info()
-                new_url = response.geturl()
-                response.close()
-
-                self.log.debug("Original URL %s resolved to %s" % (url,
-                                                                   new_url))
+                info = oz.ozutil.http_get_header(url, redirect=False)
 
                 if 'Accept-Ranges' in info and info['Accept-Ranges'] == "none":
-                    if url == new_url:
+                    if url == info['Redirect-URL']:
                         # optimization; if the URL we resolved to is exactly
                         # the same as what we started with, this is *not*
                         # a redirect, and we should fail immediately
@@ -821,7 +813,8 @@ class RedHatCDYumGuest(RedHatCDGuest):
                     count -= 1
                     continue
 
-                url = new_url
+                if 'Redirect-URL' in info and info['Redirect-URL'] is not None:
+                    url = info['Redirect-URL']
                 break
 
             if count == 0:

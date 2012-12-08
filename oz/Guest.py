@@ -26,11 +26,6 @@ import fcntl
 import subprocess
 import shutil
 import time
-import pycurl
-try:
-    import urllib.request as urllib2
-except ImportError:
-    import urllib2
 try:
     import urllib.parse as urlparse
 except ImportError:
@@ -694,42 +689,6 @@ class Guest(object):
 
         return True
 
-    def _download_file(self, from_url, fd, show_progress):
-        """
-        Internal method to download a file from from_url to file to.
-        """
-        self.last_mb = -1
-        def _progress(down_total, down_current, up_total, up_current):
-            """
-            Method that is called back from the pycurl perform() method to
-            update the progress information.
-            """
-            if down_total == 0:
-                return
-            current_mb = int(down_current) / 10485760
-            if current_mb > self.last_mb or down_current == down_total:
-                self.last_mb = current_mb
-                self.log.debug("%dkB of %dkB" % (down_current/1024,
-                                                 down_total/1024))
-
-        def _data(buf):
-            """
-            Method that is called back from the pycurl perform() method to
-            actually write data to disk.
-            """
-            os.write(fd, buf)
-
-        c = pycurl.Curl()
-        c.setopt(c.URL, from_url)
-        c.setopt(c.CONNECTTIMEOUT, 5)
-        c.setopt(c.WRITEFUNCTION, _data)
-        c.setopt(c.FOLLOWLOCATION, 1)
-        if show_progress:
-            c.setopt(c.NOPROGRESS, 0)
-            c.setopt(c.PROGRESSFUNCTION, _progress)
-        c.perform()
-        c.close()
-
     def _get_csums(self, original_url, outdir, outputfd):
         """
         Internal method to fetch the checksum file and compute the checksum
@@ -759,7 +718,7 @@ class Guest(object):
             self.log.debug("Got the lock, doing the download")
 
             self.log.debug("Checksum requested, fetching %s file" % (hashname))
-            self._download_file(url, csumfd, False)
+            oz.ozutil.http_download_file(url, csumfd, False, self.log)
         finally:
             os.close(csumfd)
 
@@ -803,14 +762,13 @@ class Guest(object):
 
             # if we reach here, the open and lock succeeded and we can download
 
-            response = urllib2.urlopen(url)
-            url = response.geturl()
-            info = response.info()
-            response.close()
+            info = oz.ozutil.http_get_header(url)
 
-            if "Content-Length" not in info:
+            if not 'HTTP-Code' in info or info['HTTP-Code'] >= 400 or not 'Content-Length' in info or info['Content-Length'] < 0:
                 raise oz.OzException.OzException("Could not reach destination to fetch boot media")
-            content_length = int(info["Content-Length"])
+
+            content_length = int(info['Content-Length'])
+
             if content_length == 0:
                 raise oz.OzException.OzException("Install media of 0 size detected, something is wrong")
 
@@ -833,7 +791,7 @@ class Guest(object):
             os.ftruncate(fd, 0)
 
             self.log.info("Fetching the original install media from %s" % (url))
-            self._download_file(url, fd, True)
+            oz.ozutil.http_download_file(url, fd, True, self.log)
 
             filesize = os.fstat(fd)[stat.ST_SIZE]
 
