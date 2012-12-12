@@ -93,6 +93,12 @@ This timer value is not configurable.
 Customize the image after installation.  This generally installs
 additional packages onto the disk image after installation.
 .TP
+.B "\-v"
+Force the use of virtio devices. By default, each guest type is
+responsible of determining the type of the devices to be used. This
+option allows users to take advantage of virtio drivers with OS images
+that weren't expected to be supported.
+.TP
 .B "\-x <xmlfile>"
 Oz will normally generate a libvirt XML file in the current working
 directory suffixed with the date and time.  Specifying the \-x option

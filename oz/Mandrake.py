@@ -158,11 +158,11 @@ class Mandrake82Guest(oz.Guest.CDGuest):
                                            "-v", "-v", "-o", self.output_iso,
                                            self.iso_contents])
 
-    def install(self, timeout=None, force=False):
+    def install(self, timeout=None, force=False, force_virtio=False):
         internal_timeout = timeout
         if internal_timeout is None:
             internal_timeout = 2500
-        return self._do_install(internal_timeout, force, 0)
+        return self._do_install(internal_timeout, force, 0, force_virtio)
 
 def get_class(tdl, config, auto, output_disk=None):
     """

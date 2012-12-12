@@ -47,6 +47,7 @@ def usage():
     print("  -s <disk>\tWrite the output to <disk> (default is the TDL name tag)")
     print("  -t <timeout>\tWait <timeout> seconds for installation, rather than the default")
     print("  -u\t\tAfter installation, do the customization")
+    print("  -v\t\tForce use of virtio devices")
     print("  -x <xmlfile>\tWrite libvirt XML to <xmlfile>")
     print(" Currently supported architectures are:")
     print("   i386, x86_64")
@@ -55,11 +56,11 @@ def usage():
     sys.exit(1)
 
 try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], 'a:c:d:fghi:ps:t:ux:',
+    opts, args = getopt.gnu_getopt(sys.argv[1:], 'a:c:d:fghi:ps:t:uvx:',
                                    ['auto', 'config', 'debug', 'force-download',
                                     'generate-icicle', 'help', 'icicle',
                                     'cleanup', 'disk', 'timeout', 'customize',
-                                    'xmlfile'])
+                                    'force-virtio', 'xmlfile'])
 except getopt.GetoptError as err:
     print(str(err))
     usage()
@@ -76,6 +77,7 @@ auto = None
 timeout = None
 icicle_file = None
 output_disk = None
+force_virtio = False
 for o, a in opts:
     if o in ("-a", "--auto"):
         auto = a
@@ -115,6 +117,8 @@ for o, a in opts:
         customize = True
     elif o in ("-x", "--xmlfile"):
         filename = a
+    elif o in ("-v", "--force-virtio"):
+        force_virtio = True
     else:
         assert False, "unhandled option"
 
@@ -143,7 +147,7 @@ try:
         guest.generate_install_media(force_download)
         try:
             guest.generate_diskimage(size=guest.disksize, force=force_download)
-            libvirt_xml = guest.install(timeout, force_download)
+            libvirt_xml = guest.install(timeout, force_download, force_virtio)
         except:
             guest.cleanup_old_guest()
             raise

@@ -104,11 +104,11 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
                                            "-o", self.output_iso,
                                            self.iso_contents])
 
-    def install(self, timeout=None, force=False):
+    def install(self, timeout=None, force=False, force_virtio=False):
         """
         Method to run the operating system installation.
         """
-        return self._do_install(timeout, force, self.reboots)
+        return self._do_install(timeout, force, self.reboots, force_virtio)
 
     def _shutdown_guest(self, guestaddr, libvirt_dom):
         """
