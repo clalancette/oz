@@ -2,7 +2,7 @@ Source: oz
 Maintainer: Hideki Yamane <henrich@debian.org>
 Section: python
 Priority: optional
-Build-Depends: debhelper (>= 7.4.3), python-all (>= 2.6.6-3)
+Build-Depends: debhelper (>= 8.0.0), python-all (>= 2.6.6-3)
 Standards-Version: 3.9.4
 Homepage: http://aeolusproject.org/oz.html
 #Vcs-Git: git://github.com/clalancette/oz.git

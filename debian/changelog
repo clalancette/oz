@@ -19,6 +19,7 @@ oz (0.9.0-1) experimental; urgency=low
   * drop debian/pycompat since it is used for dh_python, not dh_python2,
     now we can remove it.
   * add debian/postrm to remove ssh key files during purge.
+  * debian/{compat,rules}: set 8
 
  -- Hideki Yamane <henrich@debian.org>  Tue, 13 Nov 2012 00:14:02 +0900
 
