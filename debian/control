@@ -5,7 +5,8 @@ Priority: optional
 Build-Depends: debhelper (>= 8.0.0), python-all (>= 2.6.6-3)
 Standards-Version: 3.9.4
 Homepage: http://aeolusproject.org/oz.html
-#Vcs-Git: git://github.com/clalancette/oz.git
+Vcs-Git: git://github.com/henrich/oz.git
+Vcs-Browser: https://github.com/henrich/oz
 X-Python-Version: >= 2.6
 
 Package: oz
