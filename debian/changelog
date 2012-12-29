@@ -1,8 +1,27 @@
-oz (0.9.0-1) unstable; urgency=low
+oz (0.9.0-1) experimental; urgency=low
 
-  * Update to Oz 0.9.0
+  * New upstream release
+  * upload to Debian repository (Closes: #694025)
+  * set "3.0 (quilt)" to debian/source/format
+  * debian/control
+    - set Maintainer as me, thanks to Richard Jones for initial packaging.
+    - set "Standards-Version: 3.9.4"
+    - drop "Depends: python (>= 2.5)" since it pulls by ${Python:Depends},
+      and X-Python-Version specifies 2.6
+    - "Depends: python-libguestfs", it's unnecessary since it is virtual
+      package and only python-guestfs provides it.
+  * drop unnecessary debian/README* files
+  * debian/docs
+    - drop examples
+  * add debian/examples
+  * improve debian/postinst, use dehbelper token
+  * update debian/copyright to copyright-format 1.0
+  * drop debian/pycompat since it is used for dh_python, not dh_python2,
+    now we can remove it.
+  * add debian/postrm to remove ssh key files during purge.
+  * debian/{compat,rules}: set 8
 
- -- Guilhem Lettron <guilhem@lettron.fr>  Tue, 21 Aug 2012 12:21:53 +0200
+ -- Hideki Yamane <henrich@debian.org>  Tue, 13 Nov 2012 00:14:02 +0900
 
 oz (0.8.0-1) unstable; urgency=low
 

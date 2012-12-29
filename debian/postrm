@@ -5,17 +5,17 @@ set -e
 FILE="/etc/oz/id_rsa-icicle-gen"
 
 case "$1" in
-    configure)
-      if [ ! -f "$FILE" ]; then
-          ssh-keygen -t rsa -b 4096 -N "" -f "$FILE" >/dev/null 2>&1
-      fi
+    purge)
+    if [ -f $FILE ]; then
+        rm $FILE $FILE.pub
+    fi
     ;;
 
-    abort-upgrade|abort-remove|abort-deconfigure)
+    remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
     ;;
 
     *)
-        echo "postinst called with unknown argument \`$1'" >&2
+        echo "postrm called with unknown argument \`$1'" >&2
         exit 1
     ;;
 esac
