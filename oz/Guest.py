@@ -666,7 +666,7 @@ class Guest(object):
 
         self.log.info("Install of %s succeeded" % (self.tdl.name))
 
-    def _wait_for_guest_shutdown(self, libvirt_dom, count=60):
+    def _wait_for_guest_shutdown(self, libvirt_dom, count=90):
         """
         Method to wait around for orderly shutdown of a running guest.  Returns
         True if the guest shutdown in the specified time, False otherwise.
