@@ -40,6 +40,8 @@ class UbuntuGuest(oz.Guest.CDGuest):
             tdl.update = "8.04"
         elif tdl.update in ["10.04", "10.04.1", "10.04.2", "10.04.3"]:
             tdl.update = "10.04"
+        elif tdl.update in ["12.04", "12.04.1"]:
+            tdl.update = "12.04"
 
         oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, nicmodel,
                                   None, None, diskbus, True, False)
