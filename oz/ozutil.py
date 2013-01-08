@@ -19,6 +19,8 @@
 Miscellaneous utility functions.
 """
 
+import ftplib
+from ftplib import FTP
 import os
 import random
 import subprocess
@@ -409,6 +411,51 @@ def mkdir_p(path):
         if err.errno != errno.EEXIST or not os.path.isdir(path):
             raise
 
+def copytree_merge(src, dst, symlinks=False, ignore=None):
+    """
+    Function to copy an entire directory recursively. The functionality
+    differs from shutil.copytree, in that this function does *not* raise
+    an exception if the directory already exists.
+    It is based on: http://docs.python.org/2.7/library/shutil.html#copytree-example
+    """
+    names = os.listdir(src)
+    if ignore is not None:
+        ignored_names = ignore(src, names)
+    else:
+        ignored_names = set()
+
+    mkdir_p(dst)
+    errors = []
+    for name in names:
+        if name in ignored_names:
+            continue
+        srcname = os.path.join(src, name)
+        dstname = os.path.join(dst, name)
+        try:
+            if symlinks and os.path.islink(srcname):
+                linkto = os.readlink(srcname)
+                os.symlink(linkto, dstname)
+            elif os.path.isdir(srcname):
+                copytree_merge(srcname, dstname, symlinks, ignore)
+            else:
+                shutil.copy2(srcname, dstname)
+            # XXX What about devices, sockets etc.?
+        except (IOError, os.error) as why:
+            errors.append((srcname, dstname, str(why)))
+        # catch the Error from the recursive copytree so that we can
+        # continue with other files
+        except shutil.Error as err:
+            errors.extend(err.args[0])
+    try:
+        shutil.copystat(src, dst)
+    except shutil.WindowsError:
+        # can't copy file access times on Windows
+        pass
+    except OSError as why:
+        errors.extend((src, dst, str(why)))
+    if errors:
+        raise Error(errors)
+
 def copy_modify_file(inname, outname, subfunc):
     """
     Function to copy a file from inname to outname, passing each line
@@ -663,6 +710,37 @@ def http_get_header(url, redirect=True):
     c.close()
 
     return info
+
+def ftp_download_folder(server, username, password, basepath, destination, logger):
+    """
+    Function to download an ftp folder from url to local path
+    """
+    ftp = FTP(server)
+    ftp.login(username, password)
+
+    def _recursive_ftp_download(sourcepath):
+        """
+        Function to iterate and download a remote ftp folder
+        """
+        original_dir = ftp.pwd()
+        try:
+            ftp.cwd(sourcepath)
+        except ftplib.error_perm:
+            relativesourcepath = os.path.relpath(sourcepath, basepath)
+            destinationpath = os.path.join(destination, relativesourcepath)
+            if not os.path.exists(os.path.dirname(destinationpath)):
+                os.makedirs(os.path.dirname(destinationpath))
+            ftp.retrbinary("RETR " + sourcepath, open(destinationpath,"wb").write)
+            logger.debug("Downloaded ftp content from %s to %s" % (sourcepath, destinationpath))
+            return
+
+        names = ftp.nlst()
+        for name in names:
+            _recursive_ftp_download(os.path.join(sourcepath, name))
+
+        ftp.cwd(original_dir)
+
+    _recursive_ftp_download(basepath)
 
 def http_download_file(url, fd, show_progress, logger):
     """

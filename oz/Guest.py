@@ -1592,6 +1592,22 @@ class CDGuest(Guest):
         """
         pass
 
+    def _add_iso_extras(self):
+        """
+        Method to modify the ISO based on the folders specified in the TDL
+        file. This modification is done before the final OS and is not 
+        expected to be override by subclasses
+        """
+        for (targetfolder, remoteurl)  in self.tdl.isoextras:
+            targetabspath = os.path.join(self.iso_contents, targetfolder)
+            parsedurl =  urlparse.urlparse(remoteurl)
+            if parsedurl.scheme == 'file':
+                oz.ozutil.copytree_merge(parsedurl.path, targetabspath)
+            elif parsedurl.scheme == 'ftp':
+                oz.ozutil.ftp_download_folder(parsedurl.hostname, parsedurl.username, parsedurl.password, parsedurl.path, targetabspath, self.log)
+            else:
+                raise oz.OzException.OzException("The protocol '%s' is not supported for fetching remote folders" % parsedurl.schema)
+
     def _modify_iso(self):
         """
         Base method to modify the ISO.  Subclasses are expected to override
@@ -1627,6 +1643,7 @@ class CDGuest(Guest):
         self._copy_iso()
         self._check_iso_tree()
         try:
+            self._add_iso_extras()
             self._modify_iso()
             self._generate_new_iso()
             if self.cache_modified_media:

@@ -234,6 +234,13 @@ class TDL(object):
             else:
                 raise oz.OzException.OzException("File type for %s must be 'raw' or 'base64'" % (name))
 
+        self.isoextras = []
+        isoextralist = self.doc.xpathEval('/template/os/install/extras/folder')
+        for extrafolder in isoextralist:
+            remotelocation = _xml_get_value(extrafolder, 'remote', "folder remote location" , optional=False)
+            targetfolder = _xml_get_value(extrafolder, 'target', "folder target", optional=False)
+            self.isoextras.append((targetfolder, remotelocation))
+
         self.repositories = {}
         repositorieslist = self.doc.xpathEval('/template/repositories/repository')
         self._add_repositories(repositorieslist)
