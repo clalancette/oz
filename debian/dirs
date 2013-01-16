@@ -6,3 +6,4 @@ var/lib/oz/floppies
 var/lib/oz/icicletmp
 var/lib/oz/jeos
 var/lib/oz/kernels
+var/lib/oz/screenshots

@@ -53,6 +53,7 @@ mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/floppies/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/icicletmp/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/jeos/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/kernels/
+mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/screenshots/
 
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/oz
 cp oz.cfg $RPM_BUILD_ROOT%{_sysconfdir}/oz
@@ -74,6 +75,7 @@ fi
 %dir %attr(0755, root, root) %{_localstatedir}/lib/oz/icicletmp/
 %dir %attr(0755, root, root) %{_localstatedir}/lib/oz/jeos/
 %dir %attr(0755, root, root) %{_localstatedir}/lib/oz/kernels/
+%dir %attr(0755, root, root) %{_localstatedir}/lib/oz/screenshots/
 %{python_sitelib}/oz
 %{_bindir}/oz-install
 %{_bindir}/oz-generate-icicle

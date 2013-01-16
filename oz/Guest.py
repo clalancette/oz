@@ -154,7 +154,8 @@ class Guest(object):
                                                  oz.ozutil.default_data_dir())
 
         self.screenshot_dir = oz.ozutil.config_get_key(config, 'paths',
-                                                       'screenshot_dir', '.')
+                                                       'screenshot_dir',
+                                                       oz.ozutil.default_screenshot_dir())
 
         # configuration from 'libvirt' section
         self.libvirt_uri = oz.ozutil.config_get_key(config, 'libvirt', 'uri',
@@ -850,6 +851,7 @@ class Guest(object):
         """
         Method to capture a screenshot of the VM.
         """
+        oz.ozutil.mkdir_p(self.screenshot_dir)
         screenshot = os.path.realpath(os.path.join(self.screenshot_dir,
                                                    self.tdl.name + "-" + str(time.time()) + ".png"))
 

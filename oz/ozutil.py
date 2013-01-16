@@ -610,3 +610,6 @@ def default_data_dir():
         directory = "~/.oz"
 
     return os.path.expanduser(directory)
+
+def default_screenshot_dir():
+    return os.path.join(default_data_dir(), "screenshots")
