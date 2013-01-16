@@ -871,6 +871,13 @@ class Guest(object):
         vnc = "localhost:%s" % (int(port) - 5900)
 
         try:
+            if not os.path.isdir(self.screenshot_dir):
+                self.mkdir_p(self.screenshot_dir)
+        except OSError, e:
+            self.log.error("Failed create screenshot directory - %s" % e)
+            return None
+
+        try:
             oz.ozutil.subprocess_check_output(['gvnccapture', vnc, screenshot])
             return "Check screenshot at %s for more detail" % (screenshot)
         except:
