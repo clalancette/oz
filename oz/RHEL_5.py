@@ -1,4 +1,5 @@
-# Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2012,2013 Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -27,7 +28,7 @@ import oz.OzException
 
 class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
     """
-    Class for RHEL-5 GOLD, U1, U2, U3, U4, U5, U6, U7, and U8 installation.
+    Class for RHEL-5 GOLD, U1, U2, U3, U4, U5, U6, U7, U8, and U9 installation.
     """
     def __init__(self, tdl, config, auto, nicmodel, diskbus, output_disk=None):
         # FIXME: For consistency most of the __init__ functions take self, tdl,
@@ -105,11 +106,11 @@ def get_class(tdl, config, auto, output_disk=None):
     """
     if tdl.update in ["GOLD", "U1", "U2", "U3"]:
         return RHEL5Guest(tdl, config, auto, "rtl8139", None, output_disk)
-    if tdl.update in ["U4", "U5", "U6", "U7", "U8"]:
+    if tdl.update in ["U4", "U5", "U6", "U7", "U8", "U9"]:
         return RHEL5Guest(tdl, config, auto, "virtio", "virtio", output_disk)
 
 def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "RHEL/CentOS/Scientific Linux{,CERN} 5: GOLD, U1, U2, U3, U4, U5, U6, U7, U8"
+    return "RHEL/CentOS/Scientific Linux{,CERN} 5: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9"
