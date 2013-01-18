@@ -1,4 +1,5 @@
-# Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2012,2013  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -26,7 +27,7 @@ import oz.OzException
 
 class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
     """
-    Class for Fedora 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, and 17 installation.
+    Class for Fedora 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, and 18 installation.
     """
     def __init__(self, tdl, config, auto, nicmodel, haverepo,
                  diskbus, brokenisomethod, output_disk=None):
@@ -96,7 +97,7 @@ def get_class(tdl, config, auto, output_disk=None):
     """
     Factory method for Fedora installs.
     """
-    if tdl.update in ["10", "11", "12", "13", "14", "15", "16", "17"]:
+    if tdl.update in ["10", "11", "12", "13", "14", "15", "16", "17", "18"]:
         return FedoraGuest(tdl, config, auto, "virtio", True, "virtio", True,
                            output_disk)
     if tdl.update in ["7", "8", "9"]:
@@ -107,4 +108,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Fedora: 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17"
+    return "Fedora: 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18"
