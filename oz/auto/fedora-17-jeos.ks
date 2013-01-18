@@ -25,9 +25,5 @@ bootloader --location=mbr --timeout=5 --append="rhgb quiet"
 
 %packages
 @base
-@core
-@hardware-support
-mdadm
-device-mapper
 
 %end

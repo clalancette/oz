@@ -21,7 +21,5 @@ reboot
 
 %packages
 @base
-@core
-@hardware-support
 
 %post

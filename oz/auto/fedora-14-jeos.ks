@@ -22,7 +22,5 @@ reboot
 
 %packages
 @base
-@core
-@hardware-support
 
 %end

@@ -24,7 +24,6 @@ logvol / --fstype ext3 --name=LogVol00 --vgname=VolGroup00 --size=1024 --grow
 reboot
 
 %packages
-@core
 @base
 
 %post

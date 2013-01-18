@@ -23,6 +23,5 @@ reboot
 
 %packages
 @base
-@core
 
 %post
