@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
 # Copyright (C) 2012,2013  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
@@ -1217,9 +1217,10 @@ class RedHatFDGuest(oz.Guest.FDGuest):
     """
     Class for RedHat-based floppy guests.
     """
-    def __init__(self, tdl, config, auto, output_disk, ks_name, nicmodel):
+    def __init__(self, tdl, config, auto, output_disk, ks_name, nicmodel,
+                 diskbus):
         oz.Guest.FDGuest.__init__(self, tdl, config, output_disk, nicmodel,
-                                  None, None, None)
+                                  None, None, diskbus)
 
         if self.tdl.arch != "i386":
             raise oz.OzException.OzException("Invalid arch " + self.tdl.arch + "for " + self.tdl.distro + " guest")

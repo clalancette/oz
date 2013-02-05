@@ -1,4 +1,5 @@
-# Copyright (C) 2011,2012  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2012,2013  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -30,9 +31,9 @@ class MandrakeGuest(oz.Guest.CDGuest):
     """
     Class for Mandrake 9.1, 9.2, 10.0, and 10.1 installation.
     """
-    def __init__(self, tdl, config, auto, output_disk):
-        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, None,
-                                  None, None, None, True, False)
+    def __init__(self, tdl, config, auto, output_disk, netdev, diskbus):
+        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, netdev,
+                                  None, None, diskbus, True, False)
 
         if self.tdl.arch != "i386":
             raise oz.OzException.OzException("Mandrake only supports i386 architecture")
@@ -164,14 +165,14 @@ class Mandrake82Guest(oz.Guest.CDGuest):
             internal_timeout = 2500
         return self._do_install(internal_timeout, force, 0)
 
-def get_class(tdl, config, auto, output_disk=None):
+def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
     """
     Factory method for Mandrake installs.
     """
     if tdl.update in ["8.2"]:
-        return Mandrake82Guest(tdl, config, auto, output_disk)
+        return Mandrake82Guest(tdl, config, auto, output_disk, netdev, diskbus)
     if tdl.update in ["9.1", "9.2", "10.0", "10.1"]:
-        return MandrakeGuest(tdl, config, auto, output_disk)
+        return MandrakeGuest(tdl, config, auto, output_disk, netdev, diskbus)
 
 def get_supported_string():
     """

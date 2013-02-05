@@ -1,4 +1,5 @@
-# Copyright (C) 2011,2012  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2012,2013  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -30,9 +31,9 @@ class MandrivaGuest(oz.Guest.CDGuest):
     """
     Class for Mandriva 2005, 2006.0, 2007.0, and 2008.0 installation.
     """
-    def __init__(self, tdl, config, auto, output_disk):
-        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, None,
-                                  None, None, None, True, False)
+    def __init__(self, tdl, config, auto, output_disk, netdev, diskbus):
+        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, netdev,
+                                  None, None, diskbus, True, False)
 
         self.auto = auto
         if self.auto is None:
@@ -106,12 +107,12 @@ class MandrivaGuest(oz.Guest.CDGuest):
                                            "-v", "-v", "-o", self.output_iso,
                                            self.iso_contents])
 
-def get_class(tdl, config, auto, output_disk=None):
+def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
     """
     Factory method for Mandriva installs.
     """
     if tdl.update in ["2005", "2006.0", "2007.0", "2008.0"]:
-        return MandrivaGuest(tdl, config, auto, output_disk)
+        return MandrivaGuest(tdl, config, auto, output_disk, netdev, diskbus)
 
 def get_supported_string():
     """

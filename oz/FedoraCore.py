@@ -1,4 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2012,2013  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -28,12 +29,12 @@ class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
     """
     Class for Fedora Core 1, 2, 3, 4, 5, and 6 installation.
     """
-    def __init__(self, tdl, config, auto, output_disk):
+    def __init__(self, tdl, config, auto, output_disk, netdev, diskbus):
         initrdtype = "cpio"
         if tdl.update in ["1", "2", "3"]:
             initrdtype = "ext2"
         oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, output_disk,
-                                         'rtl8139', None,
+                                         netdev, diskbus,
                                          "fedoracore-" + tdl.update + "-jeos.ks",
                                          True, True, initrdtype)
 
@@ -55,12 +56,12 @@ class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
             initrdline += "cdrom:/dev/cdrom\n"
         self._modify_isolinux(initrdline)
 
-def get_class(tdl, config, auto, output_disk=None):
+def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
     """
     Factory method for Fedora Core installs.
     """
     if tdl.update in ["1", "2", "3", "4", "5", "6"]:
-        return FedoraCoreGuest(tdl, config, auto, output_disk)
+        return FedoraCoreGuest(tdl, config, auto, output_disk, netdev, diskbus)
 
 def get_supported_string():
     """

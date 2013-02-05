@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
 # Copyright (C) 2012,2013  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
@@ -554,14 +554,18 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         """
         return self._internal_customize(libvirt_xml, "gen_only")
 
-def get_class(tdl, config, auto, output_disk=None):
+def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
     """
     Factory method for OpenSUSE installs.
     """
     if tdl.update in ["10.3"]:
-        return OpenSUSEGuest(tdl, config, auto, output_disk, "rtl8139", "ide")
+        return OpenSUSEGuest(tdl, config, auto, output_disk, netdev, diskbus)
     if tdl.update in ["11.0", "11.1", "11.2", "11.3", "11.4", "12.1", "12.2", "12.3"]:
-        return OpenSUSEGuest(tdl, config, auto, output_disk, "virtio", "virtio")
+        if diskbus is None:
+            diskbus = 'virtio'
+        if netdev is None:
+            netdev = 'virtio'
+        return OpenSUSEGuest(tdl, config, auto, output_disk, netdev, diskbus)
 
 def get_supported_string():
     """

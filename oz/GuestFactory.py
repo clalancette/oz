@@ -1,5 +1,5 @@
-# Copyright (C) 2011,2012  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2012,2013  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -60,7 +60,8 @@ os_dict = { 'Fedora': 'Fedora',
             'Mandriva': 'Mandriva',
 }
 
-def guest_factory(tdl, config, auto, output_disk=None):
+def guest_factory(tdl, config, auto, output_disk=None, netdev=None,
+                  diskbus=None):
     """
     Factory function return an appropriate Guest object based on the TDL.
     The arguments are:
@@ -80,7 +81,8 @@ def guest_factory(tdl, config, auto, output_disk=None):
             # we found the matching module; import and call the get_class method
             module = __import__('oz.' + importname)
             klass = getattr(module, importname).get_class(tdl, config, auto,
-                                                          output_disk)
+                                                          output_disk, netdev,
+                                                          diskbus)
             break
 
     if klass is None:

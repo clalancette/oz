@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
 # Copyright (C) 2012,2013  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
@@ -27,11 +27,12 @@ import oz.OzException
 
 class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
     """
-    Class for RHEL-6 0, 1, 2, 3, and 4 installation.
+    Class for RHEL-6 installation
     """
-    def __init__(self, tdl, config, auto, output_disk=None):
+    def __init__(self, tdl, config, auto, output_disk=None, netdev=None,
+                 diskbus=None):
         oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, output_disk,
-                                            "virtio", "virtio",
+                                            netdev, diskbus,
                                             "rhel-6-jeos.ks", True, True,
                                             "cpio")
 
@@ -50,12 +51,16 @@ class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
             initrdline += "\n"
         self._modify_isolinux(initrdline)
 
-def get_class(tdl, config, auto, output_disk=None):
+def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
     """
     Factory method for RHEL-6 installs.
     """
     if tdl.update.isdigit():
-        return RHEL6Guest(tdl, config, auto, output_disk)
+        if netdev is None:
+            netdev = 'virtio'
+        if diskbus is None:
+            diskbus = 'virtio'
+        return RHEL6Guest(tdl, config, auto, output_disk, netdev, diskbus)
 
 def get_supported_string():
     """

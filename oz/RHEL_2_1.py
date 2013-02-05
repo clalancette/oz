@@ -1,4 +1,5 @@
-# Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2012,2013  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -25,16 +26,18 @@ class RHEL21Guest(oz.RedHat.RedHatFDGuest):
     """
     Class for RHEL-2.1 GOLD, U2, U3, U4, U5, and U6 installation.
     """
-    def __init__(self, tdl, config, auto, output_disk):
+    def __init__(self, tdl, config, auto, output_disk, netdev, diskbus):
         oz.RedHat.RedHatFDGuest.__init__(self, tdl, config, auto, output_disk,
-                                         "rhel-2.1-jeos.ks", "pcnet")
+                                         "rhel-2.1-jeos.ks", netdev, diskbus)
 
-def get_class(tdl, config, auto, output_disk=None):
+def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
     """
     Factory method for RHEL-2.1 installs.
     """
     if tdl.update in ["GOLD", "U2", "U3", "U4", "U5", "U6"]:
-        return RHEL21Guest(tdl, config, auto, output_disk)
+        if netdev is None:
+            netdev = 'pcnet'
+        return RHEL21Guest(tdl, config, auto, output_disk, netdev, diskbus)
 
 def get_supported_string():
     """

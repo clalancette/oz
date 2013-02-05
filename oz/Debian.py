@@ -1,4 +1,5 @@
-# Copyright (C) 2011,2012  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2012,2013  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -30,9 +31,9 @@ class DebianGuest(oz.Guest.CDGuest):
     """
     Class for Debian 5 and 6 installation.
     """
-    def __init__(self, tdl, config, auto, output_disk):
-        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, 'virtio',
-                                  None, None, 'virtio', True, False)
+    def __init__(self, tdl, config, auto, output_disk, netdev, diskbus):
+        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, netdev,
+                                  None, None, diskbus, True, False)
 
         self.preseed_file = auto
         if self.preseed_file is None:
@@ -101,12 +102,16 @@ class DebianGuest(oz.Guest.CDGuest):
                                            "-v", "-v", "-o", self.output_iso,
                                            self.iso_contents])
 
-def get_class(tdl, config, auto, output_disk=None):
+def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
     """
     Factory method for Debian installs.
     """
     if tdl.update in ["5", "6"]:
-        return DebianGuest(tdl, config, auto, output_disk)
+        if netdev is None:
+            netdev = 'virtio'
+        if diskbus is None:
+            diskbus = 'virtio'
+        return DebianGuest(tdl, config, auto, output_disk, netdev, diskbus)
 
 def get_supported_string():
     """

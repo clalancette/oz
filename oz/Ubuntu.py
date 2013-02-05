@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
 # Copyright (C) 2012,2013  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
@@ -804,21 +804,29 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
                 except:
                     pass
 
-def get_class(tdl, config, auto, output_disk=None):
+def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
     """
     Factory method for Ubuntu installs.
     """
     if tdl.update in ["6.06", "6.06.1", "6.06.2", "6.10", "7.04", "7.10"]:
         return UbuntuGuest(tdl, config, auto, output_disk, "initrd.gz",
-                           "rtl8139", None)
+                           netdev, diskbus)
     if tdl.update in ["8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4", "8.10",
                       "9.04"]:
+        if netdev is None:
+            netdev = 'virtio'
+        if diskbus is None:
+            diskbus = 'virtio'
         return UbuntuGuest(tdl, config, auto, output_disk, "initrd.gz",
-                           "virtio", "virtio")
+                           netdev, diskbus)
     if tdl.update in ["9.10", "10.04", "10.04.1", "10.04.2", "10.04.3", "10.10",
                       "11.04", "11.10", "12.04", "12.04.1", "12.04.2", "12.10"]:
+        if netdev is None:
+            netdev = 'virtio'
+        if diskbus is None:
+            diskbus = 'virtio'
         return UbuntuGuest(tdl, config, auto, output_disk, "initrd.lz",
-                           "virtio", "virtio")
+                           netdev, diskbus)
 
 def get_supported_string():
     """

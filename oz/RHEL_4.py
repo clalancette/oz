@@ -1,4 +1,5 @@
-# Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2012,2013  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -87,14 +88,18 @@ class RHEL4Guest(oz.RedHat.RedHatCDGuest):
                 if not re.match("CentOS *", pvd.volume_identifier):
                     raise oz.OzException.OzException("Invalid boot.iso for CentOS-4 URL install")
 
-def get_class(tdl, config, auto, output_disk=None):
+def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
     """
     Factory method for RHEL-4 installs.
     """
     if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7"]:
-        return RHEL4Guest(tdl, config, auto, output_disk, "rtl8139", None)
+        return RHEL4Guest(tdl, config, auto, output_disk, netdev, diskbus)
     if tdl.update in ["U8", "U9"]:
-        return RHEL4Guest(tdl, config, auto, output_disk, "virtio", "virtio")
+        if netdev is None:
+            netdev = 'virtio'
+        if diskbus is None:
+            diskbus = 'virtio'
+        return RHEL4Guest(tdl, config, auto, output_disk, netdev, diskbus)
 
 def get_supported_string():
     """

@@ -28,6 +28,13 @@ provide an alternate auto-installation file to do the install.  The
 caveat is that user-provided auto-installation files are more likely
 to cause installation errors, so this option should be used with caution.
 .TP
+.B "\-b <disk_bus>"
+Use \fBdisk_bus\fR for the storage device while doing the install.
+By default, Oz has built-in knowledge of the appropriate disk bus to
+use while installing each guest operating system (ide or virtio).
+This option allows the user to override that default with their own
+choice.
+.TP
 .B "\-c <config>"
 Get the configuration from config file \fBconfig\fR, instead of the
 default /etc/oz/oz.cfg.  If neither one exists, Oz will use sensible
@@ -67,6 +74,13 @@ If oz-install has been instructed to generate an ICICLE (see the \-g
 option), then it will normally write the ICICLE XML to stdout.  To
 have oz-install write the ICICLE to a file instead, use the \-i
 option.  Note that it is an error to specify \-i without \-g.
+.TP
+.B "\-n <network_device>"
+Use \fBnetwork_device\fR for the network device while doing the install.
+By default, Oz has built-in knowledge of the appropriate network
+device to use while installing each guest operating system (ne2k_pci,
+rtl8139, virtio).  This option allows the user to override that
+default with their own choice.
 .TP
 .B "\-p"
 Cleanup old guests before installation.  By default, if a guest with

@@ -1,4 +1,5 @@
-# Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
+# Copyright (C) 2012,2013  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -29,7 +30,7 @@ class RHEL3Guest(oz.RedHat.RedHatCDGuest):
     """
     Class for RHEL-3 GOLD, U1, U2, U3, U4, U5, U6, U7, U8, and U9 installation.
     """
-    def __init__(self, tdl, config, auto, output_disk):
+    def __init__(self, tdl, config, auto, output_disk, netdev, diskbus):
         iso_support = True
         if tdl.distro == "RHEL-3":
             iso_support = False
@@ -38,7 +39,7 @@ class RHEL3Guest(oz.RedHat.RedHatCDGuest):
         # fast initial installs), it isn't super reliable on RHEL-3.  Just
         # disable it and fall back to the boot.iso method which is more reliable
         oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, output_disk,
-                                         'rtl8139', None, "rhel-3-jeos.ks",
+                                         netdev, diskbus, "rhel-3-jeos.ks",
                                          iso_support, True, None)
 
         self.auto = auto
@@ -88,12 +89,12 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             # The boot ISOs for CentOS-3 don't have a whole lot of identifying
             # information.  We just pass through here, doing nothing
 
-def get_class(tdl, config, auto, output_disk=None):
+def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
     """
     Factory method for RHEL-3 installs.
     """
     if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9"]:
-        return RHEL3Guest(tdl, config, auto, output_disk)
+        return RHEL3Guest(tdl, config, auto, output_disk, netdev, diskbus)
 
 def get_supported_string():
     """
