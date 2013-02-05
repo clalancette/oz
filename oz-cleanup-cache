@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Copyright (C) 2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012,2013  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -85,7 +85,7 @@ try:
                                         oz.ozutil.default_data_dir())
 
     dirs = ["floppies", "floppycontent", "icicletmp", "isocontent", "isos",
-            "jeos", "kernels"]
+            "jeos", "kernels", "screenshots"]
     caches = []
     for path in dirs:
         caches.append(os.path.join(data_dir, path))
