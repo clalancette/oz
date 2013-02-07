@@ -193,11 +193,7 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         self.log.debug("Teardown step 1")
         # reset the authorized keys
         self.log.debug("Resetting authorized_keys")
-        if g_handle.exists('/root/.ssh'):
-            g_handle.rm_rf('/root/.ssh')
-
-        if g_handle.exists('/root/.ssh.icicle'):
-            g_handle.mv('/root/.ssh.icicle', '/root/.ssh')
+        self._guestfs_path_restore(g_handle, '/root/.ssh')
 
     def _image_ssh_teardown_step_2(self, g_handle):
         """
@@ -206,19 +202,12 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         self.log.debug("Teardown step 2")
         # remove custom sshd_config
         self.log.debug("Resetting sshd_config")
-        if g_handle.exists('/etc/ssh/sshd_config'):
-            g_handle.rm('/etc/ssh/sshd_config')
-        if g_handle.exists('/etc/ssh/sshd_config.icicle'):
-            g_handle.mv('/etc/ssh/sshd_config.icicle', '/etc/ssh/sshd_config')
+        self._guestfs_path_restore(g_handle, '/etc/ssh/sshd_config')
 
         # reset the service link
         self.log.debug("Resetting sshd service")
         if self.ssh_startuplink:
-            if g_handle.exists(self.ssh_startuplink):
-                g_handle.rm(self.ssh_startuplink)
-            if g_handle.exists(self.ssh_startuplink + ".icicle"):
-                g_handle.mv(self.ssh_startuplink + ".icicle",
-                            self.ssh_startuplink)
+            self._guestfs_path_restore(g_handle, self.ssh_startuplink)
 
     def _image_ssh_teardown_step_3(self, g_handle):
         """
@@ -227,22 +216,16 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         self.log.debug("Teardown step 3")
         # remove announce cronjob
         self.log.debug("Resetting announcement to host")
-        if g_handle.exists('/etc/cron.d/announce'):
-            g_handle.rm('/etc/cron.d/announce')
+        self._guestfs_remove_if_exists(g_handle, '/etc/cron.d/announce')
 
         # remove reportip
         self.log.debug("Removing reportip")
-        if g_handle.exists('/root/reportip'):
-            g_handle.rm('/root/reportip')
+        self._guestfs_remove_if_exists(g_handle, '/root/reportip')
 
         # reset the service link
         self.log.debug("Resetting cron service")
         if self.cron_startuplink:
-            if g_handle.exists(self.cron_startuplink):
-                g_handle.rm(self.cron_startuplink)
-            if g_handle.exists(self.cron_startuplink + ".icicle"):
-                g_handle.mv(self.cron_startuplink + ".icicle",
-                            self.cron_startuplink)
+            self._guestfs_path_restore(g_handle, self.cron_startuplink)
 
     def _image_ssh_setup_step_1(self, g_handle):
         """
@@ -250,13 +233,10 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         """
         # part 1; upload the keys
         self.log.debug("Step 1: Uploading ssh keys")
-        if g_handle.exists('/root/.ssh'):
-            g_handle.mv('/root/.ssh', '/root/.ssh.icicle')
+        self._guestfs_path_backup(g_handle, '/root/.ssh')
         g_handle.mkdir('/root/.ssh')
 
-        if g_handle.exists('/root/.ssh/authorized_keys'):
-            g_handle.mv('/root/.ssh/authorized_keys',
-                        '/root/.ssh/authorized_keys.icicle')
+        self._guestfs_path_backup(g_handle, '/root/.ssh/authorized_keys')
 
         self._generate_openssh_key(self.sshprivkey)
 
@@ -272,8 +252,7 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
             raise oz.OzException.OzException("ssh not installed on the image, cannot continue")
 
         self.ssh_startuplink = self._get_service_runlevel_link(g_handle, 'ssh')
-        if g_handle.exists(self.ssh_startuplink):
-            g_handle.mv(self.ssh_startuplink, self.ssh_startuplink + ".icicle")
+        self._guestfs_path_backup(g_handle, self.ssh_startuplink)
         g_handle.ln_sf('/etc/init.d/ssh', self.ssh_startuplink)
 
         sshd_config_file = os.path.join(self.icicle_tmp, "sshd_config")
@@ -282,9 +261,7 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         f.close()
 
         try:
-            if g_handle.exists('/etc/ssh/sshd_config'):
-                g_handle.mv('/etc/ssh/sshd_config',
-                            '/etc/ssh/sshd_config.icicle')
+            self._guestfs_path_backup(g_handle, '/etc/ssh/sshd_config')
             g_handle.upload(sshd_config_file, '/etc/ssh/sshd_config')
         finally:
             os.unlink(sshd_config_file)
@@ -326,9 +303,7 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
 
         self.cron_startuplink = self._get_service_runlevel_link(g_handle,
                                                                 'cron')
-        if g_handle.exists(self.cron_startuplink):
-            g_handle.mv(self.cron_startuplink,
-                        self.cron_startuplink + ".icicle")
+        self._guestfs_path_backup(g_handle, self.cron_startuplink)
         g_handle.ln_sf('/etc/init.d/cron', self.cron_startuplink)
 
     def _collect_setup(self, libvirt_xml):

@@ -187,11 +187,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         self.log.debug("Teardown step 1")
         # reset the authorized keys
         self.log.debug("Resetting authorized_keys")
-        if g_handle.exists('/root/.ssh'):
-            g_handle.rm_rf('/root/.ssh')
-
-        if g_handle.exists('/root/.ssh.icicle'):
-            g_handle.mv('/root/.ssh.icicle', '/root/.ssh')
+        self._guestfs_path_restore(g_handle, '/root/.ssh')
 
     def _image_ssh_teardown_step_2(self, g_handle):
         """
@@ -200,10 +196,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         self.log.debug("Teardown step 2")
         # remove custom sshd_config
         self.log.debug("Resetting sshd_config")
-        if g_handle.exists('/etc/ssh/sshd_config'):
-            g_handle.rm('/etc/ssh/sshd_config')
-        if g_handle.exists('/etc/ssh/sshd_config.icicle'):
-            g_handle.mv('/etc/ssh/sshd_config.icicle', '/etc/ssh/sshd_config')
+        self._guestfs_path_restore(g_handle, '/etc/ssh/sshd_config')
 
         # reset the service link
         self.log.debug("Resetting sshd service")
@@ -212,10 +205,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                 g_handle.rm('/etc/systemd/system/multi-user.target.wants/sshd.service')
         else:
             startuplink = self._get_service_runlevel_link(g_handle, 'sshd')
-            if g_handle.exists(startuplink):
-                g_handle.rm(startuplink)
-            if g_handle.exists(startuplink + ".icicle"):
-                g_handle.mv(startuplink + ".icicle", startuplink)
+            self._guestfs_path_restore(g_handle, startuplink)
 
     def _image_ssh_teardown_step_3(self, g_handle):
         """
@@ -224,11 +214,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         self.log.debug("Teardown step 3")
         # reset iptables
         self.log.debug("Resetting iptables rules")
-        if g_handle.exists('/etc/sysconfig/iptables'):
-            g_handle.rm('/etc/sysconfig/iptables')
-        if g_handle.exists('/etc/sysconfig/iptables.icicle'):
-            g_handle.mv('/etc/sysconfig/iptables.icicle',
-                        '/etc/sysconfig/iptables')
+        self._guestfs_path_restore(g_handle, '/etc/sysconfig/iptables')
 
     def _image_ssh_teardown_step_4(self, g_handle):
         """
@@ -237,13 +223,11 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         self.log.debug("Teardown step 4")
         # remove announce cronjob
         self.log.debug("Resetting announcement to host")
-        if g_handle.exists('/etc/cron.d/announce'):
-            g_handle.rm('/etc/cron.d/announce')
+        self._guestfs_remove_if_exists(g_handle, '/etc/cron.d/announce')
 
         # remove reportip
         self.log.debug("Removing reportip")
-        if g_handle.exists('/root/reportip'):
-            g_handle.rm('/root/reportip')
+        self._guestfs_remove_if_exists(g_handle, '/root/reportip')
 
         # reset the service link
         self.log.debug("Resetting crond service")
@@ -252,21 +236,14 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                 g_handle.rm('/etc/systemd/system/multi-user.target.wants/crond.service')
         else:
             startuplink = self._get_service_runlevel_link(g_handle, 'crond')
-            if g_handle.exists(startuplink):
-                g_handle.rm(startuplink)
-            if g_handle.exists(startuplink + ".icicle"):
-                g_handle.mv(startuplink + ".icicle", startuplink)
+            self._guestfs_path_restore(g_handle, startuplink)
 
     def _image_ssh_teardown_step_5(self, g_handle):
         """
         Fifth step to undo _image_ssh_setup (reset SELinux).
         """
         self.log.debug("Teardown step 5")
-        if g_handle.exists('/etc/selinux/config'):
-            g_handle.rm('/etc/selinux/config')
-
-        if g_handle.exists('/etc/selinux/config.icicle'):
-            g_handle.mv('/etc/selinux/config.icicle', '/etc/selinux/config')
+        self._guestfs_path_restore(g_handle, "/etc/selinux/config")
 
     def _collect_teardown(self, libvirt_xml):
         """
@@ -296,13 +273,10 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         """
         # part 1; upload the keys
         self.log.debug("Step 1: Uploading ssh keys")
-        if g_handle.exists('/root/.ssh'):
-            g_handle.mv('/root/.ssh', '/root/.ssh.icicle')
+        self._guestfs_path_backup(g_handle, '/root/.ssh')
         g_handle.mkdir('/root/.ssh')
 
-        if g_handle.exists('/root/.ssh/authorized_keys'):
-            g_handle.mv('/root/.ssh/authorized_keys',
-                        '/root/.ssh/authorized_keys.icicle')
+        self._guestfs_path_backup(g_handle, '/root/.ssh/authorized_keys')
 
         self._generate_openssh_key(self.sshprivkey)
 
@@ -325,8 +299,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                                '/etc/systemd/system/multi-user.target.wants/sshd.service')
         else:
             startuplink = self._get_service_runlevel_link(g_handle, 'sshd')
-            if g_handle.exists(startuplink):
-                g_handle.mv(startuplink, startuplink + ".icicle")
+            self._guestfs_path_backup(g_handle, startuplink)
             g_handle.ln_sf('/etc/init.d/sshd', startuplink)
 
         sshd_config_file = os.path.join(self.icicle_tmp, "sshd_config")
@@ -335,9 +308,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         f.close()
 
         try:
-            if g_handle.exists('/etc/ssh/sshd_config'):
-                g_handle.mv('/etc/ssh/sshd_config',
-                            '/etc/ssh/sshd_config.icicle')
+            self._guestfs_path_backup(g_handle, '/etc/ssh/sshd_config')
             g_handle.upload(sshd_config_file, '/etc/ssh/sshd_config')
         finally:
             os.unlink(sshd_config_file)
@@ -348,10 +319,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         """
         # part 3; open up iptables
         self.log.debug("Step 3: Open up the firewall")
-        if g_handle.exists('/etc/sysconfig/iptables'):
-            g_handle.mv('/etc/sysconfig/iptables',
-                        '/etc/sysconfig/iptables.icicle')
-        # implicit else; if there is no iptables file, the firewall is open
+        self._guestfs_path_backup(g_handle, '/etc/sysconfig/iptables')
 
     def _image_ssh_setup_step_4(self, g_handle):
         """
@@ -395,8 +363,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                                '/etc/systemd/system/multi-user.target.wants/crond.service')
         else:
             startuplink = self._get_service_runlevel_link(g_handle, 'crond')
-            if g_handle.exists(startuplink):
-                g_handle.mv(startuplink, startuplink + ".icicle")
+            self._guestfs_path_backup(g_handle, startuplink)
             g_handle.ln_sf('/etc/init.d/crond', startuplink)
 
     def _image_ssh_setup_step_5(self, g_handle):
@@ -406,8 +373,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         # part 5; set SELinux to permissive mode so we don't have to deal with
         # incorrect contexts
         self.log.debug("Step 5: Set SELinux to permissive mode")
-        if g_handle.exists('/etc/selinux/config'):
-            g_handle.mv('/etc/selinux/config', '/etc/selinux/config.icicle')
+        self._guestfs_path_backup(g_handle, '/etc/selinux/config')
 
         selinuxfile = self.icicle_tmp + "/selinux"
         f = open(selinuxfile, 'w')

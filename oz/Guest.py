@@ -942,6 +942,22 @@ class Guest(object):
 
         return g
 
+    def _guestfs_remove_if_exists(self, g_handle, path):
+        if g_handle.exists(path):
+            g_handle.rm_rf(path)
+
+    def _guestfs_move_if_exists(self, g_handle, orig_path, replace_path):
+        if g_handle.exists(orig_path):
+            g_handle.mv(orig_path, replace_path)
+
+    def _guestfs_path_backup(self, g_handle, orig):
+        self._guestfs_move_if_exists(g_handle, orig, orig + ".ozbackup")
+
+    def _guestfs_path_restore(self, g_handle, orig):
+        backup = orig + ".ozbackup"
+        self._guestfs_remove_if_exists(g_handle, orig)
+        self._guestfs_move_if_exists(g_handle, backup, orig)
+
     def _guestfs_handle_cleanup(self, g_handle):
         """
         Method to cleanup a handle previously setup by __guestfs_handle_setup.

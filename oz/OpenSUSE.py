@@ -151,11 +151,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         self.log.debug("Teardown step 1")
         # reset the authorized keys
         self.log.debug("Resetting authorized_keys")
-        if g_handle.exists('/root/.ssh/authorized_keys'):
-            g_handle.rm('/root/.ssh/authorized_keys')
-        if g_handle.exists('/root/.ssh/authorized_keys.icicle'):
-            g_handle.mv('/root/.ssh/authorized_keys.icicle',
-                        '/root/.ssh/authorized_keys')
+        self._guestfs_path_restore(g_handle, '/root/.ssh/authorized_keys')
 
     def _image_ssh_teardown_step_2(self, g_handle):
         """
@@ -164,18 +160,11 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         self.log.debug("Teardown step 2")
         # remove custom sshd_config
         self.log.debug("Resetting sshd_config")
-        if g_handle.exists('/etc/ssh/sshd_config'):
-            g_handle.rm('/etc/ssh/sshd_config')
-        if g_handle.exists('/etc/ssh/sshd_config.icicle'):
-            g_handle.mv('/etc/ssh/sshd_config.icicle', '/etc/ssh/sshd_config')
+        self._guestfs_path_restore(g_handle, '/etc/ssh/sshd_config')
 
         # reset the service link
         self.log.debug("Resetting sshd service")
-        if g_handle.exists("/etc/init.d/after.local"):
-            g_handle.rm("/etc/init.d/after.local")
-        if g_handle.exists("/etc/init.d/after.local.icicle"):
-            g_handle.mv("/etc/init.d/after.local.icicle",
-                        "/etc/init.d/after.local")
+        self._guestfs_path_restore(g_handle, '/etc/init.d/after.local')
 
     def _image_ssh_teardown_step_3(self, g_handle):
         """
@@ -184,22 +173,17 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         self.log.debug("Teardown step 3")
         # remove announce cronjob
         self.log.debug("Resetting announcement to host")
-        if g_handle.exists('/etc/cron.d/announce'):
-            g_handle.rm('/etc/cron.d/announce')
+        self._guestfs_remove_if_exists(g_handle, '/etc/cron.d/announce')
 
         # remove reportip
         self.log.debug("Removing reportip")
-        if g_handle.exists('/root/reportip'):
-            g_handle.rm('/root/reportip')
+        self._guestfs_remove_if_exists(g_handle, '/root/reportip')
 
         # reset the service link
         self.log.debug("Resetting cron service")
         runlevel = self._get_default_runlevel(g_handle)
         startuplink = '/etc/rc.d/rc' + runlevel + ".d/S06cron"
-        if g_handle.exists(startuplink):
-            g_handle.rm(startuplink)
-        if g_handle.exists(startuplink + ".icicle"):
-            g_handle.mv(startuplink + ".icicle", startuplink)
+        self._guestfs_path_restore(g_handle, startuplink)
 
     def _collect_teardown(self, libvirt_xml):
         """
@@ -257,9 +241,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         if not g_handle.exists('/root/.ssh'):
             g_handle.mkdir('/root/.ssh')
 
-        if g_handle.exists('/root/.ssh/authorized_keys'):
-            g_handle.mv('/root/.ssh/authorized_keys',
-                        '/root/.ssh/authorized_keys.icicle')
+        self._guestfs_path_backup(g_handle, '/root/.ssh/authorized_keys')
 
         self._generate_openssh_key(self.sshprivkey)
 
@@ -274,9 +256,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         if not g_handle.exists('/etc/init.d/sshd') or not g_handle.exists('/usr/sbin/sshd'):
             raise oz.OzException.OzException("ssh not installed on the image, cannot continue")
 
-        if g_handle.exists("/etc/init.d/after.local"):
-            g_handle.mv("/etc/init.d/after.local",
-                        "/etc/init.d/after.local.icicle")
+        self._guestfs_path_backup(g_handle, "/etc/init.d/after.local")
 
         local = os.path.join(self.icicle_tmp, "after.local")
         f = open(local, "w")
@@ -306,9 +286,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         f.close()
 
         try:
-            if g_handle.exists('/etc/ssh/sshd_config'):
-                g_handle.mv('/etc/ssh/sshd_config',
-                            '/etc/ssh/sshd_config.icicle')
+            self._guestfs_path_backup(g_handle, "/etc/ssh/sshd_config")
             g_handle.upload(sshd_config_file, '/etc/ssh/sshd_config')
         finally:
             os.unlink(sshd_config_file)
@@ -349,8 +327,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
 
         runlevel = self._get_default_runlevel(g_handle)
         startuplink = '/etc/rc.d/rc' + runlevel + ".d/S06cron"
-        if g_handle.exists(startuplink):
-            g_handle.mv(startuplink, startuplink + ".icicle")
+        self._guestfs_path_backup(g_handle, startuplink)
         g_handle.ln_sf('/etc/init.d/cron', startuplink)
 
     def _collect_setup(self, libvirt_xml):
