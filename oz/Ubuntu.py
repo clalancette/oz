@@ -227,6 +227,19 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         if self.cron_startuplink:
             self._guestfs_path_restore(g_handle, self.cron_startuplink)
 
+    def _image_ssh_teardown_step_4(self, g_handle):
+        """
+        Fourth step to undo changes by the operating system.  For instance,
+        during first boot openssh generates ssh host keys and stores them
+        in /etc/ssh.  Since this image might be cached later on, this method
+        removes those keys.
+        """
+        for f in ["/etc/ssh/ssh_host_dsa_key", "/etc/ssh/ssh_host_dsa_key.pub",
+                  "/etc/ssh/ssh_host_rsa_key", "/etc/ssh/ssh_host_rsa_key.pub",
+                  "/etc/ssh/ssh_host_ecdsa_key", "/etc/ssh/ssh_host_ecdsa_key.pub",
+                  "/etc/ssh/ssh_host_key", "/etc/ssh/ssh_host_key.pub"]:
+            self._guestfs_remove_if_exists(g_handle, f)
+
     def _image_ssh_setup_step_1(self, g_handle):
         """
         First step for allowing remote access (generate and upload ssh keys).
@@ -357,6 +370,7 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
 
             self._image_ssh_teardown_step_3(g_handle)
 
+            self._image_ssh_teardown_step_4(g_handle)
         finally:
             self._guestfs_handle_cleanup(g_handle)
             shutil.rmtree(self.icicle_tmp)
