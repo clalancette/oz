@@ -182,7 +182,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
 
         # reset the service link
         self.log.debug("Resetting cron service")
-        runlevel = oz.linuxutil._get_default_runlevel(g_handle)
+        runlevel = oz.linuxutil.get_default_runlevel(g_handle)
         startuplink = '/etc/rc.d/rc' + runlevel + ".d/S06cron"
         self._guestfs_path_restore(g_handle, startuplink)
 
@@ -325,7 +325,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         finally:
             os.unlink(announcefile)
 
-        runlevel = self._get_default_runlevel(g_handle)
+        runlevel = oz.linuxutil.get_default_runlevel(g_handle)
         startuplink = '/etc/rc.d/rc' + runlevel + ".d/S06cron"
         self._guestfs_path_backup(g_handle, startuplink)
         g_handle.ln_sf('/etc/init.d/cron', startuplink)

@@ -150,7 +150,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         Method to find the runlevel link(s) for a service based on the name
         and the (detected) default runlevel.
         """
-        runlevel = oz.linuxutil._get_default_runlevel(g_handle)
+        runlevel = oz.linuxutil.get_default_runlevel(g_handle)
 
         lines = g_handle.cat('/etc/init.d/' + service).split("\n")
         startlevel = "99"
@@ -819,7 +819,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
         Method to extract the protocol, port and other details from a repo URL
         returns tuple: (protocol, hostname, port, path)
         """
-        # TODO: Make an offering to the regex gods to simplify this
+        # FIXME: Make an offering to the regex gods to simplify this
         url_regex = r"^(.*)(://)([^/:]+)(:)([0-9]+)([/]+)(.*)$|^(.*)(://)([^/:]+)([/]+)(.*)$"
 
         sr = re.search(url_regex, repourl)
@@ -951,6 +951,11 @@ class RedHatCDYumGuest(RedHatCDGuest):
             repo.remotefiles = []
 
             def _add_remote_host_alias(hostname):
+                """
+                Internal function to make requests in the guest for a certain
+                host resolve to localhost, which will pump the data over a
+                tunnel.
+                """
                 self.log.debug("Modifying /etc/hosts on %s to make %s resolve to localhost tunnel port" % (guestaddr, hostname))
                 self.guest_execute_command(guestaddr,
                                            "test -f /etc/hosts.backup || cp /etc/hosts /etc/hosts.backup; sed -i -e 's/localhost.localdomain/localhost.localdomain %s/g' /etc/hosts" % hostname)
@@ -961,6 +966,11 @@ class RedHatCDYumGuest(RedHatCDGuest):
             # we need to add to the repo file
             # Create the local copies of any needed SSL files
             def _create_certfiles(repo, cert, fileext, propname):
+                """
+                Internal function to copy certificate data to the guest.  This
+                is necessary when doing tunneling to make sure that any neeeded
+                SSL certificates are in place.
+                """
                 certdict[propname] = {}
                 filename = "%s-%s" % (repo.name.replace(" ", "_"), fileext)
                 localname = os.path.join(self.icicle_tmp, filename)

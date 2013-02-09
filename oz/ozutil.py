@@ -108,7 +108,7 @@ def copyfile_sparse(src, dest):
             break
 
         buflen = len(buf)
-        if buf == '\0'*buflen:
+        if buf == r'\0'*buflen:
             os.lseek(dest_fd, buflen, os.SEEK_CUR)
         else:
             # FIXME: check out the python implementation of write, we might have
@@ -577,19 +577,24 @@ def config_get_boolean_key(config, section, key, default):
     return retval
 
 def rmtree_and_sync(directory):
+    """
+    Function to remove a directory tree and do an fsync afterwards.  Because
+    the removal of the directory tree can cause a lot of metadata updates, it
+    can cause a lot of disk activity.  By doing the fsync, we ensure that any
+    metadata updates caused by us will not cause subsequent steps to fail.  This
+    cannot help if the system is otherwise very busy, but it does ensure that
+    the problem is not self-inflicted.
+    """
     shutil.rmtree(directory)
-    # after we do the rmtree, there are usually a lot of metadata updates
-    # pending.  This can cause the next steps (especially the steps where
-    # libvirt is launching the guest) to fail, just because they timeout.  To
-    # try to workaround this, fsync the directory, which will cause us to wait
-    # until those updates have made it to disk.  Note that this cannot save us
-    # if the system is extremely busy for other reasons, but at least the
-    # problem won't be self-inflicted.
     fd = os.open(os.path.dirname(directory), os.O_RDONLY)
     os.fsync(fd)
     os.close(fd)
 
 def parse_config(config_file):
+    """
+    Function to parse the configuration file.  If the passed in config_file is
+    None, then the default configuration file is used.
+    """
     if config_file is None:
         if os.geteuid() == 0:
             config_file = "/etc/oz/oz.cfg"
@@ -607,6 +612,9 @@ def parse_config(config_file):
     return config
 
 def default_output_dir():
+    """
+    Function to get the default path to the output directory.
+    """
     if os.geteuid() == 0:
         directory = "/var/lib/libvirt/images"
     else:
@@ -615,6 +623,9 @@ def default_output_dir():
     return os.path.expanduser(directory)
 
 def default_data_dir():
+    """
+    Function to get the default path to the data directory.
+    """
     if os.geteuid() == 0:
         directory = "/var/lib/oz"
     else:
@@ -623,6 +634,9 @@ def default_data_dir():
     return os.path.expanduser(directory)
 
 def default_screenshot_dir():
+    """
+    Function to get the default path to the screenshot directory.
+    """
     return os.path.join(default_data_dir(), "screenshots")
 
 def http_get_header(url, redirect=True):
@@ -638,6 +652,10 @@ def http_get_header(url, redirect=True):
     """
     info = {}
     def _header(buf):
+        """
+        Internal function that is called back from pycurl perform() for
+        header data.
+        """
         buf = buf.strip()
         if len(buf) == 0:
             return
@@ -651,6 +669,9 @@ def http_get_header(url, redirect=True):
         info[key] = value
 
     def _data(buf):
+        """
+        Empty function that is called back from pycurl perform() for body data.
+        """
         pass
 
     c = pycurl.Curl()
@@ -682,7 +703,7 @@ def http_download_file(url, fd, show_progress, logger):
         def __init__(self):
             self.last_mb = -1
 
-        def _progress(self, down_total, down_current, up_total, up_current):
+        def progress(self, down_total, down_current, up_total, up_current):
             """
             Function that is called back from the pycurl perform() method to
             update the progress information.
@@ -709,6 +730,6 @@ def http_download_file(url, fd, show_progress, logger):
     c.setopt(c.FOLLOWLOCATION, 1)
     if show_progress:
         c.setopt(c.NOPROGRESS, 0)
-        c.setopt(c.PROGRESSFUNCTION, progress._progress)
+        c.setopt(c.PROGRESSFUNCTION, progress.progress)
     c.perform()
     c.close()

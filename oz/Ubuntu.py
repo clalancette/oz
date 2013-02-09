@@ -189,7 +189,7 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         Method to find the runlevel link(s) for a service based on the name
         and the (detected) default runlevel.
         """
-        runlevel = oz.linuxutil._get_default_runlevel(g_handle)
+        runlevel = oz.linuxutil.get_default_runlevel(g_handle)
 
         lines = g_handle.cat('/etc/init.d/' + service).split("\n")
         startlevel = "99"

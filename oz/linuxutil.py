@@ -22,17 +22,14 @@ import re
 
 def get_default_runlevel(g_handle):
     """
-    Method to determine the default runlevel based on the /etc/inittab.
+    Function to determine the default runlevel based on the /etc/inittab.
     """
     runlevel = "3"
     if g_handle.exists('/etc/inittab'):
         lines = g_handle.cat('/etc/inittab').split("\n")
         for line in lines:
             if re.match('id:', line):
-                try:
-                    runlevel = line.split(':')[1]
-                except:
-                    pass
+                runlevel = line.split(':')[1]
                 break
 
     return runlevel

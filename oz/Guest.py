@@ -343,6 +343,9 @@ class Guest(object):
 
 
     def _generate_serial_xml(self, dev):
+        """
+        Method to generate the serial portion of the libvirt XML.
+        """
         serial = dev.newChild(None, "serial", None)
         serial.setProp("type", "tcp")
         serialSource = serial.newChild(None, "source", None)
@@ -900,6 +903,9 @@ class Guest(object):
                                                        self.tdl.name + "-" + str(time.time()) + ext))
 
             def sink(stream, buf, opaque):
+                """
+                Function that is called back from the libvirt stream.
+                """
                 # opaque is the open file object
                 return os.write(opaque, buf)
 
@@ -1015,17 +1021,29 @@ class Guest(object):
         return g
 
     def _guestfs_remove_if_exists(self, g_handle, path):
+        """
+        Method to remove a file if it exists in the disk image.
+        """
         if g_handle.exists(path):
             g_handle.rm_rf(path)
 
     def _guestfs_move_if_exists(self, g_handle, orig_path, replace_path):
+        """
+        Method to move a file if it exists in the disk image.
+        """
         if g_handle.exists(orig_path):
             g_handle.mv(orig_path, replace_path)
 
     def _guestfs_path_backup(self, g_handle, orig):
+        """
+        Method to backup a file in the disk image.
+        """
         self._guestfs_move_if_exists(g_handle, orig, orig + ".ozbackup")
 
     def _guestfs_path_restore(self, g_handle, orig):
+        """
+        Method to restore a backup file in the disk image.
+        """
         backup = orig + ".ozbackup"
         self._guestfs_remove_if_exists(g_handle, orig)
         self._guestfs_move_if_exists(g_handle, backup, orig)

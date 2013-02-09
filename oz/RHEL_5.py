@@ -71,7 +71,7 @@ class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
 
         if self.tdl.distro == "RHEL-5":
             if self.tdl.installtype == 'iso':
-                if not re.match("RHEL/5(\.[0-9])? " + self.tdl.arch + " DVD",
+                if not re.match(r"RHEL/5(\.[0-9])? " + self.tdl.arch + " DVD",
                                 pvd.volume_identifier):
                     raise oz.OzException.OzException("Only DVDs are supported for RHEL-5 ISO installs")
             else:
@@ -84,20 +84,20 @@ class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
                 # unfortunately CentOS-5 has the same volume identifier for both
                 # DVDs and CDs.  To tell them apart, we assume that if the
                 # size is smaller than 1GB, this is a CD
-                if not re.match("CentOS_5.[0-9]_Final", pvd.volume_identifier) or (pvd.space_size * 2048) < 1 * 1024 * 1024 * 1024:
+                if not re.match(r"CentOS_5.[0-9]_Final", pvd.volume_identifier) or (pvd.space_size * 2048) < 1 * 1024 * 1024 * 1024:
                     raise oz.OzException.OzException("Only DVDs are supported for CentOS-5 ISO installs")
             else:
                 # url installs
-                if not re.match("CentOS *", pvd.volume_identifier):
+                if not re.match(r"CentOS *", pvd.volume_identifier):
                     raise oz.OzException.OzException("Invalid boot.iso for CentOS-5 URL install")
         elif self.tdl.distro == "SLC-5":
             # SLC-5
             if self.tdl.installtype == 'iso':
-                if not re.match("Scientific Linux CERN 5.[0-9]", pvd.volume_identifier):
+                if not re.match(r"Scientific Linux CERN 5.[0-9]", pvd.volume_identifier):
                     raise oz.OzException.OzException("Only DVDs are supported for SLC-5 ISO installs")
             else:
                 # url installs
-                if not re.match("CentOS *", pvd.volume_identifier):
+                if not re.match(r"CentOS *", pvd.volume_identifier):
                     raise oz.OzException.OzException("Invalid boot.iso for SLC-5 URL install")
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
