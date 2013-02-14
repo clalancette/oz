@@ -23,6 +23,7 @@ import shutil
 import re
 import os
 import libvirt
+import gzip
 
 import oz.Guest
 import oz.ozutil
@@ -44,7 +45,7 @@ class UbuntuGuest(oz.Guest.CDGuest):
             tdl.update = "12.04"
 
         oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, nicmodel,
-                                  None, None, diskbus, True, False)
+                                  None, None, diskbus, True, True)
 
         self.sshprivkey = os.path.join('/etc', 'oz', 'id_rsa-icicle-gen')
         self.crond_was_active = False
@@ -74,6 +75,21 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         self.ssh_startuplink = None
         self.cron_startuplink = None
 
+        self.debarch = self.tdl.arch
+        if self.debarch == "x86_64":
+            self.debarch = "amd64"
+
+        self.kernelfname = os.path.join(self.output_dir,
+                                        self.tdl.name + "-kernel")
+        self.initrdfname = os.path.join(self.output_dir,
+                                        self.tdl.name + "-ramdisk")
+        self.kernelcache = os.path.join(self.data_dir, "kernels",
+                                        self.tdl.distro + self.tdl.update + self.tdl.arch + "-kernel")
+        self.initrdcache = os.path.join(self.data_dir, "kernels",
+                                        self.tdl.distro + self.tdl.update + self.tdl.arch + "-ramdisk")
+
+        self.cmdline = "priority=critical locale=en_US"
+
     def _check_iso_tree(self):
         if self.tdl.update in ["6.06", "6.10", "7.04"]:
             if os.path.isdir(os.path.join(self.iso_contents, "casper")):
@@ -87,6 +103,9 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
 
         self.log.debug("Copying preseed file")
         outname = os.path.join(self.iso_contents, "preseed", "customiso.seed")
+        outdir = os.path.dirname(outname)
+        if not os.path.isdir(outdir):
+            oz.ozutil.mkdir_p(outdir)
 
         if self.preseed_file == oz.ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed"):
 
@@ -109,6 +128,13 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         self.log.debug("Modifying isolinux.cfg")
         isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
                                    "isolinux.cfg")
+        isolinuxdir = os.path.dirname(isolinuxcfg)
+        if not os.path.isdir(isolinuxdir):
+            oz.ozutil.mkdir_p(isolinuxdir)
+            shutil.copyfile(os.path.join(self.iso_contents, "isolinux.bin"),
+                            os.path.join(isolinuxdir, "isolinux.bin"))
+            shutil.copyfile(os.path.join(self.iso_contents, "boot.cat"),
+                            os.path.join(isolinuxdir, "boot.cat"))
         f = open(isolinuxcfg, 'w')
         f.write("default customiso\n")
         f.write("timeout 1\n")
@@ -149,6 +175,30 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
             if not timeout:
                 timeout = 3000
         return self._do_install(timeout, force, 0)
+
+    def _copy_preseed(self, outname):
+        """
+        Method to copy and modify an Ubuntu style preseed file.
+        """
+        self.log.debug("Putting the preseed file in place")
+
+        if self.preseed_file == oz.ozutil.generate_full_auto_path("ubuntu-" + self.tdl.update + "-jeos.preseed"):
+
+            def _preseed_sub(line):
+                """
+                Method that is called back from oz.ozutil.copy_modify_file() to
+                modify preseed files as appropriate for Ubuntu.
+                """
+                if re.match('d-i passwd/root-password password', line):
+                    return 'd-i passwd/root-password password ' + self.rootpw + '\n'
+                elif re.match('d-i passwd/root-password-again password', line):
+                    return 'd-i passwd/root-password-again password ' + self.rootpw + '\n'
+                else:
+                    return line
+
+            oz.ozutil.copy_modify_file(self.preseed_file, outname, _preseed_sub)
+        else:
+            shutil.copy(self.preseed_file, outname)
 
     def _get_default_runlevel(self, g_handle):
         """
@@ -564,6 +614,163 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
                 for domid in self.libvirt_conn.listDomainsID():
                     if domid == libvirt_dom.ID():
                         raise
+
+    def _get_kernel_from_txt_cfg(self, fetchurl):
+        """
+        Internal method to download and parse the txt.cfg file from a URL.  If
+        the txt.cfg file does not exist, or it does not have the keys that we
+        expect, this method raises an error.
+        """
+        txtcfgurl = fetchurl + "/ubuntu-installer/" + self.debarch + "/boot-screens/txt.cfg"
+
+        # first we check if the txt.cfg exists; this throws an exception if
+        # it is missing
+        info = oz.ozutil.http_get_header(txtcfgurl)
+        if info['HTTP-Code'] != 200:
+            raise oz.OzException.OzException("Could not find %s" % (txtcfgurl))
+
+        txtcfg = os.path.join(self.icicle_tmp, "txt.cfg")
+        self.log.debug("Going to write txt.cfg to %s" % (txtcfg))
+        txtcfgfd = os.open(txtcfg, os.O_RDWR | os.O_CREAT | os.O_TRUNC)
+        os.unlink(txtcfg)
+        fp = os.fdopen(txtcfgfd)
+        try:
+            self.log.debug("Trying to get txt.cfg from " + txtcfgurl)
+            oz.ozutil.http_download_file(txtcfgurl, txtcfgfd, False, self.log)
+
+            # if we made it here, the txt.cfg existed.  Parse it and
+            # find out the location of the kernel and ramdisk
+            self.log.debug("Got txt.cfg, parsing")
+            os.lseek(txtcfgfd, 0, os.SEEK_SET)
+            grub_pattern = re.compile(r"^default\s*(?P<default_entry>\w+)$.*"
+                                      r"^label\s*(?P=default_entry)$.*"
+                                      r"^\s*kernel\s*(?P<kernel>\S+)$.*"
+                                      r"initrd=(?P<initrd>\S+).*"
+                                      r"^label", re.DOTALL | re.MULTILINE)
+            config_text = fp.read()
+            match = re.search(grub_pattern, config_text)
+            kernel = match.group('kernel')
+            initrd = match.group('initrd')
+        finally:
+            fp.close()
+
+        if kernel is None or initrd is None:
+            raise oz.OzException.OzException("Empty kernel or initrd")
+
+        self.log.debug("Returning kernel %s and initrd %s" % (kernel, initrd))
+        return (kernel, initrd)
+
+    def _gzip_file(self, inputfile, outputmode):
+        """
+        Internal method to gzip a file and write it to the initrd.
+        """
+        f = open(inputfile, 'rb')
+        gzf = gzip.GzipFile(self.initrdfname, mode=outputmode)
+        try:
+            gzf.writelines(f)
+            gzf.close()
+            f.close()
+        except:
+            # there is a bit of asymmetry here in that OSs that support cpio
+            # archives have the initial initrdfname copied in the higher level
+            # function, but we delete it here.  OSs that don't support cpio,
+            # though, get the initrd created right here.  C'est le vie
+            os.unlink(self.initrdfname)
+            raise
+
+    def _create_cpio_initrd(self, preseedpath):
+        """
+        Internal method to create a modified CPIO initrd
+        """
+        extrafname = os.path.join(self.icicle_tmp, "extra.cpio")
+        self.log.debug("Writing cpio to %s" % (extrafname))
+        cpiofiledict = {}
+        cpiofiledict[preseedpath] = 'preseed.cfg'
+        oz.ozutil.write_cpio(cpiofiledict, extrafname)
+
+        try:
+            shutil.copyfile(self.initrdcache, self.initrdfname)
+            self._gzip_file(extrafname, 'ab')
+        finally:
+            os.unlink(extrafname)
+
+    def _initrd_inject_preseed(self, fetchurl, force_download):
+        """
+        Internal method to download and inject a preseed file into an initrd.
+        """
+        # we first see if we can use direct kernel booting, as that is
+        # faster than downloading the ISO
+        kernel = None
+        initrd = None
+        try:
+            (kernel, initrd) = self._get_kernel_from_txt_cfg(fetchurl)
+        except:
+            pass
+
+        if kernel is None:
+            self.log.debug("Kernel was None, trying images/pxeboot/vmlinuz")
+            # we couldn't find the kernel in the txt.cfg, so try a
+            # hard-coded path
+            kernel = "ubuntu-installer/%s/linux" % (self.debarch)
+        if initrd is None:
+            self.log.debug("Initrd was None, trying images/pxeboot/initrd.img")
+            # we couldn't find the initrd in the txt.cfg, so try a
+            # hard-coded path
+            initrd = "ubuntu-installer/%s/initrd.gz" % (self.debarch)
+
+        self._get_original_media('/'.join([self.url.rstrip('/'),
+                                           kernel.lstrip('/')]),
+                                 self.kernelcache, force_download)
+
+        try:
+            self._get_original_media('/'.join([self.url.rstrip('/'),
+                                               initrd.lstrip('/')]),
+                                     self.initrdcache, force_download)
+        except:
+            os.unlink(self.kernelfname)
+            raise
+
+        # if we made it here, then we can copy the kernel into place
+        shutil.copyfile(self.kernelcache, self.kernelfname)
+
+        try:
+            preseedpath = os.path.join(self.icicle_tmp, self.preseed_file)
+            self._copy_preseed(preseedpath)
+
+            try:
+                self._create_cpio_initrd(preseedpath)
+            finally:
+                os.unlink(preseedpath)
+        except:
+            os.unlink(self.kernelfname)
+            raise
+
+    def generate_install_media(self, force_download=False):
+        """
+        Method to generate the install media for Ubuntu based operating
+        systems.  If force_download is False (the default), then the
+        original media will only be fetched if it is not cached locally.  If
+        force_download is True, then the original media will be downloaded
+        regardless of whether it is cached locally.
+        """
+        fetchurl = self.url
+        if self.tdl.installtype == 'url':
+            # set the fetchurl up-front so that if the OS doesn't support
+            # initrd injection, or the injection fails for some reason, we
+            # fall back to the mini.iso
+            fetchurl += "/mini.iso"
+
+            self.log.debug("Installtype is URL, trying to do direct kernel boot")
+            try:
+                return self._initrd_inject_preseed(self.url, force_download)
+            except Exception as err:
+                # if any of the above failed, we couldn't use the direct
+                # kernel/initrd build method.  Fall back to trying to fetch
+                # the mini.iso instead
+                self.log.debug("Could not do direct boot, fetching mini.iso instead (the following error message is useful for bug reports, but can be ignored)")
+                self.log.debug(err)
+
+        return self._iso_generate_install_media(fetchurl, force_download)
 
     def customize(self, libvirt_xml):
         """
