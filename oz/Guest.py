@@ -165,6 +165,7 @@ class Guest(object):
         # libvirt expects kilobytes, so multiply by 1024
         self.install_memory = oz.ozutil.config_get_key(config, 'libvirt',
                                                        'memory', 1024) * 1024
+	self.image_type = oz.ozutil.config_get_key(config, 'libvirt', 'image_type', 'raw')
 
         # configuration from 'cache' section
         self.cache_original_media = oz.ozutil.config_get_boolean_key(config,
@@ -184,8 +185,13 @@ class Guest(object):
 
         self.diskimage = output_disk
         if self.diskimage is None:
-            self.diskimage = os.path.join(self.output_dir,
+	    if self.image_type == 'qcow2':
+            	self.diskimage = os.path.join(self.output_dir,
+                                          self.tdl.name + ".qcow2")
+	    else:
+            	self.diskimage = os.path.join(self.output_dir,
                                           self.tdl.name + ".dsk")
+
         self.icicle_tmp = os.path.join(self.data_dir, "icicletmp",
                                        self.tdl.name)
         self.listen_port = random.randrange(1024, 65535)
@@ -448,6 +454,11 @@ class Guest(object):
         bootTarget.setProp("bus", self.disk_bus)
         bootSource = bootDisk.newChild(None, "source", None)
         bootSource.setProp("file", self.diskimage)
+	if self.image_type == 'qcow2':
+	    driver = bootDisk.newChild(None, "driver", None)
+            driver.setProp("name", "qemu")
+            driver.setProp("type", "qcow2")
+
         # install disk (if any)
         if installdev:
             install = devices.newChild(None, "disk", None)
@@ -475,10 +486,15 @@ class Guest(object):
 
         self.log.info("Generating %dGB diskimage for %s" % (size,
                                                             self.tdl.name))
-
-        f = open(self.diskimage, "w")
-        f.truncate(size * 1024 * 1024 * 1024)
-        f.close()
+	
+	if self.image_type == 'qcow2':
+	    rc = os.system("qemu-img create -f qcow2 '%s' %sG" % (self.diskimage, size)) 
+            if rc != 0:
+                raise oz.OzException.OzException("Could not find disk target device")
+	else:
+            f = open(self.diskimage, "w")
+            f.truncate(size * 1024 * 1024 * 1024)
+            f.close()
 
         # FIXME: this makes the permissions insecure, but is needed since
         # libvirt launches guests as qemu:qemu.
