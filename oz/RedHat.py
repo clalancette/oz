@@ -497,8 +497,22 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         Method to shutdown the guest (gracefully at first, then with prejudice).
         """
         if guestaddr is not None:
+            # sometimes the ssh process gets disconnected before it can return
+            # cleanly (particularly when the guest is running systemd).  If that
+            # happens, ssh returns 255, guest_execute_command throws an
+            # exception, and the guest is forcibly destroyed.  While this
+            # isn't the end of the world, it isn't desirable.  To avoid
+            # this, we catch any exception thrown by ssh during the shutdown
+            # command and throw them away.  In the (rare) worst case, the
+            # shutdown will not have made it to the guest and we'll have to wait
+            # 90 seconds for wait_for_guest_shutdown to timeout and forcibly
+            # kill the guest.
             try:
                 self.guest_execute_command(guestaddr, 'shutdown -h now')
+            except:
+                pass
+
+            try:
                 if not self._wait_for_guest_shutdown(libvirt_dom):
                     self.log.warn("Guest did not shutdown in time, going to kill")
                 else:
