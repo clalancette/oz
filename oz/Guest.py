@@ -40,7 +40,6 @@ import struct
 import tempfile
 import M2Crypto
 import base64
-import parted
 import hashlib
 import errno
 import re
@@ -165,6 +164,7 @@ class Guest(object):
         # libvirt expects kilobytes, so multiply by 1024
         self.install_memory = int(oz.ozutil.config_get_key(config, 'libvirt',
                                                            'memory', 1024) * 1024)
+        self.image_type = oz.ozutil.config_get_key(config, 'libvirt', 'image_type', 'raw')
 
         # configuration from 'cache' section
         self.cache_original_media = oz.ozutil.config_get_boolean_key(config,
@@ -184,8 +184,12 @@ class Guest(object):
 
         self.diskimage = output_disk
         if self.diskimage is None:
-            self.diskimage = os.path.join(self.output_dir,
-                                          self.tdl.name + ".dsk")
+            ext = "." + self.image_type
+            # compatibility with older versions of Oz
+            if self.image_type == 'raw':
+                ext = '.dsk'
+            self.diskimage = os.path.join(self.output_dir, self.tdl.name + ext)
+
         self.icicle_tmp = os.path.join(self.data_dir, "icicletmp",
                                        self.tdl.name)
         self.listen_port = random.randrange(1024, 65535)
@@ -446,6 +450,10 @@ class Guest(object):
         bootTarget.setProp("bus", self.disk_bus)
         bootSource = bootDisk.newChild(None, "source", None)
         bootSource.setProp("file", self.diskimage)
+        driver = bootDisk.newChild(None, "driver", None)
+        driver.setProp("name", "qemu")
+        driver.setProp("type", self.image_type)
+
         # install disk (if any)
         if installdev:
             install = devices.newChild(None, "disk", None)
@@ -474,25 +482,87 @@ class Guest(object):
         self.log.info("Generating %dGB diskimage for %s" % (size,
                                                             self.tdl.name))
 
-        f = open(self.diskimage, "w")
-        f.truncate(size * 1024 * 1024 * 1024)
-        f.close()
+        directory = os.path.dirname(self.diskimage)
+        filename = os.path.basename(self.diskimage)
 
+        doc = libxml2.newDoc("1.0")
+        pool = doc.newChild(None, "pool", None)
+        pool.setProp("type", "dir")
+        pool.newChild(None, "name", "oztempdir")
+        target = pool.newChild(None, "target", None)
+        target.newChild(None, "path", directory)
+        pool_xml = doc.serialize(None, 1)
+
+        doc = libxml2.newDoc("1.0")
+        vol = doc.newChild(None, "volume", None)
+        vol.setProp("type", "file")
+        vol.newChild(None, "name", filename)
+        vol.newChild(None, "allocation", "0")
+        cap = vol.newChild(None, "capacity", str(size))
+        cap.setProp("unit", "G")
+        target = vol.newChild(None, "target", None)
+        fmt = target.newChild(None, "format", None)
+        fmt.setProp("type", self.image_type)
         # FIXME: this makes the permissions insecure, but is needed since
         # libvirt launches guests as qemu:qemu.
-        os.chmod(self.diskimage,
-                 stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IWGRP|stat.S_IROTH|stat.S_IWOTH)
+        permissions = target.newChild(None, "permissions", None)
+        permissions.newChild(None, "mode", "0666")
+        vol_xml = doc.serialize(None, 1)
+
+        # sigh.  Yes, this is racy; if a pool is defined during this loop, we
+        # might miss it.  I'm not quite sure how to do it better, and in any case
+        # we don't expect that to happen to often
+        started = False
+        found = False
+        for poolname in self.libvirt_conn.listDefinedStoragePools() + self.libvirt_conn.listStoragePools():
+            pool = self.libvirt_conn.storagePoolLookupByName(poolname)
+            doc = libxml2.parseDoc(pool.XMLDesc(0))
+            res = doc.xpathEval('/pool/target/path')
+            if len(res) != 1:
+                continue
+            if res[0].getContent() == directory:
+                # OK, this pool manages that directory; make sure it is running
+                found = True
+                if not pool.isActive():
+                    pool.create(0)
+                    started = True
+
+        if not found:
+            pool = self.libvirt_conn.storagePoolCreateXML(pool_xml, 0)
+            started = True
+
+        # this is a bit complicated, because of the cases that can
+        # happen.  The cases are:
+        #
+        # 1.  The volume did not exist.  In this case, storageVolLookupByName()
+        #     throws an exception, which we just ignore.  We then go on to
+        #     create the volume
+        # 2.  The volume did exist.  In this case, storageVolLookupByName()
+        #     returns a valid volume object, and then we delete the volume
+        try:
+            try:
+                vol = pool.storageVolLookupByName(filename)
+                vol.delete(0)
+            except libvirt.libvirtError as e:
+                if e.get_error_code() != libvirt.VIR_ERR_NO_STORAGE_VOL:
+                    raise
+
+            try:
+                pool.createXML(vol_xml, 0)
+            except libvirt.libvirtError as e:
+                raise
+        finally:
+            if started:
+                pool.destroy()
 
         if create_partition:
-            dev = parted.Device(self.diskimage)
-            disk = parted.freshDisk(dev, 'msdos')
-            constraint = parted.Constraint(device=dev)
-            geom = parted.Geometry(device=dev, start=1, end=2)
-            partition = parted.Partition(disk=disk,
-                                         type=parted.PARTITION_NORMAL,
-                                         geometry=geom)
-            disk.addPartition(partition=partition, constraint=constraint)
-            disk.commit()
+            g_handle = guestfs.GuestFS()
+            g_handle.add_drive_opts(self.diskimage, format=self.image_type, readonly = 0)
+            g_handle.launch()
+            devices = g_handle.list_devices()
+            g_handle.part_init(devices[0], "msdos")
+            g_handle.part_add(devices[0], 'p', 1, 2)
+            g_handle.close()
 
     def generate_diskimage(self, size=10, force=False):
         """

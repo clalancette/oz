@@ -65,6 +65,7 @@ type = kvm
 bridge_name = virbr0
 cpus = 1
 memory = 1024
+image_type = raw
 
 [cache]
 original_media = yes
@@ -88,7 +89,8 @@ to use.  The \fBbridge_name\fR key defines which bridge Oz should
 place the guests that it launches on.  The \fBcpus\fR key defines how
 many cpus should be used inside the virtual machine.  The \fBmemory\fR
 key defines how much memory (in megabytes) should be used inside the
-virtual machine.
+virtual machine.  The \fBimage_type\fR key defines which output disk
+type should be used; this can be any value that libvirt supports.
 
 The \fBcache\fR section allows some manipulation of how Oz caches
 data.  The caching of data in Oz is a tradeoff between installation
