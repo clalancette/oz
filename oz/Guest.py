@@ -339,6 +339,19 @@ class Guest(object):
             self.path = path
             self.bus = bus
 
+
+    def _generate_serial_xml(self, dev):
+        serial = dev.newChild(None, "serial", None)
+        serial.setProp("type", "tcp")
+        serialSource = serial.newChild(None, "source", None)
+        serialSource.setProp("mode", "bind")
+        serialSource.setProp("host", "127.0.0.1")
+        serialSource.setProp("service", str(self.listen_port))
+        serialProtocol = serial.newChild(None, "protocol", None)
+        serialProtocol.setProp("type", "raw")
+        serialTarget = serial.newChild(None, "target", None)
+        serialTarget.setProp("port", "1")
+
     def _generate_xml(self, bootdev, installdev, kernel=None, initrd=None,
                       cmdline=None):
         """
@@ -425,16 +438,7 @@ class Guest(object):
         consoleTarget = console.newChild(None, "target", None)
         consoleTarget.setProp("port", "0")
         # serial
-        serial = devices.newChild(None, "serial", None)
-        serial.setProp("type", "tcp")
-        serialSource = serial.newChild(None, "source", None)
-        serialSource.setProp("mode", "bind")
-        serialSource.setProp("host", "127.0.0.1")
-        serialSource.setProp("service", str(self.listen_port))
-        serialProtocol = serial.newChild(None, "protocol", None)
-        serialProtocol.setProp("type", "raw")
-        serialTarget = serial.newChild(None, "target", None)
-        serialTarget.setProp("port", "1")
+        self._generate_serial_xml(devices)
         # boot disk
         bootDisk = devices.newChild(None, "disk", None)
         bootDisk.setProp("device", "disk")
@@ -998,16 +1002,7 @@ class Guest(object):
         elif devlen > 1:
             raise oz.OzException.OzException("%d devices sections specified, something is wrong with the libvirt XML" % (devlen))
 
-        serial = devices[0].newChild(None, "serial", None)
-        serial.setProp("type", "tcp")
-        serialSource = serial.newChild(None, "source", None)
-        serialSource.setProp("mode", "bind")
-        serialSource.setProp("host", "127.0.0.1")
-        serialSource.setProp("service", str(self.listen_port))
-        serialProtocol = serial.newChild(None, "protocol", None)
-        serialProtocol.setProp("type", "raw")
-        serialTarget = serial.newChild(None, "target", None)
-        serialTarget.setProp("port", "1")
+        self._generate_serial_xml(devices[0])
 
         xml = input_doc.serialize(None, 1)
         self.log.debug("Generated XML:\n%s" % (xml))
