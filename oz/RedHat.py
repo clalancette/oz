@@ -1091,6 +1091,29 @@ class RedHatCDYumGuest(RedHatCDGuest):
         self.log.debug("Syncing")
         self.guest_execute_command(guestaddr, 'sync')
 
+    def _test_ssh_connection(self, guestaddr):
+        """
+        Internal method to test out the ssh connection before we try to use it.
+        Under systemd, the IP address of a guest can come up and reportip can
+        run before the ssh key is generated and sshd starts up.  This check makes
+        sure that we allow an additional 30 seconds (1 second per ssh attempt)
+        for sshd to finish initializing.
+        """
+        self.log.debug("Testing ssh connection")
+        count = 30
+        success = False
+        while count > 0:
+            try:
+                stdout, stderr, retcode = self.guest_execute_command(guestaddr, 'ls', timeout=1)
+                self.log.debug("Succeeded")
+                success = True
+                break
+            except:
+                count -= 1
+
+        if not success:
+            raise oz.OzException.OzException("Failed to connect to ssh on running guest")
+
     def _internal_customize(self, libvirt_xml, generate_icicle):
         """
         Internal method to customize and optionally generate an ICICLE for the
@@ -1125,6 +1148,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
             try:
                 guestaddr = None
                 guestaddr = self._wait_for_guest_boot(libvirt_dom)
+                self._test_ssh_connection(guestaddr)
 
                 if generate_icicle != "only" and self.tdl.packages or self.tdl.files or self.tdl.commands:
                     self.do_customize(guestaddr)
