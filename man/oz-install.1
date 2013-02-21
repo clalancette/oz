@@ -75,6 +75,10 @@ starting installation, Oz will abort.  If this option is used, then Oz
 will undefine the libvirt guest with the same name or UUID and delete
 the diskimage, so it should be used with caution.
 .TP
+.B "\-s <disk>"
+Write the disk image to \fBdisk\fR, rather than the default of the
+TDL name.
+.TP
 .B "\-t <timeout>"
 Terminate the installation of the guest in \fBtimeout\fR seconds
 rather than the oz default.  This value should be increased if running
