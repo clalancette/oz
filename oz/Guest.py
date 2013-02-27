@@ -163,8 +163,8 @@ class Guest(object):
                                                      1)
         # the memory in the configuration file is specified in megabytes, but
         # libvirt expects kilobytes, so multiply by 1024
-        self.install_memory = oz.ozutil.config_get_key(config, 'libvirt',
-                                                       'memory', 1024) * 1024
+        self.install_memory = int(oz.ozutil.config_get_key(config, 'libvirt',
+                                                           'memory', 1024) * 1024)
 
         # configuration from 'cache' section
         self.cache_original_media = oz.ozutil.config_get_boolean_key(config,
