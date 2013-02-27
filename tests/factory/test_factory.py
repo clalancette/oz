@@ -89,7 +89,7 @@ def runtest(args):
     global route
 
     (distro, version, arch, installtype) = args
-    print("Testing %s-%s-%s-%s..." % (distro, version, arch, installtype), end=' ')
+    print("Testing %s-%s-%s-%s..." % (distro, version, arch, installtype))
 
     tdlxml = """
 <template>
@@ -109,7 +109,7 @@ def runtest(args):
     tdl = oz.TDL.TDL(tdlxml)
 
     config = configparser.SafeConfigParser()
-    config.readfp(io.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(io.StringIO(u"[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
     if os.getenv('DEBUG') != None:
         logging.basicConfig(level=logging.DEBUG, format="%(message)s")
@@ -250,14 +250,14 @@ def test_all():
     # Ubuntu
     for version in ["6.06", "6.06.1", "6.06.2", "6.10", "7.04", "7.10", "8.04",
                     "8.04.1", "8.04.2", "8.04.3", "8.04.4", "8.10", "9.04",
-                    "9.10", "10.04", "10.04.1", "10.04.2", "10.04.3", "10.10",
-                    "11.04", "11.10"]:
+                    "9.10", "10.04", "10.04.1", "10.04.2", "10.04.3",
+                    "10.04.4", "10.10", "11.04", "11.10", "12.04", "12.04.1",
+                    "12.04.2", "12.10", "13.04"]:
         for arch in ["i386", "x86_64"]:
-            expect_success("Ubuntu", version, arch, "iso")
+            for installtype in ["url", "iso"]:
+                expect_success("Ubuntu", version, arch, installtype)
     # bad Ubuntu version
     expect_fail("Ubuntu", "10.9", "i386", "iso")
-    # bad Ubuntu installtype
-    expect_fail("Ubuntu", "10.10", "i386", "url")
 
     # Mandrake
     for version in ["8.2", "9.1", "9.2", "10.0", "10.1"]:

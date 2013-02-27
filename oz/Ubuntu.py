@@ -31,7 +31,7 @@ import oz.OzException
 
 class UbuntuGuest(oz.Guest.CDGuest):
     """
-    Class for Ubuntu 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, 11.04, 11.10, 12.04, and 12.10 installation.
+    Class for Ubuntu 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, 11.04, 11.10, 12.04, 12.10, 13.04 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, initrd, nicmodel,
                  diskbus):
@@ -39,9 +39,9 @@ class UbuntuGuest(oz.Guest.CDGuest):
             tdl.update = "6.06"
         elif tdl.update in ["8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4"]:
             tdl.update = "8.04"
-        elif tdl.update in ["10.04", "10.04.1", "10.04.2", "10.04.3"]:
+        elif tdl.update in ["10.04", "10.04.1", "10.04.2", "10.04.3", "10.04.4"]:
             tdl.update = "10.04"
-        elif tdl.update in ["12.04", "12.04.1"]:
+        elif tdl.update in ["12.04", "12.04.1", "12.04.2"]:
             tdl.update = "12.04"
 
         oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, nicmodel,
@@ -805,8 +805,9 @@ def get_class(tdl, config, auto, output_disk=None):
                       "9.04"]:
         return UbuntuGuest(tdl, config, auto, output_disk, "initrd.gz",
                            "virtio", "virtio")
-    if tdl.update in ["9.10", "10.04", "10.04.1", "10.04.2", "10.04.3", "10.10",
-                      "11.04", "11.10", "12.04", "12.04.1", "12.10"]:
+    if tdl.update in ["9.10", "10.04", "10.04.1", "10.04.2", "10.04.3",
+                      "10.04.4", "10.10", "11.04", "11.10", "12.04", "12.04.1",
+                      "12.04.2", "12.10", "13.04"]:
         return UbuntuGuest(tdl, config, auto, output_disk, "initrd.lz",
                            "virtio", "virtio")
 
@@ -814,4 +815,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Ubuntu: 6.06[.1,.2], 6.10, 7.04, 7.10, 8.04[.1,.2,.3,.4], 8.10, 9.04, 9.10, 10.04[.1,.2,.3], 10.10, 11.04, 11.10, 12.04[.1], 12.10"
+    return "Ubuntu: 6.06[.1,.2], 6.10, 7.04, 7.10, 8.04[.1,.2,.3,.4], 8.10, 9.04, 9.10, 10.04[.1,.2,.3,.4], 10.10, 11.04, 11.10, 12.04[.1,.2], 12.10, 13.04"
