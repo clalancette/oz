@@ -1309,9 +1309,17 @@ class CDGuest(Guest):
                     os.chmod(dirpath, st.st_mode|stat.S_IWUSR)
                     for name in filenames:
                         fullpath = os.path.join(dirpath, name)
-                        st = os.stat(fullpath)
-                        os.chmod(fullpath, st.st_mode|stat.S_IWUSR)
-
+                        try:
+                            # if there are broken symlinks in the ISO,
+                            # then the below might fail.  This probably
+                            # isn't fatal, so just allow it and go on
+                            st = os.stat(fullpath)
+                            os.chmod(fullpath, st.st_mode|stat.S_IWUSR)
+                        except OSError as err:
+                            if err.errno == errno.ENOENT:
+                                pass
+                            else:
+                                raise
             finally:
                 os.chdir(current)
         finally:
@@ -1587,7 +1595,16 @@ class CDGuest(Guest):
         for dirpath, dirnames, filenames in os.walk(self.iso_contents):
             os.chmod(dirpath, stat.S_IWUSR|stat.S_IXUSR|stat.S_IRUSR)
             for name in filenames:
-                os.chmod(os.path.join(dirpath, name), stat.S_IRUSR|stat.S_IWUSR)
+                try:
+                    # if there are broken symlinks in the ISO,
+                    # then the below might fail.  This probably
+                    # isn't fatal, so just allow it and go on
+                    os.chmod(os.path.join(dirpath, name), stat.S_IRUSR|stat.S_IWUSR)
+                except OSError as err:
+                    if err.errno == errno.ENOENT:
+                        pass
+                    else:
+                        raise
 
         oz.ozutil.rmtree_and_sync(self.iso_contents)
 
