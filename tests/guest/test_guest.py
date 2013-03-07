@@ -74,7 +74,7 @@ def test_geteltorito_none_src():
     tdl = oz.TDL.TDL(tdlxml)
 
     config = configparser.SafeConfigParser()
-    config.readfp(io.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(io.StringIO(u"[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
     guest = oz.GuestFactory.guest_factory(tdl, config, None)
 
@@ -85,7 +85,7 @@ def test_geteltorito_none_dst(tmpdir):
     tdl = oz.TDL.TDL(tdlxml)
 
     config = configparser.SafeConfigParser()
-    config.readfp(io.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(io.StringIO(u"[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
     guest = oz.GuestFactory.guest_factory(tdl, config, None)
 
@@ -99,7 +99,7 @@ def test_geteltorito_short_pvd(tmpdir):
     tdl = oz.TDL.TDL(tdlxml)
 
     config = configparser.SafeConfigParser()
-    config.readfp(io.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(io.StringIO(u"[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
     guest = oz.GuestFactory.guest_factory(tdl, config, None)
 
@@ -115,7 +115,7 @@ def test_geteltorito_bogus_pvd_desc(tmpdir):
     tdl = oz.TDL.TDL(tdlxml)
 
     config = configparser.SafeConfigParser()
-    config.readfp(io.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(io.StringIO(u"[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
     guest = oz.GuestFactory.guest_factory(tdl, config, None)
 
@@ -134,7 +134,7 @@ def test_geteltorito_bogus_pvd_ident(tmpdir):
     tdl = oz.TDL.TDL(tdlxml)
 
     config = configparser.SafeConfigParser()
-    config.readfp(io.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(io.StringIO(u"[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
     guest = oz.GuestFactory.guest_factory(tdl, config, None)
 
@@ -154,7 +154,7 @@ def test_geteltorito_bogus_pvd_unused(tmpdir):
     tdl = oz.TDL.TDL(tdlxml)
 
     config = configparser.SafeConfigParser()
-    config.readfp(io.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(io.StringIO(u"[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
     guest = oz.GuestFactory.guest_factory(tdl, config, None)
 
@@ -176,7 +176,7 @@ def test_geteltorito_bogus_pvd_unused2(tmpdir):
     tdl = oz.TDL.TDL(tdlxml)
 
     config = configparser.SafeConfigParser()
-    config.readfp(io.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(io.StringIO(u"[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
     guest = oz.GuestFactory.guest_factory(tdl, config, None)
 
@@ -202,7 +202,7 @@ def test_geteltorito_short_boot_sector(tmpdir):
     tdl = oz.TDL.TDL(tdlxml)
 
     config = configparser.SafeConfigParser()
-    config.readfp(io.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(io.StringIO(u"[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
     guest = oz.GuestFactory.guest_factory(tdl, config, None)
 
@@ -228,7 +228,7 @@ def test_geteltorito_bogus_boot_sector(tmpdir):
     tdl = oz.TDL.TDL(tdlxml)
 
     config = configparser.SafeConfigParser()
-    config.readfp(io.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(io.StringIO(u"[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
     guest = oz.GuestFactory.guest_factory(tdl, config, None)
 
@@ -257,7 +257,7 @@ def test_geteltorito_bogus_boot_isoident(tmpdir):
     tdl = oz.TDL.TDL(tdlxml)
 
     config = configparser.SafeConfigParser()
-    config.readfp(io.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(io.StringIO(u"[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
     guest = oz.GuestFactory.guest_factory(tdl, config, None)
 
@@ -287,7 +287,7 @@ def test_geteltorito_bogus_boot_version(tmpdir):
     tdl = oz.TDL.TDL(tdlxml)
 
     config = configparser.SafeConfigParser()
-    config.readfp(io.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(io.StringIO(u"[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
     guest = oz.GuestFactory.guest_factory(tdl, config, None)
 
@@ -317,7 +317,7 @@ def test_geteltorito_bogus_boot_torito(tmpdir):
     tdl = oz.TDL.TDL(tdlxml)
 
     config = configparser.SafeConfigParser()
-    config.readfp(io.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(io.StringIO(u"[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
     guest = oz.GuestFactory.guest_factory(tdl, config, None)
 
@@ -348,7 +348,7 @@ def test_geteltorito_bogus_bootp(tmpdir):
     tdl = oz.TDL.TDL(tdlxml)
 
     config = configparser.SafeConfigParser()
-    config.readfp(io.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(io.StringIO(u"[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
     guest = oz.GuestFactory.guest_factory(tdl, config, None)
 
