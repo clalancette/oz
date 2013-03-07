@@ -1400,16 +1400,14 @@ class CDGuest(Guest):
 
         def _checksum(data):
             """
-            Method to compute the 1's complement checksum on the ISO.
+            Method to compute the checksum on the ISO.  Note that this is *not*
+            a 1's complement checksum; when an addition overflows, the carry
+            bit is discarded, not added to the end.
             """
-            def carry_around_add(a, b):
-                c = a + b
-                return (c & 0xffff) + (c >> 16)
-
             s = 0
             for i in range(0, len(data), 2):
                 w = ord(data[i]) + (ord(data[i+1]) << 8)
-                s = carry_around_add(s, w)
+                s = (s + w) & 0xffff
             return s
 
         csum = _checksum(bootdata)
