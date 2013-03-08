@@ -462,8 +462,13 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         Method to collect the package information and generate the ICICLE
         XML.
         """
+
+        icicle_cmd = oz.ozutil.config_get_key(config, 'redhat',
+                                              'icicle_command',
+                                              'rpm -qa')
+
         stdout, stderr, retcode = self.guest_execute_command(guestaddr,
-                                                             'rpm -qa',
+                                                             icicle_cmd,
                                                              timeout=30)
 
         return self._output_icicle_xml(stdout.split("\n"),
