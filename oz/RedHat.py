@@ -750,6 +750,12 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                 except:
                     pass
 
+    def install(self, timeout=None, force=False):
+        """
+        Method to run the operating system installation.
+        """
+        return self._do_install(timeout, force, 0, self.cmdline)
+
 class RedHatCDYumGuest(RedHatCDGuest):
     """
     Class for RedHat-based CD guests with yum support.

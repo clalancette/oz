@@ -1463,7 +1463,7 @@ class CDGuest(Guest):
         out.write(eltoritodata)
         out.close()
 
-    def _do_install(self, timeout=None, force=False, reboots=0):
+    def _do_install(self, timeout=None, force=False, reboots=0, cmdline=None):
         """
         Internal method to actually run the installation.
         """
@@ -1486,7 +1486,7 @@ class CDGuest(Guest):
             """
             return hasattr(self, name) and os.access(getattr(self, name), os.F_OK)
 
-        if exists("kernelfname") and exists("initrdfname") and hasattr(self, "cmdline"):
+        if exists("kernelfname") and exists("initrdfname") and cmdline:
             xml = self._generate_xml(None, None, self.kernelfname,
                                      self.initrdfname, self.cmdline)
         else:
