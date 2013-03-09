@@ -1,5 +1,6 @@
 # Copyright (C) 2010,2011,2012  Chris Lalancette <clalance@redhat.com>
 # Copyright (C) 2012  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2013  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -462,6 +463,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         Method to collect the package information and generate the ICICLE
         XML.
         """
+        self.log.debug("Generating ICICLE")
         stdout, stderr, retcode = self.guest_execute_command(guestaddr,
                                                              'rpm -qa',
                                                              timeout=30)
@@ -1085,6 +1087,10 @@ class RedHatCDYumGuest(RedHatCDGuest):
         """
         Method to customize by installing additional packages and files.
         """
+        if not self.tdl.packages and not self.tdl.files and not self.tdl.commands:
+            # no work to do, just return
+            return
+
         self._customize_repos(guestaddr)
 
         self.log.debug("Installing custom packages")
@@ -1134,22 +1140,22 @@ class RedHatCDYumGuest(RedHatCDGuest):
         if not success:
             raise oz.OzException.OzException("Failed to connect to ssh on running guest")
 
-    def _internal_customize(self, libvirt_xml, generate_icicle):
+    def _internal_customize(self, libvirt_xml, action):
         """
         Internal method to customize and optionally generate an ICICLE for the
         operating system after initial installation.
         """
-        # the "generate_icicle" internal input is actually a tri-state:
-        # generate_icicle = "yes" means to generate the icicle and to
-        #                   potentially make modifications
-        # generate_icicle = "only" means to generate the icicle only, and not
-        #                   look at any modifications
-        # generate_icicle = "no" means to not generate the icicle, but still
-        #                   potentially make modifications
+        # the "action" input is actually a tri-state:
+        # action = "gen_and_mod" means to generate the icicle and to
+        #          potentially make modifications
+        # action = "gen_only" means to generate the icicle only, and not
+        #          look at any modifications
+        # action = "mod_only" means to not generate the icicle, but still
+        #          potentially make modifications
 
         self.log.info("Customizing image")
 
-        if not self.tdl.packages and not self.tdl.files and not self.tdl.commands and generate_icicle == "no":
+        if not self.tdl.packages and not self.tdl.files and not self.tdl.commands and action == "mod_only":
             self.log.info("No additional packages, files, or commands to install, and icicle generation not requested, skipping customization")
             return
 
@@ -1170,12 +1176,15 @@ class RedHatCDYumGuest(RedHatCDGuest):
                 guestaddr = self._wait_for_guest_boot(libvirt_dom)
                 self._test_ssh_connection(guestaddr)
 
-                if generate_icicle != "only" and self.tdl.packages or self.tdl.files or self.tdl.commands:
+                if action == "gen_and_mod":
                     self.do_customize(guestaddr)
-
-                if generate_icicle != "no":
-                    self.log.debug("Generating ICICLE")
                     icicle = self.do_icicle(guestaddr)
+                elif action == "gen_only":
+                    icicle = self.do_icicle(guestaddr)
+                elif action == "mod_only":
+                    self.do_customize(guestaddr)
+                else:
+                    raise oz.OzException.OzException("Invalid customize action %s; this is a programming error" % (action))
             finally:
                 self._shutdown_guest(guestaddr, libvirt_dom)
         finally:
@@ -1187,7 +1196,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
         """
         Method to customize the operating system after installation.
         """
-        return self._internal_customize(libvirt_xml, "no")
+        return self._internal_customize(libvirt_xml, "mod_only")
 
     def customize_and_generate_icicle(self, libvirt_xml):
         """
@@ -1195,7 +1204,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
         after installation.  This is equivalent to calling customize() and
         generate_icicle() back-to-back, but is faster.
         """
-        return self._internal_customize(libvirt_xml, "yes")
+        return self._internal_customize(libvirt_xml, "gen_and_mod")
 
     def generate_icicle(self, libvirt_xml):
         """
@@ -1203,7 +1212,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
         installation.  The ICICLE contains information about packages and
         other configuration on the diskimage.
         """
-        return self._internal_customize(libvirt_xml, "only")
+        return self._internal_customize(libvirt_xml, "gen_only")
 
 class RedHatFDGuest(oz.Guest.FDGuest):
     """
