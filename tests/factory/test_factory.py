@@ -1,11 +1,16 @@
 #!/usr/bin/python
 
+from __future__ import print_function
 import sys
 try:
     import configparser
 except ImportError:
     import ConfigParser as configparser
-import io
+try:
+    from io import StringIO, BytesIO
+except:
+    from StringIO import StringIO
+    BytesIO = StringIO
 import logging
 import os
 
@@ -108,8 +113,9 @@ def runtest(args):
 
     tdl = oz.TDL.TDL(tdlxml)
 
+    print(route)
     config = configparser.SafeConfigParser()
-    config.readfp(io.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
     if os.getenv('DEBUG') != None:
         logging.basicConfig(level=logging.DEBUG, format="%(message)s")
@@ -153,7 +159,7 @@ def test_all():
     expect_fail("FedoraCore", "24", "x86_64", "iso")
 
     # Fedora
-    for version in ["7", "8", "9", "10", "11", "12", "13", "14", "15", "16"]:
+    for version in ["7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18"]:
         for arch in ["i386", "x86_64"]:
             for installtype in ["url", "iso"]:
                 expect_success("Fedora", version, arch, installtype)
@@ -251,7 +257,7 @@ def test_all():
     for version in ["6.06", "6.06.1", "6.06.2", "6.10", "7.04", "7.10", "8.04",
                     "8.04.1", "8.04.2", "8.04.3", "8.04.4", "8.10", "9.04",
                     "9.10", "10.04", "10.04.1", "10.04.2", "10.04.3", "10.10",
-                    "11.04", "11.10"]:
+                    "11.04", "11.10", "12.04", "12.10"]:
         for arch in ["i386", "x86_64"]:
             expect_success("Ubuntu", version, arch, "iso")
     # bad Ubuntu version
