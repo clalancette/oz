@@ -266,9 +266,7 @@ class Guest(object):
         try:
             os.unlink(self.diskimage)
         except OSError as err:
-            if err.errno == errno.ENOENT:
-                pass
-            else:
+            if err.errno != errno.ENOENT:
                 raise
 
     def check_for_guest_conflict(self):
@@ -1240,9 +1238,7 @@ class CDGuest(Guest):
         try:
             shutil.rmtree(self.iso_contents)
         except OSError as err:
-            if err.errno == errno.ENOENT:
-                pass
-            else:
+            if err.errno != errno.ENOENT:
                 raise
         os.makedirs(self.iso_contents)
 
@@ -1316,9 +1312,7 @@ class CDGuest(Guest):
                             st = os.stat(fullpath)
                             os.chmod(fullpath, st.st_mode|stat.S_IWUSR)
                         except OSError as err:
-                            if err.errno == errno.ENOENT:
-                                pass
-                            else:
+                            if err.errno != errno.ENOENT:
                                 raise
             finally:
                 os.chdir(current)
@@ -1599,9 +1593,7 @@ class CDGuest(Guest):
                     # isn't fatal, so just allow it and go on
                     os.chmod(os.path.join(dirpath, name), stat.S_IRUSR|stat.S_IWUSR)
                 except OSError as err:
-                    if err.errno == errno.ENOENT:
-                        pass
-                    else:
+                    if err.errno != errno.ENOENT:
                         raise
 
         oz.ozutil.rmtree_and_sync(self.iso_contents)
