@@ -19,7 +19,7 @@
 Template Description Language (TDL)
 """
 
-import libxml2
+import lxml.etree
 import base64
 import re
 import tempfile
@@ -37,7 +37,7 @@ def _xml_get_value(doc, xmlstring, component, optional=False):
     """
     Function to get the contents from an XML node.  It takes 4 arguments:
 
-    doc       - The libxml2 document to get a value from.
+    doc       - The lxml.etree document to get a value from.
     xmlstring - The XPath string to use.
     component - A string representing which TDL component is being
                 looked for (used in error reporting).
@@ -49,9 +49,9 @@ def _xml_get_value(doc, xmlstring, component, optional=False):
     Returns the content of the XML node if found, None if the node is not
     found and optional is True.
     """
-    res = doc.xpathEval(xmlstring)
+    res = doc.xpath(xmlstring)
     if len(res) == 1:
-        return res[0].getContent()
+        return res[0].text
     elif len(res) == 0:
         if optional:
             return None
@@ -182,14 +182,12 @@ class TDL(object):
                    be empty.
     """
     def __init__(self, xmlstring, rootpw_required=False):
-        self.doc = None
+        self.doc = lxml.etree.fromstring(xmlstring)
 
-        self.doc = libxml2.parseDoc(xmlstring)
-
-        template = self.doc.xpathEval('/template')
+        template = self.doc.xpath('/template')
         if len(template) != 1:
             raise oz.OzException.OzException("Expected 1 template section in TDL, saw %d" % (len(template)))
-        self.version = template[0].prop('version')
+        self.version = template[0].get('version')
 
         if self.version:
             self._validate_tdl_version()
@@ -214,10 +212,10 @@ class TDL(object):
                                           'description', optional=True)
         # description is not required, so it is not fatal if it is None
 
-        install = self.doc.xpathEval('/template/os/install')
+        install = self.doc.xpath('/template/os/install')
         if len(install) != 1:
             raise oz.OzException.OzException("Expected 1 OS install section in TDL, saw %d" % (len(install)))
-        self.installtype = install[0].prop('type')
+        self.installtype = install[0].get('type')
         if self.installtype is None:
             raise oz.OzException.OzException("Failed to find OS install type in TDL")
 
@@ -260,14 +258,14 @@ class TDL(object):
                                      optional=not rootpw_required)
 
         self.packages = []
-        self._add_packages(self.doc.xpathEval('/template/packages/package'))
+        self._add_packages(self.doc.xpath('/template/packages/package'))
 
         self.files = {}
-        for afile in self.doc.xpathEval('/template/files/file'):
-            name = afile.prop('name')
+        for afile in self.doc.xpath('/template/files/file'):
+            name = afile.get('name')
             if name is None:
                 raise oz.OzException.OzException("File without a name was given")
-            contenttype = afile.prop('type')
+            contenttype = afile.get('type')
             if contenttype is None:
                 contenttype = 'raw'
 
@@ -280,7 +278,7 @@ class TDL(object):
                                               'file')
 
         self.repositories = {}
-        self._add_repositories(self.doc.xpathEval('/template/repositories/repository'))
+        self._add_repositories(self.doc.xpath('/template/repositories/repository'))
 
         self.commands = self._parse_commands()
 
@@ -337,15 +335,17 @@ class TDL(object):
         """
         tmp = []
         saw_position = False
-        for command in self.doc.xpathEval('/template/commands/command'):
-            name = command.prop('name')
+        for command in self.doc.xpath('/template/commands/command'):
+            name = command.get('name')
             if name is None:
                 raise oz.OzException.OzException("Command without a name was given")
-            contenttype = command.prop('type')
+            contenttype = command.get('type')
             if contenttype is None:
                 contenttype = 'raw'
 
-            content = command.getContent().strip()
+            content = ""
+            if command.text:
+                content = command.text.strip()
             if len(content) == 0:
                 raise oz.OzException.OzException("Empty commands are not allowed")
 
@@ -357,7 +357,7 @@ class TDL(object):
             # you use the position attribute on one command, you must use it
             # on all commands, and vice-versa.
 
-            position = command.prop('position')
+            position = command.get('position')
             if position is not None:
                 saw_position = True
                 position = int(position)
@@ -392,13 +392,13 @@ class TDL(object):
         name is in the existing TDL and in packages, the value in packages
         overrides.
         """
-        packsdoc = libxml2.parseDoc(packages)
-        packslist = packsdoc.xpathEval('/packages/package')
+        packsdoc = lxml.etree.fromstring(packages)
+        packslist = packsdoc.xpath('/packages/package')
         self._add_packages(packslist, True)
 
     def _add_packages(self, packslist, remove_duplicates = False):
         """
-        Internal method to add the list of libxml2 nodes from packslist into
+        Internal method to add the list of lxml.etree nodes from packslist into
         the self.packages array.  If remove_duplicates is False (the default),
         then a package that is listed both in packslist and in the initial
         TDL is listed twice.  If it is set to True, then a package that is
@@ -407,7 +407,7 @@ class TDL(object):
         """
         for package in packslist:
             # package name
-            name = package.prop('name')
+            name = package.get('name')
 
             if name is None:
                 raise oz.OzException.OzException("Package without a name was given")
@@ -440,13 +440,13 @@ class TDL(object):
         the same name is in the existing TDL and in repos, the value in
         repos overrides.
         """
-        reposdoc = libxml2.parseDoc(repos)
-        reposlist = reposdoc.xpathEval('/repositories/repository')
+        reposdoc = lxml.etree.fromstring(repos)
+        reposlist = reposdoc.xpath('/repositories/repository')
         self._add_repositories(reposlist)
 
     def _add_repositories(self, reposlist):
         """
-        Internal method to add the list of libxml2 nodes from reposlist into
+        Internal method to add the list of lxml.etree nodes from reposlist into
         the self.repositories dictionary.
         """
         def _get_optional_repo_bool(repo, name, default='no'):
@@ -463,7 +463,7 @@ class TDL(object):
             return val
 
         for repo in reposlist:
-            name = repo.prop('name')
+            name = repo.get('name')
             if name is None:
                 raise oz.OzException.OzException("Repository without a name was given")
             url = _xml_get_value(repo, 'url', 'repository url')
@@ -509,15 +509,15 @@ class TDL(object):
         XML path into the self.isoextras list.
         """
         isoextras = []
-        extraslist = self.doc.xpathEval(extraspath)
+        extraslist = self.doc.xpath(extraspath)
         if self.installtype != 'iso' and extraslist:
             raise oz.OzException.OzException("Extra ISO data can only be used with iso install type")
 
         for extra in extraslist:
-            source = extra.prop('source')
+            source = extra.get('source')
             if source is None:
                 raise oz.OzException.OzException("Extra ISO element without a source was given")
-            destination = extra.prop('destination')
+            destination = extra.get('destination')
             if destination is None:
                 raise oz.OzException.OzException("Extra ISO element without a destination was given")
 
@@ -535,7 +535,3 @@ class TDL(object):
         """
         if float(self.version) > float(self.schema_version):
             raise oz.OzException.OzException("TDL version (%s) is higher than our known version (%s)" % (self.version, self.schema_version))
-
-    def __del__(self):
-        if self.doc is not None:
-            self.doc.freeDoc()

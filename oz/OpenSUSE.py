@@ -22,7 +22,7 @@ OpenSUSE installation
 import re
 import shutil
 import os
-import libxml2
+import lxml.etree
 import libvirt
 
 import oz.Guest
@@ -54,15 +54,17 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         outname = os.path.join(self.iso_contents, "autoinst.xml")
 
         if self.default_auto_file():
-            doc = libxml2.parseFile(self.auto)
+            doc = lxml.etree.parse(self.autoyast)
 
-            xp = doc.xpathNewContext()
-            xp.xpathRegisterNs("suse", "http://www.suse.com/1.0/yast2ns")
+            pw = doc.xpath('/suse:profile/suse:users/suse:user/suse:user_password',
+                           namespaces={'suse':'http://www.suse.com/1.0/yast2ns'})
+            if len(pw) != 1:
+                raise oz.OzException.OzException("Invalid SUSE autoyast file; expected single user_password, saw %d" % (len(pw)))
+            pw[0].text = self.rootpw
 
-            pw = xp.xpathEval('/suse:profile/suse:users/suse:user/suse:user_password')
-            pw[0].setContent(self.rootpw)
-
-            doc.saveFile(outname)
+            f = open(outfile, 'w')
+            f.write(lxml.etree.tostring(doc, pretty_print=True))
+            f.close()
         else:
             shutil.copy(self.auto, outname)
 

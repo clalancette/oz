@@ -4,9 +4,9 @@ import sys
 import os
 
 try:
-    import libxml2
+    import lxml.etree
 except ImportError:
-    print('Unable to import libxml2.  Is libxml2-python installed?')
+    print('Unable to import lxml.  Is python-lxml installed?')
     sys.exit(1)
 
 try:
@@ -113,27 +113,17 @@ def validate_schema(tdl_file):
     if rng_file is None:
         raise Exception('RelaxNG schema file not found: tdl.rng')
 
-    # Load relaxng schema
-    schema = open(rng_file, 'r').read()
-    rngp = libxml2.relaxNGNewMemParserCtxt(schema, len(schema))
-    rngs = rngp.relaxNGParse()
+    relaxng = lxml.etree.RelaxNG(file=rng_file)
+    xml = open(tdl_file, 'r')
+    doc = lxml.etree.parse(xml)
+    xml.close()
 
-    # Define callback for error handling
-    def error_cb(ctx, str):
-        print("%s: %s" % (ctx, str.strip()))
-    libxml2.registerErrorHandler(error_cb, tdl_file)
-
-    # Attempt to validate
-    reader = libxml2.newTextReaderFilename(tdl_file)
-    reader.RelaxNGSetSchema(rngs)
-    ret = reader.Read()
-    while ret == 1:
-        ret = reader.Read()
-
-    if ret != 0:
-        raise Exception('Error parsing the document: %s' % tdl_file)
-    if reader.IsValid() != 1:
-        raise Exception('Document failed to validate: %s' % tdl_file)
+    valid = relaxng.validate(doc)
+    if not valid:
+        errstr = "\n%s XML schema validation failed:\n" % (tdl_file)
+        for error in relaxng.error_log:
+            errstr += "\tline %s: %s\n" % (error.line, error.message)
+        raise Exception(errstr)
 
 # Test generator that iterates over all .tdl files
 def test():
