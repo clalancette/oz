@@ -243,6 +243,9 @@ class TDL(object):
         self.disksize = self._parse_disksize()
 
     def _parse_disksize(self):
+        """
+        Internal method to parse the disk size out of the TDL.
+        """
         size = _xml_get_value(self.doc, '/template/disk/size', 'disk size',
                               optional=True)
         if size is None:
