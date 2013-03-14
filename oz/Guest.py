@@ -102,7 +102,7 @@ class Guest(object):
                     break
 
         if self.bridge_name is None:
-            raise oz.OzException.OzException("Could not find a viable libvirt NAT bridge, install cannot continue")
+            raise oz.OzException.OzException("Could not find a libvirt bridge.  Please run 'virsh net-start default' to start the default libvirt network, or see http://github.com/clalancette/oz/wiki/Oz-Network-Configuration for more information")
 
         self.log.debug("libvirt bridge name is %s" % (self.bridge_name))
 
