@@ -20,12 +20,12 @@ RHL installation
 """
 
 import re
-import os
 import shutil
+from os.path import join
 
-import oz.ozutil
 import oz.RedHat
-import oz.OzException
+from oz.ozutil import generate_full_auto_path, copy_modify_file
+from oz.OzException import OzException
 
 class RHL9Guest(oz.RedHat.RedHatCDGuest):
     """
@@ -42,7 +42,7 @@ class RHL9Guest(oz.RedHat.RedHatCDGuest):
         self.auto = auto
 
         if self.tdl.arch != "i386":
-            raise oz.OzException.OzException("Invalid arch " + self.tdl.arch + "for RHL guest")
+            raise OzException("Invalid arch " + self.tdl.arch + "for RHL guest")
 
     def _modify_iso(self):
         """
@@ -50,7 +50,7 @@ class RHL9Guest(oz.RedHat.RedHatCDGuest):
         """
         self.log.debug("Putting the kickstart in place")
 
-        outname = os.path.join(self.iso_contents, "ks.cfg")
+        outname = join(self.iso_contents, "ks.cfg")
 
         if self.auto is None:
             def _kssub(line):
@@ -67,8 +67,7 @@ class RHL9Guest(oz.RedHat.RedHatCDGuest):
                 else:
                     return line
 
-            oz.ozutil.copy_modify_file(oz.ozutil.generate_full_auto_path(self.stock_ks),
-                                       outname, _kssub)
+            copy_modify_file(generate_full_auto_path(self.stock_ks), outname, _kssub)
         else:
             shutil.copy(self.auto, outname)
 

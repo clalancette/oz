@@ -24,10 +24,11 @@ import re
 import os
 import libxml2
 import shutil
+from os.path import join
 
 import oz.Guest
-import oz.ozutil
-import oz.OzException
+from oz.ozutil import generate_full_auto_path, copy_modify_file, subprocess_check_output
+from oz.OzException import OzException
 
 class Windows(oz.Guest.CDGuest):
     """
@@ -38,7 +39,7 @@ class Windows(oz.Guest.CDGuest):
                                   "localtime", "usb", None, True, False)
 
         if self.tdl.key is None:
-            raise oz.OzException.OzException("A key is required when installing Windows")
+            raise OzException("A key is required when installing Windows")
 
 class Windows2000andXPand2003(Windows):
     """
@@ -48,11 +49,11 @@ class Windows2000andXPand2003(Windows):
         Windows.__init__(self, tdl, config, output_disk)
 
         if self.tdl.update == "2000" and self.tdl.arch != "i386":
-            raise oz.OzException.OzException("Windows 2000 only supports i386 architecture")
+            raise OzException("Windows 2000 only supports i386 architecture")
 
         self.siffile = auto
         if self.siffile is None:
-            self.siffile = oz.ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif")
+            self.siffile = generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif")
 
         self.winarch = self.tdl.arch
         if self.winarch == "x86_64":
@@ -63,16 +64,16 @@ class Windows2000andXPand2003(Windows):
         Method to create a new ISO based on the modified CD/DVD.
         """
         self.log.debug("Generating new ISO")
-        oz.ozutil.subprocess_check_output(["genisoimage",
-                                           "-b", "cdboot/boot.bin",
-                                           "-no-emul-boot", "-boot-load-seg",
-                                           "1984", "-boot-load-size", "4",
-                                           "-iso-level", "2", "-J", "-l", "-D",
-                                           "-N", "-joliet-long",
-                                           "-relaxed-filenames", "-v", "-v",
-                                           "-V", "Custom",
-                                           "-o", self.output_iso,
-                                           self.iso_contents])
+        subprocess_check_output(["genisoimage",
+                                 "-b", "cdboot/boot.bin",
+                                 "-no-emul-boot", "-boot-load-seg",
+                                 "1984", "-boot-load-size", "4",
+                                 "-iso-level", "2", "-J", "-l", "-D",
+                                 "-N", "-joliet-long",
+                                 "-relaxed-filenames", "-v", "-v",
+                                 "-V", "Custom",
+                                 "-o", self.output_iso,
+                                 self.iso_contents])
 
     def generate_diskimage(self, size=10, force=False):
         """
@@ -103,13 +104,12 @@ class Windows2000andXPand2003(Windows):
         """
         self.log.debug("Modifying ISO")
 
-        os.mkdir(os.path.join(self.iso_contents, "cdboot"))
-        self._geteltorito(self.orig_iso, os.path.join(self.iso_contents,
-                                                      "cdboot", "boot.bin"))
+        os.mkdir(join(self.iso_contents, "cdboot"))
+        self._geteltorito(self.orig_iso, join(self.iso_contents, "cdboot", "boot.bin"))
 
-        outname = os.path.join(self.iso_contents, self.winarch, "winnt.sif")
+        outname = join(self.iso_contents, self.winarch, "winnt.sif")
 
-        if self.siffile == oz.ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif"):
+        if self.siffile == generate_full_auto_path("windows-" + self.tdl.update + "-jeos.sif"):
             # if this is the oz default siffile, we modify certain parameters
             # to make installation succeed
             computername = "OZ" + str(random.randrange(1, 900000))
@@ -130,7 +130,7 @@ class Windows2000andXPand2003(Windows):
                 else:
                     return line
 
-            oz.ozutil.copy_modify_file(self.siffile, outname, _sifsub)
+            copy_modify_file(self.siffile, outname, _sifsub)
         else:
             # if the user provided their own siffile, do not override their
             # choices; the user gets to keep both pieces if something breaks
@@ -154,7 +154,7 @@ class Windows2008and7(Windows):
 
         self.unattendfile = auto
         if self.unattendfile is None:
-            self.unattendfile = oz.ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.xml")
+            self.unattendfile = generate_full_auto_path("windows-" + self.tdl.update + "-jeos.xml")
 
         self.winarch = "x86"
         if self.tdl.arch == "x86_64":
@@ -167,15 +167,15 @@ class Windows2008and7(Windows):
         self.log.debug("Generating new ISO")
         # NOTE: Windows 2008 is very picky about which arguments to genisoimage
         # will generate a bootable CD, so modify these at your own risk
-        oz.ozutil.subprocess_check_output(["genisoimage",
-                                           "-b", "cdboot/boot.bin",
-                                           "-no-emul-boot", "-c", "BOOT.CAT",
-                                           "-iso-level", "2", "-J", "-l", "-D",
-                                           "-N", "-joliet-long",
-                                           "-relaxed-filenames", "-v", "-v",
-                                           "-V", "Custom", "-udf",
-                                           "-o", self.output_iso,
-                                           self.iso_contents])
+        subprocess_check_output(["genisoimage",
+                                 "-b", "cdboot/boot.bin",
+                                 "-no-emul-boot", "-c", "BOOT.CAT",
+                                 "-iso-level", "2", "-J", "-l", "-D",
+                                 "-N", "-joliet-long",
+                                 "-relaxed-filenames", "-v", "-v",
+                                 "-V", "Custom", "-udf",
+                                 "-o", self.output_iso,
+                                 self.iso_contents])
 
     def _modify_iso(self):
         """
@@ -184,12 +184,11 @@ class Windows2008and7(Windows):
         self.log.debug("Modifying ISO")
 
         os.mkdir(os.path.join(self.iso_contents, "cdboot"))
-        self._geteltorito(self.orig_iso, os.path.join(self.iso_contents,
-                                                      "cdboot", "boot.bin"))
+        self._geteltorito(self.orig_iso, join(self.iso_contents, "cdboot", "boot.bin"))
 
-        outname = os.path.join(self.iso_contents, "autounattend.xml")
+        outname = join(self.iso_contents, "autounattend.xml")
 
-        if self.unattendfile == oz.ozutil.generate_full_auto_path("windows-" + self.tdl.update + "-jeos.xml"):
+        if self.unattendfile == generate_full_auto_path("windows-" + self.tdl.update + "-jeos.xml"):
             # if this is the oz default unattend file, we modify certain
             # parameters to make installation succeed
             doc = libxml2.parseFile(self.unattendfile)

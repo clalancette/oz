@@ -19,12 +19,11 @@ Debian installation
 """
 
 import shutil
-import os
 import re
+from os.path import join
 
 import oz.Guest
-import oz.ozutil
-import oz.OzException
+from oz.ozutil import generate_full_auto_path, mkdir_p, copy_modify_file, subprocess_check_output
 
 class DebianGuest(oz.Guest.CDGuest):
     """
@@ -36,7 +35,7 @@ class DebianGuest(oz.Guest.CDGuest):
 
         self.preseed_file = auto
         if self.preseed_file is None:
-            self.preseed_file = oz.ozutil.generate_full_auto_path("debian-" + self.tdl.update + "-jeos.preseed")
+            self.preseed_file = generate_full_auto_path("debian-" + self.tdl.update + "-jeos.preseed")
 
     def _modify_iso(self):
         """
@@ -45,11 +44,11 @@ class DebianGuest(oz.Guest.CDGuest):
         self.log.debug("Modifying ISO")
 
         self.log.debug("Copying preseed file")
-        oz.ozutil.mkdir_p(os.path.join(self.iso_contents, "preseed"))
+        mkdir_p(join(self.iso_contents, "preseed"))
 
-        outname = os.path.join(self.iso_contents, "preseed", "customiso.seed")
+        outname = join(self.iso_contents, "preseed", "customiso.seed")
 
-        if self.preseed_file == oz.ozutil.generate_full_auto_path("debian-" + self.tdl.update + "-jeos.preseed"):
+        if self.preseed_file == generate_full_auto_path("debian-" + self.tdl.update + "-jeos.preseed"):
 
             def _preseed_sub(line):
                 """
@@ -63,7 +62,7 @@ class DebianGuest(oz.Guest.CDGuest):
                 else:
                     return line
 
-            oz.ozutil.copy_modify_file(self.preseed_file, outname, _preseed_sub)
+            copy_modify_file(self.preseed_file, outname, _preseed_sub)
         else:
             shutil.copy(self.preseed_file, outname)
 
@@ -74,32 +73,32 @@ class DebianGuest(oz.Guest.CDGuest):
             installdir = "/install.386"
 
         self.log.debug("Modifying isolinux.cfg")
-        isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
-                                   "isolinux.cfg")
-        f = open(isolinuxcfg, 'w')
-        f.write("default customiso\n")
-        f.write("timeout 1\n")
-        f.write("prompt 0\n")
-        f.write("label customiso\n")
-        f.write("  menu label ^Customiso\n")
-        f.write("  menu default\n")
-        f.write("  kernel " + installdir + "/vmlinuz\n")
-        f.write("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us netcfg/choose_interface=auto priority=critical initrd=" + installdir + "/initrd.gz --\n")
-        f.close()
+        isolinuxcfg = join(self.iso_contents, "isolinux", "isolinux.cfg")
+        with open(isolinuxcfg, 'w') as f:
+            f.write("""\
+default customiso
+timeout 1
+prompt 0
+label customiso
+  menu label ^Customiso
+  menu default
+  kernel %s/vmlinuz\
+  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us netcfg/choose_interface=auto priority=critical initrd=" + installdir + "/initrd.gz --
+""" % installdir)
 
     def _generate_new_iso(self):
         """
         Method to create a new ISO based on the modified CD/DVD.
         """
         self.log.info("Generating new ISO")
-        oz.ozutil.subprocess_check_output(["genisoimage", "-r", "-V", "Custom",
-                                           "-J", "-l", "-no-emul-boot",
-                                           "-b", "isolinux/isolinux.bin",
-                                           "-c", "isolinux/boot.cat",
-                                           "-boot-load-size", "4",
-                                           "-cache-inodes", "-boot-info-table",
-                                           "-v", "-v", "-o", self.output_iso,
-                                           self.iso_contents])
+        subprocess_check_output(["genisoimage", "-r", "-V", "Custom",
+                                 "-J", "-l", "-no-emul-boot",
+                                 "-b", "isolinux/isolinux.bin",
+                                 "-c", "isolinux/boot.cat",
+                                 "-boot-load-size", "4",
+                                 "-cache-inodes", "-boot-info-table",
+                                 "-v", "-v", "-o", self.output_iso,
+                                 self.iso_contents])
 
 def get_class(tdl, config, auto, output_disk=None):
     """

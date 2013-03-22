@@ -19,11 +19,10 @@ RHEL-3 installation
 """
 
 import re
-import os
+from os.path import join
 
-import oz.ozutil
 import oz.RedHat
-import oz.OzException
+from oz.OzException import OzException
 
 class RHEL3Guest(oz.RedHat.RedHatCDGuest):
     """
@@ -44,8 +43,8 @@ class RHEL3Guest(oz.RedHat.RedHatCDGuest):
         self.auto = auto
 
         # override the sshd_config value set in RedHatCDGuest.__init__
-        self.sshd_config = \
-"""SyslogFacility AUTHPRIV
+        self.sshd_config = """\
+SyslogFacility AUTHPRIV
 PasswordAuthentication yes
 ChallengeResponseAuthentication no
 X11Forwarding yes
@@ -56,7 +55,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         """
         Method to make the boot ISO auto-boot with appropriate parameters.
         """
-        self._copy_kickstart(os.path.join(self.iso_contents, "ks.cfg"))
+        self._copy_kickstart(join(self.iso_contents, "ks.cfg"))
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method="
         if self.tdl.installtype == "url":
@@ -74,17 +73,17 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         cdfd.close()
 
         if pvd.system_identifier != "LINUX                           ":
-            raise oz.OzException.OzException("Invalid system identifier on ISO for " + self.tdl.distro + " install")
+            raise OzException("Invalid system identifier on ISO for " + self.tdl.distro + " install")
 
         if self.tdl.distro == "RHEL-3":
             if self.tdl.installtype == "iso":
-                raise oz.OzException.OzException("BUG: shouldn't be able to reach RHEL-3 with ISO checking")
+                raise OzException("BUG: shouldn't be able to reach RHEL-3 with ISO checking")
             # The boot ISOs for RHEL-3 don't have a whole lot of identifying
             # information.  We just pass through here, doing nothing
         else:
             if self.tdl.installtype == "iso":
                 if not re.match("CentOS-3(\.[0-9])? Disk 1", pvd.volume_identifier) and not re.match("CentOS-3(\.[0-9])? server", pvd.volume_identifier) and not re.match("CentOS-3(\.[0-9])? " + self.tdl.arch + " DVD", pvd.volume_identifier):
-                    raise oz.OzException.OzException("Only DVDs are supported for CentOS-3 ISO installs")
+                    raise OzException("Only DVDs are supported for CentOS-3 ISO installs")
             # The boot ISOs for CentOS-3 don't have a whole lot of identifying
             # information.  We just pass through here, doing nothing
 

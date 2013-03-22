@@ -32,6 +32,7 @@ try:
 except ImportError:
     import ConfigParser as configparser
 import collections
+from os.path import dirname, abspath, join, exists, split, isdir, expanduser
 
 def generate_full_auto_path(relative):
     """
@@ -42,8 +43,7 @@ def generate_full_auto_path(relative):
     if relative is None:
         raise Exception("The relative path cannot be None")
 
-    pkg_path = os.path.dirname(__file__)
-    return os.path.abspath(os.path.join(pkg_path, "auto", relative))
+    return abspath(join(dirname(__file__), "auto", relative))
 
 def executable_exists(program):
     """
@@ -55,18 +55,18 @@ def executable_exists(program):
         """
         Helper method to check if a file exists and is executable
         """
-        return os.path.exists(fpath) and os.access(fpath, os.X_OK)
+        return exists(fpath) and os.access(fpath, os.X_OK)
 
     if program is None:
         raise Exception("Invalid program name passed")
 
-    fpath, fname = os.path.split(program)
+    fpath, fname = split(program)
     if fpath:
         if is_exe(program):
             return program
     else:
         for path in os.environ["PATH"].split(os.pathsep):
-            exe_file = os.path.join(path, program)
+            exe_file = join(path, program)
             if is_exe(exe_file):
                 return exe_file
 
@@ -406,7 +406,7 @@ def mkdir_p(path):
     try:
         os.makedirs(path)
     except OSError as err:
-        if err.errno != errno.EEXIST or not os.path.isdir(path):
+        if err.errno != errno.EEXIST or not isdir(path):
             raise
 
 def copy_modify_file(inname, outname, subfunc):
@@ -575,7 +575,7 @@ def rmtree_and_sync(directory):
     # until those updates have made it to disk.  Note that this cannot save us
     # if the system is extremely busy for other reasons, but at least the
     # problem won't be self-inflicted.
-    fd = os.open(os.path.dirname(directory), os.O_RDONLY)
+    fd = os.open(dirname(directory), os.O_RDONLY)
     os.fsync(fd)
     os.close(fd)
 
@@ -588,7 +588,7 @@ def parse_config(config_file):
     # if config_file was not None on input, then it was provided by the caller
     # and we use that instead
 
-    config_file = os.path.expanduser(config_file)
+    config_file = expanduser(config_file)
 
     config = configparser.SafeConfigParser()
     if os.access(config_file, os.F_OK):
@@ -602,7 +602,7 @@ def default_output_dir():
     else:
         directory = "~/.oz/images"
 
-    return os.path.expanduser(directory)
+    return expanduser(directory)
 
 def default_data_dir():
     if os.geteuid() == 0:
@@ -610,10 +610,10 @@ def default_data_dir():
     else:
         directory = "~/.oz"
 
-    return os.path.expanduser(directory)
+    return expanduser(directory)
 
 def default_screenshot_dir():
-    return os.path.join(default_data_dir(), "screenshots")
+    return join(default_data_dir(), "screenshots")
 
 def http_get_header(url, redirect=True):
     """

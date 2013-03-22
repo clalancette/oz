@@ -20,10 +20,7 @@ Fedora installation
 """
 
 import os
-
-import oz.ozutil
 import oz.RedHat
-import oz.OzException
 
 class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
     """

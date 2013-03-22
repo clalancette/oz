@@ -23,12 +23,12 @@ import libxml2
 import base64
 import re
 try:
-    import urllib.parse as urlparse
+    from urllib.parse import urlparse
 except ImportError:
-    import urlparse
+    from urlparse import urlparse
 
-import oz.ozutil
-import oz.OzException
+from oz.ozutil import string_to_bool
+from oz.OzException import OzException
 
 def _xml_get_value(doc, xmlstring, component, optional=False):
     """
@@ -53,9 +53,9 @@ def _xml_get_value(doc, xmlstring, component, optional=False):
         if optional:
             return None
         else:
-            raise oz.OzException.OzException("Failed to find %s in TDL" % (component))
+            raise OzException("Failed to find %s in TDL" % (component))
     else:
-        raise oz.OzException.OzException("Expected 0 or 1 %s in TDL, saw %d" % (component, len(res)))
+        raise OzException("Expected 0 or 1 %s in TDL, saw %d" % (component, len(res)))
 
 class Repository(object):
     """
@@ -139,26 +139,20 @@ class TDL(object):
 
         template = self.doc.xpathEval('/template')
         if len(template) != 1:
-            raise oz.OzException.OzException("Expected 1 template section in TDL, saw %d" % (len(template)))
+            raise OzException("Expected 1 template section in TDL, saw %d" % (len(template)))
         self.version = template[0].prop('version')
 
         if self.version:
             self._validate_tdl_version()
 
         self.name = _xml_get_value(self.doc, '/template/name', 'template name')
-
         self.distro = _xml_get_value(self.doc, '/template/os/name', 'OS name')
-
-        self.update = _xml_get_value(self.doc, '/template/os/version',
-                                     'OS version')
-
-        self.arch = _xml_get_value(self.doc, '/template/os/arch',
-                                   'OS architecture')
+        self.update = _xml_get_value(self.doc, '/template/os/version', 'OS version')
+        self.arch = _xml_get_value(self.doc, '/template/os/arch', 'OS architecture')
         if self.arch != "i386" and self.arch != "x86_64":
-            raise oz.OzException.OzException("Architecture must be one of 'i386' or 'x86_64'")
+            raise OzException("Architecture must be one of 'i386' or 'x86_64'")
 
-        self.key = _xml_get_value(self.doc, '/template/os/key', 'OS key',
-                                  optional=True)
+        self.key = _xml_get_value(self.doc, '/template/os/key', 'OS key', optional=True)
         # key is not required, so it is not fatal if it is None
 
         self.description = _xml_get_value(self.doc, '/template/description',
@@ -167,10 +161,10 @@ class TDL(object):
 
         install = self.doc.xpathEval('/template/os/install')
         if len(install) != 1:
-            raise oz.OzException.OzException("Expected 1 OS install section in TDL, saw %d" % (len(install)))
+            raise OzException("Expected 1 OS install section in TDL, saw %d" % (len(install)))
         self.installtype = install[0].prop('type')
         if self.installtype is None:
-            raise oz.OzException.OzException("Failed to find OS install type in TDL")
+            raise OzException("Failed to find OS install type in TDL")
 
         # we only support md5/sha1/sha256 sums for ISO install types.  However,
         # we make sure the instance variables are set to None for both types
@@ -202,9 +196,9 @@ class TDL(object):
             # only one of md5, sha1, or sha256 can be specified; raise an error
             # if multiple are
             if (self.iso_md5_url and self.iso_sha1_url) or (self.iso_md5_url and self.iso_sha256_url) or (self.iso_sha1_url and self.iso_sha256_url):
-                raise oz.OzException.OzException("Only one of <md5sum>, <sha1sum>, and <sha256sum> can be specified")
+                raise OzException("Only one of <md5sum>, <sha1sum>, and <sha256sum> can be specified")
         else:
-            raise oz.OzException.OzException("Unknown install type " + self.installtype + " in TDL")
+            raise OzException("Unknown install type " + self.installtype + " in TDL")
 
         self.rootpw = _xml_get_value(self.doc, '/template/os/rootpw',
                                      "root/Administrator password",
@@ -218,7 +212,7 @@ class TDL(object):
         for afile in self.doc.xpathEval('/template/files/file'):
             name = afile.prop('name')
             if name is None:
-                raise oz.OzException.OzException("File without a name was given")
+                raise OzException("File without a name was given")
             contenttype = afile.prop('type')
             if contenttype is None:
                 contenttype = 'raw'
@@ -232,7 +226,7 @@ class TDL(object):
                 else:
                     self.files[name] = base64.b64decode(content)
             else:
-                raise oz.OzException.OzException("File type for %s must be 'raw' or 'base64'" % (name))
+                raise OzException("File type for %s must be 'raw' or 'base64'" % (name))
 
         self.repositories = {}
         repositorieslist = self.doc.xpathEval('/template/repositories/repository')
@@ -255,13 +249,13 @@ class TDL(object):
 
         match = re.match(r'([0-9]*) *([GT]?)$', size)
         if not match:
-            raise oz.OzException.OzException("Invalid disk size; it must be specified as a size in gigabytes, optionally suffixed with 'G' or 'T'")
+            raise OzException("Invalid disk size; it must be specified as a size in gigabytes, optionally suffixed with 'G' or 'T'")
 
         number = match.group(1)
         suffix = match.group(2)
 
         if not number.isdigit():
-            raise oz.OzException.OzException("Invalid disk size; it must begin with a number")
+            raise OzException("Invalid disk size; it must begin with a number")
 
         if not suffix or suffix == 'G':
             # for backwards compatibility, we assume G when there is no suffix
@@ -271,7 +265,7 @@ class TDL(object):
         else:
             # note that this should never, ever happen; the regular expression
             # should have failed the match earlier
-            raise oz.OzException.OzException("Invalid suffix; it must be 'G' or 'T'")
+            raise OzException("Invalid suffix; it must be 'G' or 'T'")
 
         return size
 
@@ -291,14 +285,14 @@ class TDL(object):
         for command in self.doc.xpathEval('/template/commands/command'):
             name = command.prop('name')
             if name is None:
-                raise oz.OzException.OzException("Command without a name was given")
+                raise OzException("Command without a name was given")
             contenttype = command.prop('type')
             if contenttype is None:
                 contenttype = 'raw'
 
             content = command.getContent().strip()
             if len(content) == 0:
-                raise oz.OzException.OzException("Empty commands are not allowed")
+                raise OzException("Empty commands are not allowed")
 
             # since XML doesn't *guarantee* an order, the correct way to
             # specify a particular order of commands is to use the "position"
@@ -316,7 +310,7 @@ class TDL(object):
             if contenttype == 'base64':
                 content = base64.b64decode(content)
             elif contenttype != 'raw':
-                raise oz.OzException.OzException("File type for %s must be 'raw' or 'base64'" % (name))
+                raise OzException("File type for %s must be 'raw' or 'base64'" % (name))
 
             tmp.append((position, content))
 
@@ -329,11 +323,11 @@ class TDL(object):
             order = 1
             for pos, content in tmp:
                 if pos is None:
-                    raise oz.OzException.OzException("All command elements must have a position (explicit order), or none of them may (implicit order)")
+                    raise OzException("All command elements must have a position (explicit order), or none of them may (implicit order)")
                 elif pos != order:
                     # this handles both the case where there are duplicates and
                     # the case where there is a missing number
-                    raise oz.OzException.OzException("Cannot have duplicate or sparse command position order!")
+                    raise OzException("Cannot have duplicate or sparse command position order!")
                 order += 1
                 commands.append(content)
 
@@ -365,7 +359,7 @@ class TDL(object):
             name = package.prop('name')
 
             if name is None:
-                raise oz.OzException.OzException("Package without a name was given")
+                raise OzException("Package without a name was given")
 
             # repository that the package lives in (optional)
             repo = _xml_get_value(package, 'repository',
@@ -412,25 +406,22 @@ class TDL(object):
             if xmlstr is None:
                 xmlstr = default
 
-            val = oz.ozutil.string_to_bool(xmlstr)
+            val = string_to_bool(xmlstr)
             if val is None:
-                raise oz.OzException.OzException("Repository %s property must be 'true', 'yes', 'false', or 'no'" % (name))
+                raise OzException("Repository %s property must be 'true', 'yes', 'false', or 'no'" % (name))
             return val
 
         for repo in reposlist:
             name = repo.prop('name')
             if name is None:
-                raise oz.OzException.OzException("Repository without a name was given")
+                raise OzException("Repository without a name was given")
             url = _xml_get_value(repo, 'url', 'repository url')
 
-            if urlparse.urlparse(url)[1] in ["localhost", "127.0.0.1",
-                                             "localhost.localdomain"]:
-                raise oz.OzException.OzException("Repositories cannot be localhost, since they must be reachable from the guest operating system")
+            if urlparse(url)[1] in ["localhost", "127.0.0.1", "localhost.localdomain"]:
+                raise OzException("Repositories cannot be localhost, since they must be reachable from the guest operating system")
 
             signed = _get_optional_repo_bool(repo, 'signed')
-
             persist = _get_optional_repo_bool(repo, 'persisted', default='yes')
-
             sslverify = _get_optional_repo_bool(repo, 'sslverify')
 
             clientcert = _xml_get_value(repo, 'clientcert', 'clientcert',
@@ -444,14 +435,14 @@ class TDL(object):
                 clientkey = clientkey.strip()
 
             if clientkey and not clientcert:
-                raise oz.OzException.OzException("You cannot specify a clientkey without a clientcert")
+                raise OzException("You cannot specify a clientkey without a clientcert")
 
             cacert = _xml_get_value(repo, 'cacert', 'cacert', optional=True)
             if cacert:
                 cacert = cacert.strip()
 
             if sslverify and not cacert:
-                raise oz.OzException.OzException("If sslverify is true you must also provide a ca cert")
+                raise OzException("If sslverify is true you must also provide a ca cert")
 
             # no need to delete - if the name matches we just overwrite here
             self.repositories[name] = Repository(name, url, signed, persist,
@@ -467,7 +458,7 @@ class TDL(object):
         Internal method to validate that we support the TDL version.
         """
         if float(self.version) > float(self.schema_version):
-            raise oz.OzException.OzException("TDL version (%s) is higher than our known version (%s)" % (self.version, self.schema_version))
+            raise OzException("TDL version (%s) is higher than our known version (%s)" % (self.version, self.schema_version))
 
     def __del__(self):
         if self.doc is not None:

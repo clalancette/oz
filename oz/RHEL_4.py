@@ -19,11 +19,10 @@ RHEL-4 installation
 """
 
 import re
-import os
+from os.path import join
 
-import oz.ozutil
 import oz.RedHat
-import oz.OzException
+from oz.OzException import OzException
 
 class RHEL4Guest(oz.RedHat.RedHatCDGuest):
     """
@@ -43,7 +42,7 @@ class RHEL4Guest(oz.RedHat.RedHatCDGuest):
         """
         Method to make the boot ISO auto-boot with appropriate parameters.
         """
-        self._copy_kickstart(os.path.join(self.iso_contents, "ks.cfg"))
+        self._copy_kickstart(join(self.iso_contents, "ks.cfg"))
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method="
         if self.tdl.installtype == "url":
@@ -65,7 +64,7 @@ class RHEL4Guest(oz.RedHat.RedHatCDGuest):
         # all of the below should have "LINUX" as their system_identifier,
         # so check it here
         if pvd.system_identifier != "LINUX                           ":
-            raise oz.OzException.OzException("Invalid system identifier on ISO for " + self.tdl.distro + " install")
+            raise OzException("Invalid system identifier on ISO for " + self.tdl.distro + " install")
 
         if self.tdl.distro == "RHEL-4":
             if self.tdl.installtype == 'iso':
@@ -73,19 +72,19 @@ class RHEL4Guest(oz.RedHat.RedHatCDGuest):
                 # DVDs and CDs.  To tell them apart, we assume that if the
                 # size is smaller than 1GB, this is a CD
                 if not re.match("RHEL/4(-U[0-9])?", pvd.volume_identifier) or (pvd.space_size * 2048) < 1 * 1024 * 1024 * 1024:
-                    raise oz.OzException.OzException("Only DVDs are supported for RHEL-4 ISO installs")
+                    raise OzException("Only DVDs are supported for RHEL-4 ISO installs")
             else:
                 # url installs
                 if not pvd.volume_identifier.startswith("Red Hat Enterprise Linux"):
-                    raise oz.OzException.OzException("Invalid boot.iso for RHEL-4 URL install")
+                    raise OzException("Invalid boot.iso for RHEL-4 URL install")
         elif self.tdl.distro == "CentOS-4":
             if self.tdl.installtype == 'iso':
                 if not re.match("CentOS 4(\.[0-9])?.*DVD", pvd.volume_identifier):
-                    raise oz.OzException.OzException("Only DVDs are supported for CentOS-4 ISO installs")
+                    raise OzException("Only DVDs are supported for CentOS-4 ISO installs")
             else:
                 # url installs
                 if not re.match("CentOS *", pvd.volume_identifier):
-                    raise oz.OzException.OzException("Invalid boot.iso for CentOS-4 URL install")
+                    raise OzException("Invalid boot.iso for CentOS-4 URL install")
 
 def get_class(tdl, config, auto, output_disk=None):
     """

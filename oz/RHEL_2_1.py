@@ -19,7 +19,6 @@ RHEL-2.1 installation
 """
 
 import oz.RedHat
-import oz.OzException
 
 class RHEL21Guest(oz.RedHat.RedHatFDGuest):
     """

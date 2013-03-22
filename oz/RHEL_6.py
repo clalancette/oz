@@ -18,12 +18,8 @@
 """
 RHEL-6 installation
 """
-
-import os
-
-import oz.ozutil
+from os.path import join
 import oz.RedHat
-import oz.OzException
 
 class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
     """
@@ -41,7 +37,7 @@ class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
         """
         Method to modify the ISO for autoinstallation.
         """
-        self._copy_kickstart(os.path.join(self.iso_contents, "ks.cfg"))
+        self._copy_kickstart(join(self.iso_contents, "ks.cfg"))
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
         if self.tdl.installtype == "url":

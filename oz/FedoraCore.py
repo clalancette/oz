@@ -19,10 +19,7 @@ Fedora Core installation
 """
 
 import os
-
-import oz.ozutil
 import oz.RedHat
-import oz.OzException
 
 class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
     """
