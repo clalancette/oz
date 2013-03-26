@@ -19,7 +19,7 @@
 Factory functions.
 """
 
-import oz.OzException
+from oz.OzException import OzException
 
 os_dict = { 'Fedora': 'Fedora',
             'FedoraCore': 'FedoraCore',
@@ -84,7 +84,7 @@ def guest_factory(tdl, config, auto, output_disk=None):
             break
 
     if klass is None:
-        raise oz.OzException.OzException("Unsupported " + tdl.distro + " update " + tdl.update)
+        raise OzException("Unsupported " + tdl.distro + " update " + tdl.update)
 
     return klass
 

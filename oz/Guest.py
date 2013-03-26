@@ -27,9 +27,9 @@ import subprocess
 import shutil
 import time
 try:
-    import urllib.parse as urlparse
+    from urllib.parse import urlparse
 except ImportError:
-    import urlparse
+    from urlparse import urlparse
 import stat
 import libxml2
 import logging
@@ -43,17 +43,12 @@ import base64
 import hashlib
 import errno
 import re
+from os.path import join, dirname, basename, realpath
 
 import oz.ozutil
-import oz.OzException
+from oz.ozutil import config_get_key, config_get_boolean_key, mkdir_p, copyfile_sparse, rmtree_and_sync
+from oz.OzException import OzException
 
-def subprocess_check_output(*popenargs, **kwargs):
-    """
-    Function to call a subprocess and gather the output.  Deprecated; slated
-    to be removed in Oz version 0.7.0. See
-    oz.ozutil.subprocess_check_output().
-    """
-    return oz.ozutil.subprocess_check_output(*popenargs, **kwargs)
 
 class Guest(object):
     """
@@ -69,10 +64,10 @@ class Guest(object):
 
             if len(doc.xpathEval("/capabilities/guest/arch/domain[@type='kvm']")) > 0:
                 self.libvirt_type = 'kvm'
-            elif len(doc.xpathEval("/capabilities/guest/arch/domain[@type='qemu']")) >0:
+            elif len(doc.xpathEval("/capabilities/guest/arch/domain[@type='qemu']")) > 0:
                 self.libvirt_type = 'qemu'
             else:
-                raise oz.OzException.OzException("This host does not support virtualization type kvm or qemu")
+                raise OzException("This host does not support virtualization type kvm or qemu")
 
         self.log.debug("Libvirt type is %s" % (self.libvirt_type))
 
@@ -102,7 +97,7 @@ class Guest(object):
                     break
 
         if self.bridge_name is None:
-            raise oz.OzException.OzException("Could not find a libvirt bridge.  Please run 'virsh net-start default' to start the default libvirt network, or see http://github.com/clalancette/oz/wiki/Oz-Network-Configuration for more information")
+            raise OzException("Could not find a libvirt bridge.  Please run 'virsh net-start default' to start the default libvirt network, or see http://github.com/clalancette/oz/wiki/Oz-Network-Configuration for more information")
 
         self.log.debug("libvirt bridge name is %s" % (self.bridge_name))
 
@@ -130,57 +125,35 @@ class Guest(object):
         self.name = self.tdl.name
 
         if self.tdl.arch != "i386" and self.tdl.arch != "x86_64":
-            raise oz.OzException.OzException("Unsupported guest arch " + self.tdl.arch)
-        self.log = logging.getLogger('%s.%s' % (__name__,
-                                                self.__class__.__name__))
+            raise OzException("Unsupported guest arch " + self.tdl.arch)
+        self.log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
         self.uuid = uuid.uuid4()
         self.macaddr = oz.ozutil.generate_macaddress()
 
         # configuration from 'paths' section
-        self.output_dir = oz.ozutil.config_get_key(config, 'paths',
-                                                   'output_dir',
-                                                   oz.ozutil.default_output_dir())
+        self.output_dir = config_get_key(config, 'paths', 'output_dir', oz.ozutil.default_output_dir())
+        mkdir_p(self.output_dir)
 
-        oz.ozutil.mkdir_p(self.output_dir)
-
-        self.data_dir = oz.ozutil.config_get_key(config, 'paths',
-                                                 'data_dir',
-                                                 oz.ozutil.default_data_dir())
-
-        self.screenshot_dir = oz.ozutil.config_get_key(config, 'paths',
-                                                       'screenshot_dir',
-                                                       oz.ozutil.default_screenshot_dir())
+        self.data_dir = config_get_key(config, 'paths', 'data_dir', oz.ozutil.default_data_dir())
+        self.screenshot_dir = config_get_key(config, 'paths', 'screenshot_dir', oz.ozutil.default_screenshot_dir())
 
         # configuration from 'libvirt' section
-        self.libvirt_uri = oz.ozutil.config_get_key(config, 'libvirt', 'uri',
-                                                    'qemu:///system')
-        self.libvirt_type = oz.ozutil.config_get_key(config, 'libvirt', 'type',
-                                                     None)
-        self.bridge_name = oz.ozutil.config_get_key(config, 'libvirt',
-                                                    'bridge_name', None)
-        self.install_cpus = oz.ozutil.config_get_key(config, 'libvirt', 'cpus',
-                                                     1)
+        self.libvirt_uri = config_get_key(config, 'libvirt', 'uri', 'qemu:///system')
+        self.libvirt_type = config_get_key(config, 'libvirt', 'type', None)
+        self.bridge_name = config_get_key(config, 'libvirt', 'bridge_name', None)
+        self.install_cpus = config_get_key(config, 'libvirt', 'cpus', 1)
         # the memory in the configuration file is specified in megabytes, but
         # libvirt expects kilobytes, so multiply by 1024
-        self.install_memory = int(oz.ozutil.config_get_key(config, 'libvirt',
-                                                           'memory', 1024) * 1024)
-        self.image_type = oz.ozutil.config_get_key(config, 'libvirt', 'image_type', 'raw')
+        self.install_memory = int(config_get_key(config, 'libvirt', 'memory', 1024) * 1024)
+        self.image_type = config_get_key(config, 'libvirt', 'image_type', 'raw')
 
         # configuration from 'cache' section
-        self.cache_original_media = oz.ozutil.config_get_boolean_key(config,
-                                                                     'cache',
-                                                                     'original_media',
-                                                                     True)
-        self.cache_modified_media = oz.ozutil.config_get_boolean_key(config,
-                                                                     'cache',
-                                                                     'modified_media',
-                                                                     False)
-        self.cache_jeos = oz.ozutil.config_get_boolean_key(config, 'cache',
-                                                           'jeos', False)
+        self.cache_original_media = config_get_boolean_key(config, 'cache', 'original_media', True)
+        self.cache_modified_media = config_get_boolean_key(config, 'cache', 'modified_media', False)
+        self.cache_jeos = config_get_boolean_key(config, 'cache', 'jeos', False)
 
-        self.jeos_cache_dir = os.path.join(self.data_dir, "jeos")
-        self.jeos_filename = os.path.join(self.jeos_cache_dir,
-                                          self.tdl.distro + self.tdl.update + self.tdl.arch + ".dsk")
+        self.jeos_cache_dir = join(self.data_dir, "jeos")
+        self.jeos_filename = join(self.jeos_cache_dir, self.tdl.distro + self.tdl.update + self.tdl.arch + ".dsk")
 
         self.diskimage = output_disk
         if self.diskimage is None:
@@ -188,10 +161,9 @@ class Guest(object):
             # compatibility with older versions of Oz
             if self.image_type == 'raw':
                 ext = '.dsk'
-            self.diskimage = os.path.join(self.output_dir, self.tdl.name + ext)
+            self.diskimage = join(self.output_dir, self.tdl.name + ext)
 
-        self.icicle_tmp = os.path.join(self.data_dir, "icicletmp",
-                                       self.tdl.name)
+        self.icicle_tmp = join(self.data_dir, "icicletmp", self.tdl.name)
         self.listen_port = random.randrange(1024, 65535)
 
         self.connect_to_libvirt()
@@ -212,7 +184,7 @@ class Guest(object):
             self.disk_bus = "virtio"
             self.disk_dev = "vda"
         else:
-            raise oz.OzException.OzException("Unknown diskbus type " + diskbus)
+            raise OzException("Unknown diskbus type " + diskbus)
 
         self.rootpw = self.tdl.rootpw
         if self.rootpw is None:
@@ -224,7 +196,7 @@ class Guest(object):
             self.log.debug("Install URL validation failed:", exc_info=True)
             raise
 
-        oz.ozutil.mkdir_p(self.icicle_tmp)
+        mkdir_p(self.icicle_tmp)
 
         self.disksize = self.tdl.disksize
         if self.disksize is None:
@@ -283,18 +255,18 @@ class Guest(object):
 
         try:
             self.libvirt_conn.lookupByName(self.tdl.name)
-            raise oz.OzException.OzException("Domain with name %s already exists" % (self.tdl.name))
+            raise OzException("Domain with name %s already exists" % (self.tdl.name))
         except libvirt.libvirtError:
             pass
 
         try:
             self.libvirt_conn.lookupByUUID(str(self.uuid))
-            raise oz.OzException.OzException("Domain with UUID %s already exists" % (self.uuid))
+            raise OzException("Domain with UUID %s already exists" % (self.uuid))
         except libvirt.libvirtError:
             pass
 
         if os.access(self.diskimage, os.F_OK):
-            raise oz.OzException.OzException("Diskimage %s already exists" % (self.diskimage))
+            raise OzException("Diskimage %s already exists" % (self.diskimage))
 
     # the next 4 methods are intended to be overridden by the individual
     # OS backends; raise an error if they are called but not implemented
@@ -304,14 +276,14 @@ class Guest(object):
         Base method for generating the install media for operating system
         installation.  This is expected to be overridden by all subclasses.
         """
-        raise oz.OzException.OzException("Install media for %s%s is not implemented, install cannot continue" % (self.tdl.distro, self.tdl.update))
+        raise OzException("Install media for %s%s is not implemented, install cannot continue" % (self.tdl.distro, self.tdl.update))
 
     def customize(self, libvirt_xml):
         """
         Base method for customizing the operating system.  This is expected
         to be overridden by subclasses that support customization.
         """
-        raise oz.OzException.OzException("Customization for %s%s is not implemented" % (self.tdl.distro, self.tdl.update))
+        raise OzException("Customization for %s%s is not implemented" % (self.tdl.distro, self.tdl.update))
 
     def generate_icicle(self, libvirt_xml):
         """
@@ -319,7 +291,7 @@ class Guest(object):
         system.  This is expect to be overridden by subclasses that support
         ICICLE generation.
         """
-        raise oz.OzException.OzException("ICICLE generation for %s%s is not implemented" % (self.tdl.distro, self.tdl.update))
+        raise OzException("ICICLE generation for %s%s is not implemented" % (self.tdl.distro, self.tdl.update))
 
     # this method is intended to be an optimization if the user wants to do
     # both customize and generate_icicle
@@ -330,7 +302,7 @@ class Guest(object):
         separately for those classes that support customization and ICICLE
         generation.
         """
-        raise oz.OzException.OzException("Customization and ICICLE generate for %s%s is not implemented" % (self.tdl.distro, self.tdl.update))
+        raise OzException("Customization and ICICLE generate for %s%s is not implemented" % (self.tdl.distro, self.tdl.update))
 
     class _InstallDev(object):
         """
@@ -354,8 +326,7 @@ class Guest(object):
         serialTarget = serial.newChild(None, "target", None)
         serialTarget.setProp("port", "1")
 
-    def _generate_xml(self, bootdev, installdev, kernel=None, initrd=None,
-                      cmdline=None):
+    def _generate_xml(self, bootdev, installdev, kernel=None, initrd=None, cmdline=None):
         """
         Method to generate libvirt XML useful for installation.
         """
@@ -469,8 +440,7 @@ class Guest(object):
 
         return xml
 
-    def _internal_generate_diskimage(self, size=10, force=False,
-                                     create_partition=False):
+    def _internal_generate_diskimage(self, size=10, force=False, create_partition=False):
         """
         Internal method to generate a diskimage.
         """
@@ -479,11 +449,10 @@ class Guest(object):
             # we'll copy the JEOS itself later on
             return
 
-        self.log.info("Generating %dGB diskimage for %s" % (size,
-                                                            self.tdl.name))
+        self.log.info("Generating %dGB diskimage for %s" % (size, self.tdl.name))
 
-        directory = os.path.dirname(self.diskimage)
-        filename = os.path.basename(self.diskimage)
+        directory = dirname(self.diskimage)
+        filename = basename(self.diskimage)
 
         doc = libxml2.newDoc("1.0")
         pool = doc.newChild(None, "pool", None)
@@ -586,20 +555,20 @@ class Guest(object):
         doc = libxml2.parseDoc(libvirt_dom.XMLDesc(0))
         disktargets = doc.xpathEval("/domain/devices/disk/target")
         if len(disktargets) < 1:
-            raise oz.OzException.OzException("Could not find disk target")
+            raise OzException("Could not find disk target")
         disks = []
         for target in disktargets:
             disks.append(target.prop('dev'))
         if not disks:
-            raise oz.OzException.OzException("Could not find disk target device")
+            raise OzException("Could not find disk target device")
         inttargets = doc.xpathEval("/domain/devices/interface/target")
         if len(inttargets) < 1:
-            raise oz.OzException.OzException("Could not find interface target")
+            raise OzException("Could not find interface target")
         interfaces = []
         for target in inttargets:
             interfaces.append(target.prop('dev'))
         if not interfaces:
-            raise oz.OzException.OzException("Could not find interface target device")
+            raise OzException("Could not find interface target device")
 
         return disks, interfaces
 
@@ -660,10 +629,9 @@ class Guest(object):
                 raise saved_exception
             else:
                 # the passed in exception was None, just raise a generic error
-                raise oz.OzException.OzException("Unknown libvirt error")
+                raise OzException("Unknown libvirt error")
 
-    def _wait_for_install_finish(self, libvirt_dom, count,
-                                 inactivity_timeout=300):
+    def _wait_for_install_finish(self, libvirt_dom, count, inactivity_timeout=300):
         """
         Method to wait for an installation to finish.  This will wait around
         until either the VM has gone away (at which point it is assumed the
@@ -722,12 +690,12 @@ class Guest(object):
         if count == 0:
             # if we timed out, then let's make sure to take a screenshot.
             screenshot_text = self._capture_screenshot(libvirt_dom)
-            raise oz.OzException.OzException("Timed out waiting for install to finish.  %s" % (screenshot_text))
+            raise OzException("Timed out waiting for install to finish.  %s" % (screenshot_text))
         elif inactivity_countdown == 0:
             # if we saw no disk or network activity in the countdown window,
             # we presume the install has hung.  Fail here
             screenshot_text = self._capture_screenshot(libvirt_dom)
-            raise oz.OzException.OzException("No disk activity in %d seconds, failing.  %s" % (inactivity_timeout, screenshot_text))
+            raise OzException("No disk activity in %d seconds, failing.  %s" % (inactivity_timeout, screenshot_text))
 
         # We get here only if we got a libvirt exception
         self._wait_for_clean_shutdown(libvirt_dom, saved_exception)
@@ -778,10 +746,9 @@ class Guest(object):
         else:
             return True
 
-        originalname = os.path.basename(urlparse.urlparse(original_url)[2])
+        originalname = basename(urlparse(original_url)[2])
 
-        csumname = os.path.join(outdir,
-                                self.tdl.distro + self.tdl.update + self.tdl.arch + "-CHECKSUM")
+        csumname = join(outdir, self.tdl.distro + self.tdl.update + self.tdl.arch + "-CHECKSUM")
         csumfd = os.open(csumname, os.O_WRONLY|os.O_CREAT|os.O_TRUNC)
 
         try:
@@ -800,7 +767,7 @@ class Guest(object):
         os.unlink(csumname)
 
         if not upstream_sum:
-            raise oz.OzException.OzException("Could not find checksum for original file " + originalname)
+            raise OzException("Could not find checksum for original file " + originalname)
 
         self.log.debug("Calculating checksum of downloaded file")
         os.lseek(outputfd, 0, os.SEEK_SET)
@@ -821,8 +788,8 @@ class Guest(object):
         """
         self.log.info("Fetching the original media")
 
-        outdir = os.path.dirname(output)
-        oz.ozutil.mkdir_p(outdir)
+        outdir = dirname(output)
+        mkdir_p(outdir)
 
         fd = os.open(output, os.O_RDWR|os.O_CREAT)
 
@@ -837,12 +804,11 @@ class Guest(object):
             info = oz.ozutil.http_get_header(url)
 
             if not 'HTTP-Code' in info or info['HTTP-Code'] >= 400 or not 'Content-Length' in info or info['Content-Length'] < 0:
-                raise oz.OzException.OzException("Could not reach destination to fetch boot media")
+                raise OzException("Could not reach destination to fetch boot media")
 
             content_length = int(info['Content-Length'])
-
             if content_length == 0:
-                raise oz.OzException.OzException("Install media of 0 size detected, something is wrong")
+                raise OzException("Install media of 0 size detected, something is wrong")
 
             if not force_download:
                 if content_length == os.fstat(fd)[stat.ST_SIZE]:
@@ -856,7 +822,7 @@ class Guest(object):
             # space on the filesystem to store the data we are about to download
             devdata = os.statvfs(outdir)
             if (devdata.f_bsize*devdata.f_bavail) < content_length:
-                raise oz.OzException.OzException("Not enough room on %s for install media" % (outdir))
+                raise OzException("Not enough room on %s for install media" % (outdir))
 
             # at this point we know we are going to download something.  Make
             # sure to truncate the file so no stale data is left on the end
@@ -866,14 +832,13 @@ class Guest(object):
             oz.ozutil.http_download_file(url, fd, True, self.log)
 
             filesize = os.fstat(fd)[stat.ST_SIZE]
-
             if filesize != content_length:
                 # if the length we downloaded is not the same as what we
                 # originally saw from the headers, something went wrong
-                raise oz.OzException.OzException("Expected to download %d bytes, downloaded %d" % (content_length, filesize))
+                raise OzException("Expected to download %d bytes, downloaded %d" % (content_length, filesize))
 
             if not self._get_csums(url, outdir, fd):
-                raise oz.OzException.OzException("Checksum for downloaded file does not match!")
+                raise OzException("Checksum for downloaded file does not match!")
         finally:
             os.close(fd)
 
@@ -881,7 +846,7 @@ class Guest(object):
         """
         Method to capture a screenshot of the VM.
         """
-        oz.ozutil.mkdir_p(self.screenshot_dir)
+        mkdir_p(self.screenshot_dir)
         # create a new stream
         st = libvirt_dom.connect().newStream(0)
 
@@ -896,8 +861,7 @@ class Guest(object):
             return "Unknown screenshot type, failed to take screenshot"
 
         try:
-            screenshot = os.path.realpath(os.path.join(self.screenshot_dir,
-                                                       self.tdl.name + "-" + str(time.time()) + ext))
+            screenshot = realpath(join(self.screenshot_dir, self.tdl.name + "-" + str(time.time()) + ext))
 
             def sink(stream, buf, opaque):
                 # opaque is the open file object
@@ -921,14 +885,14 @@ class Guest(object):
         input_doc = libxml2.parseDoc(libvirt_xml)
         namenode = input_doc.xpathEval('/domain/name')
         if len(namenode) != 1:
-            raise oz.OzException.OzException("invalid libvirt XML with no name")
+            raise OzException("invalid libvirt XML with no name")
         input_name = namenode[0].getContent()
         disks = input_doc.xpathEval('/domain/devices/disk')
         if len(disks) != 1:
-            raise oz.OzException.OzException("oz cannot handle a libvirt domain with more than 1 disk")
+            raise OzException("oz cannot handle a libvirt domain with more than 1 disk")
         source = disks[0].xpathEval('source')
         if len(source) != 1:
-            raise oz.OzException.OzException("invalid <disk> entry without a source")
+            raise OzException("invalid <disk> entry without a source")
         input_disk = source[0].prop('file')
         driver = disks[0].xpathEval('driver')
         if len(driver) == 0:
@@ -936,7 +900,7 @@ class Guest(object):
         elif len(driver) == 1:
             input_disk_type = driver[0].prop('type')
         else:
-            raise oz.OzException.OzException("invalid <disk> entry without a driver")
+            raise OzException("invalid <disk> entry without a driver")
 
         for domid in self.libvirt_conn.listDomainsID():
             try:
@@ -948,9 +912,9 @@ class Guest(object):
             namenode = doc.xpathEval('/domain/name')
             if len(namenode) != 1:
                 # hm, odd, a domain without a name?
-                raise oz.OzException.OzException("Saw a domain without a name, something weird is going on")
+                raise OzException("Saw a domain without a name, something weird is going on")
             if input_name == namenode[0].getContent():
-                raise oz.OzException.OzException("Cannot setup ICICLE generation on a running guest")
+                raise OzException("Cannot setup ICICLE generation on a running guest")
             disks = doc.xpathEval('/domain/devices/disk')
             if len(disks) < 1:
                 # odd, a domain without a disk, but don't worry about it
@@ -962,7 +926,7 @@ class Guest(object):
                     # http://git.annexia.org/?p=libguestfs.git;a=blob;f=src/virt.c;h=2c6be3c6a2392ab8242d1f4cee9c0d1445844385;hb=HEAD#l169
                     filename = str(source.prop('file'))
                     if filename == input_disk:
-                        raise oz.OzException.OzException("Cannot setup ICICLE generation on a running disk")
+                        raise OzException("Cannot setup ICICLE generation on a running disk")
 
 
         self.log.info("Setting up guestfs handle for %s" % (self.tdl.name))
@@ -982,7 +946,7 @@ class Guest(object):
         roots = g.inspect_os()
 
         if len(roots) == 0:
-            raise oz.OzException.OzException("No operating systems found on the disk")
+            raise OzException("No operating systems found on the disk")
 
         self.log.debug("Getting mountpoints")
         for root in roots:
@@ -1056,7 +1020,7 @@ class Guest(object):
         for serial in serialNode:
             target = serial.xpathEval('target')
             if len(target) != 1:
-                raise oz.OzException.OzException("libvirt XML has a serial port with %d target(s), it is invalid" % (len(target)))
+                raise OzException("libvirt XML has a serial port with %d target(s), it is invalid" % (len(target)))
             if target[0].prop('port') == "1":
                 serial.unlinkNode()
                 break
@@ -1066,9 +1030,9 @@ class Guest(object):
         devices = input_doc.xpathEval("/domain/devices")
         devlen = len(devices)
         if devlen == 0:
-            raise oz.OzException.OzException("No devices section specified, something is wrong with the libvirt XML")
+            raise OzException("No devices section specified, something is wrong with the libvirt XML")
         elif devlen > 1:
-            raise oz.OzException.OzException("%d devices sections specified, something is wrong with the libvirt XML" % (devlen))
+            raise OzException("%d devices sections specified, something is wrong with the libvirt XML" % (devlen))
 
         self._generate_serial_xml(devices[0])
 
@@ -1114,24 +1078,24 @@ class Guest(object):
             match = re.search("!([^!]*?,[^!]*?)!$", data)
             if match is not None:
                 if len(match.groups()) != 1:
-                    raise oz.OzException.OzException("Guest checked in with no data")
+                    raise OzException("Guest checked in with no data")
                 split = match.group(1).split(',')
                 if len(split) != 2:
-                    raise oz.OzException.OzException("Guest checked in with bogus data")
+                    raise OzException("Guest checked in with bogus data")
                 addr = split[0]
                 uuidstr = split[1]
                 try:
                     # we use socket.inet_aton() to validate the IP address
                     socket.inet_aton(addr)
                 except socket.error:
-                    raise oz.OzException.OzException("Guest checked in with invalid IP address")
+                    raise OzException("Guest checked in with invalid IP address")
 
                 # FIXME: this is slightly different semantics than before.
                 # Previously, if we saw a bogus UUID, we would ignore it and
                 # continue waiting for the "right" one.  Now we are throwing
                 # an exception.  I kind of like the previous behavior better
                 if uuidstr != str(self.uuid):
-                    raise oz.OzException.OzException("Guest checked in with unknown UUID")
+                    raise OzException("Guest checked in with unknown UUID")
                 break
 
             # if the data we got didn't match, we need to continue waiting.
@@ -1144,7 +1108,7 @@ class Guest(object):
         sock.close()
 
         if addr is None:
-            raise oz.OzException.OzException("Timed out waiting for guest to boot")
+            raise OzException("Timed out waiting for guest to boot")
 
         self.log.debug("IP address of guest is %s" % (addr))
 
@@ -1169,13 +1133,6 @@ class Guest(object):
 
         return doc.serialize(None, 1)
 
-    def mkdir_p(self, path):
-        """
-        Create a directory and all of its parents.
-        Deprecated; slated for removal in Oz 0.7.0. See oz.ozutil.mkdir_p().
-        """
-        return oz.ozutil.mkdir_p(path)
-
     def _check_url(self, iso=True, url=True):
         """
         Method to check that a TDL URL meets the requirements for a particular
@@ -1196,18 +1153,17 @@ class Guest(object):
             # when doing URL installs, we can't allow localhost URLs (the URL
             # will be embedded into the installer, so the install is guaranteed
             # to fail with localhost URLs).  Disallow them here
-            if urlparse.urlparse(url)[1] in ["localhost", "127.0.0.1",
-                                             "localhost.localdomain"]:
-                raise oz.OzException.OzException("Can not use localhost for an URL based install")
+            if urlparse(url)[1] in ["localhost", "127.0.0.1", "localhost.localdomain"]:
+                raise OzException("Can not use localhost for an URL based install")
         else:
             if iso and url:
-                raise oz.OzException.OzException("%s installs must be done via url or iso" % (self.tdl.distro))
+                raise OzException("%s installs must be done via url or iso" % (self.tdl.distro))
             elif iso:
-                raise oz.OzException.OzException("%s installs must be done via iso" % (self.tdl.distro))
+                raise OzException("%s installs must be done via iso" % (self.tdl.distro))
             elif url:
-                raise oz.OzException.OzException("%s installs must be done via url" % (self.tdl.distro))
+                raise OzException("%s installs must be done via url" % (self.tdl.distro))
             else:
-                raise oz.OzException.OzException("Unknown error occurred while determining install URL")
+                raise OzException("Unknown error occurred while determining install URL")
 
         return url
 
@@ -1251,8 +1207,7 @@ class Guest(object):
 
             username = os.getlogin()
             hostname = os.uname()[1]
-            keystring = 'ssh-rsa %s %s@%s\n' % (base64.b64encode(pubkey),
-                                                username, hostname)
+            keystring = 'ssh-rsa %s %s@%s\n' % (base64.b64encode(pubkey), username, hostname)
 
             key.save_key(privname, cipher=None)
             os.chmod(privname, 0o600)
@@ -1280,14 +1235,14 @@ class CDGuest(Guest):
         Guest.__init__(self, tdl, config, output_disk, nicmodel, clockoffset,
                        mousetype, diskbus, iso_allowed, url_allowed)
 
-        self.orig_iso = os.path.join(self.data_dir, "isos",
-                                     self.tdl.distro + self.tdl.update + self.tdl.arch + "-" + self.tdl.installtype + ".iso")
-        self.modified_iso_cache = os.path.join(self.data_dir, "isos",
-                                               self.tdl.distro + self.tdl.update + self.tdl.arch + "-" + self.tdl.installtype + "-oz.iso")
-        self.output_iso = os.path.join(self.output_dir,
-                                       self.tdl.name + "-" + self.tdl.installtype + "-oz.iso")
-        self.iso_contents = os.path.join(self.data_dir, "isocontent",
-                                         self.tdl.name + "-" + self.tdl.installtype)
+        self.orig_iso = join(self.data_dir, "isos",
+                            self.tdl.distro + self.tdl.update + self.tdl.arch + "-" + self.tdl.installtype + ".iso")
+        self.modified_iso_cache = join(self.data_dir, "isos",
+                                        self.tdl.distro + self.tdl.update + self.tdl.arch + "-" + self.tdl.installtype + "-oz.iso")
+        self.output_iso = join(self.output_dir,
+                                self.tdl.name + "-" + self.tdl.installtype + "-oz.iso")
+        self.iso_contents = join(self.data_dir, "isocontent",
+                                self.tdl.name + "-" + self.tdl.installtype)
 
         self.log.debug("Original ISO path: %s" % self.orig_iso)
         self.log.debug("Modified ISO cache: %s" % self.modified_iso_cache)
@@ -1326,7 +1281,7 @@ class CDGuest(Guest):
             isostat = gfs.statvfs("/")
             outputstat = os.statvfs(self.iso_contents)
             if (outputstat.f_bsize*outputstat.f_bavail) < (isostat['blocks']*isostat['bsize']):
-                raise oz.OzException.OzException("Not enough room on %s to extract install media" % (self.iso_contents))
+                raise OzException("Not enough room on %s to extract install media" % (self.iso_contents))
 
             self.log.debug("Extracting ISO contents")
             current = os.getcwd()
@@ -1374,7 +1329,7 @@ class CDGuest(Guest):
                     st = os.stat(dirpath)
                     os.chmod(dirpath, st.st_mode|stat.S_IWUSR)
                     for name in filenames:
-                        fullpath = os.path.join(dirpath, name)
+                        fullpath = join(dirpath, name)
                         try:
                             # if there are broken symlinks in the ISO,
                             # then the below might fail.  This probably
@@ -1401,13 +1356,13 @@ class CDGuest(Guest):
         (desc_type, identifier, version, unused1, system_identifier, volume_identifier, unused2, space_size_le, space_size_be, unused3, set_size_le, set_size_be, seqnum_le, seqnum_be) = struct.unpack(fmt, cdfd.read(struct.calcsize(fmt)))
 
         if desc_type != 0x1:
-            raise oz.OzException.OzException("Invalid primary volume descriptor")
+            raise OzException("Invalid primary volume descriptor")
         if identifier != "CD001":
-            raise oz.OzException.OzException("invalid CD isoIdentification")
+            raise OzException("invalid CD isoIdentification")
         if unused1 != 0x0:
-            raise oz.OzException.OzException("data in unused field")
+            raise OzException("data in unused field")
         if unused2 != 0x0:
-            raise oz.OzException.OzException("data in 2nd unused field")
+            raise OzException("data in 2nd unused field")
 
         return self._PrimaryVolumeDescriptor(version, system_identifier,
                                              volume_identifier, space_size_le,
@@ -1419,9 +1374,9 @@ class CDGuest(Guest):
         to a file.
         """
         if cdfile is None:
-            raise oz.OzException.OzException("input iso is None")
+            raise OzException("input iso is None")
         if outfile is None:
-            raise oz.OzException.OzException("output file is None")
+            raise OzException("output file is None")
 
         cdfd = open(cdfile, "r")
 
@@ -1438,13 +1393,13 @@ class CDGuest(Guest):
         (boot, isoIdent, version, toritoSpec, unused, bootP) = struct.unpack(fmt,
                                                                              cdfd.read(struct.calcsize(fmt)))
         if boot != 0x0:
-            raise oz.OzException.OzException("invalid CD boot sector")
+            raise OzException("invalid CD boot sector")
         if isoIdent != "CD001":
-            raise oz.OzException.OzException("invalid CD isoIdentification")
+            raise OzException("invalid CD isoIdentification")
         if version != 0x1:
-            raise oz.OzException.OzException("invalid CD version")
+            raise OzException("invalid CD version")
         if toritoSpec != "EL TORITO SPECIFICATION":
-            raise oz.OzException.OzException("invalid CD torito specification")
+            raise OzException("invalid CD torito specification")
 
         # OK, this looks like a bootable CD.  Seek to the boot sector, and
         # look for the header, 0x55, and 0xaa in the first 32 bytes
@@ -1454,13 +1409,13 @@ class CDGuest(Guest):
         (header, platform, unused, manu, unused2, five, aa) = struct.unpack(fmt,
                                                                             bootdata)
         if header != 0x1:
-            raise oz.OzException.OzException("invalid CD boot sector header")
+            raise OzException("invalid CD boot sector header")
         if platform != 0x0 and platform != 0x1 and platform != 0x2:
-            raise oz.OzException.OzException("invalid CD boot sector platform")
+            raise OzException("invalid CD boot sector platform")
         if unused != 0x0:
-            raise oz.OzException.OzException("invalid CD unused boot sector field")
+            raise OzException("invalid CD unused boot sector field")
         if five != 0x55 or aa != 0xaa:
-            raise oz.OzException.OzException("invalid CD boot sector footer")
+            raise OzException("invalid CD boot sector footer")
 
         def _checksum(data):
             """
@@ -1476,7 +1431,7 @@ class CDGuest(Guest):
 
         csum = _checksum(bootdata)
         if csum != 0:
-            raise oz.OzException.OzException("invalid CD checksum: expected 0, saw %d" % (csum))
+            raise OzException("invalid CD checksum: expected 0, saw %d" % (csum))
 
         # OK, everything so far has checked out.  Read the default/initial
         # boot entry
@@ -1485,9 +1440,9 @@ class CDGuest(Guest):
         (boot, media, loadsegment, systemtype, unused, scount, imgstart, unused2) = struct.unpack(fmt, cdfd.read(struct.calcsize(fmt)))
 
         if boot != 0x88:
-            raise oz.OzException.OzException("invalid CD initial boot indicator")
+            raise OzException("invalid CD initial boot indicator")
         if unused != 0x0 or unused2 != 0x0:
-            raise oz.OzException.OzException("invalid CD initial boot unused field")
+            raise OzException("invalid CD initial boot unused field")
 
         if media == 0 or media == 4:
             count = scount
@@ -1501,7 +1456,7 @@ class CDGuest(Guest):
             # 2.88MB floppy in sectors
             count = 2880*1024/512
         else:
-            raise oz.OzException.OzException("invalid CD media type")
+            raise OzException("invalid CD media type")
 
         # finally, seek to "imgstart", and read "count" sectors, which
         # contains the boot image
@@ -1533,7 +1488,7 @@ class CDGuest(Guest):
         """
         if not force and os.access(self.jeos_filename, os.F_OK):
             self.log.info("Found cached JEOS, using it")
-            oz.ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
+            copyfile_sparse(self.jeos_filename, self.diskimage)
             return self._generate_xml("hd", None)
 
         self.log.info("Running install for %s" % (self.tdl.name))
@@ -1566,8 +1521,8 @@ class CDGuest(Guest):
 
         if self.cache_jeos:
             self.log.info("Caching JEOS")
-            oz.ozutil.mkdir_p(self.jeos_cache_dir)
-            oz.ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
+            mkdir_p(self.jeos_cache_dir)
+            copyfile_sparse(self.diskimage, self.jeos_filename)
 
         return self._generate_xml("hd", None)
 
@@ -1597,14 +1552,14 @@ class CDGuest(Guest):
         Base method to modify the ISO.  Subclasses are expected to override
         this.
         """
-        raise oz.OzException.OzException("Internal error, subclass didn't override modify_iso")
+        raise OzException("Internal error, subclass didn't override modify_iso")
 
     def _generate_new_iso(self):
         """
         Base method to generate the new ISO.  Subclasses are expected to
         override this.
         """
-        raise oz.OzException.OzException("Internal error, subclass didn't override generate_new_iso")
+        raise OzException("Internal error, subclass didn't override generate_new_iso")
 
     def _iso_generate_install_media(self, url, force_download):
         """
@@ -1661,12 +1616,12 @@ class CDGuest(Guest):
                     # if there are broken symlinks in the ISO,
                     # then the below might fail.  This probably
                     # isn't fatal, so just allow it and go on
-                    os.chmod(os.path.join(dirpath, name), stat.S_IRUSR|stat.S_IWUSR)
+                    os.chmod(join(dirpath, name), stat.S_IRUSR|stat.S_IWUSR)
                 except OSError as err:
                     if err.errno != errno.ENOENT:
                         raise
 
-        oz.ozutil.rmtree_and_sync(self.iso_contents)
+        rmtree_and_sync(self.iso_contents)
 
     def cleanup_install(self):
         """
@@ -1689,18 +1644,15 @@ class FDGuest(Guest):
     """
     Class for guest installation via floppy disk.
     """
-    def __init__(self, tdl, config, output_disk, nicmodel, clockoffset,
-                 mousetype, diskbus):
+    def __init__(self, tdl, config, output_disk, nicmodel, clockoffset, mousetype, diskbus):
         Guest.__init__(self, tdl, config, output_disk, nicmodel, clockoffset,
                        mousetype, diskbus, False, True)
-        self.orig_floppy = os.path.join(self.data_dir, "floppies",
-                                        self.tdl.distro + self.tdl.update + self.tdl.arch + ".img")
-        self.modified_floppy_cache = os.path.join(self.data_dir, "floppies",
-                                                  self.tdl.distro + self.tdl.update + self.tdl.arch + "-oz.img")
-        self.output_floppy = os.path.join(self.output_dir,
-                                          self.tdl.name + "-oz.img")
-        self.floppy_contents = os.path.join(self.data_dir, "floppycontent",
-                                            self.tdl.name)
+        self.orig_floppy = join(self.data_dir, "floppies",
+                                self.tdl.distro + self.tdl.update + self.tdl.arch + ".img")
+        self.modified_floppy_cache = join(self.data_dir, "floppies",
+                                        self.tdl.distro + self.tdl.update + self.tdl.arch + "-oz.img")
+        self.output_floppy = join(self.output_dir, self.tdl.name + "-oz.img")
+        self.floppy_contents = join(self.data_dir, "floppycontent", self.tdl.name)
 
         self.log.debug("Original floppy path: %s" % self.orig_floppy)
         self.log.debug("Modified floppy cache: %s" % self.modified_floppy_cache)
@@ -1726,24 +1678,22 @@ class FDGuest(Guest):
         """
         if not force and os.access(self.jeos_filename, os.F_OK):
             self.log.info("Found cached JEOS, using it")
-            oz.ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
+            copyfile_sparse(self.jeos_filename, self.diskimage)
             return self._generate_xml("hd", None)
 
         self.log.info("Running install for %s" % (self.tdl.name))
 
-        fddev = self._InstallDev("floppy", self.output_floppy, "fda")
-
         if timeout is None:
             timeout = 1200
 
-        dom = self.libvirt_conn.createXML(self._generate_xml("fd", fddev),
-                                          0)
+        fddev = self._InstallDev("floppy", self.output_floppy, "fda")
+        dom = self.libvirt_conn.createXML(self._generate_xml("fd", fddev), 0)
         self._wait_for_install_finish(dom, timeout)
 
         if self.cache_jeos:
             self.log.info("Caching JEOS")
-            oz.ozutil.mkdir_p(self.jeos_cache_dir)
-            oz.ozutil.copyfile_sparse(self.diskimage, self.jeos_filename)
+            mkdir_p(self.jeos_cache_dir)
+            copyfile_sparse(self.diskimage, self.jeos_filename)
 
         return self._generate_xml("hd", None)
 
@@ -1752,7 +1702,7 @@ class FDGuest(Guest):
         Method to cleanup the temporary floppy data.
         """
         self.log.info("Cleaning up floppy data")
-        oz.ozutil.rmtree_and_sync(self.floppy_contents)
+        rmtree_and_sync(self.floppy_contents)
 
     def cleanup_install(self):
         """

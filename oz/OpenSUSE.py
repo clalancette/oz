@@ -21,13 +21,14 @@ OpenSUSE installation
 
 import re
 import shutil
-import os
 import libxml2
 import libvirt
+import os
+from os.path import join
 
 import oz.Guest
-import oz.ozutil
-import oz.OzException
+from oz.ozutil import generate_full_auto_path, copy_modify_file, subprocess_check_output, ssh_execute_command, scp_copy_file
+from oz.OzException import OzException
 
 class OpenSUSEGuest(oz.Guest.CDGuest):
     """
@@ -44,9 +45,9 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
 
         self.autoyast = auto
         if self.autoyast is None:
-            self.autoyast = oz.ozutil.generate_full_auto_path("opensuse-" + self.tdl.update + "-jeos.xml")
+            self.autoyast = generate_full_auto_path("opensuse-" + self.tdl.update + "-jeos.xml")
 
-        self.sshprivkey = os.path.join('/etc', 'oz', 'id_rsa-icicle-gen')
+        self.sshprivkey = join('/etc', 'oz', 'id_rsa-icicle-gen')
 
     def _modify_iso(self):
         """
@@ -54,9 +55,9 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         """
         self.log.debug("Putting the autoyast in place")
 
-        outname = os.path.join(self.iso_contents, "autoinst.xml")
+        outname = join(self.iso_contents, "autoinst.xml")
 
-        if self.autoyast == oz.ozutil.generate_full_auto_path("opensuse-" + self.tdl.update + "-jeos.xml"):
+        if self.autoyast == generate_full_auto_path("opensuse-" + self.tdl.update + "-jeos.xml"):
             doc = libxml2.parseFile(self.autoyast)
 
             xp = doc.xpathNewContext()
@@ -70,8 +71,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
             shutil.copy(self.autoyast, outname)
 
         self.log.debug("Modifying the boot options")
-        isolinux_cfg = os.path.join(self.iso_contents, "boot", self.tdl.arch,
-                                    "loader", "isolinux.cfg")
+        isolinux_cfg = join(self.iso_contents, "boot", self.tdl.arch, "loader", "isolinux.cfg")
         f = open(isolinux_cfg, "r")
         lines = f.readlines()
         f.close()
@@ -93,16 +93,16 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         Method to create a new ISO based on the modified CD/DVD.
         """
         self.log.info("Generating new ISO")
-        oz.ozutil.subprocess_check_output(["genisoimage", "-r", "-V", "Custom",
-                                           "-J", "-no-emul-boot",
-                                           "-b", "boot/" + self.tdl.arch + "/loader/isolinux.bin",
-                                           "-c", "boot/" + self.tdl.arch + "/loader/boot.cat",
-                                           "-boot-load-size", "4",
-                                           "-boot-info-table", "-graft-points",
-                                           "-iso-level", "4", "-pad",
-                                           "-allow-leading-dots", "-l",
-                                           "-o", self.output_iso,
-                                           self.iso_contents])
+        subprocess_check_output(["genisoimage", "-r", "-V", "Custom",
+                                 "-J", "-no-emul-boot",
+                                 "-b", "boot/" + self.tdl.arch + "/loader/isolinux.bin",
+                                 "-c", "boot/" + self.tdl.arch + "/loader/boot.cat",
+                                 "-boot-load-size", "4",
+                                 "-boot-info-table", "-graft-points",
+                                 "-iso-level", "4", "-pad",
+                                 "-allow-leading-dots", "-l",
+                                 "-o", self.output_iso,
+                                 self.iso_contents])
 
     def install(self, timeout=None, force=False):
         """
@@ -141,8 +141,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         """
         Method to execute a command on the guest and return the output.
         """
-        return oz.ozutil.ssh_execute_command(guestaddr, self.sshprivkey,
-                                             command, timeout)
+        return ssh_execute_command(guestaddr, self.sshprivkey, command, timeout)
 
     def _image_ssh_teardown_step_1(self, g_handle):
         """
@@ -270,11 +269,11 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         # part 2; check and setup sshd
         self.log.debug("Step 2: setup sshd")
         if not g_handle.exists('/etc/init.d/sshd') or not g_handle.exists('/usr/sbin/sshd'):
-            raise oz.OzException.OzException("ssh not installed on the image, cannot continue")
+            raise OzException("ssh not installed on the image, cannot continue")
 
         self._guestfs_path_backup(g_handle, "/etc/init.d/after.local")
 
-        local = os.path.join(self.icicle_tmp, "after.local")
+        local = join(self.icicle_tmp, "after.local")
         f = open(local, "w")
         f.write("/sbin/service sshd start\n")
         f.close()
@@ -315,9 +314,9 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         # part 3; make sure the guest announces itself
         self.log.debug("Step 3: Guest announcement")
         if not g_handle.exists('/etc/init.d/cron') or not g_handle.exists('/usr/sbin/cron'):
-            raise oz.OzException.OzException("cron not installed on the image, cannot continue")
+            raise OzException("cron not installed on the image, cannot continue")
 
-        scriptfile = os.path.join(self.icicle_tmp, "script")
+        scriptfile = join(self.icicle_tmp, "script")
         f = open(scriptfile, 'w')
         f.write("#!/bin/bash\n")
         f.write("DEV=$(/bin/awk '{if ($2 == 0) print $1}' /proc/net/route) &&\n")
@@ -332,7 +331,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         finally:
             os.unlink(scriptfile)
 
-        announcefile = os.path.join(self.icicle_tmp, "announce")
+        announcefile = join(self.icicle_tmp, "announce")
         f = open(announcefile, 'w')
         f.write('*/1 * * * * root /bin/bash -c "/root/reportip"\n')
         f.close()
@@ -396,8 +395,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         """
         Method to copy a file to the live guest.
         """
-        return oz.ozutil.scp_copy_file(guestaddr, self.sshprivkey,
-                                       file_to_upload, destination, timeout)
+        return scp_copy_file(guestaddr, self.sshprivkey, file_to_upload, destination, timeout)
 
     def _customize_files(self, guestaddr):
         """
@@ -405,7 +403,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         """
         self.log.info("Uploading custom files")
         for name, content in list(self.tdl.files.items()):
-            localname = os.path.join(self.icicle_tmp, "file")
+            localname = join(self.icicle_tmp, "file")
             f = open(localname, 'w')
             f.write(content)
             f.close()
@@ -478,7 +476,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
                 count -= 1
 
         if not success:
-            raise oz.OzException.OzException("Failed to connect to ssh on running guest")
+            raise OzException("Failed to connect to ssh on running guest")
 
     def _internal_customize(self, libvirt_xml, action):
         """
@@ -524,7 +522,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
                 elif action == "mod_only":
                     self.do_customize(guestaddr)
                 else:
-                    raise oz.OzException.OzException("Invalid customize action %s; this is a programming error" % (action))
+                    raise OzException("Invalid customize action %s; this is a programming error" % (action))
             finally:
                 self._shutdown_guest(guestaddr, libvirt_dom)
         finally:

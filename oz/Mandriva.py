@@ -19,12 +19,11 @@ Mandriva installation
 """
 
 import shutil
-import os
 import re
+from os.path import join
 
 import oz.Guest
-import oz.ozutil
-import oz.OzException
+from oz.ozutil import generate_full_auto_path, copy_modify_file, subprocess_check_output
 
 class MandrivaGuest(oz.Guest.CDGuest):
     """
@@ -36,7 +35,7 @@ class MandrivaGuest(oz.Guest.CDGuest):
 
         self.auto = auto
         if self.auto is None:
-            self.auto = oz.ozutil.generate_full_auto_path("mandriva-" + self.tdl.update + "-jeos.cfg")
+            self.auto = generate_full_auto_path("mandriva-" + self.tdl.update + "-jeos.cfg")
 
         self.mandriva_arch = self.tdl.arch
         if self.mandriva_arch == "i386":
@@ -47,18 +46,16 @@ class MandrivaGuest(oz.Guest.CDGuest):
         Method to make the boot ISO auto-boot with appropriate parameters.
         """
         self.log.debug("Modifying ISO")
-
         self.log.debug("Copying cfg file")
 
         if self.tdl.update in ["2007.0", "2008.0"]:
-            pathdir = os.path.join(self.iso_contents, self.mandriva_arch)
+            pathdir = join(self.iso_contents, self.mandriva_arch)
         else:
             pathdir = self.iso_contents
 
-        outname = os.path.join(pathdir, "auto_inst.cfg")
+        outname = join(pathdir, "auto_inst.cfg")
 
-        if self.auto == oz.ozutil.generate_full_auto_path("mandriva-" + self.tdl.update + "-jeos.cfg"):
-
+        if self.auto == generate_full_auto_path("mandriva-" + self.tdl.update + "-jeos.cfg"):
             def _cfg_sub(line):
                 """
                 Method that is called back from oz.ozutil.copy_modify_file() to
@@ -69,20 +66,21 @@ class MandrivaGuest(oz.Guest.CDGuest):
                 else:
                     return line
 
-            oz.ozutil.copy_modify_file(self.auto, outname, _cfg_sub)
+            copy_modify_file(self.auto, outname, _cfg_sub)
         else:
             shutil.copy(self.auto, outname)
 
         self.log.debug("Modifying isolinux.cfg")
-        isolinuxcfg = os.path.join(pathdir, "isolinux", "isolinux.cfg")
-        f = open(isolinuxcfg, 'w')
-        f.write("default customiso\n")
-        f.write("timeout 1\n")
-        f.write("prompt 0\n")
-        f.write("label customiso\n")
-        f.write("  kernel alt0/vmlinuz\n")
-        f.write("  append initrd=alt0/all.rdz ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom kickstart=auto_inst.cfg\n")
-        f.close()
+        isolinuxcfg = join(pathdir, "isolinux", "isolinux.cfg")
+        with open(isolinuxcfg, 'w') as f:
+            f.write("""\
+default customiso
+timeout 1
+prompt 0
+label customiso
+  kernel alt0/vmlinuz
+  append initrd=alt0/all.rdz ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom kickstart=auto_inst.cfg
+""")
 
     def _generate_new_iso(self):
         """
@@ -94,17 +92,17 @@ class MandrivaGuest(oz.Guest.CDGuest):
         if self.tdl.update in ["2007.0", "2008.0"]:
             isolinuxdir = self.mandriva_arch
 
-        isolinuxbin = os.path.join(isolinuxdir, "isolinux/isolinux.bin")
-        isolinuxboot = os.path.join(isolinuxdir, "isolinux/boot.cat")
+        isolinuxbin = join(isolinuxdir, "isolinux/isolinux.bin")
+        isolinuxboot = join(isolinuxdir, "isolinux/boot.cat")
 
-        oz.ozutil.subprocess_check_output(["genisoimage", "-r", "-V", "Custom",
-                                           "-J", "-l", "-no-emul-boot",
-                                           "-b", isolinuxbin,
-                                           "-c", isolinuxboot,
-                                           "-boot-load-size", "4",
-                                           "-cache-inodes", "-boot-info-table",
-                                           "-v", "-v", "-o", self.output_iso,
-                                           self.iso_contents])
+        subprocess_check_output(["genisoimage", "-r", "-V", "Custom",
+                                 "-J", "-l", "-no-emul-boot",
+                                 "-b", isolinuxbin,
+                                 "-c", isolinuxboot,
+                                 "-boot-load-size", "4",
+                                 "-cache-inodes", "-boot-info-table",
+                                 "-v", "-v", "-o", self.output_iso,
+                                 self.iso_contents])
 
 def get_class(tdl, config, auto, output_disk=None):
     """
