@@ -136,14 +136,14 @@ class Windows2000andXPand2003(Windows):
             # choices; the user gets to keep both pieces if something breaks
             shutil.copy(self.siffile, outname)
 
-    def install(self, timeout=None, force=False):
+    def install(self, timeout=None, force=False, force_virtio=False):
         """
         Method to run the operating system installation.
         """
         internal_timeout = timeout
         if internal_timeout is None:
             internal_timeout = 3600
-        return self._do_install(internal_timeout, force, 1)
+        return self._do_install(internal_timeout, force, 1, force_virtio)
 
 class Windows2008and7(Windows):
     """
@@ -215,11 +215,11 @@ class Windows2008and7(Windows):
             # breaks
             shutil.copy(self.unattendfile, outname)
 
-    def install(self, timeout=None, force=False):
+    def install(self, timeout=None, force=False, force_virtio=False):
         internal_timeout = timeout
         if internal_timeout is None:
             internal_timeout = 6000
-        return self._do_install(internal_timeout, force, 2)
+        return self._do_install(internal_timeout, force, 2, force_virtio)
 
 def get_class(tdl, config, auto, output_disk=None):
     """

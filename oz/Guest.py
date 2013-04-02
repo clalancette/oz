@@ -1527,10 +1527,13 @@ class CDGuest(Guest):
         out.write(eltoritodata)
         out.close()
 
-    def _do_install(self, timeout=None, force=False, reboots=0, cmdline=None):
+    def _do_install(self, timeout=None, force=False, reboots=0, cmdline=None, force_virtio=False):
         """
         Internal method to actually run the installation.
         """
+        if force_virtio:
+           self.disk_bus = "virtio"
+           self.nicmodel = "virtio"
         if not force and os.access(self.jeos_filename, os.F_OK):
             self.log.info("Found cached JEOS, using it")
             oz.ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
@@ -1571,11 +1574,11 @@ class CDGuest(Guest):
 
         return self._generate_xml("hd", None)
 
-    def install(self, timeout=None, force=False):
+    def install(self, timeout=None, force=False, force_virtio=False):
         """
         Method to run the operating system installation.
         """
-        return self._do_install(timeout, force, 0)
+        return self._do_install(timeout, force, 0, force_virtio)
 
     def _check_pvd(self):
         """
@@ -1720,10 +1723,14 @@ class FDGuest(Guest):
         self.log.info("Copying floppy contents for modification")
         shutil.copyfile(self.orig_floppy, self.output_floppy)
 
-    def install(self, timeout=None, force=False):
+    def install(self, timeout=None, force=False, force_virtio=False):
         """
         Method to run the operating system installation.
         """
+        if force_virtio:
+            self.disk_bus = "virtio"
+            self.nicmodel = "virtio"
+
         if not force and os.access(self.jeos_filename, os.F_OK):
             self.log.info("Found cached JEOS, using it")
             oz.ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)

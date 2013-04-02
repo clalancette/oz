@@ -174,14 +174,14 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
                                            "-v", "-v", "-o", self.output_iso,
                                            self.iso_contents])
 
-    def install(self, timeout=None, force=False):
+    def install(self, timeout=None, force=False, force_virtio=False):
         """
         Method to run the operating system installation.
         """
         if self.tdl.update in ["6.06", "6.10", "7.04"]:
             if not timeout:
                 timeout = 3000
-        return self._do_install(timeout, force, 0, self.cmdline)
+        return self._do_install(timeout, force, 0, self.cmdline, force_virtio)
 
     def _get_default_runlevel(self, g_handle):
         """
