@@ -27,7 +27,7 @@ import oz.OzException
 
 class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
     """
-    Class for RHEL-6 0, 1, and 2 installation.
+    Class for RHEL-6 0, 1, 2, 3, and 4 installation.
     """
     def __init__(self, tdl, config, auto, output_disk=None):
         oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, output_disk,
@@ -61,4 +61,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "RHEL/OEL/CentOS/Scientific Linux{,CERN} 6: 0, 1, 2, 3"
+    return "RHEL/OEL/CentOS/Scientific Linux{,CERN} 6: 0, 1, 2, 3, 4"
