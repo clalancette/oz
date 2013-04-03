@@ -258,11 +258,10 @@ def test_all():
                     "9.10", "10.04", "10.04.1", "10.04.2", "10.04.3", "10.10",
                     "11.04", "11.10", "12.04", "12.10"]:
         for arch in ["i386", "x86_64"]:
-            expect_success("Ubuntu", version, arch, "iso")
+            for installtype in ["iso", "url"]:
+                expect_success("Ubuntu", version, arch, installtype)
     # bad Ubuntu version
     expect_fail("Ubuntu", "10.9", "i386", "iso")
-    # bad Ubuntu installtype
-    expect_fail("Ubuntu", "10.10", "i386", "url")
 
     # Mandrake
     for version in ["8.2", "9.1", "9.2", "10.0", "10.1"]:
