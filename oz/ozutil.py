@@ -82,6 +82,13 @@ def copyfile_sparse(src, dest):
     if dest is None:
         raise Exception("Destination of copy cannot be None")
 
+    if os.path.samefile(src, dest):
+        raise Exception("Source '%s' and dest '%s' are the same file" % (src, dest))
+
+    base = os.path.basename(dest)
+    if not os.path.exists(base):
+        mkdir_p(base)
+
     src_fd = os.open(src, os.O_RDONLY)
     dest_fd = os.open(dest, os.O_WRONLY|os.O_CREAT|os.O_TRUNC)
 
