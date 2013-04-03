@@ -70,7 +70,6 @@ def default_route():
     route_file = "/proc/net/route"
     d = file(route_file)
 
-    defn = 0
     for line in d:
         info = line.split()
         if (len(info) != 11): # 11 = typical num of fields in the file
@@ -122,7 +121,7 @@ def runtest(args):
     else:
         logging.basicConfig(level=logging.ERROR, format="%(message)s")
 
-    guest = oz.GuestFactory.guest_factory(tdl, config, None)
+    oz.GuestFactory.guest_factory(tdl, config, None)
 
 def expect_success(*args):
     '''Create a TestResult object using provided arguments.  Append result to

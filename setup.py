@@ -1,6 +1,5 @@
-from distutils.core import setup, Extension, Command
+from distutils.core import setup, Command
 from distutils.command.sdist import sdist as _sdist
-import os
 import subprocess
 import time
 

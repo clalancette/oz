@@ -2,13 +2,6 @@
 
 import sys
 import os
-import random
-
-try:
-    import libxml2
-except ImportError:
-    print('Unable to import libxml2.  Is libxml2-python installed?')
-    sys.exit(1)
 
 try:
     import py.test
