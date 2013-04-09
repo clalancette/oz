@@ -18,6 +18,7 @@ Requires: libvirt-python >= 0.9.7
 %if 0%{?fedora} >= 17
 Requires: libvirt-daemon-kvm
 Requires: libvirt-daemon-qemu
+Requires: libvirt-daemon-config-network
 %else
 Requires: libvirt >= 0.9.7
 %endif
