@@ -148,6 +148,21 @@ def test_copy_sparse_zero_blocks(tmpdir):
     dstname = os.path.join(str(tmpdir), 'dst')
     oz.ozutil.copyfile_sparse(srcname, dstname)
 
+def test_copy_sparse_src_not_exists(tmpdir):
+
+    srcname = os.path.join(str(tmpdir), 'src')
+    dstname = os.path.join(str(tmpdir), 'dst')
+    open(dstname, 'w').write('dst')
+    with py.test.raises(Exception):
+        oz.ozutil.copyfile_sparse(srcname, dstname)
+
+def test_copy_sparse_dest_not_exists(tmpdir):
+    srcname = os.path.join(str(tmpdir), 'src')
+    open(srcname, 'w').write('src')
+    dstname = os.path.join(str(tmpdir), 'dst')
+    oz.ozutil.copyfile_sparse(srcname, dstname)
+
+
 # test oz.ozutil.string_to_bool
 def test_stb_no():
     for nletter in ['n', 'N']:
