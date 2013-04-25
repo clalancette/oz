@@ -28,6 +28,7 @@ import libvirt
 import oz.Guest
 import oz.ozutil
 import oz.OzException
+import oz.linuxutil
 
 class OpenSUSEGuest(oz.Guest.CDGuest):
     """
@@ -181,7 +182,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
 
         # reset the service link
         self.log.debug("Resetting cron service")
-        runlevel = self._get_default_runlevel(g_handle)
+        runlevel = oz.linuxutil._get_default_runlevel(g_handle)
         startuplink = '/etc/rc.d/rc' + runlevel + ".d/S06cron"
         self._guestfs_path_restore(g_handle, startuplink)
 
@@ -230,23 +231,6 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
 
         return self._output_icicle_xml(stdout.split("\n"),
                                        self.tdl.description)
-
-    def _get_default_runlevel(self, g_handle):
-        """
-        Method to determine the default runlevel based on the /etc/inittab.
-        """
-        runlevel = "3"
-        if g_handle.exists('/etc/inittab'):
-            lines = g_handle.cat('/etc/inittab').split("\n")
-            for line in lines:
-                if re.match('id:', line):
-                    try:
-                        runlevel = line.split(':')[1]
-                    except:
-                        pass
-                    break
-
-        return runlevel
 
     def _image_ssh_setup_step_1(self, g_handle):
         """

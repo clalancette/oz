@@ -34,6 +34,7 @@ import pycurl
 import oz.Guest
 import oz.ozutil
 import oz.OzException
+import oz.linuxutil
 
 class RedHatCDGuest(oz.Guest.CDGuest):
     """
@@ -144,29 +145,12 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         else:
             shutil.copy(self.auto, outname)
 
-    def _get_default_runlevel(self, g_handle):
-        """
-        Method to determine the default runlevel based on the /etc/inittab.
-        """
-        runlevel = "3"
-        if g_handle.exists('/etc/inittab'):
-            lines = g_handle.cat('/etc/inittab').split("\n")
-            for line in lines:
-                if re.match('id:', line):
-                    try:
-                        runlevel = line.split(':')[1]
-                    except:
-                        pass
-                    break
-
-        return runlevel
-
     def _get_service_runlevel_link(self, g_handle, service):
         """
         Method to find the runlevel link(s) for a service based on the name
         and the (detected) default runlevel.
         """
-        runlevel = self._get_default_runlevel(g_handle)
+        runlevel = oz.linuxutil._get_default_runlevel(g_handle)
 
         lines = g_handle.cat('/etc/init.d/' + service).split("\n")
         startlevel = "99"
