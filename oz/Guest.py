@@ -925,7 +925,7 @@ class Guest(object):
         input_name = namenode[0].getContent()
         disks = input_doc.xpathEval('/domain/devices/disk')
         if len(disks) != 1:
-            raise oz.OzException.OzException("oz cannot handle a libvirt domain with more than 1 disk")
+            self.log.warning("Oz given a libvirt domain with more than 1 disk; using the first one parsed")
         source = disks[0].xpathEval('source')
         if len(source) != 1:
             raise oz.OzException.OzException("invalid <disk> entry without a source")
