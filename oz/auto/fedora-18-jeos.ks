@@ -21,8 +21,6 @@ logvol swap --fstype swap --name=LogVol01 --vgname=VolGroup00 --size=768 --grow 
 logvol / --fstype ext4 --name=LogVol00 --vgname=VolGroup00 --size=1024 --grow
 reboot
 
-bootloader --location=mbr --timeout=5 --append="rhgb quiet"
-
 %packages
 @core
 
