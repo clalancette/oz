@@ -32,7 +32,7 @@ import oz.linuxutil
 
 class UbuntuGuest(oz.Guest.CDGuest):
     """
-    Class for Ubuntu 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, 11.04, 11.10, 12.04, and 12.10 installation.
+    Class for Ubuntu 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, 11.04, 11.10, 12.04, 12.10, and 13.04 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, initrd, nicmodel,
                  diskbus):
@@ -804,7 +804,8 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
         return UbuntuGuest(tdl, config, auto, output_disk, "initrd.gz",
                            netdev, diskbus)
     if tdl.update in ["9.10", "10.04", "10.04.1", "10.04.2", "10.04.3", "10.10",
-                      "11.04", "11.10", "12.04", "12.04.1", "12.04.2", "12.10"]:
+                      "11.04", "11.10", "12.04", "12.04.1", "12.04.2", "12.10",
+                      "13.04"]:
         if netdev is None:
             netdev = 'virtio'
         if diskbus is None:
@@ -816,4 +817,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Ubuntu: 6.06[.1,.2], 6.10, 7.04, 7.10, 8.04[.1,.2,.3,.4], 8.10, 9.04, 9.10, 10.04[.1,.2,.3], 10.10, 11.04, 11.10, 12.04[.1,.2], 12.10"
+    return "Ubuntu: 6.06[.1,.2], 6.10, 7.04, 7.10, 8.04[.1,.2,.3,.4], 8.10, 9.04, 9.10, 10.04[.1,.2,.3], 10.10, 11.04, 11.10, 12.04[.1,.2], 12.10, 13.04"
