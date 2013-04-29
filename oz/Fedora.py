@@ -29,8 +29,8 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
     """
     Class for Fedora 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, and 18 installation.
     """
-    def __init__(self, tdl, config, auto, nicmodel, haverepo,
-                 diskbus, brokenisomethod, output_disk=None):
+    def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,
+                 brokenisomethod, output_disk=None, macaddress=None):
         # FIXME: For consistency most of the __init__ functions take self, tdl,
         # config, auto, output_disk (in that order).  However, in order to not
         # break imagefactory, we want to make output_disk have a default of
@@ -41,7 +41,8 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
         oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, output_disk,
                                             nicmodel, diskbus,
                                             "fedora-" + tdl.update + "-jeos.ks",
-                                            True, True, directkernel)
+                                            True, True, directkernel,
+                                            macaddress)
 
         self.auto = auto
 
@@ -93,7 +94,8 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
             createpart = True
         return self._internal_generate_diskimage(size, force, createpart)
 
-def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
+def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
+              macaddress=None):
     """
     Factory method for Fedora installs.
     """
@@ -103,10 +105,10 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
         if diskbus is None:
             diskbus = 'virtio'
         return FedoraGuest(tdl, config, auto, netdev, True, diskbus, True,
-                           output_disk)
+                           output_disk, macaddress)
     if tdl.update in ["7", "8", "9"]:
         return FedoraGuest(tdl, config, auto, netdev, False, diskbus, False,
-                           output_disk)
+                           output_disk, macaddress)
 
 def get_supported_string():
     """

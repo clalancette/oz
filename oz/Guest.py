@@ -123,7 +123,7 @@ class Guest(object):
         self._discover_libvirt_type()
 
     def __init__(self, tdl, config, output_disk, nicmodel, clockoffset,
-                 mousetype, diskbus, iso_allowed, url_allowed):
+                 mousetype, diskbus, iso_allowed, url_allowed, macaddress):
         self.tdl = tdl
 
         # for backwards compatibility
@@ -134,7 +134,10 @@ class Guest(object):
         self.log = logging.getLogger('%s.%s' % (__name__,
                                                 self.__class__.__name__))
         self.uuid = uuid.uuid4()
-        self.macaddr = oz.ozutil.generate_macaddress()
+        if macaddress is None:
+            self.macaddr = oz.ozutil.generate_macaddress()
+        else:
+            self.macaddr = macaddress
 
         # configuration from 'paths' section
         self.output_dir = oz.ozutil.config_get_key(config, 'paths',
@@ -1294,9 +1297,9 @@ class CDGuest(Guest):
             self.seqnum = seqnum
 
     def __init__(self, tdl, config, output_disk, nicmodel, clockoffset,
-                 mousetype, diskbus, iso_allowed, url_allowed):
+                 mousetype, diskbus, iso_allowed, url_allowed, macaddress):
         Guest.__init__(self, tdl, config, output_disk, nicmodel, clockoffset,
-                       mousetype, diskbus, iso_allowed, url_allowed)
+                       mousetype, diskbus, iso_allowed, url_allowed, macaddress)
 
         self.orig_iso = os.path.join(self.data_dir, "isos",
                                      self.tdl.distro + self.tdl.update + self.tdl.arch + "-" + self.tdl.installtype + ".iso")
@@ -1708,9 +1711,9 @@ class FDGuest(Guest):
     Class for guest installation via floppy disk.
     """
     def __init__(self, tdl, config, output_disk, nicmodel, clockoffset,
-                 mousetype, diskbus):
+                 mousetype, diskbus, macaddress):
         Guest.__init__(self, tdl, config, output_disk, nicmodel, clockoffset,
-                       mousetype, diskbus, False, True)
+                       mousetype, diskbus, False, True, macaddress)
         self.orig_floppy = os.path.join(self.data_dir, "floppies",
                                         self.tdl.distro + self.tdl.update + self.tdl.arch + ".img")
         self.modified_floppy_cache = os.path.join(self.data_dir, "floppies",

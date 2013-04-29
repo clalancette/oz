@@ -31,13 +31,14 @@ class RHL9Guest(oz.RedHat.RedHatCDGuest):
     """
     Class for RHL-9 installation.
     """
-    def __init__(self, tdl, config, auto, output_disk, netdev, diskbus):
+    def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
+                 macaddress):
         # RHL-9 doesn't support direct kernel/initrd booting; it hangs right
         # after unpacking the initrd
         oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, output_disk,
                                          netdev, diskbus,
                                          "rhl-" + tdl.update + "-jeos.ks",
-                                         False, True, None)
+                                         False, True, None, macaddress)
 
         self.auto = auto
 
@@ -79,25 +80,28 @@ class RHL70and71and72and73and8Guest(oz.RedHat.RedHatFDGuest):
     """
     Class for RHL 7.0, 7.1, 7.2, and 8 installation.
     """
-    def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus):
+    def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus,
+                 macaddress):
         oz.RedHat.RedHatFDGuest.__init__(self, tdl, config, auto, output_disk,
                                          "rhl-" + tdl.update + "-jeos.ks",
-                                         nicmodel, diskbus)
+                                         nicmodel, diskbus, macaddress)
 
-def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
+def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
+              macaddress=None):
     """
     Factory method for RHL installs.
     """
     if tdl.update in ["9"]:
-        return RHL9Guest(tdl, config, auto, output_disk, netdev, diskbus)
+        return RHL9Guest(tdl, config, auto, output_disk, netdev, diskbus,
+                         macaddress)
     if tdl.update in ["7.2", "7.3", "8"]:
         return RHL70and71and72and73and8Guest(tdl, config, auto, output_disk,
-                                             netdev, diskbus)
+                                             netdev, diskbus, macaddress)
     if tdl.update in ["7.0", "7.1"]:
         if netdev is None:
             netdev = "ne2k_pci"
         return RHL70and71and72and73and8Guest(tdl, config, auto, output_disk,
-                                             netdev, diskbus)
+                                             netdev, diskbus, macaddress)
 
 def get_supported_string():
     """
