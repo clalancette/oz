@@ -34,8 +34,8 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
     """
     Class for OpenSUSE installation.
     """
-    def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus):
-        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, nicmodel,
+    def __init__(self, tdl, config, auto, output_disk, nicmodel, macaddress, diskbus):
+        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, nicmodel, macaddress,
                                   None, None, diskbus, True, False)
 
         self.reboots = 1
@@ -538,18 +538,18 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         """
         return self._internal_customize(libvirt_xml, "gen_only")
 
-def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
+def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None, macaddress=None):
     """
     Factory method for OpenSUSE installs.
     """
     if tdl.update in ["10.3"]:
-        return OpenSUSEGuest(tdl, config, auto, output_disk, netdev, diskbus)
+        return OpenSUSEGuest(tdl, config, auto, output_disk, netdev, macaddress, diskbus)
     if tdl.update in ["11.0", "11.1", "11.2", "11.3", "11.4", "12.1", "12.2", "12.3"]:
         if diskbus is None:
             diskbus = 'virtio'
         if netdev is None:
             netdev = 'virtio'
-        return OpenSUSEGuest(tdl, config, auto, output_disk, netdev, diskbus)
+        return OpenSUSEGuest(tdl, config, auto, output_disk, netdev, macaddress, diskbus)
 
 def get_supported_string():
     """

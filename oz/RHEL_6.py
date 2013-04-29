@@ -30,9 +30,9 @@ class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
     Class for RHEL-6 installation
     """
     def __init__(self, tdl, config, auto, output_disk=None, netdev=None,
-                 diskbus=None):
+                 macaddress=None, diskbus=None):
         oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, output_disk,
-                                            netdev, diskbus,
+                                            netdev, macaddress, diskbus,
                                             "rhel-6-jeos.ks", True, True,
                                             "cpio")
 
@@ -51,7 +51,7 @@ class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
             initrdline += "\n"
         self._modify_isolinux(initrdline)
 
-def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
+def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None, macaddress=None):
     """
     Factory method for RHEL-6 installs.
     """
@@ -60,7 +60,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
             netdev = 'virtio'
         if diskbus is None:
             diskbus = 'virtio'
-        return RHEL6Guest(tdl, config, auto, output_disk, netdev, diskbus)
+        return RHEL6Guest(tdl, config, auto, output_disk, netdev, macaddress, diskbus)
 
 def get_supported_string():
     """

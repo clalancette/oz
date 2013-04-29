@@ -35,7 +35,7 @@ class UbuntuGuest(oz.Guest.CDGuest):
     Class for Ubuntu 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, 11.04, 11.10, 12.04, 12.10, and 13.04 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, initrd, nicmodel,
-                 diskbus):
+                 macaddress, diskbus):
         if tdl.update in ["6.06", "6.06.1", "6.06.2"]:
             tdl.update = "6.06"
         elif tdl.update in ["8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4"]:
@@ -46,7 +46,7 @@ class UbuntuGuest(oz.Guest.CDGuest):
             tdl.update = "12.04"
 
         oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, nicmodel,
-                                  None, None, diskbus, True, True)
+                                  macaddress, None, None, diskbus, True, True)
 
         self.sshprivkey = os.path.join('/etc', 'oz', 'id_rsa-icicle-gen')
         self.crond_was_active = False
@@ -788,13 +788,13 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
                 except:
                     pass
 
-def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
+def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None, macaddress=None):
     """
     Factory method for Ubuntu installs.
     """
     if tdl.update in ["6.06", "6.06.1", "6.06.2", "6.10", "7.04", "7.10"]:
         return UbuntuGuest(tdl, config, auto, output_disk, "initrd.gz",
-                           netdev, diskbus)
+                           netdev, macaddress, diskbus)
     if tdl.update in ["8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4", "8.10",
                       "9.04"]:
         if netdev is None:
@@ -802,7 +802,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
         if diskbus is None:
             diskbus = 'virtio'
         return UbuntuGuest(tdl, config, auto, output_disk, "initrd.gz",
-                           netdev, diskbus)
+                           netdev, macaddress, diskbus)
     if tdl.update in ["9.10", "10.04", "10.04.1", "10.04.2", "10.04.3", "10.10",
                       "11.04", "11.10", "12.04", "12.04.1", "12.04.2", "12.10",
                       "13.04"]:
@@ -811,7 +811,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
         if diskbus is None:
             diskbus = 'virtio'
         return UbuntuGuest(tdl, config, auto, output_disk, "initrd.lz",
-                           netdev, diskbus)
+                           netdev, macaddress, diskbus)
 
 def get_supported_string():
     """

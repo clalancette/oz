@@ -31,9 +31,9 @@ class MandrakeGuest(oz.Guest.CDGuest):
     """
     Class for Mandrake 9.1, 9.2, 10.0, and 10.1 installation.
     """
-    def __init__(self, tdl, config, auto, output_disk, netdev, diskbus):
+    def __init__(self, tdl, config, auto, output_disk, netdev, macaddress, diskbus):
         oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, netdev,
-                                  None, None, diskbus, True, False)
+                                  macaddress, None, None, diskbus, True, False)
 
         if self.tdl.arch != "i386":
             raise oz.OzException.OzException("Mandrake only supports i386 architecture")
@@ -165,14 +165,14 @@ class Mandrake82Guest(oz.Guest.CDGuest):
             internal_timeout = 2500
         return self._do_install(internal_timeout, force, 0)
 
-def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
+def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None, macaddress=None):
     """
     Factory method for Mandrake installs.
     """
     if tdl.update in ["8.2"]:
-        return Mandrake82Guest(tdl, config, auto, output_disk, netdev, diskbus)
+        return Mandrake82Guest(tdl, config, auto, output_disk, netdev, macaddress, diskbus)
     if tdl.update in ["9.1", "9.2", "10.0", "10.1"]:
-        return MandrakeGuest(tdl, config, auto, output_disk, netdev, diskbus)
+        return MandrakeGuest(tdl, config, auto, output_disk, netdev, macaddress, diskbus)
 
 def get_supported_string():
     """

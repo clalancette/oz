@@ -31,8 +31,8 @@ class DebianGuest(oz.Guest.CDGuest):
     """
     Class for Debian 5 and 6 installation.
     """
-    def __init__(self, tdl, config, auto, output_disk, netdev, diskbus):
-        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, netdev,
+    def __init__(self, tdl, config, auto, output_disk, netdev, macaddress, diskbus):
+        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, netdev, macaddress
                                   None, None, diskbus, True, False)
 
         self.preseed_file = auto
@@ -102,7 +102,7 @@ class DebianGuest(oz.Guest.CDGuest):
                                            "-v", "-v", "-o", self.output_iso,
                                            self.iso_contents])
 
-def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
+def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None, macaddress=None):
     """
     Factory method for Debian installs.
     """
@@ -111,7 +111,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
             netdev = 'virtio'
         if diskbus is None:
             diskbus = 'virtio'
-        return DebianGuest(tdl, config, auto, output_disk, netdev, diskbus)
+        return DebianGuest(tdl, config, auto, output_disk, netdev, macaddress, diskbus)
 
 def get_supported_string():
     """

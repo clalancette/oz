@@ -61,7 +61,7 @@ os_dict = { 'Fedora': 'Fedora',
 }
 
 def guest_factory(tdl, config, auto, output_disk=None, netdev=None,
-                  diskbus=None):
+                  diskbus=None, macaddress=None):
     """
     Factory function return an appropriate Guest object based on the TDL.
     The arguments are:
@@ -82,7 +82,7 @@ def guest_factory(tdl, config, auto, output_disk=None, netdev=None,
             module = __import__('oz.' + importname)
             klass = getattr(module, importname).get_class(tdl, config, auto,
                                                           output_disk, netdev,
-                                                          diskbus)
+                                                          diskbus, macaddress)
             break
 
     if klass is None:

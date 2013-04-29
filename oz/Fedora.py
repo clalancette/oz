@@ -29,7 +29,7 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
     """
     Class for Fedora 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, and 18 installation.
     """
-    def __init__(self, tdl, config, auto, nicmodel, haverepo,
+    def __init__(self, tdl, config, auto, nicmodel, macaddress, haverepo,
                  diskbus, brokenisomethod, output_disk=None):
         # FIXME: For consistency most of the __init__ functions take self, tdl,
         # config, auto, output_disk (in that order).  However, in order to not
@@ -39,7 +39,7 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
         if tdl.update in ["16", "17"]:
             directkernel = None
         oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, output_disk,
-                                            nicmodel, diskbus,
+                                            nicmodel, macaddress, diskbus,
                                             "fedora-" + tdl.update + "-jeos.ks",
                                             True, True, directkernel)
 
@@ -93,7 +93,7 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
             createpart = True
         return self._internal_generate_diskimage(size, force, createpart)
 
-def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
+def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None, macaddress=None):
     """
     Factory method for Fedora installs.
     """
@@ -102,10 +102,10 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
             netdev = 'virtio'
         if diskbus is None:
             diskbus = 'virtio'
-        return FedoraGuest(tdl, config, auto, netdev, True, diskbus, True,
+        return FedoraGuest(tdl, config, auto, netdev, macaddress, True, diskbus, True,
                            output_disk)
     if tdl.update in ["7", "8", "9"]:
-        return FedoraGuest(tdl, config, auto, netdev, False, diskbus, False,
+        return FedoraGuest(tdl, config, auto, netdev, macaddress, False, diskbus, False,
                            output_disk)
 
 def get_supported_string():
