@@ -122,7 +122,7 @@ class Guest(object):
         self._discover_libvirt_bridge()
         self._discover_libvirt_type()
 
-    def __init__(self, tdl, config, output_disk, nicmodel, clockoffset,
+    def __init__(self, tdl, config, output_disk, nicmodel, macaddress, clockoffset,
                  mousetype, diskbus, iso_allowed, url_allowed):
         self.tdl = tdl
 
@@ -134,7 +134,10 @@ class Guest(object):
         self.log = logging.getLogger('%s.%s' % (__name__,
                                                 self.__class__.__name__))
         self.uuid = uuid.uuid4()
-        self.macaddr = oz.ozutil.generate_macaddress()
+        if macaddress is None:
+            self.macaddr = oz.ozutil.generate_macaddress()
+        else:
+            self.macaddr = macaddress
 
         # configuration from 'paths' section
         self.output_dir = oz.ozutil.config_get_key(config, 'paths',
@@ -1293,9 +1296,9 @@ class CDGuest(Guest):
             self.set_size = set_size
             self.seqnum = seqnum
 
-    def __init__(self, tdl, config, output_disk, nicmodel, clockoffset,
+    def __init__(self, tdl, config, output_disk, nicmodel, macaddress, clockoffset,
                  mousetype, diskbus, iso_allowed, url_allowed):
-        Guest.__init__(self, tdl, config, output_disk, nicmodel, clockoffset,
+        Guest.__init__(self, tdl, config, output_disk, nicmodel, macaddress, clockoffset,
                        mousetype, diskbus, iso_allowed, url_allowed)
 
         self.orig_iso = os.path.join(self.data_dir, "isos",
@@ -1707,9 +1710,9 @@ class FDGuest(Guest):
     """
     Class for guest installation via floppy disk.
     """
-    def __init__(self, tdl, config, output_disk, nicmodel, clockoffset,
+    def __init__(self, tdl, config, output_disk, nicmodel, macaddress, clockoffset,
                  mousetype, diskbus):
-        Guest.__init__(self, tdl, config, output_disk, nicmodel, clockoffset,
+        Guest.__init__(self, tdl, config, output_disk, nicmodel, macaddress, clockoffset,
                        mousetype, diskbus, False, True)
         self.orig_floppy = os.path.join(self.data_dir, "floppies",
                                         self.tdl.distro + self.tdl.update + self.tdl.arch + ".img")

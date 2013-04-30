@@ -33,9 +33,10 @@ class Windows(oz.Guest.CDGuest):
     """
     Shared Windows base class.
     """
-    def __init__(self, tdl, config, output_disk, netdev, diskbus):
+    def __init__(self, tdl, config, output_disk, netdev, macaddress, diskbus):
         oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, netdev,
-                                  "localtime", "usb", diskbus, True, False)
+                                  macaddress, "localtime", "usb", diskbus,
+                                  True, False)
 
         if self.tdl.key is None:
             raise oz.OzException.OzException("A key is required when installing Windows")
@@ -44,8 +45,8 @@ class Windows2000andXPand2003(Windows):
     """
     Class for Windows 2000, XP, and 2003 installation.
     """
-    def __init__(self, tdl, config, auto, output_disk, netdev, diskbus):
-        Windows.__init__(self, tdl, config, output_disk, netdev, diskbus)
+    def __init__(self, tdl, config, auto, output_disk, netdev, macaddress, diskbus):
+        Windows.__init__(self, tdl, config, output_disk, netdev, macaddress, diskbus)
 
         if self.tdl.update == "2000" and self.tdl.arch != "i386":
             raise oz.OzException.OzException("Windows 2000 only supports i386 architecture")
@@ -149,8 +150,8 @@ class Windows2008and7(Windows):
     """
     Class for Windows 2008 and 7 installation.
     """
-    def __init__(self, tdl, config, auto, output_disk, netdev, diskbus):
-        Windows.__init__(self, tdl, config, output_disk, netdev, diskbus)
+    def __init__(self, tdl, config, auto, output_disk, netdev, macaddress, diskbus):
+        Windows.__init__(self, tdl, config, output_disk, netdev, macaddress, diskbus)
 
         self.unattendfile = auto
         if self.unattendfile is None:
@@ -221,15 +222,15 @@ class Windows2008and7(Windows):
             internal_timeout = 6000
         return self._do_install(internal_timeout, force, 2)
 
-def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None):
+def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None, macaddress=None):
     """
     Factory method for Windows installs.
     """
     if tdl.update in ["2000", "XP", "2003"]:
-        return Windows2000andXPand2003(tdl, config, auto, output_disk, netdev,
+        return Windows2000andXPand2003(tdl, config, auto, output_disk, netdev, macaddress,
                                        diskbus)
     if tdl.update in ["2008", "7"]:
-        return Windows2008and7(tdl, config, auto, output_disk, netdev, diskbus)
+        return Windows2008and7(tdl, config, auto, output_disk, netdev, macaddress, diskbus)
 
 def get_supported_string():
     """

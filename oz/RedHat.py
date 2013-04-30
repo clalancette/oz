@@ -40,9 +40,9 @@ class RedHatCDGuest(oz.Guest.CDGuest):
     """
     Class for RedHat-based CD guests.
     """
-    def __init__(self, tdl, config, output_disk, nicmodel, diskbus, stock_ks,
+    def __init__(self, tdl, config, output_disk, nicmodel, macaddress, diskbus, stock_ks,
                  iso_allowed, url_allowed, initrdtype):
-        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, nicmodel,
+        oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, nicmodel, macaddress,
                                   None, None, diskbus, iso_allowed, url_allowed)
         self.sshprivkey = os.path.join('/etc', 'oz', 'id_rsa-icicle-gen')
         self.crond_was_active = False
@@ -1212,9 +1212,9 @@ class RedHatFDGuest(oz.Guest.FDGuest):
     Class for RedHat-based floppy guests.
     """
     def __init__(self, tdl, config, auto, output_disk, ks_name, nicmodel,
-                 diskbus):
+                 macaddress, diskbus):
         oz.Guest.FDGuest.__init__(self, tdl, config, output_disk, nicmodel,
-                                  None, None, diskbus)
+                                  macaddress, None, None, diskbus)
 
         if self.tdl.arch != "i386":
             raise oz.OzException.OzException("Invalid arch " + self.tdl.arch + "for " + self.tdl.distro + " guest")
