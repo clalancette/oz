@@ -1558,7 +1558,7 @@ class CDGuest(Guest):
         Internal method to actually run the installation.
         """
         if not force and os.access(self.jeos_filename, os.F_OK):
-            self.log.info("Found cached JEOS, using it")
+            self.log.info("Found cached JEOS (%s), using it" % (self.jeos_filename))
             oz.ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
             return self._generate_xml("hd", None)
 
