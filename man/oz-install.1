@@ -145,6 +145,9 @@ image_type = raw
 original_media = yes
 modified_media = no
 jeos = no
+
+[icicle]
+safe_generation = no
 .fi
 .in
 
@@ -179,6 +182,17 @@ operating system after installation.  This can significantly speed up
 subsequent installation of the same operating system, with the
 additional downside of the operating system getting out-of-date with
 respect to security updates.  Use with care.
+
+The \fBicicle\fR section allows some manipulation of how Oz generates
+ICICLE output.  ICICLE is a package manifest that can optionally be
+generated at the end of installs.  The \fBsafe_generation\fR key
+controls whether Oz uses a throwaway overlay file while generating
+the ICICLE.  If it is set to "no" (the default), then Oz will boot
+up the guest at the end of the install and run the appropriate
+commands to generate the ICICLE.  If it is set to "yes", then Oz
+will use a throwaway overlay file while generating the ICICLE.  After
+the ICICLE is generated, Oz will delete the backing file, leaving
+the original disk image pristine.
 
 .SH SEE ALSO
 oz-generate-icicle(1), oz-customize(1), oz-cleanup-cache(1), oz-examples(1)
