@@ -477,6 +477,7 @@ class Guest(object):
 
     def _internal_generate_diskimage(self, size=10, force=False,
                                      create_partition=False,
+                                     image_filename=None,
                                      backing_filename=None):
         """
         Internal method to generate a diskimage.
@@ -489,8 +490,12 @@ class Guest(object):
         self.log.info("Generating %dGB diskimage for %s" % (size,
                                                             self.tdl.name))
 
-        directory = os.path.dirname(self.diskimage)
-        filename = os.path.basename(self.diskimage)
+        if image_filename:
+            diskimage = image_filename
+        else:
+            diskimage = self.diskimage
+        directory = os.path.dirname(diskimage)
+        filename = os.path.basename(diskimage)
 
         doc = libxml2.newDoc("1.0")
         pool = doc.newChild(None, "pool", None)
@@ -505,18 +510,20 @@ class Guest(object):
         vol.setProp("type", "file")
         vol.newChild(None, "name", filename)
         vol.newChild(None, "allocation", "0")
-        cap = vol.newChild(None, "capacity", str(size))
-        cap.setProp("unit", "G")
         target = vol.newChild(None, "target", None)
         fmt = target.newChild(None, "format", None)
-        fmt.setProp("type", self.image_type)
+        if backing_filename:
+            fmt.setProp("type", "qcow2")
+            backstore = vol.newChild(None, "backingStore", None)
+            backstore.newChild(None, "path", backing_filename)
+        else:
+            fmt.setProp("type", self.image_type)
+            cap = vol.newChild(None, "capacity", str(size))
+            cap.setProp("unit", "G")
         # FIXME: this makes the permissions insecure, but is needed since
         # libvirt launches guests as qemu:qemu.
         permissions = target.newChild(None, "permissions", None)
         permissions.newChild(None, "mode", "0666")
-        if backing_filename:
-            backstore = vol.newChild(None, "backingStore", None)
-            backstore.newChild(None, "path", backing_filename)
         vol_xml = doc.serialize(None, 1)
 
         # sigh.  Yes, this is racy; if a pool is defined during this loop, we
