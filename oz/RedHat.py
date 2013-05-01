@@ -1211,6 +1211,13 @@ class RedHatCDYumGuest(RedHatCDGuest):
         domainsnapshot = doc.newChild(None, "domainsnapshot", None)
         domainsnapshot.newChild(None, "name", libvirt_dom.name() + "-icicle-snap")
         domainsnapshot.newChild(None, "description", "Snapshot of original install output to enable safe ICICLE generation")
+        # Force the snapshot to be external - if the bootdisk is qcow2 already, libvirt may try to use internal snapshots
+        # imcleod note - testing with libvirt-0.10.2-18.el6.x86_64 this was not the case - even a qcow2 base file results
+        #                in a distinct external snapshot - however I do not believe this is guaranteed
+        # TODO: Find out if this will ever be the case
+        disks = domainsnapshot.newChild(None, "disk", None)
+        disks.setProp("name", "bootdisk")
+        disks.setProp("snapshot", "external")
         xml = doc.serialize(None, 1)
         libvirt_snapshot = libvirt_dom.snapshotCreateXML(xml, libvirt.VIR_DOMAIN_SNAPSHOT_CREATE_DISK_ONLY)
 
