@@ -34,6 +34,7 @@ except ImportError:
     import ConfigParser as configparser
 import collections
 import ftplib
+import struct
 
 def generate_full_auto_path(relative):
     """
@@ -895,3 +896,40 @@ def gzip_create(inputfile, outputfile):
         if os.access(outputfile, os.F_OK):
             os.unlink(outputfile)
         raise
+
+def check_qcow_size(filename):
+    # Detect if an image is in qcow format
+    # If it is, return the size of the underlying disk image
+    # If it isn't, return none
+
+    # For interested parties, this is the QCOW header struct in C
+    # struct qcow_header {
+    #    uint32_t magic; 
+    #    uint32_t version;
+    #    uint64_t backing_file_offset;
+    #    uint32_t backing_file_size;
+    #    uint32_t cluster_bits;
+    #    uint64_t size; /* in bytes */
+    #    uint32_t crypt_method;
+    #    uint32_t l1_size;
+    #    uint64_t l1_table_offset;
+    #    uint64_t refcount_table_offset;
+    #    uint32_t refcount_table_clusters;
+    #    uint32_t nb_snapshots;
+    #    uint64_t snapshots_offset;
+    # };
+
+    # And in Python struct format string-ese
+    qcow_struct=">IIQIIQIIQQIIQ" # > means big-endian
+    qcow_magic = 0x514649FB # 'Q' 'F' 'I' 0xFB
+
+    f = open(filename,"r")
+    pack = f.read(struct.calcsize(qcow_struct))
+    f.close()
+
+    unpack = struct.unpack(qcow_struct, pack)
+
+    if unpack[0] == qcow_magic:
+	return unpack[5]
+    else:
+	return None

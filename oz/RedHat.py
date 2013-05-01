@@ -23,6 +23,7 @@ import re
 import os
 import shutil
 import libvirt
+import libxml2
 try:
     import configparser
 except ImportError:
@@ -1126,9 +1127,20 @@ class RedHatCDYumGuest(RedHatCDGuest):
 
         self.log.info("Customizing image")
 
-        if not self.tdl.packages and not self.tdl.files and not self.tdl.commands and action == "mod_only":
-            self.log.info("No additional packages, files, or commands to install, and icicle generation not requested, skipping customization")
-            return
+        if not self.tdl.packages and not self.tdl.files and not self.tdl.commands:
+            if action == "mod_only":
+                self.log.info("No additional packages, files, or commands to install, and icicle generation not requested, skipping customization")
+                return
+            elif action == "gen_and_mod":
+                # It is actually possible to get here with a "gen_and_mod"
+                # action but a TDL that contains no real customizations
+                # In the "safe ICICLE" code below it is important to know
+                # when we are truly in a "gen_only" state so we modify
+                # the action here if we detect that ICICLE generation is the
+                # only task to be done.
+                # TODO: See about doing this test earlier or in a more generic way
+                self.log.debug("Asked to gen_and_mod but no mods are present - changing action to gen_only")
+                action = "gen_only"
 
         # when doing an oz-install with -g, this isn't necessary as it will
         # just replace the port with the same port.  However, it is very
@@ -1136,6 +1148,16 @@ class RedHatCDYumGuest(RedHatCDGuest):
         # not match what is specified in the libvirt XML
         modified_xml = self._modify_libvirt_xml_for_serial(libvirt_xml)
 
+        if action == "gen_only" and self.safe_icicle_gen:
+            # We are only generating ICICLE and the user has asked us to do this without modifying
+            # the completed image by booting it.
+            # Create a copy on write snapshot to use for ICICLE generation - discard when finished
+            cow_diskimage = self.diskimage + "-icicle-snap.qcow2"
+            self._internal_generate_diskimage(force=True,
+                                              backing_filename=self.diskimage,
+                                              image_filename=cow_diskimage)
+            modified_xml = self._modify_libvirt_xml_diskimage(modified_xml, cow_diskimage, 'qcow2')
+ 
         self._collect_setup(modified_xml)
 
         icicle = None
@@ -1159,7 +1181,11 @@ class RedHatCDYumGuest(RedHatCDGuest):
             finally:
                 self._shutdown_guest(guestaddr, libvirt_dom)
         finally:
-            self._collect_teardown(modified_xml)
+            if action == "gen_only" and self.safe_icicle_gen:
+                # no need to teardown because we simply discard the file containing those changes
+                os.unlink(cow_diskimage)
+            else:
+                self._collect_teardown(modified_xml)
 
         return icicle
 
