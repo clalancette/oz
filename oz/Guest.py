@@ -476,7 +476,8 @@ class Guest(object):
         return xml
 
     def _internal_generate_diskimage(self, size=10, force=False,
-                                     create_partition=False):
+                                     create_partition=False,
+                                     backing_filename=None):
         """
         Internal method to generate a diskimage.
         """
@@ -513,6 +514,9 @@ class Guest(object):
         # libvirt launches guests as qemu:qemu.
         permissions = target.newChild(None, "permissions", None)
         permissions.newChild(None, "mode", "0666")
+        if backing_filename:
+            backstore = vol.newChild(None, "backingStore", None)
+            backstore.newChild(None, "path", backing_filename)
         vol_xml = doc.serialize(None, 1)
 
         # sigh.  Yes, this is racy; if a pool is defined during this loop, we
@@ -561,7 +565,9 @@ class Guest(object):
             if started:
                 pool.destroy()
 
-        if create_partition:
+        if create_partition and backing_filename:
+            self.log.warning("Asked to create partition against a copy-on-write snapshot - ignoring")
+        elif create_partition:
             g_handle = guestfs.GuestFS()
             g_handle.add_drive_opts(self.diskimage, format=self.image_type, readonly = 0)
             g_handle.launch()
