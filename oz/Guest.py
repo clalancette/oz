@@ -182,8 +182,16 @@ class Guest(object):
                                                            'jeos', False)
 
         self.jeos_cache_dir = os.path.join(self.data_dir, "jeos")
+
+        # only pull a cached JEOS if it was built with the correct image type
+        if self.image_type == 'raw':
+            # backwards compatible
+            jeos_extension = 'dsk'
+        else:
+            jeos_extension = self.image_type
+
         self.jeos_filename = os.path.join(self.jeos_cache_dir,
-                                          self.tdl.distro + self.tdl.update + self.tdl.arch + ".dsk")
+                                          self.tdl.distro + self.tdl.update + self.tdl.arch + '.' + jeos_extension)
 
         self.diskimage = output_disk
         if self.diskimage is None:
