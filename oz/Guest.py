@@ -513,6 +513,9 @@ class Guest(object):
         target = vol.newChild(None, "target", None)
         fmt = target.newChild(None, "format", None)
         if backing_filename:
+            # TODO: Revisit as BZ 958510 evolves
+            # It may be possible to avoid this inspection step if libvirt allow creation without
+            # an explicit capacity element.
             qcow_size = oz.ozutil.check_qcow_size(backing_filename)
             if qcow_size:
                 capacity = qcow_size
