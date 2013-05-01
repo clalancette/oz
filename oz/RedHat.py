@@ -23,6 +23,7 @@ import re
 import os
 import shutil
 import libvirt
+import libxml2
 try:
     import configparser
 except ImportError:
@@ -1148,9 +1149,14 @@ class RedHatCDYumGuest(RedHatCDGuest):
 
         self.log.info("Customizing image")
 
-        if not self.tdl.packages and not self.tdl.files and not self.tdl.commands and action == "mod_only":
-            self.log.info("No additional packages, files, or commands to install, and icicle generation not requested, skipping customization")
-            return
+        if not self.tdl.packages and not self.tdl.files and not self.tdl.commands:
+            if action == "mod_only":
+                self.log.info("No additional packages, files, or commands to install, and icicle generation not requested, skipping customization")
+                return
+            elif action == "gen_and_mod":
+                self.log.debug("Asked to gen_and_mod but no mods are present - changing action to gen_only")
+                action = "gen_only"
+
 
         # when doing an oz-install with -g, this isn't necessary as it will
         # just replace the port with the same port.  However, it is very
@@ -1206,7 +1212,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
         # It contains any changes made after the snapshot is taken.  The original disk file is thus preserved unchanged.
 
         # define only - we only start once our snapshoting is set up
-        libvirt_dom = self.libvirt_conn.defineXML(modified_xml, 0)
+        libvirt_dom = self.libvirt_conn.defineXML(modified_xml)
         doc = libxml2.newDoc("1.0")
         domainsnapshot = doc.newChild(None, "domainsnapshot", None)
         domainsnapshot.newChild(None, "name", libvirt_dom.name() + "-icicle-snap")
