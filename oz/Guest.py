@@ -513,9 +513,20 @@ class Guest(object):
         target = vol.newChild(None, "target", None)
         fmt = target.newChild(None, "format", None)
         if backing_filename:
+            qcow_size = oz.ozutil.check_qcow_size(backing_filename)
+            if qcow_size:
+                capacity = qcow_size
+                backing_format = 'qcow2'
+            else:
+                capacity = os.path.getsize(backing_filename)
+                backing_format = 'raw'
             fmt.setProp("type", "qcow2")
             backstore = vol.newChild(None, "backingStore", None)
             backstore.newChild(None, "path", backing_filename)
+            backfmt = backstore.newChild(None, "format", None)
+            backfmt.setProp("type", backing_format)
+            cap = vol.newChild(None, "capacity", str(capacity))
+            cap.setProp("unit", "B")
         else:
             fmt.setProp("type", self.image_type)
             cap = vol.newChild(None, "capacity", str(size))

@@ -1167,7 +1167,8 @@ class RedHatCDYumGuest(RedHatCDGuest):
         if action == "gen_only":
             # Create a copy on write snapshot to use for ICICLE generation - discard when finished
             cow_diskimage = self.diskimage + "-icicle-snap.qcow2"
-            self._internal_generate_diskimage(backing_filename=self.diskimage,
+            self._internal_generate_diskimage(force=True,
+                                              backing_filename=self.diskimage,
                                               image_filename=cow_diskimage)
             modified_xml = self._modify_libvirt_xml_diskimage(modified_xml, cow_diskimage, 'qcow2')
  
@@ -1203,6 +1204,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
         return icicle
 
     def _modify_libvirt_xml_diskimage(self, libvirt_xml, new_diskimage, image_type):
+        self.log.debug("Modifying libvirt XML to use disk image (%s) of type (%s)" % (new_diskimage, image_type))
         input_doc = libxml2.parseDoc(libvirt_xml)
         disks = input_doc.xpathEval('/domain/devices/disk')
         if len(disks) != 1:
@@ -1211,7 +1213,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
         source = disks[0].xpathEval('source')
         if len(source) != 1:
             raise oz.OzException.OzException("invalid <disk> entry without a source")
-        source.setProp('file', new_diskimage)
+        source[0].setProp('file', new_diskimage)
 
         driver = disks[0].xpathEval('driver')
         # at the time this function was added, all boot disk device stanzas have a driver section - even raw images
@@ -1219,6 +1221,11 @@ class RedHatCDYumGuest(RedHatCDGuest):
             driver[0].setProp('type', image_type)
         else:
             raise oz.OzException.OzException("Found a disk with an unexpected number of driver sections")
+
+        xml = input_doc.serialize(None, 1)
+        self.log.debug("Generated XML:\n%s" % (xml))
+        return xml
+
 
 
     def customize(self, libvirt_xml):
