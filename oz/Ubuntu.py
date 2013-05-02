@@ -91,10 +91,13 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
 
         self.cmdline = "priority=critical locale=en_US"
 
-    def _check_iso_tree(self):
-        if self.tdl.update in ["6.06", "6.10", "7.04"]:
-            if os.path.isdir(os.path.join(self.iso_contents, "casper")):
+    def _check_iso_tree(self, customize_or_icicle):
+        # ISOs that contain casper are desktop install CDs
+        if os.path.isdir(os.path.join(self.iso_contents, "casper")):
+            if self.tdl.update in ["6.06", "6.10", "7.04"]:
                 raise oz.OzException.OzException("Ubuntu %s installs can only be done using the alternate or server CDs" % (self.tdl.update))
+            if customize_or_icicle:
+                raise oz.OzException.OzException("Ubuntu customization or ICICLE generation can only be done using the alternate or server CDs")
 
     def _copy_preseed(self, outname):
         """
@@ -720,7 +723,8 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
             os.unlink(self.kernelfname)
             raise
 
-    def generate_install_media(self, force_download=False):
+    def generate_install_media(self, force_download=False,
+                               customize_or_icicle=False):
         """
         Method to generate the install media for Ubuntu based operating
         systems.  If force_download is False (the default), then the
@@ -745,7 +749,8 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
                 self.log.debug("Could not do direct boot, fetching mini.iso instead (the following error message is useful for bug reports, but can be ignored)")
                 self.log.debug(err)
 
-        return self._iso_generate_install_media(fetchurl, force_download)
+        return self._iso_generate_install_media(fetchurl, force_download,
+                                                customize_or_icicle)
 
     def customize(self, libvirt_xml):
         """

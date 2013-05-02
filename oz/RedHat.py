@@ -102,7 +102,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                                            "-o", self.output_iso,
                                            self.iso_contents])
 
-    def _check_iso_tree(self):
+    def _check_iso_tree(self, customize_or_icicle):
         kernel = os.path.join(self.iso_contents, "isolinux", "vmlinuz")
         if not os.path.exists(kernel):
             raise oz.OzException.OzException("Fedora/Red Hat installs can only be done using a boot.iso (netinst) or DVD image (LiveCDs are not supported)")
@@ -689,7 +689,8 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             os.unlink(self.kernelfname)
             raise
 
-    def generate_install_media(self, force_download=False):
+    def generate_install_media(self, force_download=False,
+                               customize_or_icicle=False):
         """
         Method to generate the install media for RedHat based operating
         systems.  If force_download is False (the default), then the
@@ -715,7 +716,8 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                     self.log.debug("Could not do direct boot, fetching boot.iso instead (the following error message is useful for bug reports, but can be ignored)")
                     self.log.debug(err)
 
-        return self._iso_generate_install_media(fetchurl, force_download)
+        return self._iso_generate_install_media(fetchurl, force_download,
+                                                customize_or_icicle)
 
     def cleanup_install(self):
         """
@@ -1278,7 +1280,8 @@ class RedHatFDGuest(oz.Guest.FDGuest):
                                            self.output_floppy, syslinux,
                                            "::SYSLINUX.CFG"])
 
-    def generate_install_media(self, force_download=False):
+    def generate_install_media(self, force_download=False,
+                               customize_or_icicle=False):
         """
         Method to generate the install media for RedHat based operating
         systems that install from floppy.  If force_download is False (the

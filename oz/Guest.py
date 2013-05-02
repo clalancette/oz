@@ -310,7 +310,8 @@ class Guest(object):
     # the next 4 methods are intended to be overridden by the individual
     # OS backends; raise an error if they are called but not implemented
 
-    def generate_install_media(self, force_download=False):
+    def generate_install_media(self, force_download=False,
+                               customize_or_icicle=False):
         """
         Base method for generating the install media for operating system
         installation.  This is expected to be overridden by all subclasses.
@@ -1614,7 +1615,7 @@ class CDGuest(Guest):
         """
         pass
 
-    def _check_iso_tree(self):
+    def _check_iso_tree(self, customize_or_icicle):
         """
         Base method to check the exploded ISO tree.  In the common case, do
         nothing; subclasses that need to check the tree will override this.
@@ -1635,7 +1636,8 @@ class CDGuest(Guest):
         """
         raise oz.OzException.OzException("Internal error, subclass didn't override generate_new_iso")
 
-    def _iso_generate_install_media(self, url, force_download):
+    def _iso_generate_install_media(self, url, force_download,
+                                    customize_or_icicle):
         """
         Method to generate the modified media necessary for unattended installs.
         """
@@ -1654,7 +1656,7 @@ class CDGuest(Guest):
         self._get_original_iso(url, force_download)
         self._check_pvd()
         self._copy_iso()
-        self._check_iso_tree()
+        self._check_iso_tree(customize_or_icicle)
         try:
             self._modify_iso()
             self._generate_new_iso()
@@ -1664,7 +1666,8 @@ class CDGuest(Guest):
         finally:
             self._cleanup_iso()
 
-    def generate_install_media(self, force_download=False):
+    def generate_install_media(self, force_download=False,
+                               customize_or_icicle=False):
         """
         Method to generate the install media for the operating
         system.  If force_download is False (the default), then the
@@ -1672,7 +1675,8 @@ class CDGuest(Guest):
         force_download is True, then the original media will be downloaded
         regardless of whether it is cached locally.
         """
-        return self._iso_generate_install_media(self.url, force_download)
+        return self._iso_generate_install_media(self.url, force_download,
+                                                customize_or_icicle)
 
     def _cleanup_iso(self):
         """
