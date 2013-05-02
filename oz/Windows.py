@@ -41,9 +41,9 @@ class Windows(oz.Guest.CDGuest):
         if self.tdl.key is None:
             raise oz.OzException.OzException("A key is required when installing Windows")
 
-class Windows2000andXPand2003(Windows):
+class Windows_v5(Windows):
     """
-    Class for Windows 2000, XP, and 2003 installation.
+    Class for Windows versions based on kernel 5.x (2000, XP, and 2003).
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
@@ -148,9 +148,9 @@ class Windows2000andXPand2003(Windows):
             internal_timeout = 3600
         return self._do_install(internal_timeout, force, 1)
 
-class Windows2008and7(Windows):
+class Windows_v6(Windows):
     """
-    Class for Windows 2008 and 7 installation.
+    Class for Windows versions based on kernel 6.x (2008 and 7).
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
@@ -232,11 +232,11 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     Factory method for Windows installs.
     """
     if tdl.update in ["2000", "XP", "2003"]:
-        return Windows2000andXPand2003(tdl, config, auto, output_disk, netdev,
-                                       diskbus, macaddress)
+        return Windows_v5(tdl, config, auto, output_disk, netdev,
+                          diskbus, macaddress)
     if tdl.update in ["2008", "7"]:
-        return Windows2008and7(tdl, config, auto, output_disk, netdev, diskbus,
-                               macaddress)
+        return Windows_v6(tdl, config, auto, output_disk, netdev, diskbus,
+                          macaddress)
 
 def get_supported_string():
     """
