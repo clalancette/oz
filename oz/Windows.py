@@ -234,7 +234,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     if tdl.update in ["2000", "XP", "2003"]:
         return Windows_v5(tdl, config, auto, output_disk, netdev,
                           diskbus, macaddress)
-    if tdl.update in ["2008", "7"]:
+    if tdl.update in ["2008", "7", "2012", "8"]:
         return Windows_v6(tdl, config, auto, output_disk, netdev, diskbus,
                           macaddress)
 
@@ -242,4 +242,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Windows: 2000, XP, 2003, 7, 2008"
+    return "Windows: 2000, XP, 2003, 7, 2008, 2012, 8"
