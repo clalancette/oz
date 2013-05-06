@@ -230,7 +230,7 @@
   <define name='rawtype'>
     <optional>
       <attribute name='type'>
-	<value>raw</value>
+        <value>raw</value>
       </attribute>
     </optional>
     <text/>
