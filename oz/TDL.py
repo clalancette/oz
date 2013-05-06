@@ -22,6 +22,8 @@ Template Description Language (TDL)
 import libxml2
 import base64
 import re
+import urllib2
+
 try:
     import urllib.parse as urlparse
 except ImportError:
@@ -231,8 +233,19 @@ class TDL(object):
                     self.files[name] = ""
                 else:
                     self.files[name] = base64.b64decode(content)
+            elif contenttype == 'url':
+                url = urlparse.urlparse(content)
+                if url.scheme == "file":
+                    with open(url.netloc + url.path) as f:
+                        output = "".join(f.readlines())
+                else:
+                    #fetch url, and put it in self.commands[name]
+                    fp = urllib2.urlopen(content)
+                    output = "".join(fp.readlines())
+
+                self.files[name] = output
             else:
-                raise oz.OzException.OzException("File type for %s must be 'raw' or 'base64'" % (name))
+                raise oz.OzException.OzException("File type for %s must be 'raw', 'url', or 'base64'" % (name))
 
         self.repositories = {}
         repositorieslist = self.doc.xpathEval('/template/repositories/repository')
@@ -315,8 +328,17 @@ class TDL(object):
 
             if contenttype == 'base64':
                 content = base64.b64decode(content)
+            elif contenttype == 'url':
+                url = urlparse.urlparse(content)
+                if url.scheme == "file":
+                    with open(url.netloc + url.path) as f:
+                        content = "".join(f.readlines())
+                else:
+                    #fetch url, and put it in self.commands[name]
+                    fp = urllib2.urlopen(content)
+                    content = "".join(fp.readlines())
             elif contenttype != 'raw':
-                raise oz.OzException.OzException("File type for %s must be 'raw' or 'base64'" % (name))
+                raise oz.OzException.OzException("File type for %s must be 'raw', 'url' or 'base64'" % (name))
 
             tmp.append((position, content))
 

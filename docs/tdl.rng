@@ -93,6 +93,7 @@
                 <choice>
                   <ref name='rawtype'/>
                   <ref name='base64_or_emptytype'/>
+                  <ref name='urltype'/>
                 </choice>
               </element>
             </zeroOrMore>
@@ -113,6 +114,7 @@
                 <choice>
                   <ref name='rawtype'/>
                   <ref name='base64type'/>
+                  <ref name='urltype'/>
                 </choice>
               </element>
             </zeroOrMore>
@@ -230,7 +232,7 @@
   <define name='rawtype'>
     <optional>
       <attribute name='type'>
-	<value>raw</value>
+	    <value>raw</value>
       </attribute>
     </optional>
     <text/>
@@ -261,6 +263,13 @@
       <value>base64</value>
     </attribute>
     <ref name='base64'/>
+  </define>
+
+  <define name='urltype'>
+    <attribute name='type'>
+      <value>url</value>
+    </attribute>
+    <text/>
   </define>
 
   <define name='number'>
