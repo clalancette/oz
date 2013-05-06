@@ -86,6 +86,10 @@ tests = {
     "test-49-file-empty-raw.tdl": True,
     "test-50-command-base64-empty.tdl": False,
     "test-51-disk-size.tdl": True,
+    "test-52-command-file-url.tdl": True,
+    "test-53-command-http-url.tdl": True,
+    "test-54-files-file-url.tdl": True,
+    "test-55-files-http-url.tdl": True,
 }
 
 # Validate oz handling of tdl file

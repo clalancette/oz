@@ -22,6 +22,8 @@ Template Description Language (TDL)
 import libxml2
 import base64
 import re
+import tempfile
+
 try:
     import urllib.parse as urlparse
 except ImportError:
@@ -56,6 +58,37 @@ def _xml_get_value(doc, xmlstring, component, optional=False):
             raise oz.OzException.OzException("Failed to find %s in TDL" % (component))
     else:
         raise oz.OzException.OzException("Expected 0 or 1 %s in TDL, saw %d" % (component, len(res)))
+
+
+def data_from_type(name, contenttype, content):
+    if contenttype == 'raw':
+        out = content
+    elif contenttype == 'base64':
+        if len(content) == 0:
+            out = ""
+        else:
+            # FIXME: this is pretty bad; if the content is long, then
+            # we'll be storing it all in memory
+            out = base64.b64decode(content)
+    elif contenttype == 'url':
+        # FIXME: this is really bad; if the file content is long, then we'll be
+        # storing it all in memory.  We should probably download it to a
+        # temporary file somewhere and reference that later on.
+        url = urlparse.urlparse(content)
+        if url.scheme == "file":
+            with open(url.netloc + url.path) as f:
+                out = "".join(f.readlines())
+        else:
+            # fetch url, and put it in self.commands[name]
+            fp = tempfile.TemporaryFile()
+            oz.ozutil.http_download_file(content, fp.fileno(), False, None)
+            fp.seek(0)
+            out = "".join(fp.readlines())
+            fp.close()
+    else:
+        raise oz.OzException.OzException("Type for %s must be 'raw', 'url' or 'base64'" % (name))
+
+    return out
 
 class Repository(object):
     """
@@ -224,15 +257,7 @@ class TDL(object):
                 contenttype = 'raw'
 
             content = afile.getContent().strip()
-            if contenttype == 'raw':
-                self.files[name] = content
-            elif contenttype == 'base64':
-                if len(content) == 0:
-                    self.files[name] = ""
-                else:
-                    self.files[name] = base64.b64decode(content)
-            else:
-                raise oz.OzException.OzException("File type for %s must be 'raw' or 'base64'" % (name))
+            self.files[name] = data_from_type(name, contenttype, content)
 
         self.repositories = {}
         repositorieslist = self.doc.xpathEval('/template/repositories/repository')
@@ -313,11 +338,7 @@ class TDL(object):
                 saw_position = True
                 position = int(position)
 
-            if contenttype == 'base64':
-                content = base64.b64decode(content)
-            elif contenttype != 'raw':
-                raise oz.OzException.OzException("File type for %s must be 'raw' or 'base64'" % (name))
-
+            content = data_from_type(name, contenttype, content)
             tmp.append((position, content))
 
         commands = []
