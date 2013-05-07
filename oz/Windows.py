@@ -223,7 +223,7 @@ class Windows_v6(Windows):
     def install(self, timeout=None, force=False):
         internal_timeout = timeout
         if internal_timeout is None:
-            internal_timeout = 6000
+            internal_timeout = 8500
         return self._do_install(internal_timeout, force, 2)
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
