@@ -29,7 +29,7 @@ import oz.OzException
 
 class DebianGuest(oz.Guest.CDGuest):
     """
-    Class for Debian 5 and 6 installation.
+    Class for Debian 5, 6 and 7 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
@@ -86,7 +86,7 @@ class DebianGuest(oz.Guest.CDGuest):
         f.write("  menu label ^Customiso\n")
         f.write("  menu default\n")
         f.write("  kernel " + installdir + "/vmlinuz\n")
-        f.write("  append file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US console-setup/layoutcode=us netcfg/choose_interface=auto priority=critical initrd=" + installdir + "/initrd.gz --\n")
+        f.write("  append file=/cdrom/preseed/customiso.seed auto=true debian-installer/locale=en_US console-setup/layoutcode=us netcfg/choose_interface=auto priority=critical initrd=" + installdir + "/initrd.gz --\n")
         f.close()
 
     def _generate_new_iso(self):
@@ -108,7 +108,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for Debian installs.
     """
-    if tdl.update in ["5", "6"]:
+    if tdl.update in ["5", "6", "7"]:
         if netdev is None:
             netdev = 'virtio'
         if diskbus is None:
@@ -120,4 +120,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Debian: 5, 6"
+    return "Debian: 5, 6, 7"
