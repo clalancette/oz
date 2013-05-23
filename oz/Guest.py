@@ -449,11 +449,11 @@ class Guest(object):
         elif self.mousetype == "usb":
             inputdev.setProp("type", "tablet")
             inputdev.setProp("bus", "usb")
-        # console
-        console = devices.newChild(None, "console", None)
-        console.setProp("type", "pty")
-        consoleTarget = console.newChild(None, "target", None)
-        consoleTarget.setProp("port", "0")
+        # serial console pseudo TTY
+        serial = devices.newChild(None, "serial", None)
+        serial.setProp("type", "pty")
+        serialTarget = serial.newChild(None, "target", None)
+        serialTarget.setProp("port", "0")
         # serial
         self._generate_serial_xml(devices)
         # boot disk
