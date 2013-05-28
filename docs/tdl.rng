@@ -41,12 +41,12 @@
                 <element name='extras'>
                   <zeroOrMore>
                     <element name='folder'>
-                      <element name='remote'>
+                      <attribute name='from'>
                         <text/>
-                      </element>
-                      <element name='target'>
+                      </attribute>
+                      <attribute name='to'>
                         <text/>
-                      </element>
+                      </attribute>
                     </element>
                   </zeroOrMore>
                 </element>

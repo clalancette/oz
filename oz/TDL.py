@@ -237,8 +237,8 @@ class TDL(object):
         self.isoextras = []
         isoextralist = self.doc.xpathEval('/template/os/install/extras/folder')
         for extrafolder in isoextralist:
-            remotelocation = _xml_get_value(extrafolder, 'remote', "folder remote location" , optional=False)
-            targetfolder = _xml_get_value(extrafolder, 'target', "folder target", optional=False)
+            remotelocation = extrafolder.prop('from')
+            targetfolder = extrafolder.prop('to')
             self.isoextras.append((targetfolder, remotelocation))
 
         self.repositories = {}
