@@ -27,6 +27,7 @@ Requires: mtools
 Requires: python-uuid
 Requires: openssh-clients
 Requires: m2crypto
+Requires: GitPython
 
 BuildRequires: python
 

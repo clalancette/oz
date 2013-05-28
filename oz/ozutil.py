@@ -20,6 +20,7 @@ Miscellaneous utility functions.
 """
 
 import ftplib
+from git import Repo
 import os
 import random
 import subprocess
@@ -494,6 +495,8 @@ def copy_remote_folder(source, destination, logger):
         logger.debug("Copied folder from %s to %s" % (url.path, destination))
     elif url.scheme == 'ftp':
         ftp_download_folder(url.hostname, url.username, url.password, url.path, destination, logger)
+    elif url.scheme == 'git':
+        git_clone_folder(source,destination, logger)
     else:
         raise oz.OzException.OzException("The protocol '%s' is not supported for fetching remote folders" % url.schema)
 
@@ -726,6 +729,11 @@ def http_get_header(url, redirect=True):
     c.close()
 
     return info
+
+def git_clone_folder(source, destination, logger):
+    mkdir_p(destination)
+    Repo.clone_from(source, destination)
+    logger.debug("Cloned Git repository from %s to %s" % (source, destination))
 
 def ftp_download_folder(server, username, password, basepath, destination, logger):
     """
