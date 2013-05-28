@@ -1600,13 +1600,7 @@ class CDGuest(Guest):
         """
         for (targetfolder, remoteurl)  in self.tdl.isoextras:
             targetabspath = os.path.join(self.iso_contents, targetfolder)
-            parsedurl =  urlparse.urlparse(remoteurl)
-            if parsedurl.scheme == 'file':
-                oz.ozutil.copytree_merge(parsedurl.path, targetabspath)
-            elif parsedurl.scheme == 'ftp':
-                oz.ozutil.ftp_download_folder(parsedurl.hostname, parsedurl.username, parsedurl.password, parsedurl.path, targetabspath, self.log)
-            else:
-                raise oz.OzException.OzException("The protocol '%s' is not supported for fetching remote folders" % parsedurl.schema)
+            oz.ozutil.copy_remote_folder(remoteurl, targetabspath, self.log)
 
     def _modify_iso(self):
         """

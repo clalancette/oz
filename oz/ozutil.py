@@ -20,11 +20,14 @@ Miscellaneous utility functions.
 """
 
 import ftplib
-from ftplib import FTP
 import os
 import random
 import subprocess
 import tempfile
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
 import errno
 import stat
 import shutil
@@ -481,6 +484,19 @@ def copy_modify_file(inname, outname, subfunc):
     infile.close()
     outfile.close()
 
+def copy_remote_folder(source, destination, logger):
+    """
+    Function to copy a remote folder in the local filesystem.
+    """
+    url =  urlparse.urlparse(source)
+    if url.scheme == 'file':
+        copytree_merge(url.path, destination)
+        logger.debug("Copied folder from %s to %s" % (url.path, destination))
+    elif url.scheme == 'ftp':
+        ftp_download_folder(url.hostname, url.username, url.password, url.path, destination, logger)
+    else:
+        raise oz.OzException.OzException("The protocol '%s' is not supported for fetching remote folders" % url.schema)
+
 def write_cpio(inputdict, outputfile):
     """
     Function to write a CPIO archive in the "New ASCII Format".  The
@@ -715,7 +731,7 @@ def ftp_download_folder(server, username, password, basepath, destination, logge
     """
     Function to download an ftp folder from url to local path
     """
-    ftp = FTP(server)
+    ftp = ftplib.FTP(server)
     ftp.login(username, password)
 
     def _recursive_ftp_download(sourcepath):
