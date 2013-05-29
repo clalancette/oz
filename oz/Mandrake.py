@@ -99,9 +99,10 @@ class Mandrake82Guest(oz.Guest.CDGuest):
     """
     Class for Mandrake 8.2 installation.
     """
-    def __init__(self, tdl, config, auto, output_disk, netdev, diskbus):
+    def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
+                 macaddress):
         oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, netdev,
-                                  None, None, diskbus, True, False)
+                                  None, None, diskbus, True, False, macaddress)
 
         if self.tdl.arch != "i386":
             raise oz.OzException.OzException("Mandrake only supports i386 architecture")
