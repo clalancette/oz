@@ -525,8 +525,8 @@ class Guest(object):
         vol_xml = doc.serialize(None, 1)
 
         # sigh.  Yes, this is racy; if a pool is defined during this loop, we
-        # might miss it.  I'm not quite sure how to do it better, and in any case
-        # we don't expect that to happen to often
+        # might miss it.  I'm not quite sure how to do it better, and in any
+        # case we don't expect that to happen often
         started = False
         found = False
         for poolname in self.libvirt_conn.listDefinedStoragePools() + self.libvirt_conn.listStoragePools():
