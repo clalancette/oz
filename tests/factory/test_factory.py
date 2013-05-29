@@ -105,7 +105,7 @@ def runtest(args):
     <install type='%s'>
       <%s>http://example.org</%s>
     </install>
-    <key></key>
+    <key>1234</key>
   </os>
 </template>
 """ % (distro, version, arch, installtype, installtype, installtype)
@@ -158,7 +158,7 @@ def test_all():
     expect_fail("FedoraCore", "24", "x86_64", "iso")
 
     # Fedora
-    for version in ["7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18"]:
+    for version in ["7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19"]:
         for arch in ["i386", "x86_64"]:
             for installtype in ["url", "iso"]:
                 expect_success("Fedora", version, arch, installtype)
@@ -215,7 +215,7 @@ def test_all():
 
     # RHEL-6
     for distro in ["RHEL-6", "CentOS-6", "ScientificLinux-6", "OEL-6"]:
-        for version in ["0", "1", "2"]:
+        for version in ["0", "1", "2", "3", "4"]:
             for arch in ["i386", "x86_64"]:
                 for installtype in ["url", "iso"]:
                     expect_success(distro, version, arch, installtype)
@@ -223,7 +223,7 @@ def test_all():
     expect_fail("RHEL-6", "U10", "x86_64", "url")
 
     # Debian
-    for version in ["5", "6"]:
+    for version in ["5", "6", "7"]:
         for arch in ["i386", "x86_64"]:
             expect_success("Debian", version, arch, "iso")
     # bad Debian version
@@ -233,7 +233,7 @@ def test_all():
 
     # Windows
     expect_success("Windows", "2000", "i386", "iso")
-    for version in ["XP", "2003", "2008", "7"]:
+    for version in ["XP", "2003", "2008", "7", "8", "2012"]:
         for arch in ["i386", "x86_64"]:
             expect_success("Windows", version, arch, "iso")
     # bad Windows 2000 arch
@@ -256,7 +256,8 @@ def test_all():
     for version in ["6.06", "6.06.1", "6.06.2", "6.10", "7.04", "7.10", "8.04",
                     "8.04.1", "8.04.2", "8.04.3", "8.04.4", "8.10", "9.04",
                     "9.10", "10.04", "10.04.1", "10.04.2", "10.04.3", "10.10",
-                    "11.04", "11.10", "12.04", "12.10", "13.04"]:
+                    "11.04", "11.10", "12.04", "12.04.1", "12.04.2", "12.10",
+                    "13.04"]:
         for arch in ["i386", "x86_64"]:
             for installtype in ["iso", "url"]:
                 expect_success("Ubuntu", version, arch, installtype)
