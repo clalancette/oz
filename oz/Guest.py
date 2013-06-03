@@ -541,6 +541,7 @@ class Guest(object):
                 if not pool.isActive():
                     pool.create(0)
                     started = True
+                break
 
         if not found:
             pool = self.libvirt_conn.storagePoolCreateXML(pool_xml, 0)
