@@ -485,7 +485,9 @@ class Guest(object):
         return xml
 
     def _internal_generate_diskimage(self, size=10, force=False,
-                                     create_partition=False):
+                                     create_partition=False,
+                                     image_filename=None,
+                                     backing_filename=None):
         """
         Internal method to generate a diskimage.
         """
@@ -497,8 +499,12 @@ class Guest(object):
         self.log.info("Generating %dGB diskimage for %s" % (size,
                                                             self.tdl.name))
 
-        directory = os.path.dirname(self.diskimage)
-        filename = os.path.basename(self.diskimage)
+        if image_filename:
+            diskimage = image_filename
+        else:
+            diskimage = self.diskimage
+        directory = os.path.dirname(diskimage)
+        filename = os.path.basename(diskimage)
 
         doc = libxml2.newDoc("1.0")
         pool = doc.newChild(None, "pool", None)
@@ -513,11 +519,30 @@ class Guest(object):
         vol.setProp("type", "file")
         vol.newChild(None, "name", filename)
         vol.newChild(None, "allocation", "0")
-        cap = vol.newChild(None, "capacity", str(size))
-        cap.setProp("unit", "G")
         target = vol.newChild(None, "target", None)
         fmt = target.newChild(None, "format", None)
-        fmt.setProp("type", self.image_type)
+        if backing_filename:
+            # TODO: Revisit as BZ 958510 evolves
+            # It may be possible to avoid this inspection step if libvirt allow creation without
+            # an explicit capacity element.
+            qcow_size = oz.ozutil.check_qcow_size(backing_filename)
+            if qcow_size:
+                capacity = qcow_size
+                backing_format = 'qcow2'
+            else:
+                capacity = os.path.getsize(backing_filename)
+                backing_format = 'raw'
+            fmt.setProp("type", "qcow2")
+            backstore = vol.newChild(None, "backingStore", None)
+            backstore.newChild(None, "path", backing_filename)
+            backfmt = backstore.newChild(None, "format", None)
+            backfmt.setProp("type", backing_format)
+            cap = vol.newChild(None, "capacity", str(capacity))
+            cap.setProp("unit", "B")
+        else:
+            fmt.setProp("type", self.image_type)
+            cap = vol.newChild(None, "capacity", str(size))
+            cap.setProp("unit", "G")
         # FIXME: this makes the permissions insecure, but is needed since
         # libvirt launches guests as qemu:qemu.
         permissions = target.newChild(None, "permissions", None)
@@ -571,7 +596,9 @@ class Guest(object):
             if started:
                 pool.destroy()
 
-        if create_partition:
+        if create_partition and backing_filename:
+            self.log.warning("Asked to create partition against a copy-on-write snapshot - ignoring")
+        elif create_partition:
             g_handle = guestfs.GuestFS()
             g_handle.add_drive_opts(self.diskimage, format=self.image_type, readonly = 0)
             g_handle.launch()
