@@ -66,13 +66,23 @@ def guest_factory(tdl, config, auto, output_disk=None, netdev=None,
     Factory function return an appropriate Guest object based on the TDL.
     The arguments are:
 
-    tdl    - The TDL object to be used.  The object will be determined based
-             on the distro and version from the TDL.
+    tdl    - The TDL object to be used.  The return object will be determined
+             based on the distro and version from the TDL.
     config - A ConfigParser object that contains configuration.  If None is
              passed for the config, Oz defaults will be used.
     auto   - An unattended installation file to be used for the
              installation.  If None is passed for auto, then Oz will use
              a known-working unattended installation file.
+    output_disk - An optional string argument specifying the path to the
+                  disk to be written to.
+    netdev - An optional string argument specifying the type of network device
+             to be used during installation.  If specified, this will override
+             the default that Oz uses.
+    diskbus - An optional string argument specifying the type of disk device
+              to be used during installation.  If specified, this will override
+              the default that Oz uses.
+    macaddress - An optional string argument specifying the MAC address to use
+                 for the guest.
     """
 
     klass = None
