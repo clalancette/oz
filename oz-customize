@@ -37,6 +37,7 @@ def usage():
     print("\t\t\t2 - errors, warnings, and information")
     print("\t\t\t3 - all messages")
     print("\t\t\t4 - all messages, prepended with the level and classname")
+    print("  --follow\t\tEnable live output of commands running during image customization")
     print("  -h\t\tPrint this help message")
     print(" Currently supported architectures are:")
     print("   i386, x86_64")
@@ -46,7 +47,7 @@ def usage():
 
 try:
     opts, args = getopt.gnu_getopt(sys.argv[1:], 'c:d:h', ['config', 'debug',
-                                                           'help'])
+                                                           'follow','help'])
 except getopt.GetoptError as err:
     print(str(err))
     usage()
@@ -54,6 +55,7 @@ except getopt.GetoptError as err:
 loglevel = logging.ERROR
 logformat = "%(message)s"
 config_file = None
+follow = False
 for o, a in opts:
     if o in ("-c", "--config"):
         config_file = a
@@ -73,6 +75,8 @@ for o, a in opts:
         elif d_int >= 4:
             loglevel = logging.DEBUG
             logformat = logging.BASIC_FORMAT
+    elif o in ("--follow"):
+        follow = True
     elif o in ("-h", "--help"):
         usage()
     else:
@@ -91,7 +95,7 @@ try:
 
     tdl = oz.TDL.TDL(open(tdlfile, 'r').read())
 
-    guest = oz.GuestFactory.guest_factory(tdl, config, None)
+    guest = oz.GuestFactory.guest_factory(tdl, config, None, follow=follow)
 
     fp = open(libvirt_xml_file, 'r')
 

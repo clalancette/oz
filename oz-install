@@ -41,6 +41,7 @@ def usage():
     print("\t\t\t2 - errors, warnings, and information")
     print("\t\t\t3 - all messages")
     print("\t\t\t4 - all messages, prepended with the level and classname")
+    print("  --follow\t\tEnable live output of commands running during image customization")
     print("  -f\t\tForce download of installation media even if already cached")
     print("  -g\t\tGenerate the ICICLE after installation")
     print("  -h\t\tPrint this help message")
@@ -61,7 +62,7 @@ def usage():
 try:
     opts, args = getopt.gnu_getopt(sys.argv[1:], 'a:b:c:d:fghi:m:n:ps:t:ux:',
                                    ['auto', 'disk-bus', 'config', 'debug', 'force-download',
-                                    'generate-icicle', 'help', 'icicle', 'mac-address'
+                                    'follow', 'generate-icicle', 'help', 'icicle', 'mac-address',
                                     'network-device', 'cleanup', 'disk', 'timeout', 'customize',
                                     'xmlfile'])
 except getopt.GetoptError as err:
@@ -71,6 +72,7 @@ except getopt.GetoptError as err:
 loglevel = logging.ERROR
 logformat = "%(message)s"
 force_download = False
+follow = False
 config_file = None
 generate_icicle = False
 filename = None
@@ -108,6 +110,8 @@ for o, a in opts:
             logformat = logging.BASIC_FORMAT
     elif o in ("-f", "--force-download"):
         force_download = True
+    elif o in ("--follow"):
+        follow = True
     elif o in ("-g", "--generate-icicle"):
         generate_icicle = True
     elif o in ("-h", "--help"):
@@ -146,7 +150,7 @@ try:
     tdl = oz.TDL.TDL(open(args[0], 'r').read())
 
     guest = oz.GuestFactory.guest_factory(tdl, config, auto, output_disk,
-                                          netdev, diskbus, macaddress)
+                                          netdev, diskbus, macaddress, follow)
 
     if cleanup:
         guest.cleanup_old_guest()

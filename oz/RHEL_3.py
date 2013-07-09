@@ -31,7 +31,7 @@ class RHEL3Guest(oz.RedHat.RedHatCDGuest):
     Class for RHEL-3 GOLD, U1, U2, U3, U4, U5, U6, U7, U8, and U9 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
-                 macaddress):
+                 macaddress, follow):
         iso_support = True
         if tdl.distro == "RHEL-3":
             iso_support = False
@@ -41,7 +41,7 @@ class RHEL3Guest(oz.RedHat.RedHatCDGuest):
         # disable it and fall back to the boot.iso method which is more reliable
         oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, output_disk,
                                          netdev, diskbus, "rhel-3-jeos.ks",
-                                         iso_support, True, None, macaddress)
+                                         iso_support, True, None, macaddress, follow)
 
         self.auto = auto
 
@@ -91,13 +91,13 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             # information.  We just pass through here, doing nothing
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
-              macaddress=None):
+              macaddress=None, follow=False):
     """
     Factory method for RHEL-3 installs.
     """
     if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9"]:
         return RHEL3Guest(tdl, config, auto, output_disk, netdev, diskbus,
-                          macaddress)
+                          macaddress, follow)
 
 def get_supported_string():
     """

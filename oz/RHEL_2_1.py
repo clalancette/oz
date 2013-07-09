@@ -27,13 +27,13 @@ class RHEL21Guest(oz.RedHat.RedHatFDGuest):
     Class for RHEL-2.1 GOLD, U2, U3, U4, U5, and U6 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
-                 macaddress):
+                 macaddress, follow):
         oz.RedHat.RedHatFDGuest.__init__(self, tdl, config, auto, output_disk,
                                          "rhel-2.1-jeos.ks", netdev, diskbus,
-                                         macaddress)
+                                         macaddress, follow)
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
-              macaddress=None):
+              macaddress=None, follow=False):
     """
     Factory method for RHEL-2.1 installs.
     """
@@ -41,7 +41,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
         if netdev is None:
             netdev = 'pcnet'
         return RHEL21Guest(tdl, config, auto, output_disk, netdev, diskbus,
-                           macaddress)
+                           macaddress, follow)
 
 def get_supported_string():
     """
