@@ -35,7 +35,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
     Class for OpenSUSE installation.
     """
     def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus,
-                 macaddress):
+                 macaddress, follow):
         oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, nicmodel,
                                   None, None, diskbus, True, False, macaddress)
 
@@ -49,6 +49,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
             self.autoyast = oz.ozutil.generate_full_auto_path("opensuse-" + self.tdl.update + "-jeos.xml")
 
         self.sshprivkey = os.path.join('/etc', 'oz', 'id_rsa-icicle-gen')
+        self.follow = follow
 
     def _modify_iso(self):
         """
@@ -139,12 +140,12 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
                     if domid == libvirt_dom.ID():
                         raise
 
-    def guest_execute_command(self, guestaddr, command, timeout=10):
+    def guest_execute_command(self, guestaddr, command, timeout=10, follow=False):
         """
         Method to execute a command on the guest and return the output.
         """
         return oz.ozutil.ssh_execute_command(guestaddr, self.sshprivkey,
-                                             command, timeout)
+                                             command, timeout, follow)
 
     def _image_ssh_teardown_step_1(self, g_handle):
         """
@@ -437,7 +438,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
 
         self.log.debug("Running custom commands")
         for cmd in self.tdl.commands:
-            self.guest_execute_command(guestaddr, cmd)
+            self.guest_execute_command(guestaddr, cmd, follow=self.follow)
 
         self.log.debug("Syncing")
         self.guest_execute_command(guestaddr, 'sync')
@@ -540,7 +541,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         return self._internal_customize(libvirt_xml, "gen_only")
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
-              macaddress=None):
+              macaddress=None, follow=False):
     """
     Factory method for OpenSUSE installs.
     """

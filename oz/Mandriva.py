@@ -32,7 +32,7 @@ class MandrivaGuest(oz.Guest.CDGuest):
     Class for Mandriva 2005, 2006.0, 2007.0, and 2008.0 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
-                 macaddress):
+                 macaddress, follow):
         oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, netdev,
                                   None, None, diskbus, True, False, macaddress)
 
@@ -43,6 +43,8 @@ class MandrivaGuest(oz.Guest.CDGuest):
         self.mandriva_arch = self.tdl.arch
         if self.mandriva_arch == "i386":
             self.mandriva_arch = "i586"
+        
+        self.follow = follow
 
     def _modify_iso(self):
         """
@@ -109,13 +111,13 @@ class MandrivaGuest(oz.Guest.CDGuest):
                                            self.iso_contents])
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
-              macaddress=None):
+              macaddress=None, follow=False):
     """
     Factory method for Mandriva installs.
     """
     if tdl.update in ["2005", "2006.0", "2007.0", "2008.0"]:
         return MandrivaGuest(tdl, config, auto, output_disk, netdev, diskbus,
-                             macaddress)
+                             macaddress, follow)
 
 def get_supported_string():
     """

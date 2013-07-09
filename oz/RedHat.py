@@ -41,7 +41,7 @@ class RedHatCDGuest(oz.Guest.CDGuest):
     Class for RedHat-based CD guests.
     """
     def __init__(self, tdl, config, output_disk, nicmodel, diskbus, stock_ks,
-                 iso_allowed, url_allowed, initrdtype, macaddress):
+                 iso_allowed, url_allowed, initrdtype, macaddress, follow):
         oz.Guest.CDGuest.__init__(self, tdl, config, output_disk, nicmodel,
                                   None, None, diskbus, iso_allowed, url_allowed,
                                   macaddress)
@@ -87,6 +87,8 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         # two layer dict to track required tunnels
         # self.tunnels[hostname][port]
         self.tunnels = {}
+
+        self.follow = follow
 
     def _generate_new_iso(self):
         """
@@ -435,12 +437,12 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             self._guestfs_handle_cleanup(g_handle)
 
     def guest_execute_command(self, guestaddr, command, timeout=10,
-                              tunnels=None):
+                              tunnels=None, follow=False):
         """
         Method to execute a command on the guest and return the output.
         """
         return oz.ozutil.ssh_execute_command(guestaddr, self.sshprivkey,
-                                             command, timeout, tunnels)
+                                             command, timeout, tunnels, follow)
 
     def do_icicle(self, guestaddr):
         """
@@ -1103,7 +1105,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
 
         self.log.debug("Running custom commands")
         for cmd in self.tdl.commands:
-            self.guest_execute_command(guestaddr, cmd)
+            self.guest_execute_command(guestaddr, cmd, follow=self.follow)
 
         self._remove_host_aliases(guestaddr)
 
@@ -1215,7 +1217,7 @@ class RedHatFDGuest(oz.Guest.FDGuest):
     Class for RedHat-based floppy guests.
     """
     def __init__(self, tdl, config, auto, output_disk, ks_name, nicmodel,
-                 diskbus, macaddress):
+                 diskbus, macaddress, follow):
         oz.Guest.FDGuest.__init__(self, tdl, config, output_disk, nicmodel,
                                   None, None, diskbus, macaddress)
 
@@ -1227,6 +1229,8 @@ class RedHatFDGuest(oz.Guest.FDGuest):
         self.ks_file = auto
         if self.ks_file is None:
             self.ks_file = oz.ozutil.generate_full_auto_path(self.ks_name)
+
+        self.follow = follow
 
     def _modify_floppy(self):
         """

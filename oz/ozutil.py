@@ -318,27 +318,40 @@ def subprocess_check_output(*popenargs, **kwargs):
         raise ValueError('stderr argument not allowed, it will be overridden.')
 
     executable_exists(popenargs[0][0])
+    
+    # For certain commands we'd like to send subprocess stdout/stderr to the console
+    # without collecting them in a file
+    follow = False
+    if 'follow' in kwargs:
+        follow = kwargs['follow']
+        del kwargs['follow']
 
-    # NOTE: it is very, very important that we use temporary files for
-    # collecting stdout and stderr here.  There is a nasty bug in python
-    # subprocess; if your process produces more than 64k of data on an fd that
-    # is using subprocess.PIPE, the whole thing will hang. To avoid this, we
-    # use temporary fds to capture the data
-    stdouttmp = tempfile.TemporaryFile()
-    stderrtmp = tempfile.TemporaryFile()
-
-    process = subprocess.Popen(stdout=stdouttmp, stderr=stderrtmp, *popenargs,
+    if follow:
+        process = subprocess.Popen(*popenargs,
                                **kwargs)
-    process.communicate()
-    retcode = process.poll()
+        (stdout, stderr) = process.communicate()
+        retcode = process.poll()
+    else:
+        # NOTE: it is very, very important that we use temporary files for
+        # collecting stdout and stderr here.  There is a nasty bug in python
+        # subprocess; if your process produces more than 64k of data on an fd that
+        # is using subprocess.PIPE, the whole thing will hang. To avoid this, we
+        # use temporary fds to capture the data
+        stdouttmp = tempfile.TemporaryFile()
+        stderrtmp = tempfile.TemporaryFile()
 
-    stdouttmp.seek(0, 0)
-    stdout = stdouttmp.read()
-    stdouttmp.close()
+        process = subprocess.Popen(stdout=stdouttmp, stderr=stderrtmp, *popenargs,
+                                   **kwargs)
+        process.communicate()
+        retcode = process.poll()
 
-    stderrtmp.seek(0, 0)
-    stderr = stderrtmp.read()
-    stderrtmp.close()
+        stdouttmp.seek(0, 0)
+        stdout = stdouttmp.read()
+        stdouttmp.close()
+
+        stderrtmp.seek(0, 0)
+        stderr = stderrtmp.read()
+        stderrtmp.close()
 
     if retcode:
         cmd = ' '.join(*popenargs)
@@ -346,7 +359,7 @@ def subprocess_check_output(*popenargs, **kwargs):
     return (stdout, stderr, retcode)
 
 def ssh_execute_command(guestaddr, sshprivkey, command, timeout=10,
-                        tunnels=None):
+                        tunnels=None, follow=False):
     """
     Function to execute a command on the guest using SSH and return the
     output.
@@ -375,7 +388,7 @@ def ssh_execute_command(guestaddr, sshprivkey, command, timeout=10,
 
     cmd.extend( ["root@" + guestaddr, command] )
 
-    return subprocess_check_output(cmd)
+    return subprocess_check_output(cmd, follow=follow)
 
 def scp_copy_file(guestaddr, sshprivkey, file_to_upload, destination,
                   timeout=10):
