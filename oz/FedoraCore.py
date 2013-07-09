@@ -30,14 +30,14 @@ class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
     Class for Fedora Core 1, 2, 3, 4, 5, and 6 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
-                 macaddress):
+                 macaddress, follow):
         initrdtype = "cpio"
         if tdl.update in ["1", "2", "3"]:
             initrdtype = "ext2"
         oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, output_disk,
                                          netdev, diskbus,
                                          "fedoracore-" + tdl.update + "-jeos.ks",
-                                         True, True, initrdtype, macaddress)
+                                         True, True, initrdtype, macaddress, follow)
 
         self.auto = auto
 
@@ -58,13 +58,13 @@ class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
         self._modify_isolinux(initrdline)
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
-              macaddress=None):
+              macaddress=None, follow=False):
     """
     Factory method for Fedora Core installs.
     """
     if tdl.update in ["1", "2", "3", "4", "5", "6"]:
         return FedoraCoreGuest(tdl, config, auto, output_disk, netdev, diskbus,
-                               macaddress)
+                               macaddress, follow)
 
 def get_supported_string():
     """

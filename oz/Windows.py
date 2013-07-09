@@ -227,7 +227,7 @@ class Windows_v6(Windows):
         return self._do_install(internal_timeout, force, 2)
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
-              macaddress=None):
+              macaddress=None, follow=False):
     """
     Factory method for Windows installs.
     """

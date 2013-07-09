@@ -30,7 +30,7 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
     Class for Fedora 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, and 19 installation.
     """
     def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,
-                 brokenisomethod, output_disk=None, macaddress=None):
+                 brokenisomethod, output_disk=None, macaddress=None, follow=False):
         # FIXME: For consistency most of the __init__ functions take self, tdl,
         # config, auto, output_disk (in that order).  However, in order to not
         # break imagefactory, we want to make output_disk have a default of
@@ -42,12 +42,13 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
                                             nicmodel, diskbus,
                                             "fedora-" + tdl.update + "-jeos.ks",
                                             True, True, directkernel,
-                                            macaddress)
+                                            macaddress, follow)
 
         self.auto = auto
 
         self.haverepo = haverepo
         self.brokenisomethod = brokenisomethod
+        self.follow = follow
 
     def _modify_iso(self):
         """
@@ -95,7 +96,7 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
         return self._internal_generate_diskimage(size, force, createpart)
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
-              macaddress=None):
+              macaddress=None, follow=False):
     """
     Factory method for Fedora installs.
     """
@@ -106,10 +107,10 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
         if diskbus is None:
             diskbus = 'virtio'
         return FedoraGuest(tdl, config, auto, netdev, True, diskbus, True,
-                           output_disk, macaddress)
+                           output_disk, macaddress, follow)
     if tdl.update in ["7", "8", "9"]:
         return FedoraGuest(tdl, config, auto, netdev, False, diskbus, False,
-                           output_disk, macaddress)
+                           output_disk, macaddress, follow)
 
 def get_supported_string():
     """

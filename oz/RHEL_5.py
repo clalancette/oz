@@ -31,14 +31,14 @@ class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
     Class for RHEL-5 GOLD, U1, U2, U3, U4, U5, U6, U7, U8, and U9 installation.
     """
     def __init__(self, tdl, config, auto, nicmodel, diskbus, output_disk=None,
-                 macaddress=None):
+                 macaddress=None, follow=False):
         # FIXME: For consistency most of the __init__ functions take self, tdl,
         # config, auto, output_disk (in that order).  However, in order to not
         # break imagefactory, we want to make output_disk have a default of
         # None, and we can't do that without putting output_disk at the end.
         oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, output_disk,
                                             nicmodel, diskbus, "rhel-5-jeos.ks",
-                                            True, True, "cpio", macaddress)
+                                            True, True, "cpio", macaddress, follow)
 
         self.auto = auto
 
@@ -102,20 +102,20 @@ class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
                     raise oz.OzException.OzException("Invalid boot.iso for SLC-5 URL install")
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
-              macaddress=None):
+              macaddress=None, follow=False):
     """
     Factory method for RHEL-5 installs.
     """
     if tdl.update in ["GOLD", "U1", "U2", "U3"]:
         return RHEL5Guest(tdl, config, auto, netdev, diskbus, output_disk,
-                          macaddress)
+                          macaddress, follow)
     if tdl.update in ["U4", "U5", "U6", "U7", "U8", "U9"]:
         if netdev is None:
             netdev = 'virtio'
         if diskbus is None:
             diskbus = 'virtio'
         return RHEL5Guest(tdl, config, auto, netdev, diskbus, output_disk,
-                          macaddress)
+                          macaddress, follow)
 
 def get_supported_string():
     """

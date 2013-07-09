@@ -35,7 +35,7 @@ class UbuntuGuest(oz.Guest.CDGuest):
     Class for Ubuntu 5.04, 5.10, 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, 11.04, 11.10, 12.04, 12.10, and 13.04 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, initrd, nicmodel,
-                 diskbus, macaddress):
+                 diskbus, macaddress, follow):
         if tdl.update in ["6.06", "6.06.1", "6.06.2"]:
             tdl.update = "6.06"
         elif tdl.update in ["8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4"]:
@@ -94,6 +94,7 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         self.reboots = 0
         if self.tdl.update in ["5.04", "5.10"]:
             self.reboots = 1
+        self.follow = follow
 
     def _check_iso_tree(self, customize_or_icicle):
         # ISOs that contain casper are desktop install CDs
@@ -523,15 +524,15 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
 
         self.log.debug("Running custom commands")
         for cmd in self.tdl.commands:
-            self.guest_execute_command(guestaddr, cmd)
+            self.guest_execute_command(guestaddr, cmd, follow=self.follow)
 
     def guest_execute_command(self, guestaddr, command, timeout=10,
-                              tunnels=None):
+                              tunnels=None, follow=False):
         """
         Method to execute a command on the guest and return the output.
         """
         return oz.ozutil.ssh_execute_command(guestaddr, self.sshprivkey,
-                                             command, timeout, tunnels)
+                                             command, timeout, tunnels, follow)
 
     def do_icicle(self, guestaddr):
         """
@@ -806,14 +807,14 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
                     pass
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
-              macaddress=None):
+              macaddress=None, follow=False):
     """
     Factory method for Ubuntu installs.
     """
     if tdl.update in ["5.04", "5.10", "6.06", "6.06.1", "6.06.2", "6.10",
                       "7.04", "7.10"]:
         return UbuntuGuest(tdl, config, auto, output_disk, "initrd.gz",
-                           netdev, diskbus, macaddress)
+                           netdev, diskbus, macaddress, follow)
     if tdl.update in ["8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4", "8.10",
                       "9.04"]:
         if netdev is None:
@@ -821,7 +822,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
         if diskbus is None:
             diskbus = 'virtio'
         return UbuntuGuest(tdl, config, auto, output_disk, "initrd.gz",
-                           netdev, diskbus, macaddress)
+                           netdev, diskbus, macaddress, follow)
     if tdl.update in ["9.10", "10.04", "10.04.1", "10.04.2", "10.04.3", "10.10",
                       "11.04", "11.10", "12.04", "12.04.1", "12.04.2", "12.10",
                       "13.04"]:
@@ -830,7 +831,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
         if diskbus is None:
             diskbus = 'virtio'
         return UbuntuGuest(tdl, config, auto, output_disk, "initrd.lz",
-                           netdev, diskbus, macaddress)
+                           netdev, diskbus, macaddress, follow)
 
 def get_supported_string():
     """
