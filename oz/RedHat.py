@@ -468,15 +468,10 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         Method to upload the custom files specified in the TDL to the guest.
         """
         self.log.info("Uploading custom files")
-        for name, content in list(self.tdl.files.items()):
-            localname = os.path.join(self.icicle_tmp, "file")
-            f = open(localname, 'w')
-            f.write(content)
-            f.close()
-            try:
-                self.guest_live_upload(guestaddr, localname, name)
-            finally:
-                os.unlink(localname)
+        for name, fp in list(self.tdl.files.items()):
+            # all of the self.tdl.files are named temporary files; we just need
+            # to fetch the name out and have scp upload it
+            self.guest_live_upload(guestaddr, fp.name, name)
 
     def _shutdown_guest(self, guestaddr, libvirt_dom):
         """
@@ -1103,7 +1098,7 @@ class RedHatCDYumGuest(RedHatCDGuest):
 
         self.log.debug("Running custom commands")
         for cmd in self.tdl.commands:
-            self.guest_execute_command(guestaddr, cmd)
+            self.guest_execute_command(guestaddr, cmd.read())
 
         self._remove_host_aliases(guestaddr)
 

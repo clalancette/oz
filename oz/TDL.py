@@ -23,6 +23,7 @@ import libxml2
 import base64
 import re
 import tempfile
+import StringIO
 
 try:
     import urllib.parse as urlparse
@@ -59,34 +60,35 @@ def _xml_get_value(doc, xmlstring, component, optional=False):
     else:
         raise oz.OzException.OzException("Expected 0 or 1 %s in TDL, saw %d" % (component, len(res)))
 
-
 def data_from_type(name, contenttype, content):
+    '''
+    A function to get data out of some content, possibly decoding it depending
+    on the content type.  This function understands three types of content:
+    raw (where no decoding is necessary), base64 (where the data needs to be
+    base64 decoded), and url (where the data needs to be downloaded).  Because
+    the data might be large, all data is sent to file handle, which is returned
+    from the function.
+    '''
+
+    out = tempfile.NamedTemporaryFile()
     if contenttype == 'raw':
-        out = content
+        out.write(content)
     elif contenttype == 'base64':
-        if len(content) == 0:
-            out = ""
-        else:
-            # FIXME: this is pretty bad; if the content is long, then
-            # we'll be storing it all in memory
-            out = base64.b64decode(content)
+        base64.decode(StringIO.StringIO(content), out)
     elif contenttype == 'url':
-        # FIXME: this is really bad; if the file content is long, then we'll be
-        # storing it all in memory.  We should probably download it to a
-        # temporary file somewhere and reference that later on.
         url = urlparse.urlparse(content)
         if url.scheme == "file":
             with open(url.netloc + url.path) as f:
-                out = "".join(f.readlines())
+                out.write("".join(f.readlines()))
         else:
-            # fetch url, and put it in self.commands[name]
-            fp = tempfile.TemporaryFile()
-            oz.ozutil.http_download_file(content, fp.fileno(), False, None)
-            fp.seek(0)
-            out = "".join(fp.readlines())
-            fp.close()
+            oz.ozutil.http_download_file(content, out.fileno(), False, None)
     else:
         raise oz.OzException.OzException("Type for %s must be 'raw', 'url' or 'base64'" % (name))
+
+    # make sure the data is flushed to disk for uses of the file through
+    # the name
+    out.flush()
+    out.seek(0)
 
     return out
 
@@ -338,17 +340,17 @@ class TDL(object):
                 saw_position = True
                 position = int(position)
 
-            content = data_from_type(name, contenttype, content)
-            tmp.append((position, content))
+            fp = data_from_type(name, contenttype, content)
+            tmp.append((position, fp))
 
         commands = []
         if not saw_position:
-            for pos, content in tmp:
-                commands.append(content)
+            for pos, fp in tmp:
+                commands.append(fp)
         else:
             tmp.sort(cmp=lambda x, y: cmp(x[0], y[0]))
             order = 1
-            for pos, content in tmp:
+            for pos, fp in tmp:
                 if pos is None:
                     raise oz.OzException.OzException("All command elements must have a position (explicit order), or none of them may (implicit order)")
                 elif pos != order:
@@ -356,7 +358,7 @@ class TDL(object):
                     # the case where there is a missing number
                     raise oz.OzException.OzException("Cannot have duplicate or sparse command position order!")
                 order += 1
-                commands.append(content)
+                commands.append(fp)
 
         return commands
 
