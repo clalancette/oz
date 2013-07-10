@@ -88,7 +88,7 @@ def copyfile_sparse(src, dest):
     if os.path.exists(dest) and os.path.samefile(src, dest):
         raise Exception("Source '%s' and dest '%s' are the same file" % (src, dest))
 
-    base = os.path.basename(dest)
+    base = os.path.dirname(dest)
     if not os.path.exists(base):
         mkdir_p(base)
 
