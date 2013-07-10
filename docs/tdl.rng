@@ -37,6 +37,20 @@
                 <ref name='url'/>
                 <ref name='iso'/>
               </choice>
+              <optional>
+                <element name='extras'>
+                  <zeroOrMore>
+                    <element name='folder'>
+                      <attribute name='from'>
+                        <text/>
+                      </attribute>
+                      <attribute name='to'>
+                        <text/>
+                      </attribute>
+                    </element>
+                  </zeroOrMore>
+                </element>
+              </optional>
             </element>
             <optional>
               <element name='rootpw'>

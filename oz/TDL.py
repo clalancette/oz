@@ -261,6 +261,13 @@ class TDL(object):
             content = afile.getContent().strip()
             self.files[name] = data_from_type(name, contenttype, content)
 
+        self.isoextras = []
+        isoextralist = self.doc.xpathEval('/template/os/install/extras/folder')
+        for extrafolder in isoextralist:
+            remotelocation = extrafolder.prop('from')
+            targetfolder = extrafolder.prop('to')
+            self.isoextras.append((targetfolder, remotelocation))
+
         self.repositories = {}
         repositorieslist = self.doc.xpathEval('/template/repositories/repository')
         self._add_repositories(repositorieslist)
