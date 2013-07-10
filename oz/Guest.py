@@ -1119,62 +1119,61 @@ class Guest(object):
         self.log.info("Waiting for guest %s to boot" % (self.tdl.name))
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect(('127.0.0.1', self.listen_port))
-        sock.settimeout(1)
 
-        addr = None
-        count = 300
-        data = ''
-        while count > 0:
-            do_sleep = True
-            if count % 10 == 0:
-                self.log.debug("Waiting for guest %s to boot, %d/300" % (self.tdl.name, count))
-            try:
-                # note that we have to build the data up here, since there is
-                # no guarantee that we will get the whole write in one go
-                data += sock.recv(100)
-            except socket.timeout:
-                # the socket times out after 1 second.  We can just fall
-                # through to the below code because it is a noop, *except* that
-                # we don't want to sleep.  Set the flag
-                do_sleep = False
+        try:
+            sock.settimeout(1)
+            sock.connect(('127.0.0.1', self.listen_port))
 
-            # OK, we got data back from the socket.  Check to see if the data
-            # is what we expect; essentially, some up-front hex-garbage,
-            # followed by a !<ip>,<uuid>!
-            # Exclude ! from the wildcard to avoid errors when rx-ing two
-            # announce messages in the same string
-            match = re.search("!([^!]*?,[^!]*?)!$", data)
-            if match is not None:
-                if len(match.groups()) != 1:
-                    raise oz.OzException.OzException("Guest checked in with no data")
-                split = match.group(1).split(',')
-                if len(split) != 2:
-                    raise oz.OzException.OzException("Guest checked in with bogus data")
-                addr = split[0]
-                uuidstr = split[1]
+            addr = None
+            count = 300
+            data = ''
+            while count > 0:
+                do_sleep = True
+                if count % 10 == 0:
+                    self.log.debug("Waiting for guest %s to boot, %d/300" % (self.tdl.name, count))
                 try:
-                    # we use socket.inet_aton() to validate the IP address
-                    socket.inet_aton(addr)
-                except socket.error:
-                    raise oz.OzException.OzException("Guest checked in with invalid IP address")
+                    # note that we have to build the data up here, since there
+                    # is no guarantee that we will get the whole write in one go
+                    data += sock.recv(100)
+                except socket.timeout:
+                    # the socket times out after 1 second.  We can just fall
+                    # through to the below code because it is a noop, *except* that
+                    # we don't want to sleep.  Set the flag
+                    do_sleep = False
 
-                # FIXME: this is slightly different semantics than before.
-                # Previously, if we saw a bogus UUID, we would ignore it and
-                # continue waiting for the "right" one.  Now we are throwing
-                # an exception.  I kind of like the previous behavior better
-                if uuidstr != str(self.uuid):
-                    raise oz.OzException.OzException("Guest checked in with unknown UUID")
-                break
+                # OK, we got data back from the socket.  Check to see if it is
+                # is what we expect; essentially, some up-front garbage,
+                # followed by a !<ip>,<uuid>!
+                # Exclude ! from the wildcard to avoid errors when receiving two
+                # announce messages in the same string
+                match = re.search("!([^!]*?,[^!]*?)!$", data)
+                if match is not None:
+                    if len(match.groups()) != 1:
+                        raise oz.OzException.OzException("Guest checked in with no data")
+                    split = match.group(1).split(',')
+                    if len(split) != 2:
+                        raise oz.OzException.OzException("Guest checked in with bogus data")
+                    addr = split[0]
+                    uuidstr = split[1]
+                    try:
+                        # use socket.inet_aton() to validate the IP address
+                        socket.inet_aton(addr)
+                    except socket.error:
+                        raise oz.OzException.OzException("Guest checked in with invalid IP address")
 
-            # if the data we got didn't match, we need to continue waiting.
-            # before going to sleep, make sure that the domain is still around
-            libvirt_dom.info()
-            if do_sleep:
-                time.sleep(1)
-            count -= 1
+                    if uuidstr != str(self.uuid):
+                        raise oz.OzException.OzException("Guest checked in with unknown UUID")
+                    break
 
-        sock.close()
+                # if the data we got didn't match, we need to continue waiting.
+                # before going to sleep, make sure that the domain is still
+                # around
+                libvirt_dom.info()
+                if do_sleep:
+                    time.sleep(1)
+                count -= 1
+        finally:
+            sock.close()
 
         if addr is None:
             raise oz.OzException.OzException("Timed out waiting for guest to boot")
