@@ -309,7 +309,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
         f.write('[ -z "$DEV" ] && exit 0\n')
         f.write("ADDR=$(/sbin/ip -4 -o addr show dev $DEV | /bin/awk '{print $4}' | /usr/bin/cut -d/ -f1) &&\n")
         f.write('[ -z "$ADDR" ] && exit 0\n')
-        f.write('echo -n "!$ADDR,%s!" > /dev/ttyS0\n' % (self.uuid))
+        f.write('echo -n "!$ADDR,%s!" > /dev/ttyS1\n' % (self.uuid))
         f.close()
         try:
             g_handle.upload(scriptfile, '/root/reportip')
