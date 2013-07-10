@@ -547,6 +547,8 @@ class Guest(object):
             pool = self.libvirt_conn.storagePoolCreateXML(pool_xml, 0)
             started = True
 
+        pool.refresh(0)
+
         # this is a bit complicated, because of the cases that can
         # happen.  The cases are:
         #
