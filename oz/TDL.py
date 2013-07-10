@@ -138,6 +138,20 @@ class Package(object):
         self.filename = filename
         self.args = args
 
+class ISOExtra(object):
+    """
+    Class that represents an extra element to add to an installation ISO.
+    Objects of this type contain 3 pieces of information:
+
+    element_type - "file" or "directory"
+    source       - A source URL for the element.
+    destination  - A relative destination for the element.
+    """
+    def __init__(self, element_type, source, destination):
+        self.element_type = element_type
+        self.source = source
+        self.destination = destination
+
 class TDL(object):
     """
     Class that represents a parsed piece of TDL XML.  Objects of this kind
@@ -259,6 +273,11 @@ class TDL(object):
 
             content = afile.getContent().strip()
             self.files[name] = data_from_type(name, contenttype, content)
+
+        self.isoextras = self._add_isoextras('/template/os/install/extras/directory',
+                                             'directory')
+        self.isoextras += self._add_isoextras('/template/os/install/extras/file',
+                                              'file')
 
         self.repositories = {}
         self._add_repositories(self.doc.xpathEval('/template/repositories/repository'))
@@ -478,6 +497,24 @@ class TDL(object):
             self.repositories[name] = Repository(name, url, signed, persist,
                                                  clientcert, clientkey, cacert,
                                                  sslverify)
+
+    def _add_isoextras(self, extraspath, element_type):
+        isoextras = []
+        extraslist = self.doc.xpathEval(extraspath)
+        if self.installtype != 'iso' and extraslist:
+            raise oz.OzException.OzException("Extra ISO data can only be used with iso install type")
+
+        for extra in extraslist:
+            source = extra.prop('source')
+            if source is None:
+                raise oz.OzException.OzException("Extra ISO element without a source was given")
+            destination = extra.prop('destination')
+            if destination is None:
+                raise oz.OzException.OzException("Extra ISO element without a destination was given")
+
+            isoextras.append(ISOExtra(element_type, source, destination))
+
+        return isoextras
 
     # I declare we will use a 2 element version string with a dot
     # This allows simple comparison by conversion to float
