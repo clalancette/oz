@@ -32,6 +32,7 @@ try:
 except ImportError:
     import ConfigParser as configparser
 import collections
+import ftplib
 
 def generate_full_auto_path(relative):
     """
@@ -784,3 +785,31 @@ def http_download_file(url, fd, show_progress, logger):
         c.setopt(c.PROGRESSFUNCTION, progress.progress)
     c.perform()
     c.close()
+
+def ftp_download_directory(server, username, password, basepath, destination):
+    ftp = ftplib.FTP(server)
+    ftp.login(username, password)
+
+    def _recursive_ftp_download(sourcepath):
+        """
+        Function to iterate and download a remote ftp folder
+        """
+        original_dir = ftp.pwd()
+        try:
+            ftp.cwd(sourcepath)
+        except ftplib.error_perm:
+            relativesourcepath = os.path.relpath(sourcepath, basepath)
+            destinationpath = os.path.join(destination, relativesourcepath)
+            if not os.path.exists(os.path.dirname(destinationpath)):
+                os.makedirs(os.path.dirname(destinationpath))
+            ftp.retrbinary("RETR " + sourcepath, open(destinationpath, "wb").write)
+            return
+
+        names = ftp.nlst()
+        for name in names:
+            _recursive_ftp_download(os.path.join(sourcepath, name))
+
+        ftp.cwd(original_dir)
+
+    _recursive_ftp_download(basepath)
+    ftp.close()

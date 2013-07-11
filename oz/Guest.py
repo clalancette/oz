@@ -1633,12 +1633,29 @@ class CDGuest(Guest):
         for isoextra in self.tdl.isoextras:
             targetabspath = os.path.join(self.iso_contents,
                                          isoextra.destination)
+            oz.ozutil.mkdir_p(os.path.dirname(targetabspath))
+
             parsedurl = urlparse.urlparse(isoextra.source)
             if parsedurl.scheme == 'file':
                 if isoextra.element_type == "file":
                     oz.ozutil.copyfile_sparse(parsedurl.path, targetabspath)
                 else:
                     oz.ozutil.copytree_merge(parsedurl.path, targetabspath)
+            elif parsedurl.scheme == "ftp":
+                if isoextra.element_type == "file":
+                    fd = os.open(targetabspath,
+                                 os.O_CREAT|os.O_TRUNC|os.O_WRONLY)
+                    try:
+                        oz.ozutil.http_download_file(isoextra.source, fd, True,
+                                                     self.log)
+                    finally:
+                        os.close(fd)
+                else:
+                    oz.ozutil.ftp_download_directory(parsedurl.hostname,
+                                                     parsedurl.username,
+                                                     parsedurl.password,
+                                                     parsedurl.path,
+                                                     targetabspath)
             else:
                 raise oz.OzException.OzException("The protocol '%s' is not supported for fetching remote directories" % parsedurl.schema)
 
