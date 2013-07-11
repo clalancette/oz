@@ -1656,6 +1656,17 @@ class CDGuest(Guest):
                                                      parsedurl.password,
                                                      parsedurl.path,
                                                      targetabspath)
+            elif parsedurl.scheme == "http":
+                if isoextra.element_type == "directory":
+                    raise oz.OzException.OzException("ISO extra directories cannot be fetched over HTTP")
+                else:
+                    fd = os.open(targetabspath,
+                                 os.O_CREAT|os.O_TRUNC|os.O_WRONLY)
+                    try:
+                        oz.ozutil.http_download_file(isoextra.source, fd, True,
+                                                     self.log)
+                    finally:
+                        os.close(fd)
             else:
                 raise oz.OzException.OzException("The protocol '%s' is not supported for fetching remote directories" % parsedurl.schema)
 
