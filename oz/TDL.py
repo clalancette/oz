@@ -246,8 +246,7 @@ class TDL(object):
                                      optional=not rootpw_required)
 
         self.packages = []
-        packageslist = self.doc.xpathEval('/template/packages/package')
-        self._add_packages(packageslist)
+        self._add_packages(self.doc.xpathEval('/template/packages/package'))
 
         self.files = {}
         for afile in self.doc.xpathEval('/template/files/file'):
@@ -262,8 +261,7 @@ class TDL(object):
             self.files[name] = data_from_type(name, contenttype, content)
 
         self.repositories = {}
-        repositorieslist = self.doc.xpathEval('/template/repositories/repository')
-        self._add_repositories(repositorieslist)
+        self._add_repositories(self.doc.xpathEval('/template/repositories/repository'))
 
         self.commands = self._parse_commands()
 
