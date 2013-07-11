@@ -413,6 +413,12 @@ def mkdir_p(path):
     if path is None:
         raise Exception("Path cannot be None")
 
+    if path == '':
+        # this can happen if the user did something like call os.path.dirname()
+        # on a file without directories.  Since os.makedirs throws an exception
+        # in that case, check for it here and allow it.
+        return
+
     try:
         os.makedirs(path)
     except OSError as err:
