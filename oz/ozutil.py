@@ -496,7 +496,7 @@ def copytree_merge(src, dst, symlinks=False, ignore=None):
                 copytree_merge(srcname, dstname, symlinks, ignore)
             else:
                 shutil.copy2(srcname, dstname)
-            # XXX What about devices, sockets etc.?
+            # FIXME: What about devices, sockets etc.?
         except (IOError, os.error) as why:
             errors.append((srcname, dstname, str(why)))
         # catch the Error from the recursive copytree so that we can
@@ -794,6 +794,11 @@ def http_download_file(url, fd, show_progress, logger):
     Function to download a file from url to file descriptor fd.
     """
     class Progress(object):
+        """
+        Internal class to represent progress on the connection.  This is only
+        required so that we have somewhere to store the "last_mb" variable
+        that is not global.
+        """
         def __init__(self):
             self.last_mb = -1
 

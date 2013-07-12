@@ -499,6 +499,10 @@ class TDL(object):
                                                  sslverify)
 
     def _add_isoextras(self, extraspath, element_type):
+        """
+        Internal method to add the list of extra ISO elements from the specified
+        XML path into the self.isoextras list.
+        """
         isoextras = []
         extraslist = self.doc.xpathEval(extraspath)
         if self.installtype != 'iso' and extraslist:
