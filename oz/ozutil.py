@@ -73,6 +73,49 @@ def executable_exists(program):
 
     raise Exception("Could not find %s" % (program))
 
+def write_bytes_to_fd(fd, buf):
+    """
+    Function to write all bytes in "buf" to "fd".  This handles both EINTR
+    and short writes.
+    """
+    size = len(buf)
+    offset = 0
+    while size > 0:
+        try:
+            bytes_written = os.write(fd, buf[offset:])
+            offset += bytes_written
+            size -= bytes_written
+        except OSError as err:
+            # python's os.write() can raise an exception on EINTR, which
+            # according to the man page can happen if a signal was
+            # received before any data was written.  Therefore, we don't
+            # need to update destlen or size, but just retry
+            if err.errno == errno.EINTR:
+                continue
+            raise
+
+    return offset
+
+def read_bytes_from_fd(fd, num):
+    """
+    Function to read and return bytes from fd.  This handles the EINTR situation
+    where no bytes were read before a signal happened.
+    """
+    read_done = False
+    while not read_done:
+        try:
+            ret = os.read(fd, num)
+            read_done = True
+        except OSError as err:
+            # python's os.read() can raise an exception on EINTR, which
+            # according to the man page can happen if a signal was
+            # received before any data was read.  In this case we need to retry
+            if err.errno == errno.EINTR:
+                continue
+            raise
+
+    return ret
+
 def copyfile_sparse(src, dest):
     """
     Function to copy a file sparsely if possible.  The logic here is
@@ -104,7 +147,7 @@ def copyfile_sparse(src, dest):
     size = sb.st_size
     destlen = 0
     while size != 0:
-        buf = os.read(src_fd, min(buf_size, size))
+        buf = read_bytes_from_fd(src_fd, min(buf_size, size))
         if len(buf) == 0:
             break
 
@@ -112,12 +155,10 @@ def copyfile_sparse(src, dest):
         if buf == '\0'*buflen:
             os.lseek(dest_fd, buflen, os.SEEK_CUR)
         else:
-            # FIXME: check out the python implementation of write, we might have
-            # to handle EINTR here
-            os.write(dest_fd, buf)
+            write_bytes_to_fd(dest_fd, buf)
 
-        destlen += len(buf)
-        size -= len(buf)
+        destlen += buflen
+        size -= buflen
 
     os.ftruncate(dest_fd, destlen)
 
@@ -772,7 +813,7 @@ def http_download_file(url, fd, show_progress, logger):
         Function that is called back from the pycurl perform() method to
         actually write data to disk.
         """
-        os.write(fd, buf)
+        write_bytes_to_fd(fd, buf)
 
     progress = Progress()
     c = pycurl.Curl()

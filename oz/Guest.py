@@ -825,10 +825,10 @@ class Guest(object):
 
         local_sum = getattr(hashlib, hashname)()
 
-        buf = os.read(outputfd, 4096)
+        buf = oz.ozutil.read_bytes_from_fd(outputfd, 4096)
         while buf != '':
             local_sum.update(buf)
-            buf = os.read(outputfd, 4096)
+            buf = oz.ozutil.read_bytes_from_fd(outputfd, 4096)
 
         return local_sum.hexdigest() == upstream_sum
 
@@ -922,7 +922,7 @@ class Guest(object):
                 Function that is called back from the libvirt stream.
                 """
                 # opaque is the open file object
-                return os.write(opaque, buf)
+                return oz.ozutil.write_bytes_to_fd(opaque, buf)
 
             fd = os.open(screenshot, os.O_RDWR|os.O_CREAT)
             st.recvAll(sink, fd)
