@@ -27,6 +27,7 @@ import errno
 import stat
 import shutil
 import pycurl
+import gzip
 try:
     import configparser
 except ImportError:
@@ -828,6 +829,9 @@ def http_download_file(url, fd, show_progress, logger):
     c.close()
 
 def ftp_download_directory(server, username, password, basepath, destination):
+    """
+    Function to recursively download an entire directory structure over FTP.
+    """
     ftp = ftplib.FTP(server)
     ftp.login(username, password)
 
@@ -854,3 +858,35 @@ def ftp_download_directory(server, username, password, basepath, destination):
 
     _recursive_ftp_download(basepath)
     ftp.close()
+
+def _gzip_file(inputfile, outputfile, outputmode):
+    """
+    Internal function to gzip the input file and place it in the outputfile.
+    If the outputmode is 'ab', then the input file will be appended to the
+    output file, and if the outputmode is 'wb' then the input file will be
+    written over the output file.
+    """
+    f = open(inputfile, 'rb')
+    gzf = gzip.GzipFile(outputfile, mode=outputmode)
+    gzf.writelines(f)
+    gzf.close()
+    f.close()
+
+def gzip_append(inputfile, outputfile):
+    """
+    Function to gzip and append the data from inputfile onto output file.
+    """
+    _gzip_file(inputfile, outputfile, 'ab')
+
+def gzip_create(inputfile, outputfile):
+    """
+    Function to gzip the data from inputfile and place it into outputfile,
+    overwriting any existing data in outputfile.
+    """
+    try:
+        _gzip_file(inputfile, outputfile, 'wb')
+    except:
+        # since we created the output file, we should clean it up
+        if os.access(outputfile, os.F_OK):
+            os.unlink(outputfile)
+        raise

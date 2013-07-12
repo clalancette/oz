@@ -553,24 +553,6 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         self.log.debug("Returning kernel %s and initrd %s" % (kernel, initrd))
         return (kernel, initrd)
 
-    def _gzip_file(self, inputfile, outputmode):
-        """
-        Internal method to gzip a file and write it to the initrd.
-        """
-        f = open(inputfile, 'rb')
-        gzf = gzip.GzipFile(self.initrdfname, mode=outputmode)
-        try:
-            gzf.writelines(f)
-            gzf.close()
-            f.close()
-        except:
-            # there is a bit of asymmetry here in that OSs that support cpio
-            # archives have the initial initrdfname copied in the higher level
-            # function, but we delete it here.  OSs that don't support cpio,
-            # though, get the initrd created right here.  C'est le vie
-            os.unlink(self.initrdfname)
-            raise
-
     def _create_cpio_initrd(self, kspath):
         """
         Internal method to create a modified CPIO initrd
@@ -585,7 +567,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 
         try:
             shutil.copyfile(self.initrdcache, self.initrdfname)
-            self._gzip_file(extrafname, 'ab')
+            oz.ozutil.gzip_append(extrafname, self.initrdfname)
         finally:
             os.unlink(extrafname)
 
@@ -621,7 +603,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             g.kill_subprocess()
 
             # kickstart is added, lets recompress it
-            self._gzip_file(ext2file, 'wb')
+            oz.ozutil.gzip_create(ext2file, self.initrdfname)
         finally:
             os.unlink(ext2file)
 
