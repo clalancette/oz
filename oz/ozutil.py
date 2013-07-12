@@ -108,7 +108,7 @@ def copyfile_sparse(src, dest):
             break
 
         buflen = len(buf)
-        if buf == r'\0'*buflen:
+        if buf == '\0'*buflen:
             os.lseek(dest_fd, buflen, os.SEEK_CUR)
         else:
             # FIXME: check out the python implementation of write, we might have
