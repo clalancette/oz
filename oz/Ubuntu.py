@@ -36,15 +36,6 @@ class UbuntuGuest(oz.Guest.CDGuest):
     """
     def __init__(self, tdl, config, auto, output_disk, initrd, nicmodel,
                  diskbus, macaddress):
-        if tdl.update in ["6.06", "6.06.1", "6.06.2"]:
-            tdl.update = "6.06"
-        elif tdl.update in ["8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4"]:
-            tdl.update = "8.04"
-        elif tdl.update in ["10.04", "10.04.1", "10.04.2", "10.04.3"]:
-            tdl.update = "10.04"
-        elif tdl.update in ["12.04", "12.04.1", "12.04.2"]:
-            tdl.update = "12.04"
-
         oz.Guest.CDGuest.__init__(self, tdl, config, auto, output_disk,
                                   nicmodel, None, None, diskbus, True, True,
                                   macaddress)
@@ -172,6 +163,13 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
                 f.write("  append preseed/file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US " + keyboard + " netcfg/choose_interface=auto keyboard-configuration/layoutcode=us priority=critical initrd=/install/initrd.gz --\n")
 
         f.close()
+
+    def get_auto_path(self):
+        autoname = self.tdl.distro + self.tdl.update + ".auto"
+        sp = self.tdl.update.split('.')
+        if len(sp) == 3:
+            autoname = self.tdl.distro + sp[0] + "." + sp[1] + ".auto"
+        return oz.ozutil.generate_full_auto_path(autoname)
 
     def _generate_new_iso(self):
         """
