@@ -1688,7 +1688,7 @@ class CDGuest(Guest):
                     finally:
                         os.close(fd)
             else:
-                raise oz.OzException.OzException("The protocol '%s' is not supported for fetching remote directories" % parsedurl.schema)
+                raise oz.OzException.OzException("The protocol '%s' is not supported for fetching remote files or directories" % parsedurl.scheme)
 
     def _modify_iso(self):
         """
