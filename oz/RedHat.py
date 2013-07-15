@@ -47,8 +47,8 @@ class RedHatCDGuest(oz.Guest.CDGuest):
                                   url_allowed, macaddress)
         self.crond_was_active = False
         self.sshd_was_active = False
-        self.sshd_config = \
-"""SyslogFacility AUTHPRIV
+        self.sshd_config = """\
+SyslogFacility AUTHPRIV
 PasswordAuthentication yes
 ChallengeResponseAuthentication no
 GSSAPIAuthentication yes
@@ -112,14 +112,15 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
                                    "isolinux.cfg")
 
-        f = open(isolinuxcfg, "w")
-        f.write("default customiso\n")
-        f.write("timeout 1\n")
-        f.write("prompt 0\n")
-        f.write("label customiso\n")
-        f.write("  kernel vmlinuz\n")
-        f.write(initrdline)
-        f.close()
+        with open(isolinuxcfg, "w") as f:
+            f.write("""\
+default customiso
+timeout 1
+prompt 0
+label customiso
+  kernel vmlinuz
+%s
+""" % initrdline)
 
     def _copy_kickstart(self, outname):
         """
@@ -299,9 +300,8 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             g_handle.ln_sf('/etc/init.d/sshd', startuplink)
 
         sshd_config_file = os.path.join(self.icicle_tmp, "sshd_config")
-        f = open(sshd_config_file, 'w')
-        f.write(self.sshd_config)
-        f.close()
+        with open(sshd_config_file, 'w') as f:
+            f.write(self.sshd_config)
 
         try:
             self._guestfs_path_backup(g_handle, '/etc/ssh/sshd_config')
@@ -328,14 +328,16 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             raise oz.OzException.OzException("cron not installed on the image, cannot continue")
 
         scriptfile = os.path.join(self.icicle_tmp, "script")
-        f = open(scriptfile, 'w')
-        f.write("#!/bin/bash\n")
-        f.write("DEV=$(/bin/awk '{if ($2 == 0) print $1}' /proc/net/route) &&\n")
-        f.write('[ -z "$DEV" ] && exit 0\n')
-        f.write("ADDR=$(/sbin/ip -4 -o addr show dev $DEV | /bin/awk '{print $4}' | /bin/cut -d/ -f1) &&\n")
-        f.write('[ -z "$ADDR" ] && exit 0\n')
-        f.write('echo -n "!$ADDR,%s!" > /dev/ttyS1\n' % (self.uuid))
-        f.close()
+        with open(scriptfile, 'w') as f:
+            f.write("""\
+#!/bin/bash\n")
+DEV=$(/bin/awk '{if ($2 == 0) print $1}' /proc/net/route) &&
+[ -z "$DEV" ] && exit 0
+ADDR=$(/sbin/ip -4 -o addr show dev $DEV | /bin/awk '{print $4}' | /bin/cut -d/ -f1) &&
+[ -z "$ADDR" ] && exit 0
+echo -n "!$ADDR,%s!" > /dev/ttyS1
+""" % (self.uuid))
+
         try:
             g_handle.upload(scriptfile, '/root/reportip')
             g_handle.chmod(0o755, '/root/reportip')
@@ -343,9 +345,9 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             os.unlink(scriptfile)
 
         announcefile = os.path.join(self.icicle_tmp, "announce")
-        f = open(announcefile, 'w')
-        f.write('*/1 * * * * root /bin/bash -c "/root/reportip"\n')
-        f.close()
+        with open(announcefile, 'w') as f:
+            f.write('*/1 * * * * root /bin/bash -c "/root/reportip"\n')
+
         try:
             g_handle.upload(announcefile, '/etc/cron.d/announce')
         finally:
@@ -372,10 +374,10 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         self._guestfs_path_backup(g_handle, '/etc/selinux/config')
 
         selinuxfile = self.icicle_tmp + "/selinux"
-        f = open(selinuxfile, 'w')
-        f.write("SELINUX=permissive\n")
-        f.write("SELINUXTYPE=targeted\n")
-        f.close()
+        with open(selinuxfile, 'w') as f:
+            f.write("SELINUX=permissive\n")
+            f.write("SELINUXTYPE=targeted\n")
+
         try:
             g_handle.upload(selinuxfile, "/etc/selinux/config")
         finally:
@@ -964,9 +966,9 @@ class RedHatCDYumGuest(RedHatCDGuest):
                 filename = "%s-%s" % (repo.name.replace(" ", "_"), fileext)
                 localname = os.path.join(self.icicle_tmp, filename)
                 certdict[propname]["localname"] = localname
-                f = open(localname, 'w')
-                f.write(cert)
-                f.close()
+                with open(localname, 'w') as f:
+                    f.write(cert)
+
                 try:
                     remotename = os.path.join(self._remotecertdir, filename)
                     if not self._remotecertdir_created:
@@ -1014,49 +1016,47 @@ class RedHatCDYumGuest(RedHatCDGuest):
 
             filename = repo.name.replace(" ", "_") + ".repo"
             localname = os.path.join(self.icicle_tmp, filename)
-            f = open(localname, 'w')
-            f.write("[%s]\n" % repo.name.replace(" ", "_"))
-            f.write("name=%s\n" % repo.name)
-            if host and not guest:
-                remote_tun_port = tunport
-                (protocol, hostname, port, path) = self._deconstruct_repo_url(repo.url)
-                if (hostname in self.tunnels) and (port in self.tunnels[hostname]):
-                    # We are already tunneling this hostname and port - use the
-                    # existing one
-                    remote_tun_port = self.tunnels[hostname][port]
+            with open(localname, 'w') as f:
+                f.write("[%s]\n" % repo.name.replace(" ", "_"))
+                f.write("name=%s\n" % repo.name)
+                if host and not guest:
+                    remote_tun_port = tunport
+                    (protocol, hostname, port, path) = self._deconstruct_repo_url(repo.url)
+                    if (hostname in self.tunnels) and (port in self.tunnels[hostname]):
+                        # We are already tunneling this hostname and port - use the
+                        # existing one
+                        remote_tun_port = self.tunnels[hostname][port]
+                    else:
+                        # New tunnel required
+                        if not (hostname in self.tunnels):
+                            _add_remote_host_alias(hostname)
+                            self.tunnels[hostname] = {}
+                        self.tunnels[hostname][port] = str(remote_tun_port)
+                        tunport = tunport + 1
+                    remote_url = "%s://%s:%s/%s" % (protocol, hostname,
+                                                    remote_tun_port, path)
+                    f.write("# This is a tunneled version of local repo: (%s)\n" % (repo.url))
+                    f.write("baseurl=%s\n" % remote_url)
                 else:
-                    # New tunnel required
-                    if not (hostname in self.tunnels):
-                        _add_remote_host_alias(hostname)
-                        self.tunnels[hostname] = {}
-                    self.tunnels[hostname][port] = str(remote_tun_port)
-                    tunport = tunport + 1
-                remote_url = "%s://%s:%s/%s" % (protocol, hostname,
-                                                remote_tun_port, path)
-                f.write("# This is a tunneled version of local repo: (%s)\n" % (repo.url))
-                f.write("baseurl=%s\n" % remote_url)
-            else:
-                f.write("baseurl=%s\n" % repo.url)
+                    f.write("baseurl=%s\n" % repo.url)
 
-            f.write("skip_if_unavailable=1\n")
-            f.write("enabled=1\n")
+                f.write("skip_if_unavailable=1\n")
+                f.write("enabled=1\n")
 
-            # Now write in any remembered repo lines from our earlier SSL cert
-            # activities
-            for cert in certdict:
-                f.write(certdict[cert]["repoline"])
+                # Now write in any remembered repo lines from our earlier SSL cert
+                # activities
+                for cert in certdict:
+                    f.write(certdict[cert]["repoline"])
 
-            if repo.sslverify:
-                f.write("sslverify=1\n")
-            else:
-                f.write("sslverify=0\n")
+                if repo.sslverify:
+                    f.write("sslverify=1\n")
+                else:
+                    f.write("sslverify=0\n")
 
-            if repo.signed:
-                f.write("gpgcheck=1\n")
-            else:
-                f.write("gpgcheck=0\n")
-
-            f.close()
+                if repo.signed:
+                    f.write("gpgcheck=1\n")
+                else:
+                    f.write("gpgcheck=0\n")
 
             try:
                 remotename = os.path.join("/etc/yum.repos.d/", filename)

@@ -891,11 +891,10 @@ def _gzip_file(inputfile, outputfile, outputmode):
     output file, and if the outputmode is 'wb' then the input file will be
     written over the output file.
     """
-    f = open(inputfile, 'rb')
-    gzf = gzip.GzipFile(outputfile, mode=outputmode)
-    gzf.writelines(f)
-    gzf.close()
-    f.close()
+    with open(inputfile, 'rb') as f:
+        gzf = gzip.GzipFile(outputfile, mode=outputmode)
+        gzf.writelines(f)
+        gzf.close()
 
 def gzip_append(inputfile, outputfile):
     """
