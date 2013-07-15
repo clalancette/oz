@@ -136,3 +136,6 @@ initial time in half (plus or minus the page cache).
 26.  Change setup.py to make the directories /var/lib/oz/*.  Since that is
 repeated in both of the RPM and deb building stuff, it would be better to just
 do it on python setup.py install instead.
+27.  Add tests for oz.ozutil.copyfile_sparse(), for when the source or
+destination is a directory.
+28.  Add a test for oz.ozutil.mkdir_p() when the directory is the blank string.
