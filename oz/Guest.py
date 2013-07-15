@@ -1395,7 +1395,8 @@ class Guest(object):
 
             key.save_key(privname, cipher=None)
             os.chmod(privname, 0o600)
-            open(pubname, 'w').write(keystring)
+            with open(pubname, 'w') as f:
+                f.write(keystring)
             os.chmod(pubname, 0o644)
 
 class CDGuest(Guest):
@@ -1663,9 +1664,8 @@ class CDGuest(Guest):
         eltoritodata = cdfd.read(count*512)
         cdfd.close()
 
-        out = open(outfile, "w")
-        out.write(eltoritodata)
-        out.close()
+        with open(outfile, "w") as f:
+            f.write(eltoritodata)
 
     def _do_install(self, timeout=None, force=False, reboots=0,
                     kernelfname=None, ramdiskfname=None, cmdline=None):

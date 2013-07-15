@@ -42,8 +42,8 @@ class UbuntuGuest(oz.Guest.CDGuest):
 
         self.crond_was_active = False
         self.sshd_was_active = False
-        self.sshd_config = \
-"""SyslogFacility AUTHPRIV
+        self.sshd_config = """\
+SyslogFacility AUTHPRIV
 PasswordAuthentication yes
 ChallengeResponseAuthentication no
 GSSAPIAuthentication yes
@@ -137,36 +137,37 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
                             os.path.join(isolinuxdir, "isolinux.bin"))
             shutil.copyfile(os.path.join(self.iso_contents, "boot.cat"),
                             os.path.join(isolinuxdir, "boot.cat"))
-        f = open(isolinuxcfg, 'w')
 
-        if self.tdl.update in ["5.04", "5.10"]:
-            f.write("DEFAULT /install/vmlinuz\n")
-            f.write("APPEND initrd=/install/initrd.gz ramdisk_size=16384 root=/dev/rd/0 rw preseed/file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US kbd-chooser/method=us netcfg/choose_interface=auto keyboard-configuration/layoutcode=us debconf/priority=critical --\n")
-            f.write("TIMEOUT 1\n")
-            f.write("PROMPT 0\n")
-        else:
-            f.write("default customiso\n")
-            f.write("timeout 1\n")
-            f.write("prompt 0\n")
-            f.write("label customiso\n")
-            f.write("  menu label ^Customiso\n")
-            f.write("  menu default\n")
-            if os.path.isdir(os.path.join(self.iso_contents, "casper")):
-                kernelname = "/casper/vmlinuz"
-                # sigh.  Ubuntu 12.04.2, amd64 changed the name of the kernel
-                # on the boot CD to "/casper/vmlinuz.efi".  Handle that here
-                if self.tdl.update in ["12.04.2", "13.04"] and self.tdl.arch == "x86_64":
-                    kernelname += ".efi"
-                f.write("  kernel " + kernelname + "\n")
-                f.write("  append file=/cdrom/preseed/customiso.seed boot=casper automatic-ubiquity noprompt keyboard-configuration/layoutcode=us initrd=/casper/" + self.casper_initrd + "\n")
+        with open(isolinuxcfg, 'w') as f:
+
+            if self.tdl.update in ["5.04", "5.10"]:
+                f.write("""\
+DEFAULT /install/vmlinuz\
+APPEND initrd=/install/initrd.gz ramdisk_size=16384 root=/dev/rd/0 rw preseed/file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US kbd-chooser/method=us netcfg/choose_interface=auto keyboard-configuration/layoutcode=us debconf/priority=critical --
+TIMEOUT 1
+PROMPT 0
+""")
+
             else:
-                keyboard = "console-setup/layoutcode=us"
-                if self.tdl.update == "6.06":
-                    keyboard = "kbd-chooser/method=us"
-                f.write("  kernel /install/vmlinuz\n")
-                f.write("  append preseed/file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US " + keyboard + " netcfg/choose_interface=auto keyboard-configuration/layoutcode=us priority=critical initrd=/install/initrd.gz --\n")
+                f.write("default customiso\n")
+                f.write("timeout 1\n")
+                f.write("prompt 0\n")
+                f.write("label customiso\n")
+                f.write("  menu label ^Customiso\n")
+                f.write("  menu default\n")
+                if os.path.isdir(os.path.join(self.iso_contents, "casper")):
+                    kernelname = "/casper/vmlinuz"
+                    if self.tdl.update in ["12.04.2", "13.04"] and self.tdl.arch == "x86_64":
+                        kernelname += ".efi"
+                    f.write("  kernel " + kernelname + "\n")
+                    f.write("  append file=/cdrom/preseed/customiso.seed boot=casper automatic-ubiquity noprompt keyboard-configuration/layoutcode=us initrd=/casper/" + self.casper_initrd + "\n")
+                else:
+                    keyboard = "console-setup/layoutcode=us"
+                    if self.tdl.update == "6.06":
+                        keyboard = "kbd-chooser/method=us"
+                    f.write("  kernel /install/vmlinuz\n")
+                    f.write("  append preseed/file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US " + keyboard + " netcfg/choose_interface=auto keyboard-configuration/layoutcode=us priority=critical initrd=/install/initrd.gz --\n")
 
-        f.close()
 
     def get_auto_path(self):
         autoname = self.tdl.distro + self.tdl.update + ".auto"
@@ -301,9 +302,8 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         g_handle.ln_sf('/etc/init.d/ssh', self.ssh_startuplink)
 
         sshd_config_file = os.path.join(self.icicle_tmp, "sshd_config")
-        f = open(sshd_config_file, 'w')
-        f.write(self.sshd_config)
-        f.close()
+        with open(sshd_config_file, 'w') as f:
+            f.write(self.sshd_config)
 
         try:
             self._guestfs_path_backup(g_handle, '/etc/ssh/sshd_config')
@@ -322,15 +322,17 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
             raise oz.OzException.OzException("cron not installed on the image, cannot continue")
 
         scriptfile = os.path.join(self.icicle_tmp, "script")
-        f = open(scriptfile, 'w')
-        f.write("#!/bin/bash\n")
-        f.write("/bin/sleep 20\n")
-        f.write("DEV=$(/usr/bin/awk '{if ($2 == 0) print $1}' /proc/net/route) &&\n")
-        f.write('[ -z "$DEV" ] && exit 0\n')
-        f.write("ADDR=$(/sbin/ip -4 -o addr show dev $DEV | /usr/bin/awk '{print $4}' | /usr/bin/cut -d/ -f1) &&\n")
-        f.write('[ -z "$ADDR" ] && exit 0\n')
-        f.write('echo -n "!$ADDR,%s!" > /dev/ttyS1\n' % (self.uuid))
-        f.close()
+        with open(scriptfile, 'w') as f:
+            f.write("""\
+#!/bin/bash
+/bin/sleep 20
+DEV=$(/usr/bin/awk '{if ($2 == 0) print $1}' /proc/net/route) &&
+[ -z "$DEV" ] && exit 0
+ADDR=$(/sbin/ip -4 -o addr show dev $DEV | /usr/bin/awk '{print $4}' | /usr/bin/cut -d/ -f1) &&
+[ -z "$ADDR" ] && exit 0
+echo -n "!$ADDR,%s!" > /dev/ttyS1
+""" % (self.uuid))
+
         try:
             g_handle.upload(scriptfile, '/root/reportip')
             g_handle.chmod(0o755, '/root/reportip')
@@ -338,9 +340,9 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
             os.unlink(scriptfile)
 
         announcefile = os.path.join(self.icicle_tmp, "announce")
-        f = open(announcefile, 'w')
-        f.write('*/1 * * * * root /bin/bash -c "/root/reportip"\n')
-        f.close()
+        with open(announcefile, 'w') as f:
+            f.write('*/1 * * * * root /bin/bash -c "/root/reportip"\n')
+
         try:
             g_handle.upload(announcefile, '/etc/cron.d/announce')
         finally:
@@ -687,19 +689,18 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         """
         Internal method to gzip a file and write it to the initrd.
         """
-        f = open(inputfile, 'rb')
-        gzf = gzip.GzipFile(self.initrdfname, mode=outputmode)
-        try:
-            gzf.writelines(f)
-            gzf.close()
-            f.close()
-        except:
-            # there is a bit of asymmetry here in that OSs that support cpio
-            # archives have the initial initrdfname copied in the higher level
-            # function, but we delete it here.  OSs that don't support cpio,
-            # though, get the initrd created right here.  C'est le vie
-            os.unlink(self.initrdfname)
-            raise
+        with open(inputfile, 'rb') as f:
+            gzf = gzip.GzipFile(self.initrdfname, mode=outputmode)
+            try:
+                gzf.writelines(f)
+                gzf.close()
+            except:
+                # there is a bit of asymmetry here in that OSs that support cpio
+                # archives have the initial initrdfname copied in the higher level
+                # function, but we delete it here.  OSs that don't support cpio,
+                # though, get the initrd created right here.  C'est le vie
+                os.unlink(self.initrdfname)
+                raise
 
     def _create_cpio_initrd(self, preseedpath):
         """

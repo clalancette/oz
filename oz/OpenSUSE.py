@@ -81,9 +81,8 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         lines.append("  kernel linux\n")
         lines.append("  append initrd=initrd splash=silent instmode=cd autoyast=default")
 
-        f = open(isolinux_cfg, "w")
-        f.writelines(lines)
-        f.close()
+        with open(isolinux.cfg, 'w') as f:
+            f.writelines(lines)
 
     def _generate_new_iso(self):
         """
@@ -255,31 +254,27 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         self._guestfs_path_backup(g_handle, "/etc/init.d/after.local")
 
         local = os.path.join(self.icicle_tmp, "after.local")
-        f = open(local, "w")
-        f.write("/sbin/service sshd start\n")
-        f.close()
+        with open(local, "w") as f:
+            f.write("/sbin/service sshd start\n")
 
         try:
             g_handle.upload(local, "/etc/init.d/after.local")
         finally:
             os.unlink(local)
 
-        sshd_config = \
-"""PasswordAuthentication no
+        sshd_config_file = self.icicle_tmp + "/sshd_config"
+        with open(sshd_config_file, 'w') as f:
+            f.write("""PasswordAuthentication no
 UsePAM yes
 
 X11Forwarding yes
 
-Subsystem	sftp	/usr/lib64/ssh/sftp-server
+Subsystem      sftp    /usr/lib64/ssh/sftp-server
 
 AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES
 AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT
 AcceptEnv LC_IDENTIFICATION LC_ALL
-"""
-        sshd_config_file = self.icicle_tmp + "/sshd_config"
-        f = open(sshd_config_file, 'w')
-        f.write(sshd_config)
-        f.close()
+""")
 
         try:
             self._guestfs_path_backup(g_handle, "/etc/ssh/sshd_config")
@@ -298,14 +293,16 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
             raise oz.OzException.OzException("cron not installed on the image, cannot continue")
 
         scriptfile = os.path.join(self.icicle_tmp, "script")
-        f = open(scriptfile, 'w')
-        f.write("#!/bin/bash\n")
-        f.write("DEV=$(/bin/awk '{if ($2 == 0) print $1}' /proc/net/route) &&\n")
-        f.write('[ -z "$DEV" ] && exit 0\n')
-        f.write("ADDR=$(/sbin/ip -4 -o addr show dev $DEV | /bin/awk '{print $4}' | /usr/bin/cut -d/ -f1) &&\n")
-        f.write('[ -z "$ADDR" ] && exit 0\n')
-        f.write('echo -n "!$ADDR,%s!" > /dev/ttyS1\n' % (self.uuid))
-        f.close()
+        with open(scriptfile, 'w') as f:
+            f.write("""\
+#!/bin/bash
+DEV=$(/bin/awk '{if ($2 == 0) print $1}' /proc/net/route) &&
+[ -z "$DEV" ] && exit 0
+ADDR=$(/sbin/ip -4 -o addr show dev $DEV | /bin/awk '{print $4}' | /usr/bin/cut -d/ -f1) &&
+[ -z "$ADDR" ] && exit 0
+echo -n "!$ADDR,%s!" > /dev/ttyS1
+""" % (self.uuid))
+
         try:
             g_handle.upload(scriptfile, '/root/reportip')
             g_handle.chmod(0o755, '/root/reportip')
@@ -313,9 +310,9 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
             os.unlink(scriptfile)
 
         announcefile = os.path.join(self.icicle_tmp, "announce")
-        f = open(announcefile, 'w')
-        f.write('*/1 * * * * root /bin/bash -c "/root/reportip"\n')
-        f.close()
+        with open(announcefile, 'w') as f:
+            f.write('*/1 * * * * root /bin/bash -c "/root/reportip"\n')
+
         try:
             g_handle.upload(announcefile, '/etc/cron.d/announce')
         finally:

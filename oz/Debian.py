@@ -72,21 +72,22 @@ class DebianGuest(oz.Guest.CDGuest):
             installdir = "/install.386"
 
         self.log.debug("Modifying isolinux.cfg")
-        isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
-                                   "isolinux.cfg")
-        f = open(isolinuxcfg, 'w')
-        f.write("default customiso\n")
-        f.write("timeout 1\n")
-        f.write("prompt 0\n")
-        f.write("label customiso\n")
-        f.write("  menu label ^Customiso\n")
-        f.write("  menu default\n")
-        f.write("  kernel " + installdir + "/vmlinuz\n")
+        isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
         extra = ""
         if self.tdl.update in ["7"]:
             extra = "auto=true "
-        f.write("  append file=/cdrom/preseed/customiso.seed " + extra + "debian-installer/locale=en_US console-setup/layoutcode=us netcfg/choose_interface=auto priority=critical initrd=" + installdir + "/initrd.gz --\n")
-        f.close()
+
+        with open(isolinuxcfg, 'w') as f:
+            f.write("""\
+default customiso
+timeout 1
+prompt 0
+label customiso
+  menu label ^Customiso
+  menu default
+  kernel %s/vmlinuz
+  append file=/cdrom/preseed/customiso.seed %sdebian-installer/locale=en_US console-setup/layoutcode=us netcfg/choose_interface=auto priority=critical initrd=%s/initrd.gz --
+""" % (installdir, extra, installdir))
 
     def _generate_new_iso(self):
         """
