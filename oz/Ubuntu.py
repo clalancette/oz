@@ -192,7 +192,8 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         if self.tdl.update in ["5.04", "5.10", "6.06", "6.10", "7.04"]:
             if not timeout:
                 timeout = 3000
-        return self._do_install(timeout, force, self.reboots, self.cmdline)
+        return self._do_install(timeout, force, self.reboots, self.kernelfname,
+                                self.initrdfname, self.cmdline)
 
     def _get_service_runlevel_link(self, g_handle, service):
         """

@@ -1579,7 +1579,8 @@ class CDGuest(Guest):
         out.write(eltoritodata)
         out.close()
 
-    def _do_install(self, timeout=None, force=False, reboots=0, cmdline=None):
+    def _do_install(self, timeout=None, force=False, reboots=0,
+                    kernelfname=None, ramdiskfname=None, cmdline=None):
         """
         Internal method to actually run the installation.
         """
@@ -1590,31 +1591,28 @@ class CDGuest(Guest):
 
         self.log.info("Running install for %s" % (self.tdl.name))
 
-        cddev = self._InstallDev("cdrom", self.output_iso, "hdc")
-
         if timeout is None:
             timeout = 1200
 
-        def exists(name):
-            """
-            Internal utility method to check if an attribute exists and is
-            a path to a valid filename.
-            """
-            return hasattr(self, name) and os.access(getattr(self, name), os.F_OK)
+        cddev = self._InstallDev("cdrom", self.output_iso, "hdc")
 
-        if exists("kernelfname") and exists("initrdfname") and cmdline:
-            xml = self._generate_xml(None, None, self.kernelfname,
-                                     self.initrdfname, self.cmdline)
-        else:
-            xml = self._generate_xml("cdrom", cddev)
+        reboots_to_go = reboots
+        while reboots_to_go >= 0:
+            # if reboots_to_go is the same as reboots, it means that this is
+            # the first time through and we should generate the "initial" xml
+            if reboots_to_go == reboots:
+                if kernelfname and os.access(kernelfname, os.F_OK) and ramdiskfname and os.access(ramdiskfname, os.F_OK) and cmdline:
+                    xml = self._generate_xml(None, None, kernelfname,
+                                             ramdiskfname, cmdline)
+                else:
+                    xml = self._generate_xml("cdrom", cddev)
+            else:
+                xml = self._generate_xml("hd", cddev)
 
-        dom = self.libvirt_conn.createXML(xml, 0)
-        self._wait_for_install_finish(dom, timeout)
-
-        for i in range(0, reboots):
-            dom = self.libvirt_conn.createXML(self._generate_xml("hd", cddev),
-                                              0)
+            dom = self.libvirt_conn.createXML(xml, 0)
             self._wait_for_install_finish(dom, timeout)
+
+            reboots_to_go -= 1
 
         if self.cache_jeos:
             self.log.info("Caching JEOS")
