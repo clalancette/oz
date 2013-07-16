@@ -60,9 +60,10 @@ def usage():
 
 try:
     opts, args = getopt.gnu_getopt(sys.argv[1:], 'a:b:c:d:fghi:m:n:ps:t:ux:',
-                                   ['auto', 'disk-bus', 'config', 'debug', 'force-download',
-                                    'generate-icicle', 'help', 'icicle', 'mac-address'
-                                    'network-device', 'cleanup', 'disk', 'timeout', 'customize',
+                                   ['auto', 'disk-bus', 'config', 'debug',
+                                    'force-download', 'generate-icicle', 'help',
+                                    'icicle', 'mac-address', 'network-device',
+                                    'cleanup', 'disk', 'timeout', 'customize',
                                     'xmlfile'])
 except getopt.GetoptError as err:
     print(str(err))
