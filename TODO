@@ -124,10 +124,7 @@ done
     you use the short-circuit oz-customize or oz-generate-icicle, the user
     could have fed us bad data.
 21. In TDL.py, do a real schema validation using tdl.rng
-22. Allow a URL argument for both <files> and <commands>, where the user gives
-    us a URL with file contents or commands, and Oz assumes the responsibility
-    for downloading the file and then uploading it into the guest.
-23. Currently we use libguestfs to extract the installation ISO, make changes
+22. Currently we use libguestfs to extract the installation ISO, make changes
     to it, and then rebundle the ISO using mkisofs.  This is time consuming,
     partially because we are doing two copies of the ISO (once from the ISO to
     the filesystem, and once from the filesystem to the new ISO), and partially
@@ -137,9 +134,6 @@ done
     directory, and only modifying the small bits we need to.  Then we can pack
     the whole thing back up using mkisofs.  This gets rid of the first copy, so
     it should cut our initial time in half (plus or minus the page cache).
-24. Change setup.py to make the directories /var/lib/oz/*.  Since that is
+23. Change setup.py to make the directories /var/lib/oz/*.  Since that is
     repeated in both of the RPM and deb building stuff, it would be better to
     just do it on python setup.py install instead.
-25. Add tests for oz.ozutil.copyfile_sparse(), for when the source or
-    destination is a directory.
-26. Add a test for oz.ozutil.mkdir_p() when the directory is the blank string.

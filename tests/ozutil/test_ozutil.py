@@ -149,7 +149,6 @@ def test_copy_sparse_zero_blocks(tmpdir):
     oz.ozutil.copyfile_sparse(srcname, dstname)
 
 def test_copy_sparse_src_not_exists(tmpdir):
-
     srcname = os.path.join(str(tmpdir), 'src')
     dstname = os.path.join(str(tmpdir), 'dst')
     open(dstname, 'w').write('dst')
@@ -162,6 +161,17 @@ def test_copy_sparse_dest_not_exists(tmpdir):
     dstname = os.path.join(str(tmpdir), 'dst')
     oz.ozutil.copyfile_sparse(srcname, dstname)
 
+def test_copy_sparse_src_is_dir(tmpdir):
+    dstname = os.path.join(str(tmpdir), 'dst')
+    open(dstname, 'w').write('dst')
+    with py.test.raises(Exception):
+        oz.ozutil.copyfile_sparse(tmpdir, dstname)
+
+def test_copy_sparse_dst_is_dir(tmpdir):
+    srcname = os.path.join(str(tmpdir), 'src')
+    open(srcname, 'w').write('src')
+    with py.test.raises(Exception):
+        oz.ozutil.copyfile_sparse(srcname, tmpdir)
 
 # test oz.ozutil.string_to_bool
 def test_stb_no():
@@ -226,6 +236,9 @@ def test_mkdir_p_file_exists(tmpdir):
 def test_mkdir_p_none():
     with py.test.raises(Exception):
         oz.ozutil.mkdir_p(None)
+
+def test_mkdir_p_empty_string():
+    oz.ozutil.mkdir_p('')
 
 # test oz.ozutil.copy_modify_file
 def test_copy_modify_none_src():
