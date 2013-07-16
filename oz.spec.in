@@ -63,7 +63,7 @@ if [ ! -f %{_sysconfdir}/oz/id_rsa-icicle-gen ]; then
 fi
 
 %files
-%doc README COPYING examples docs
+%doc README COPYING examples
 %dir %attr(0755, root, root) %{_sysconfdir}/oz/
 %config(noreplace) %{_sysconfdir}/oz/oz.cfg
 %dir %attr(0755, root, root) %{_localstatedir}/lib/oz/

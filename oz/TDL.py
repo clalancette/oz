@@ -24,7 +24,7 @@ import base64
 import re
 import tempfile
 import StringIO
-
+import os
 try:
     import urllib.parse as urlparse
 except ImportError:
@@ -182,7 +182,18 @@ class TDL(object):
                    be empty.
     """
     def __init__(self, xmlstring, rootpw_required=False):
+        # open the XML document
         self.doc = lxml.etree.fromstring(xmlstring)
+
+        # then validate the schema
+        relaxng = lxml.etree.RelaxNG(file=os.path.join(os.path.dirname(__file__),
+                                                       'tdl.rng'))
+        valid = relaxng.validate(self.doc)
+        if not valid:
+            errstr = "\nXML schema validation failed:\n"
+            for error in relaxng.error_log:
+                errstr += "\tline %s: %s\n" % (error.line, error.message)
+            raise oz.OzException.OzException(errstr)
 
         template = self.doc.xpath('/template')
         if len(template) != 1:
