@@ -1,0 +1,20 @@
+<!-- An example that shows how to do a basic install of Fedora 18 i386
+     using the ISO install type.  This example also shows how to add
+     "extra" elements to the installation ISO.  In this case, an
+     entire directory is downloaded over FTP from kernel.org and
+     placed into the anotherdir/ relative path on the ISO.
+-->
+<template>
+  <name>f18</name>
+  <os>
+    <name>Fedora</name>
+    <version>18</version>
+    <arch>i386</arch>
+    <install type='iso'>
+      <iso>http://mirrors.kernel.org/fedora/releases/18/Fedora/i386/iso/Fedora-18-i386-DVD.iso</iso>
+      <extras>
+        <directory source="ftp://kernel.org/pub/site" destination="anotherdir"/>
+      </extras>
+    </install>
+  </os>
+</template>

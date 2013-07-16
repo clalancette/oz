@@ -1,3 +1,9 @@
+<!-- An example that shows how to do a basic install of Fedora 13
+     x86_64 using the URL type install.  It also shows how to add
+     optional packages to be installed; these will only be
+     installed when oz-customize or the -u switch to oz-install is
+     used.
+-->
 <template>
   <name>f13jeos</name>
   <os>

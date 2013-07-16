@@ -1,3 +1,6 @@
+<!-- An example that shows how to do a basic install of OpenSUSE
+     11.3 i386 using the ISO type install.
+-->
 <template>
   <name>opensuse11.3jeos</name>
   <os>

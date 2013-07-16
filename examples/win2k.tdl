@@ -1,3 +1,7 @@
+<!-- An example that shows how to do a basic install of Windows 2000
+     i386 using the ISO type install.  Note that Windows requires a
+     key, so Oz will fail if the <key> element is missing.
+-->
 <template>
   <name>win2kjeos</name>
   <os>

@@ -1,0 +1,19 @@
+<!-- An example that shows how to do a basic install of Fedora 18 i386
+     using the URL install type.  This example also shows how to
+     define a size for the disk image, overriding the default of a 10
+     gigabyte disk image with a 20 gigabyte disk image.
+-->
+<template>
+  <name>f18</name>
+  <os>
+    <name>Fedora</name>
+    <version>18</version>
+    <arch>i386</arch>
+    <install type='url'>
+      <url>http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/i386/os</url>
+    </install>
+  </os>
+  <disk>
+    <size>20</size>
+  </disk>
+</template>

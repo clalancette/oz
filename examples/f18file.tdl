@@ -1,0 +1,26 @@
+<!-- An example that shows how to do a basic install of Fedora 18 i386
+     using the URL install type.  This example also shows how to
+     add an extra file to the disk image.  The source of the file will
+     be the http address, and the destination on the disk image will
+     be /root/README.  Note that this customization will only be done
+     if oz-customize is run or the -u flag is passed to oz-install.
+-->
+<template>
+  <name>f18</name>
+  <os>
+    <name>Fedora</name>
+    <version>18</version>
+    <arch>i386</arch>
+    <install type='url'>
+      <url>http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/i386/os</url>
+    </install>
+  </os>
+  <disk>
+    <size>20</size>
+  </disk>
+  <files>
+    <file name='/root/README' type='url'>
+https://www.kernel.org/pub/linux/kernel/README
+    </file>
+  </files>
+</template>
