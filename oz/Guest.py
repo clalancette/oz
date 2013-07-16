@@ -131,6 +131,10 @@ class Guest(object):
 
         if self.tdl.arch != "i386" and self.tdl.arch != "x86_64":
             raise oz.OzException.OzException("Unsupported guest arch " + self.tdl.arch)
+
+        if os.uname()[4] in ["i386", "i586", "i686"] and self.tdl.arch == "x86_64":
+            raise oz.OzException.OzException("Host machine is i386, but trying to install x86_64 guest; this cannot work")
+
         self.log = logging.getLogger('%s.%s' % (__name__,
                                                 self.__class__.__name__))
         self.uuid = uuid.uuid4()
