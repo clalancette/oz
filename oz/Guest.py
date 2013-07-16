@@ -483,6 +483,8 @@ class Guest(object):
         bootDisk = devices.newChild(None, "disk", None)
         bootDisk.setProp("device", "disk")
         bootDisk.setProp("type", "file")
+        # Naming the disk allows easier lookup-discovery - independent of the driver used
+        bootDisk.setProp("name", "bootdisk")
         bootTarget = bootDisk.newChild(None, "target", None)
         bootTarget.setProp("dev", self.disk_dev)
         bootTarget.setProp("bus", self.disk_bus)
