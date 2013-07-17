@@ -512,7 +512,7 @@ def copytree_merge(src, dst, symlinks=False, ignore=None):
     except OSError as why:
         errors.extend((src, dst, str(why)))
     if errors:
-        raise Error(errors)
+        raise shutil.Error(errors)
 
 def copy_modify_file(inname, outname, subfunc):
     """
@@ -931,6 +931,6 @@ def check_qcow_size(filename):
     unpack = struct.unpack(qcow_struct, pack)
 
     if unpack[0] == qcow_magic:
-	return unpack[5]
+        return unpack[5]
     else:
-	return None
+        return None
