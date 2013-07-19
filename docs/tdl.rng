@@ -72,6 +72,13 @@
                 <text/>
               </element>
             </optional>
+            <optional>
+              <element name='icicle'>
+                <element name='extra_command'>
+                  <text/>
+                </element>
+              </element>
+            </optional>
           </interleave>
         </element>
         <optional>

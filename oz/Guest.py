@@ -1275,9 +1275,13 @@ class Guest(object):
 
         return addr
 
-    def _output_icicle_xml(self, lines, description):
+    def _output_icicle_xml(self, lines, description, extra=[]):
         """
-        Generate ICICLE XML based on the data supplied.
+        Generate ICICLE XML based on the data supplied.  The parameter 'lines'
+        is expected to be an list of strings, with one package per list item.
+        The parameter 'description' is a description of the guest.  The
+        parameter 'extra' is an optional one that describes any additional
+        information the user wanted in the ICICLE output.
         """
         doc = libxml2.newDoc("1.0")
         icicle = doc.newChild(None, "icicle", None)
@@ -1286,11 +1290,13 @@ class Guest(object):
         packages = icicle.newChild(None, "packages", None)
 
         lines.sort()
-        for line in lines:
+        for index,line in enumerate(lines):
             if line == "":
                 continue
             package = packages.newChild(None, "package", None)
             package.setProp("name", line)
+            if extra:
+                package.newChild(None, "extra", extra[index])
 
         return doc.serialize(None, 1)
 

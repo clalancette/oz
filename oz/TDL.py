@@ -286,6 +286,11 @@ class TDL(object):
 
         self.disksize = self._parse_disksize()
 
+        self.icicle_extra_cmd = _xml_get_value(self.doc,
+                                               '/template/os/icicle/extra_command',
+                                               "extra icicle command",
+                                               optional=True)
+
     def _parse_disksize(self):
         """
         Internal method to parse the disk size out of the TDL.

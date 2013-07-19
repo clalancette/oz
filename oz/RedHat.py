@@ -449,8 +449,20 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                                                              'rpm -qa',
                                                              timeout=30)
 
-        return self._output_icicle_xml(stdout.split("\n"),
-                                       self.tdl.description)
+        package_split = stdout.split("\n")
+
+        extrasplit = []
+        if self.tdl.icicle_extra_cmd:
+            extrastdout, stderr, retcode = self.guest_execute_command(guestaddr,
+                                                                      self.tdl.icicle_extra_cmd,
+                                                                      timeout=30)
+            extrasplit = extrastdout.split("\n")
+
+            if len(package_split) != len(extrasplit):
+                raise oz.OzException.OzException("Invalid extra package command; it must return the same set of packages as 'rpm -qa'")
+
+        return self._output_icicle_xml(package_split, self.tdl.description,
+                                       extrasplit)
 
     def guest_live_upload(self, guestaddr, file_to_upload, destination,
                           timeout=10):

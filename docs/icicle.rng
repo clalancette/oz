@@ -14,6 +14,11 @@
               <attribute name='name'>
                 <text/>
               </attribute>
+              <optional>
+                <element name='extra'>
+                  <text/>
+                </element>
+              </optional>
             </element>
           </zeroOrMore>
         </element>
