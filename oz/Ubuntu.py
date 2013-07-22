@@ -156,7 +156,7 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
                 kernelname = "/casper/vmlinuz"
                 # sigh.  Ubuntu 12.04.2, amd64 changed the name of the kernel
                 # on the boot CD to "/casper/vmlinuz.efi".  Handle that here
-                if self.tdl.update == "12.04.2" and self.tdl.arch == "x86_64":
+                if self.tdl.update in ["12.04.2", "13.04"] and self.tdl.arch == "x86_64":
                     kernelname += ".efi"
                 f.write("  kernel " + kernelname + "\n")
                 f.write("  append file=/cdrom/preseed/customiso.seed boot=casper automatic-ubiquity noprompt keyboard-configuration/layoutcode=us initrd=/casper/" + self.casper_initrd + "\n")
