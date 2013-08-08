@@ -1291,7 +1291,6 @@ class Guest(object):
             description = icicle.newChild(None, "description", description)
         packages = icicle.newChild(None, "packages", None)
 
-        lines.sort()
         for index,line in enumerate(lines):
             if line == "":
                 continue
