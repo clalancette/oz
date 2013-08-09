@@ -4,8 +4,8 @@ Version: @VERSION@
 Release: @RELEASE@%{?dist}
 License: LGPLv2
 Group: Development/Libraries
-URL: http://aeolusproject.org/oz.html
-Source0: http://repos.fedorapeople.org/repos/aeolus/oz/%{version}/tarball/%{name}-%{version}.tar.gz
+URL: http://github.com/clalancette/oz
+Source0: http://github.com/clalancette/%{name}/archive/%{name}-%{version}.tar.gz
 BuildArch: noarch
 Requires: python >= 2.5
 Requires: python-libguestfs >= 1.18
