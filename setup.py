@@ -50,7 +50,7 @@ class pytest(Command):
     def run(self):
         try:
             errno = subprocess.call('py.test tests --verbose --tb=short --junitxml=tests/results.xml'.split())
-        except OSError, e:
+        except OSError as e:
             if e.errno == 2:
                 raise OSError(2, "No such file or directory: py.test")
             raise
