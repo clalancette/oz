@@ -94,12 +94,15 @@ class Guest(object):
                     continue
 
                 if forward[0].prop('mode') == 'nat':
-                    ip = doc.xpathEval('/network/ip')
-                    if len(ip) != 1:
+                    ips = doc.xpathEval('/network/ip')
+                    if len(ips) == 0:
                         self.log.warn("Libvirt network without an IP, skipping")
                         continue
-                    self.bridge_name = network.bridgeName()
-                    break
+                    for ip in ips:
+                        family = ip.prop("family")
+                        if family is None or family == "ipv4":
+                            self.bridge_name = network.bridgeName()
+                            break
 
         if self.bridge_name is None:
             raise oz.OzException.OzException("Could not find a libvirt bridge.  Please run 'virsh net-start default' to start the default libvirt network, or see http://github.com/clalancette/oz/wiki/Oz-Network-Configuration for more information")
