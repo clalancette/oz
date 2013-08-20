@@ -545,7 +545,7 @@ class Guest(object):
         doc = libxml2.newDoc("1.0")
         pool = doc.newChild(None, "pool", None)
         pool.setProp("type", "dir")
-        pool.newChild(None, "name", "oztempdir")
+        pool.newChild(None, "name", "oztempdir-" + str(uuid.uuid4()) )
         target = pool.newChild(None, "target", None)
         target.newChild(None, "path", directory)
         pool_xml = doc.serialize(None, 1)
