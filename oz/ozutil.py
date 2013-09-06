@@ -735,11 +735,12 @@ def default_data_dir():
 
     return os.path.expanduser(directory)
 
-def default_screenshot_dir():
+def default_screenshot_dir(data_dir):
     """
-    Function to get the default path to the screenshot directory.
+    Function to get the default path to the screenshot directory. The directory is
+    generated relative to the given data directory.
     """
-    return os.path.join(default_data_dir(), "screenshots")
+    return os.path.join(data_dir, "screenshots")
 
 def http_get_header(url, redirect=True):
     """
