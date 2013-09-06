@@ -159,7 +159,7 @@ class Guest(object):
 
         self.screenshot_dir = oz.ozutil.config_get_key(config, 'paths',
                                                        'screenshot_dir',
-                                                       oz.ozutil.default_screenshot_dir())
+                                                       oz.ozutil.default_screenshot_dir(self.data_dir))
 
         # configuration from 'libvirt' section
         self.libvirt_uri = oz.ozutil.config_get_key(config, 'libvirt', 'uri',
