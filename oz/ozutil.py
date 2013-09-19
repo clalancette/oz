@@ -735,6 +735,17 @@ def default_data_dir():
 
     return os.path.expanduser(directory)
 
+def default_sshprivkey():
+    """
+    Function to get the default path to the SSH private key.
+    """
+    if os.geteuid() == 0:
+        directory = "/etc/oz/id_rsa-icicle-gen"
+    else:
+        directory = "~/.oz/id_rsa-icicle-gen"
+
+    return os.path.expanduser(directory)
+
 def default_screenshot_dir(data_dir):
     """
     Function to get the default path to the screenshot directory. The directory is

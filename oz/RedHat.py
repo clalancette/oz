@@ -45,7 +45,6 @@ class RedHatCDGuest(oz.Guest.CDGuest):
         oz.Guest.CDGuest.__init__(self, tdl, config, auto, output_disk,
                                   nicmodel, None, None, diskbus, iso_allowed,
                                   url_allowed, macaddress)
-        self.sshprivkey = os.path.join('/etc', 'oz', 'id_rsa-icicle-gen')
         self.crond_was_active = False
         self.sshd_was_active = False
         self.sshd_config = \

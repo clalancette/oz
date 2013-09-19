@@ -40,7 +40,6 @@ class UbuntuGuest(oz.Guest.CDGuest):
                                   nicmodel, None, None, diskbus, True, True,
                                   macaddress)
 
-        self.sshprivkey = os.path.join('/etc', 'oz', 'id_rsa-icicle-gen')
         self.crond_was_active = False
         self.sshd_was_active = False
         self.sshd_config = \
