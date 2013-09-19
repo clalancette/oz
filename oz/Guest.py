@@ -161,6 +161,10 @@ class Guest(object):
                                                        'screenshot_dir',
                                                        oz.ozutil.default_screenshot_dir(self.data_dir))
 
+        self.sshprivkey = oz.ozutil.config_get_key(config, 'paths',
+                                                   'sshprivkey',
+                                                   oz.ozutil.default_sshprivkey())
+
         # configuration from 'libvirt' section
         self.libvirt_uri = oz.ozutil.config_get_key(config, 'libvirt', 'uri',
                                                     'qemu:///system')
