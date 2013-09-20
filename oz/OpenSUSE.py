@@ -45,8 +45,6 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
             # for 10.3 we don't have a 2-stage install process so don't reboot
             self.reboots = 0
 
-        self.sshprivkey = os.path.join('/etc', 'oz', 'id_rsa-icicle-gen')
-
     def _modify_iso(self):
         """
         Method to make the boot ISO auto-boot with appropriate parameters.
