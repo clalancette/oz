@@ -38,6 +38,9 @@ class MageiaGuest(oz.Guest.CDGuest):
         self.mageia_arch = self.tdl.arch
         if self.mageia_arch == "i386":
             self.mageia_arch = "i586"
+        self.output_floppy = os.path.join(self.output_dir,
+                                          self.tdl.name + "-" + self.tdl.installtype + "-oz.img")
+
 
     def _modify_iso(self):
         """
@@ -45,14 +48,14 @@ class MageiaGuest(oz.Guest.CDGuest):
         """
         self.log.debug("Modifying ISO")
 
-        self.log.debug("Copying cfg file")
+        self.log.debug("Copying cfg file to floppy image")
 
-        if self.tdl.update in ["4"]:
-            pathdir = os.path.join(self.iso_contents, self.mageia_arch)
-        else:
+        pathdir = os.path.join(self.iso_contents, self.mageia_arch)
+
+        if not os.path.exists(pathdir):
             pathdir = self.iso_contents
 
-        outname = os.path.join(pathdir, "auto_inst.cfg")
+        outname = "/tmp/auto_inst.cfg"
 
         if self.default_auto_file():
 
@@ -69,6 +72,19 @@ class MageiaGuest(oz.Guest.CDGuest):
             oz.ozutil.copy_modify_file(self.auto, outname, _cfg_sub)
         else:
             shutil.copy(self.auto, outname)
+        try:
+            os.unlink(self.output_floppy)
+        except:
+            pass
+        oz.ozutil.subprocess_check_output(["/sbin/mkfs.msdos", "-C", 
+                                           self.output_floppy, "1440"])
+        oz.ozutil.subprocess_check_output(["mcopy", "-n", "-o", "-i",
+                                           self.output_floppy, outname,
+                                           "::AUTO_INST.CFG"])
+        try:
+            os.unlink(outname)
+        except:
+            pass
 
         self.log.debug("Modifying isolinux.cfg")
         isolinuxcfg = os.path.join(pathdir, "isolinux", "isolinux.cfg")
@@ -79,7 +95,7 @@ timeout 1
 prompt 0
 label customiso
   kernel alt0/vmlinuz
-  append initrd=alt0/all.rdz ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom kickstart=auto_inst.cfg
+  append initrd=alt0/all.rdz ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom kickstart=floppy
 """)
 
     def _generate_new_iso(self):
@@ -104,6 +120,18 @@ label customiso
                                            "-v", "-o", self.output_iso,
                                            self.iso_contents],
                                           printfn=self.log.debug)
+    def _do_install(self, timeout=None, force=False, reboots=0,
+                    kernelfname=None, ramdiskfname=None, cmdline=None):
+        fddev = self._InstallDev("floppy", self.output_floppy, "fda")
+        return oz.Guest.CDGuest._do_install(self, timeout, force, reboots,
+                                            kernelfname, ramdiskfname, cmdline,
+                                            [fddev])
+    def cleanup_install(self):
+        try:
+            os.unlink(self.output_floppy)
+        except:
+            pass
+        return oz.Guest.CDGuest.cleanup_install(self)
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):

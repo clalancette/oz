@@ -471,7 +471,13 @@ class Guest(object):
         self.lxml_subelement(bootDisk, "source", None, {'file':self.diskimage})
         self.lxml_subelement(bootDisk, "driver", None, {'name':'qemu', 'type':self.image_type})
         # install disk (if any)
-        if installdev:
+        if not installdev:
+            installdev_list = []
+        elif not type(installdev) is list:
+            installdev_list = [installdev]
+        else:
+            installdev_list = installdev
+        for installdev in installdev_list:
             install = self.lxml_subelement(devices, "disk", None, {'type':'file', 'device':installdev.devicetype})
             self.lxml_subelement(install, "source", None, {'file':installdev.path})
             self.lxml_subelement(install, "target", None, {'dev':installdev.bus})
@@ -1626,7 +1632,8 @@ class CDGuest(Guest):
             f.write(eltoritodata)
 
     def _do_install(self, timeout=None, force=False, reboots=0,
-                    kernelfname=None, ramdiskfname=None, cmdline=None):
+                    kernelfname=None, ramdiskfname=None, cmdline=None,
+                    extrainstalldevs=None):
         """
         Internal method to actually run the installation.
         """
@@ -1641,7 +1648,9 @@ class CDGuest(Guest):
             timeout = 1200
 
         cddev = self._InstallDev("cdrom", self.output_iso, "hdc")
-
+        if extrainstalldevs != None:
+            extrainstalldevs.append(cddev)
+            cddev = extrainstalldevs
         reboots_to_go = reboots
         while reboots_to_go >= 0:
             # if reboots_to_go is the same as reboots, it means that this is
