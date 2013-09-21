@@ -25,6 +25,11 @@ import re
 import oz.Guest
 import oz.ozutil
 import oz.OzException
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
+
 
 class MageiaGuest(oz.Guest.CDGuest):
     """
@@ -32,6 +37,8 @@ class MageiaGuest(oz.Guest.CDGuest):
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
+        if netdev is None:
+            netdev = "virtio"
         oz.Guest.CDGuest.__init__(self, tdl, config, auto, output_disk, netdev,
                                   None, None, diskbus, True, False, macaddress)
 
@@ -85,7 +92,12 @@ class MageiaGuest(oz.Guest.CDGuest):
             os.unlink(outname)
         except:
             pass
-
+        if not os.path.exists(os.path.join(pathdir,
+                                           "media")):
+            url = urlparse.urlparse(self.tdl.repositories['install'].url)
+            install_flags=  "automatic=method:%s,ser:%s,dir:%s,int:eth0,netw:dhcp" % (url.scheme, url.hostname, url.path)
+        else:
+            install_flags = "automatic=method:cdrom"
         self.log.debug("Modifying isolinux.cfg")
         isolinuxcfg = os.path.join(pathdir, "isolinux", "isolinux.cfg")
         with open(isolinuxcfg, 'w') as f:
@@ -95,8 +107,8 @@ timeout 1
 prompt 0
 label customiso
   kernel alt0/vmlinuz
-  append initrd=alt0/all.rdz ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom kickstart=floppy
-""")
+  append initrd=alt0/all.rdz ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom kickstart=floppy %s
+""" % install_flags)
 
     def _generate_new_iso(self):
         """
@@ -104,9 +116,10 @@ label customiso
         """
         self.log.info("Generating new ISO")
 
-        isolinuxdir = ""
-        if self.tdl.update in ["4"]:
+        if os.path.exists(os.path.join(self.iso_contents, self.mageia_arch)):
             isolinuxdir = self.mageia_arch
+        else:
+            isolinuxdir = ""
 
         isolinuxbin = os.path.join(isolinuxdir, "isolinux/isolinux.bin")
         isolinuxboot = os.path.join(isolinuxdir, "isolinux/boot.cat")
