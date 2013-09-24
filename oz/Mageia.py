@@ -39,6 +39,8 @@ class MageiaGuest(oz.Guest.CDGuest):
                  macaddress):
         if netdev is None:
             netdev = "virtio"
+        if diskbus is None:
+            diskbus = "virtio"
         oz.Guest.CDGuest.__init__(self, tdl, config, auto, output_disk, netdev,
                                   None, None, diskbus, True, False, macaddress)
 
