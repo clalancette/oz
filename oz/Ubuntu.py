@@ -560,6 +560,9 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         for cmd in self.tdl.commands:
             self.guest_execute_command(guestaddr, cmd.read())
 
+        self.log.debug("Syncing")
+        self.guest_execute_command(guestaddr, 'sync')
+
     def guest_execute_command(self, guestaddr, command, timeout=10,
                               tunnels=None):
         """
