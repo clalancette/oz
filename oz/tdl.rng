@@ -203,6 +203,36 @@
                       <ref name='bool'/>
                     </element>
                   </optional>
+                  <optional>
+                    <element name='distribution'>
+                      <text/>
+                    </element>
+                  </optional>
+                  <optional>
+                    <element name='components'>
+                      <text/>
+                    </element>
+                  </optional>
+                  <optional>
+                    <element name='trusted'>
+                      <ref name='bool'/>
+                    </element>
+                  </optional>
+                  <optional>
+                    <element name='arch'>
+                      <text/>
+                    </element>
+                  </optional>
+                  <optional>
+                    <interleave>
+                      <element name='keyserver'>
+                        <text/>
+                      </element>
+                      <element name='key'>
+                        <text/>
+                      </element>
+                    </interleave>
+                  </optional>
                 </interleave>
               </element>
             </zeroOrMore>

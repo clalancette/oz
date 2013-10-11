@@ -102,16 +102,32 @@ class Repository(object):
 
     name       - The name of this repository.
     url        - The URL of this repository.
+    (all remaining properties are optional with defaults in parentheses)
+    (yum specific)
     signed     - Whether this repository is signed
     persisted  - Whether this repository should remain in the final image
     sslverify  - Whether SSL certificates should be verified
+    (apt specific)
+    distribution - Determines from with location of the mirror to download from (OS short name)
+    components   - Components of the repository to access, more than one is accepted (main)
+    keyserver    - Which GPG key server to use (None)
+    key          - Which GPG key packages are signed with (None)
+    trusted      - Wether this repository is trusted, skips GPG checks if on (no)
+    arch         - Used for which architectures information should be downloaded (None)
     """
-    def __init__(self, name, url, signed, persisted, sslverify):
+    def __init__(self, name, url, signed, persisted, sslverify,
+                 distribution, components, keyserver, key, trusted, arch):
         self.name = name
         self.url = url
         self.signed = signed
         self.persisted = persisted
         self.sslverify = sslverify
+        self.distribution = distribution
+        self.components = components
+        self.keyserver = keyserver
+        self.key = key
+        self.trusted = trusted
+        self.arch = arch
 
 class Package(object):
     """
@@ -478,15 +494,26 @@ class TDL(object):
                                              "localhost.localdomain"]:
                 raise oz.OzException.OzException("Repositories cannot be localhost, since they must be reachable from the guest operating system")
 
+            # yum specific
             signed = _get_optional_repo_bool(repo, 'signed', 'no')
-
             persist = _get_optional_repo_bool(repo, 'persisted', 'yes')
-
             sslverify = _get_optional_repo_bool(repo, 'sslverify', 'no')
+
+            # apt specific
+            distribution = _xml_get_value(repo, 'distribution', 'distribution', optional=True)
+            components = _xml_get_value(repo, 'components', 'components', optional=True)
+            keyserver = _xml_get_value(repo, 'keyserver', 'keyserver', optional=True)
+            key = _xml_get_value(repo, 'key', 'key', optional=True)
+            trusted = _get_optional_repo_bool(repo, 'trusted', 'no')
+            arch = _xml_get_value(repo, 'arch', 'arch', optional=True)
+
+            if keyserver and not key:
+                raise oz.OzException.OzException('A key is required with keyserver')
 
             # no need to delete - if the name matches we just overwrite here
             self.repositories[name] = Repository(name, url, signed, persist,
-                                                 sslverify)
+                                                 sslverify, distribution, components,
+                                                 keyserver, key, trusted, arch)
 
     def _add_isoextras(self, extraspath, element_type):
         """

@@ -439,10 +439,105 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
         Method to generate and upload custom repository files based on the TDL.
         """
 
+        def build_repo(uri, distribution, components=['main'], trusted=False, arch=None):
+            """
+            Builds a Ubuntu / Debian repo string to put into /etc/apt/sources.list.d
+
+            http://manpages.ubuntu.com/manpages/man5/sources.list.5.html
+            """
+            options = []
+            if trusted:
+                options.append('trusted=yes')
+
+            if arch:
+                options.append('arch=' + arch)
+
+            if options:
+                options = '[%s]' % ' '.join(options)
+            else:
+                options = ''
+
+            # In case a user passes in "main non-free" kind of string
+            if isinstance(components, str):
+                components = components.split(' ')
+
+            info = ' '.join([options, uri, distribution, ' '.join(components)])
+            repo = ''.join(['deb', info, "\n", 'deb-src', info, "\n"])
+            return repo
+
+        def setup_key_server(server, key):
+            """
+            Fetch GPG from a specific server and add locally
+            """
+            # Does the key exist already locally?
+            if key.upper() in get_fingerprints():
+                return True
+
+            self.guest_execute_command(guestaddr, "apt-key adv --keyserver %s --recv %s" % (server, key))
+
+        def get_fingerprints():
+            """
+            Fetches a fingerprint of a given key
+            """
+            keys = []
+            out, err, code = self.guest_execute_command(guestaddr, 'apt-key finger')
+            for line in out.split("\n"):
+                match = re.match(r'^\s+Key fingerprint = ([0-9A-F ]+)', line)
+                if match:
+                    keys.append(match.group(1))
+
+            return list(set(keys))
+
         self.log.debug("Installing additional repository files")
 
         for repo in list(self.tdl.repositories.values()):
-            self.guest_execute_command(guestaddr, "apt-add-repository --yes '%s'" % (repo.url.strip('\'"')))
+            if repo.url[:3] == 'ppa' or repo.url[:13] == 'cloud-archive':
+                self.guest_execute_command(guestaddr, "apt-add-repository --yes '%s'" % (repo.url.strip('\'"')))
+            else:
+                # Process any keys if presented with them
+                if repo.keyserver and repo.key:
+                    setup_key_server(repo.keyserver, repo.key)
+
+                # Save config file locally and build it, then upload to guest
+                # alphanumeric, hypen, dot and underscore allowed.
+                filename = re.sub(r'([^\.\-\_\w]|_)+', '', repo.name.replace(" ", "_")) + ".list"
+                localname = os.path.join(self.icicle_tmp, filename)
+                with open(localname, 'w') as handle:
+                    # Get fragments from URL
+                    fragments = repo.url.strip('\'"').split(' ')
+                    if fragments[0][:3] == 'deb':
+                        del fragments[0]
+
+                    # URI
+                    uri = fragments[0]
+
+                    # Distribution is always behind the URI
+                    if len(fragments) > 1:
+                        repo.distribution = fragments[1]
+
+                    # Get all components
+                    if len(fragments) > 2:
+                        repo.components = fragments[2:]
+
+                    if not repo.distribution:
+                        # Fetch the codename to use in the source list
+                        out, err, code = self.guest_execute_command(guestaddr, 'lsb_release --codename --short')
+                        distribution = out.strip()
+                    else:
+                        distribution = repo.distribution
+
+                    components = ['main'] if not repo.components else repo.components
+                    trusted = False if not repo.trusted else True
+                    arch = None if not repo.arch else repo.arch
+                    built_repo = build_repo(uri, distribution, components, trusted, arch)
+                    handle.write(built_repo)
+
+                try:
+                    remotename = os.path.join("/etc/apt/sources.list.d/", filename)
+                    self.guest_live_upload(guestaddr, localname, remotename)
+                finally:
+                    os.unlink(localname)
+
             self.guest_execute_command(guestaddr, "apt-get update")
 
     def _install_packages(self, guestaddr, packstr):
