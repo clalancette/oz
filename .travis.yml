@@ -5,13 +5,16 @@ python:
   - "3.2"
   - "2.7"
   - "2.6"
-  - "2.5"
-  - "pypy"
 
 before_install:
   - sudo apt-get update
-  - sudo apt-get install -qq genisoimage libvirt-dev mtools openssh-client python-guestfs python-libvirt python-libxml2
+  - sudo apt-get install -qq genisoimage libvirt-dev mtools openssh-client python-guestfs python-libvirt python-libxml2 swig libssl1.0.0 python-m2crypto
+  # Travis uses an isolated virtualenv (see http://about.travis-ci.org/docs/user/languages/python/#Travis-CI-Uses-Isolated-virtualenvs)
+  # Install the system python packages to get their deps and then install the pip version to have them locally
   - pip install -r requirements.txt --use-mirrors
+  - sudo cp /usr/lib/python2.7/dist-packages/*libxml2* $VIRTUAL_ENV/lib/python$TRAVIS_PYTHON_VERSION/site-packages/
+  - sudo cp /usr/lib/python2.7/dist-packages/*libvirt* $VIRTUAL_ENV/lib/python$TRAVIS_PYTHON_VERSION/site-packages/
+  - sudo cp /usr/lib/python2.7/dist-packages/*guestfs* $VIRTUAL_ENV/lib/python$TRAVIS_PYTHON_VERSION/site-packages/
 
 install:
   - python setup.py install
