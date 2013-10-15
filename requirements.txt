@@ -1,0 +1,6 @@
+pycurl
+# m2crypt has some sslv2 issues (see https://bugzilla.osafoundation.org/show_bug.cgi?id=13024)
+# Use a pip source that patches up like all the OS packages
+-e git://github.com/eventbrite/m2crypto.git@0.21.1-sane#egg=m2crypto
+libvirt-python
+lxml
