@@ -10,7 +10,8 @@ python:
 
 before_install:
   - sudo apt-get update
-  - sudo apt-get install -qq genisoimage libvirt-dev mtools openssh-client python-guestfs python-libvirt python-pycurl python-m2crypto python-libxml2
+  - sudo apt-get install -qq genisoimage libvirt-dev mtools openssh-client python-guestfs python-libvirt python-libxml2
+  - pip install -r requirements.txt --use-mirrors
 
 install:
   - python setup.py install

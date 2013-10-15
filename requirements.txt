@@ -1,0 +1,2 @@
+pycurl
+m2crypto
