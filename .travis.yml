@@ -1,0 +1,17 @@
+language: python
+
+python:
+  - "3.3"
+  - "3.2"
+  - "2.7"
+  - "2.6"
+  - "2.5"
+  - "pypy"
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -qq genisoimage libvirt-dev mtools openssh-client python-guestfs python-libvirt python-pycurl python-m2crypto python-libxml2
+
+install:
+  - python setup.py install
+script: python setup.py test
