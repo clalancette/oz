@@ -11,7 +11,6 @@ before_install:
   # Travis uses an isolated virtualenv (see http://about.travis-ci.org/docs/user/languages/python/#Travis-CI-Uses-Isolated-virtualenvs)
   # Install the system python packages to get their deps and then install the pip version to have them locally
   - pip install -r requirements.txt --use-mirrors
-  - sudo cp /usr/lib/python2.7/dist-packages/*libxml2* $VIRTUAL_ENV/lib/python$TRAVIS_PYTHON_VERSION/site-packages/
   - sudo cp /usr/lib/python2.7/dist-packages/*libvirt* $VIRTUAL_ENV/lib/python$TRAVIS_PYTHON_VERSION/site-packages/
   - sudo cp /usr/lib/python2.7/dist-packages/*guestfs* $VIRTUAL_ENV/lib/python$TRAVIS_PYTHON_VERSION/site-packages/
 
