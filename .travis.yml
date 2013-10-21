@@ -8,7 +8,7 @@ python:
 
 before_install:
   - sudo apt-get update
-  - sudo apt-get install -qq genisoimage libvirt-dev mtools openssh-client python-guestfs python-libvirt python-libxml2 swig libssl1.0.0 python-m2crypto
+  - sudo apt-get install -qq genisoimage libvirt-dev mtools openssh-client python-dev python-guestfs python-libvirt python-libxml2 swig libssl1.0.0 python-m2crypto
   # Travis uses an isolated virtualenv (see http://about.travis-ci.org/docs/user/languages/python/#Travis-CI-Uses-Isolated-virtualenvs)
   # Install the system python packages to get their deps and then install the pip version to have them locally
   - pip install -r requirements.txt --use-mirrors
@@ -18,4 +18,18 @@ before_install:
 
 install:
   - python setup.py install
-script: python setup.py test
+  - pip install coverage
+  - pip install coveralls
+  - py.test --genscript=runtests.py
+
+env:
+  - TESTFOLDER=tdl
+  - TESTFOLDER=guest
+  - TESTFOLDER=ozutil
+  - TESTFOLDER=factory
+
+script: 
+  - coverage run --source=oz runtests.py --verbose --tb=short tests/$TESTFOLDER
+
+after_success:
+  - coveralls
