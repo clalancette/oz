@@ -158,7 +158,8 @@ def test_all():
     expect_fail("FedoraCore", "24", "x86_64", "iso")
 
     # Fedora
-    for version in ["7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19"]:
+    for version in ["7", "8", "9", "10", "11", "12", "13", "14", "15", "16",
+                    "17", "18", "19"]:
         for arch in ["i386", "x86_64"]:
             for installtype in ["url", "iso"]:
                 expect_success("Fedora", version, arch, installtype)
@@ -187,7 +188,8 @@ def test_all():
 
     # RHEL-3/CentOS-3
     for distro in ["RHEL-3", "CentOS-3"]:
-        for version in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9"]:
+        for version in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8",
+                        "U9"]:
             for arch in ["i386", "x86_64"]:
                 expect_success(distro, version, arch, "url")
     # bad RHEL-3 version
@@ -197,7 +199,8 @@ def test_all():
 
     # RHEL-4/CentOS-4
     for distro in ["RHEL-4", "CentOS-4", "ScientificLinux-4"]:
-        for version in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9"]:
+        for version in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8",
+                        "U9"]:
             for arch in ["i386", "x86_64"]:
                 for installtype in ["url", "iso"]:
                     expect_success(distro, version, arch, installtype)
@@ -206,12 +209,13 @@ def test_all():
 
     # RHEL-5/CentOS-5
     for distro in ["RHEL-5", "CentOS-5", "ScientificLinux-5"]:
-        for version in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8"]:
+        for version in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8",
+                        "U9", "U10"]:
             for arch in ["i386", "x86_64"]:
                 for installtype in ["url", "iso"]:
                     expect_success(distro, version, arch, installtype)
     # bad RHEL-5 version
-    expect_fail("RHEL-5", "U10", "x86_64", "url")
+    expect_fail("RHEL-5", "U20", "x86_64", "url")
 
     # RHEL-6
     for distro in ["RHEL-6", "CentOS-6", "ScientificLinux-6", "OEL-6"]:
