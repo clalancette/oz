@@ -202,7 +202,7 @@
         <optional>
           <element name='disk'>
             <element name='size'>
-              <ref name='number'/>
+              <ref name='disk_number'/>
             </element>
           </element>
         </optional>
@@ -306,6 +306,12 @@
   <define name='number'>
     <data type="string">
       <param name="pattern">[0-9]*</param>
+    </data>
+  </define>
+
+  <define name='disk_number'>
+    <data type="string">
+      <param name="pattern">([0-9]*) *([GT]?)</param>
     </data>
   </define>
 
