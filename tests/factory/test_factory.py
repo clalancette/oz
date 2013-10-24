@@ -206,12 +206,10 @@ def test_all():
 
     # RHEL-5/CentOS-5
     for distro in ["RHEL-5", "CentOS-5", "ScientificLinux-5"]:
-        for version in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8"]:
+        for version in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9", "U10"]:
             for arch in ["i386", "x86_64"]:
                 for installtype in ["url", "iso"]:
                     expect_success(distro, version, arch, installtype)
-    # bad RHEL-5 version
-    expect_fail("RHEL-5", "U10", "x86_64", "url")
 
     # RHEL-6
     for distro in ["RHEL-6", "CentOS-6", "ScientificLinux-6", "OEL-6"]:
