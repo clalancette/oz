@@ -68,14 +68,15 @@ class MandrakeGuest(oz.Guest.CDGuest):
         self.log.debug("Modifying isolinux.cfg")
         isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
                                    "isolinux.cfg")
-        f = open(isolinuxcfg, 'w')
-        f.write("default customiso\n")
-        f.write("timeout 1\n")
-        f.write("prompt 0\n")
-        f.write("label customiso\n")
-        f.write("  kernel alt0/vmlinuz\n")
-        f.write("  append initrd=alt0/all.rdz ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom kickstart=auto_inst.cfg\n")
-        f.close()
+        with open(isolinuxcfg, 'w') as f:
+            f.write("""\
+default customiso
+timeout 1
+prompt 0
+label customiso
+  kernel alt0/vmlinuz
+  append initrd=alt0/all.rdz ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom kickstart=auto_inst.cfg
+""")
 
     def _generate_new_iso(self):
         """
@@ -127,15 +128,15 @@ class Mandrake82Guest(oz.Guest.CDGuest):
             shutil.copy(self.auto, outname)
 
         syslinux = os.path.join(self.icicle_tmp, 'syslinux.cfg')
-        f = open(syslinux, 'w')
-        f.write("default customiso\n")
-        f.write("timeout 1\n")
-        f.write("prompt 0\n")
-        f.write("label customiso\n")
-        f.write("  kernel vmlinuz\n")
-        f.write("  append initrd=cdrom.rdz ramdisk_size=32000 root=/dev/ram3 automatic=method:cdrom vga=788 auto_install=auto_inst.cfg\n")
-        f.close()
-
+        with open(syslinux, 'w') as f:
+            f.write("""\
+default customiso
+timeout 1
+prompt 0
+label customiso
+  kernel vmlinuz
+  append initrd=cdrom.rdz ramdisk_size=32000 root=/dev/ram3 automatic=method:cdrom vga=788 auto_install=auto_inst.cfg
+""")
         cdromimg = os.path.join(self.iso_contents, "Boot", "cdrom.img")
         oz.ozutil.subprocess_check_output(["mcopy", "-n", "-o", "-i",
                                            cdromimg, syslinux,

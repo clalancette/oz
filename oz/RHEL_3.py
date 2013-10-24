@@ -44,8 +44,8 @@ class RHEL3Guest(oz.RedHat.RedHatCDGuest):
                                          None, macaddress)
 
         # override the sshd_config value set in RedHatCDGuest.__init__
-        self.sshd_config = \
-"""SyslogFacility AUTHPRIV
+        self.sshd_config = """\
+SyslogFacility AUTHPRIV
 PasswordAuthentication yes
 ChallengeResponseAuthentication no
 X11Forwarding yes
