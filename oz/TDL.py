@@ -319,24 +319,17 @@ class TDL(object):
             return None
 
         match = re.match(r'([0-9]*) *([GT]?)$', size)
-        if not match:
+        if not match or len(match.groups()) != 2:
             raise oz.OzException.OzException("Invalid disk size; it must be specified as a size in gigabytes, optionally suffixed with 'G' or 'T'")
 
         number = match.group(1)
         suffix = match.group(2)
-
-        if not number.isdigit():
-            raise oz.OzException.OzException("Invalid disk size; it must begin with a number")
 
         if not suffix or suffix == 'G':
             # for backwards compatibility, we assume G when there is no suffix
             size = number
         elif suffix == 'T':
             size = str(int(number) * 1024)
-        else:
-            # note that this should never, ever happen; the regular expression
-            # should have failed the match earlier
-            raise oz.OzException.OzException("Invalid suffix; it must be 'G' or 'T'")
 
         return size
 
