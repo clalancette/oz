@@ -31,4 +31,6 @@ script:
   - coverage run --source=oz runtests.py --verbose --tb=short tests/$TESTFOLDER
 
 after_success:
+  - coverage combine
   - coveralls
+  - coverage erase
