@@ -501,7 +501,7 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         self.log.debug("Installing additional repository files")
 
         for repo in list(self.tdl.repositories.values()):
-            self.guest_execute_command(guestaddr, "echo '%s' > /etc/apt/sources.list.d/%s" % (repo.url.strip('\'"'), repo.name + "list")
+            self.guest_execute_command(guestaddr, "echo '%s' > /etc/apt/sources.list.d/%s" % (repo.url.strip('\'"'), repo.name + "list"))
             self.guest_execute_command(guestaddr, "apt-get update")
 
     def do_customize(self, guestaddr):
