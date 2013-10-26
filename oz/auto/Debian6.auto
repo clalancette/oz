@@ -25,6 +25,8 @@ d-i passwd/root-password password %ROOTPW%
 d-i passwd/root-password-again password %ROOTPW%
 
 tasksel tasksel/first multiselect standard
+d-i pkgsel/include/install-recommends boolean true
+d-i pkgsel/include string openssh-server
 
 d-i grub-installer/only_debian boolean true
 d-i grub-installer/with_other_os boolean true
@@ -33,5 +35,7 @@ d-i apt-setup/security_host string
 d-i apt-setup/services-select multiselect
 d-i apt-setup/volatile_host string
 d-i apt-setup/security_host string
+
+d-i preseed/late_command sed -i "/^deb cdrom:/s/^/#/" /target/etc/apt/sources.list; in-target apt-get update
 
 d-i finish-install/reboot_in_progress note
