@@ -47,13 +47,6 @@ import re
 import oz.ozutil
 import oz.OzException
 
-def subprocess_check_output(*popenargs, **kwargs):
-    """
-    Function to call a subprocess and gather the output.  Deprecated; slated
-    to be removed in Oz version 0.7.0. See
-    oz.ozutil.subprocess_check_output().
-    """
-    return oz.ozutil.subprocess_check_output(*popenargs, **kwargs)
 
 class Guest(object):
     """
@@ -1307,13 +1300,6 @@ class Guest(object):
                 package.newChild(None, "extra", extra[index])
 
         return doc.serialize(None, 1)
-
-    def mkdir_p(self, path):
-        """
-        Create a directory and all of its parents.
-        Deprecated; slated for removal in Oz 0.7.0. See oz.ozutil.mkdir_p().
-        """
-        return oz.ozutil.mkdir_p(path)
 
     def _check_url(self, iso=True, url=True):
         """
