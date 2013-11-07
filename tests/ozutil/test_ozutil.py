@@ -33,8 +33,8 @@ def test_auto_none():
         oz.ozutil.generate_full_auto_path(None)
 
 # test oz.ozutil.executable_exists
-def test_exe_exists_bin_true():
-    oz.ozutil.executable_exists('/bin/true')
+def test_exe_exists_bin_ls():
+    oz.ozutil.executable_exists('/bin/ls')
 
 def test_exe_exists_foo():
     with py.test.raises(Exception):

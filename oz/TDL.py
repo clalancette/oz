@@ -19,11 +19,12 @@
 Template Description Language (TDL)
 """
 
-import libxml2
+import lxml.etree
 import base64
 import re
 import tempfile
 import StringIO
+import os
 
 try:
     import urllib.parse as urlparse
@@ -33,32 +34,6 @@ except ImportError:
 import oz.ozutil
 import oz.OzException
 
-def _xml_get_value(doc, xmlstring, component, optional=False):
-    """
-    Function to get the contents from an XML node.  It takes 4 arguments:
-
-    doc       - The libxml2 document to get a value from.
-    xmlstring - The XPath string to use.
-    component - A string representing which TDL component is being
-                looked for (used in error reporting).
-    optional  - A boolean describing whether this XML node is allowed to be
-                absent or not.  If optional is True and the node is absent,
-                None is returned.  If optional is False and the node is
-                absent, an exception is raised.  (default: False)
-
-    Returns the content of the XML node if found, None if the node is not
-    found and optional is True.
-    """
-    res = doc.xpathEval(xmlstring)
-    if len(res) == 1:
-        return res[0].getContent()
-    elif len(res) == 0:
-        if optional:
-            return None
-        else:
-            raise oz.OzException.OzException("Failed to find %s in TDL" % (component))
-    else:
-        raise oz.OzException.OzException("Expected 0 or 1 %s in TDL, saw %d" % (component, len(res)))
 
 def data_from_type(name, contenttype, content):
     '''
@@ -85,8 +60,7 @@ def data_from_type(name, contenttype, content):
     else:
         raise oz.OzException.OzException("Type for %s must be 'raw', 'url' or 'base64'" % (name))
 
-    # make sure the data is flushed to disk for uses of the file through
-    # the name
+    # make sure the data is flushed to disk for uses of the file through the name
     out.flush()
     out.seek(0)
 
@@ -181,43 +155,40 @@ class TDL(object):
                    dictionary is indexed by commands.  This dictionary may
                    be empty.
     """
-    def __init__(self, xmlstring, rootpw_required=False):
-        self.doc = None
+    def __init__(self, xml, rootpw_required=False):
+        # Get document
+        self.doc = lxml.etree.fromstring(xml)
 
-        self.doc = libxml2.parseDoc(xmlstring)
 
-        template = self.doc.xpathEval('/template')
-        if len(template) != 1:
-            raise oz.OzException.OzException("Expected 1 template section in TDL, saw %d" % (len(template)))
-        self.version = template[0].prop('version')
+        # then validate the schema
+        relaxng = lxml.etree.RelaxNG(file=os.path.join(os.path.dirname(__file__), 'tdl.rng'))
+        valid = relaxng.validate(self.doc)
+        if not valid:
+            errstr = "\nXML schema validation failed:\n"
+            for error in relaxng.error_log:
+                errstr += "\tline %s: %s\n" % (error.line, error.message)
+            raise oz.OzException.OzException(errstr)
 
+        self.version = self.node('/template', 'template').get('version')
         if self.version:
             self._validate_tdl_version()
 
-        self.name = _xml_get_value(self.doc, '/template/name', 'template name')
+        self.name = self.node_text('/template/name', 'template name')
+        self.distro = self.node_text('/template/os/name', 'OS name')
+        self.update = self.node_text('/template/os/version', 'OS version')
 
-        self.distro = _xml_get_value(self.doc, '/template/os/name', 'OS name')
-
-        self.update = _xml_get_value(self.doc, '/template/os/version',
-                                     'OS version')
-
-        self.arch = _xml_get_value(self.doc, '/template/os/arch',
-                                   'OS architecture')
-        if self.arch != "i386" and self.arch != "x86_64":
+        self.arch = self.node_text('/template/os/arch', 'OS architecture')
+        if self.arch not in ["i386", "x86_64"]:
             raise oz.OzException.OzException("Architecture must be one of 'i386' or 'x86_64'")
 
-        self.key = _xml_get_value(self.doc, '/template/os/key', 'OS key',
-                                  optional=True)
+        self.key = self.node_text('/template/os/key', 'OS key', optional=True)
         # key is not required, so it is not fatal if it is None
 
-        self.description = _xml_get_value(self.doc, '/template/description',
-                                          'description', optional=True)
+        self.description = self.node_text('/template/description', 'description', optional=True)
         # description is not required, so it is not fatal if it is None
 
-        install = self.doc.xpathEval('/template/os/install')
-        if len(install) != 1:
-            raise oz.OzException.OzException("Expected 1 OS install section in TDL, saw %d" % (len(install)))
-        self.installtype = install[0].prop('type')
+        install = self.node('/template/os/install', 'OS install')
+        self.installtype = install.get('type')
         if self.installtype is None:
             raise oz.OzException.OzException("Failed to find OS install type in TDL")
 
@@ -226,78 +197,113 @@ class TDL(object):
         # so code lower down in the stack doesn't have to care about the ISO
         # vs. URL install type distinction, and can just check whether or not
         # these URLs are None
-        self.iso_md5_url = None
-        self.iso_sha1_url = None
-        self.iso_sha256_url = None
+        self.iso_sha256_url = self.iso_sha1_url = self.iso_md5_url = None
 
         if self.installtype == "url":
-            self.url = _xml_get_value(self.doc, '/template/os/install/url',
-                                      'OS install URL')
+            self.url = self.node_text('/template/os/install/url', 'OS install URL')
         elif self.installtype == "iso":
-            self.iso = _xml_get_value(self.doc, '/template/os/install/iso',
-                                      'OS install ISO')
-            self.iso_md5_url = _xml_get_value(self.doc,
-                                              '/template/os/install/md5sum',
-                                              'OS install ISO MD5SUM',
-                                              optional=True)
-            self.iso_sha1_url = _xml_get_value(self.doc,
-                                               '/template/os/install/sha1sum',
-                                               'OS install ISO SHA1SUM',
-                                               optional=True)
-            self.iso_sha256_url = _xml_get_value(self.doc,
-                                                 '/template/os/install/sha256sum',
-                                                 'OS install ISO SHA256SUM',
-                                                 optional=True)
-            # only one of md5, sha1, or sha256 can be specified; raise an error
-            # if multiple are
+            self.iso = self.node_text('/template/os/install/iso', 'OS install ISO')
+            self.iso_md5_url = self.node_text('/template/os/install/md5sum', 'OS install ISO MD5SUM', optional=True)
+            self.iso_sha1_url = self.node_text('/template/os/install/sha1sum', 'OS install ISO SHA1SUM', optional=True)
+            self.iso_sha256_url = self.node_text('/template/os/install/sha256sum', 'OS install ISO SHA256SUM', optional=True)
+
+            # only one of md5, sha1, or sha256 can be specified; raise an error if multiple are
             if (self.iso_md5_url and self.iso_sha1_url) or (self.iso_md5_url and self.iso_sha256_url) or (self.iso_sha1_url and self.iso_sha256_url):
                 raise oz.OzException.OzException("Only one of <md5sum>, <sha1sum>, and <sha256sum> can be specified")
         else:
             raise oz.OzException.OzException("Unknown install type " + self.installtype + " in TDL")
 
-        self.rootpw = _xml_get_value(self.doc, '/template/os/rootpw',
-                                     "root/Administrator password",
-                                     optional=not rootpw_required)
+        self.rootpw = self.node_text('/template/os/rootpw', "root/Administrator password", optional=not rootpw_required)
 
         self.packages = []
-        self._add_packages(self.doc.xpathEval('/template/packages/package'))
+        self._add_packages(self.node('/template/packages/package', multiple=True, optional=True))
 
         self.files = {}
-        for afile in self.doc.xpathEval('/template/files/file'):
-            name = afile.prop('name')
+        for afile in self.node('/template/files/file', multiple=True, optional=True):
+            name = afile.get('name')
             if name is None:
                 raise oz.OzException.OzException("File without a name was given")
-            contenttype = afile.prop('type')
-            if contenttype is None:
-                contenttype = 'raw'
+            contenttype = afile.get('type', 'raw')
 
-            content = afile.getContent().strip()
+            content = str(afile.text).strip()
             self.files[name] = data_from_type(name, contenttype, content)
 
-        self.isoextras = self._add_isoextras('/template/os/install/extras/directory',
-                                             'directory')
-        self.isoextras += self._add_isoextras('/template/os/install/extras/file',
-                                              'file')
+        self.isoextras = self._add_isoextras('/template/os/install/extras/directory', 'directory')
+        self.isoextras += self._add_isoextras('/template/os/install/extras/file', 'file')
 
         self.repositories = {}
-        self._add_repositories(self.doc.xpathEval('/template/repositories/repository'))
+        self._add_repositories(self.node('/template/repositories/repository', multiple=True, optional=True))
 
         self.commands = self._parse_commands()
-
         self.disksize = self._parse_disksize()
 
-        self.icicle_extra_cmd = _xml_get_value(self.doc,
-                                               '/template/os/icicle/extra_command',
-                                               "extra icicle command",
-                                               optional=True)
+        self.icicle_extra_cmd = self.node('/template/os/icicle/extra_command', "extra icicle command", optional=True)
+
+    def node(self, path, component=None, optional=False, doc=None, multiple=False):
+        """
+        Function to get an XML node or nodes.
+
+        path - The XPath string to use.
+        component - A string representing which TDL component is being
+                    looked for (used in error reporting).
+        optional  - A boolean describing whether this XML node is allowed to be
+                    absent or not.  If optional is True and the node is absent,
+                    None is returned.  If optional is False and the node is
+                    absent, an exception is raised.  (default: False)
+        doc       - The xml document to get a value from. (default: None, main doc used)
+        multiple  - If more than one result is acceptable (default: False)
+
+        Returns the content of the XML node if found, None if the node is not
+        found and optional is True.
+        """
+        if not doc:
+            doc = self.doc
+
+        # Fallback to path in case descriptive component name isn't available
+        if not component:
+            component = path
+
+        res = doc.xpath(path)
+        if multiple:
+            return res
+        elif len(res) == 1:
+            return res[0]
+        elif len(res) == 0:
+            if optional:
+                return None
+
+            raise oz.OzException.OzException("Failed to find %s in TDL" % (component))
+
+        raise oz.OzException.OzException("Expected 0 or 1 %s in TDL, saw %d" % (component, len(res)))
+
+    def node_text(self, path, component=None, optional=False, doc=None):
+        """
+        Function to get the contents from an XML node.
+
+        path - The XPath string to use.
+        component - A string representing which TDL component is being
+                    looked for (used in error reporting).
+        optional  - A boolean describing whether this XML node is allowed to be
+                    absent or not.  If optional is True and the node is absent,
+                    None is returned.  If optional is False and the node is
+                    absent, an exception is raised.  (default: False)
+        doc       - The xml document to get a value from. (default: None, main doc used)
+
+        Returns the content of the XML node if found, None if the node is not
+        found and optional is True.
+        """
+        node = self.node(path, component, optional, doc)
+        if node is not None:
+            return node.text
+
+        return None
 
     def _parse_disksize(self):
         """
         Internal method to parse the disk size out of the TDL.
         """
-        size = _xml_get_value(self.doc, '/template/disk/size', 'disk size',
-                              optional=True)
-        if size is None:
+        size = self.node_text('/template/disk/size', 'disk size', optional=True)
+        if not size:
             # if it wasn't specified, return None; the Guest object will assign
             # a sensible default
             return None
@@ -337,15 +343,11 @@ class TDL(object):
         """
         tmp = []
         saw_position = False
-        for command in self.doc.xpathEval('/template/commands/command'):
-            name = command.prop('name')
+        for command in self.node('/template/commands/command', multiple=True, optional=True):
+            name = command.get('name')
             if name is None:
                 raise oz.OzException.OzException("Command without a name was given")
-            contenttype = command.prop('type')
-            if contenttype is None:
-                contenttype = 'raw'
-
-            content = command.getContent().strip()
+            content = command.text.strip()
             if len(content) == 0:
                 raise oz.OzException.OzException("Empty commands are not allowed")
 
@@ -357,11 +359,12 @@ class TDL(object):
             # you use the position attribute on one command, you must use it
             # on all commands, and vice-versa.
 
-            position = command.prop('position')
+            position = command.get('position')
             if position is not None:
                 saw_position = True
                 position = int(position)
 
+            contenttype = command.get('type', 'raw')
             fp = data_from_type(name, contenttype, content)
             tmp.append((position, fp))
 
@@ -392,13 +395,13 @@ class TDL(object):
         name is in the existing TDL and in packages, the value in packages
         overrides.
         """
-        packsdoc = libxml2.parseDoc(packages)
-        packslist = packsdoc.xpathEval('/packages/package')
+        packsdoc = lxml.etree.fromstring(packages)
+        packslist = self.node('/packages/package', multiple=True, optional=True, doc=packsdoc)
         self._add_packages(packslist, True)
 
     def _add_packages(self, packslist, remove_duplicates = False):
         """
-        Internal method to add the list of libxml2 nodes from packslist into
+        Internal method to add the list of XML nodes from packslist into
         the self.packages array.  If remove_duplicates is False (the default),
         then a package that is listed both in packslist and in the initial
         TDL is listed twice.  If it is set to True, then a package that is
@@ -407,22 +410,18 @@ class TDL(object):
         """
         for package in packslist:
             # package name
-            name = package.prop('name')
-
+            name = package.get('name')
             if name is None:
                 raise oz.OzException.OzException("Package without a name was given")
 
             # repository that the package lives in (optional)
-            repo = _xml_get_value(package, 'repository',
-                                  "package repository section", optional=True)
+            repo = self.node('repository', "package repository section", doc=package, optional=True)
 
             # filename of the package (optional)
-            filename = _xml_get_value(package, 'file', "package filename",
-                                      optional=True)
+            filename = self.node('file', "package filename", doc=package, optional=True)
 
             # arguments to install package (optional)
-            args = _xml_get_value(package, 'arguments', "package arguments",
-                                  optional=True)
+            args = self.node('arguments', "package arguments", doc=package, optional=True)
 
             if remove_duplicates:
                 # delete any existing packages with this name
@@ -440,58 +439,53 @@ class TDL(object):
         the same name is in the existing TDL and in repos, the value in
         repos overrides.
         """
-        reposdoc = libxml2.parseDoc(repos)
-        reposlist = reposdoc.xpathEval('/repositories/repository')
+        reposdoc = lxml.etree.fromstring(repos)
+        reposlist = self.node('/repositories/repository', multiple=True, optional=True, doc=reposdoc)
         self._add_repositories(reposlist)
 
     def _add_repositories(self, reposlist):
         """
-        Internal method to add the list of libxml2 nodes from reposlist into
+        Internal method to add the list of XML nodes from reposlist into
         the self.repositories dictionary.
         """
-        def _get_optional_repo_bool(repo, name, default='no'):
+        def repo_bool(repo, name, default='no'):
             """
             Internal method to get an option boolean from a repo XML section.
             """
-            xmlstr = _xml_get_value(repo, name, name, optional=True)
-            if xmlstr is None:
-                xmlstr = default
+            value = self.node(name, name, doc=repo, optional=True)
+            value = value.text if value is not None else default
 
-            val = oz.ozutil.string_to_bool(xmlstr)
+            val = oz.ozutil.string_to_bool(value)
             if val is None:
                 raise oz.OzException.OzException("Repository %s property must be 'true', 'yes', 'false', or 'no'" % (name))
             return val
 
         for repo in reposlist:
-            name = repo.prop('name')
+            name = repo.get('name')
             if name is None:
                 raise oz.OzException.OzException("Repository without a name was given")
-            url = _xml_get_value(repo, 'url', 'repository url')
+            url = self.node_text('url', 'repository url', doc=repo)
 
-            if urlparse.urlparse(url)[1] in ["localhost", "127.0.0.1",
-                                             "localhost.localdomain"]:
+            host = urlparse.urlparse(url)[1]
+            if host in ["localhost", "127.0.0.1", "localhost.localdomain"]:
                 raise oz.OzException.OzException("Repositories cannot be localhost, since they must be reachable from the guest operating system")
 
-            signed = _get_optional_repo_bool(repo, 'signed')
+            signed = repo_bool(repo, 'signed')
+            persist = repo_bool(repo, 'persisted', default='yes')
+            sslverify = repo_bool(repo, 'sslverify')
 
-            persist = _get_optional_repo_bool(repo, 'persisted', default='yes')
-
-            sslverify = _get_optional_repo_bool(repo, 'sslverify')
-
-            clientcert = _xml_get_value(repo, 'clientcert', 'clientcert',
-                                        optional=True)
+            clientcert = self.node('clientcert', 'clientcert', doc=repo, optional=True)
             if clientcert:
                 clientcert = clientcert.strip()
 
-            clientkey = _xml_get_value(repo, 'clientkey', 'clientkey',
-                                       optional=True)
+            clientkey = self.node('clientkey', 'clientkey', doc=repo, optional=True)
             if clientkey:
                 clientkey = clientkey.strip()
 
             if clientkey and not clientcert:
                 raise oz.OzException.OzException("You cannot specify a clientkey without a clientcert")
 
-            cacert = _xml_get_value(repo, 'cacert', 'cacert', optional=True)
+            cacert = self.node('cacert', 'cacert', doc=repo, optional=True)
             if cacert:
                 cacert = cacert.strip()
 
@@ -503,21 +497,22 @@ class TDL(object):
                                                  clientcert, clientkey, cacert,
                                                  sslverify)
 
-    def _add_isoextras(self, extraspath, element_type):
+    def _add_isoextras(self, path, element_type):
         """
         Internal method to add the list of extra ISO elements from the specified
         XML path into the self.isoextras list.
         """
         isoextras = []
-        extraslist = self.doc.xpathEval(extraspath)
+        extraslist = self.node(path, optional=True, multiple=True)
         if self.installtype != 'iso' and extraslist:
             raise oz.OzException.OzException("Extra ISO data can only be used with iso install type")
 
         for extra in extraslist:
-            source = extra.prop('source')
+            source = extra.get('source')
             if source is None:
                 raise oz.OzException.OzException("Extra ISO element without a source was given")
-            destination = extra.prop('destination')
+
+            destination = extra.get('destination')
             if destination is None:
                 raise oz.OzException.OzException("Extra ISO element without a destination was given")
 
@@ -535,7 +530,3 @@ class TDL(object):
         """
         if float(self.version) > float(self.schema_version):
             raise oz.OzException.OzException("TDL version (%s) is higher than our known version (%s)" % (self.version, self.schema_version))
-
-    def __del__(self):
-        if self.doc is not None:
-            self.doc.freeDoc()

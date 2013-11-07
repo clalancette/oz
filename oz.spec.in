@@ -9,7 +9,7 @@ Source0: http://github.com/clalancette/%{name}/archive/%{name}-%{version}.tar.gz
 BuildArch: noarch
 Requires: python >= 2.5
 Requires: python-libguestfs >= 1.18
-Requires: libxml2-python
+Requires: python-lxml
 Requires: libvirt-python >= 0.9.7
 # in theory, oz doesn't really require libvirtd to be local to operate
 # properly.  However, because of the libguestfs manipulations, in practice
