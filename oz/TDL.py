@@ -23,12 +23,15 @@ import lxml.etree
 import base64
 import re
 import tempfile
-import StringIO
 import os
 try:
     import urllib.parse as urlparse
 except ImportError:
     import urlparse
+try:
+    import StringIO
+except ImportError:
+    from io import StringIO
 
 import oz.ozutil
 import oz.OzException
