@@ -280,7 +280,11 @@ class TDL(object):
             if contenttype is None:
                 contenttype = 'raw'
 
-            content = afile.getContent().strip()
+            content = afile.text
+            if content:
+                content = content.strip()
+            else:
+                content = ''
             self.files[name] = data_from_type(name, contenttype, content)
 
         self.isoextras = self._add_isoextras('/template/os/install/extras/directory',

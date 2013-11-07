@@ -102,9 +102,9 @@ def validate_schema(tdl_file):
 
     # Locate relaxng schema
     rng_file = None
-    for tryme in ['../../docs/tdl.rng',
-                  '../docs/tdl.rng',
-                  'docs/tdl.rng',
+    for tryme in ['../../oz/tdl.rng',
+                  '../oz/tdl.rng',
+                  'oz/tdl.rng',
                   'tdl.rng',]:
         if os.path.isfile(tryme):
             rng_file = tryme
