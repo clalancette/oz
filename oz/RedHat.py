@@ -23,6 +23,7 @@ import re
 import os
 import shutil
 import libvirt
+import time
 try:
     import configparser
 except ImportError:
@@ -1103,23 +1104,32 @@ class RedHatCDYumGuest(RedHatCDGuest):
         """
         Internal method to test out the ssh connection before we try to use it.
         Under systemd, the IP address of a guest can come up and reportip can
-        run before the ssh key is generated and sshd starts up.  This check makes
-        sure that we allow an additional 30 seconds (1 second per ssh attempt)
-        for sshd to finish initializing.
+        run before the ssh key is generated and sshd starts up.  This check
+        makes sure that we allow an additional 30 seconds (1 second per ssh
+        attempt) for sshd to finish initializing.
         """
         self.log.debug("Testing ssh connection")
         count = 30
         success = False
         while count > 0:
             try:
-                stdout, stderr, retcode = self.guest_execute_command(guestaddr, 'ls', timeout=1)
+                self.log.debug("Testing ssh connection, try %d" % (count))
+                start = time.time()
+                stdout, stderr, retcode = self.guest_execute_command(guestaddr,
+                                                                     'ls',
+                                                                     timeout=1)
                 self.log.debug("Succeeded")
                 success = True
                 break
             except:
+                # ensure that we spent at least one second before trying again
+                end = time.time()
+                if (end - start) < 1:
+                    time.sleep(1 - (end - start))
                 count -= 1
 
         if not success:
+            self.log.debug("Failed to connect to ssh on running guest")
             raise oz.OzException.OzException("Failed to connect to ssh on running guest")
 
     def _internal_customize(self, libvirt_xml, action):
