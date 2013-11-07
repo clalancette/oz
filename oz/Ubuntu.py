@@ -244,6 +244,9 @@ PROMPT 0
         self.log.debug("Teardown step 3")
         # remove announce cronjob
         self.log.debug("Resetting announcement to host")
+        self._guestfs_remove_if_exists(g_handle,
+                                       '/etc/NetworkManager/dispatcher.d/99-announce')
+
         self._guestfs_remove_if_exists(g_handle, '/etc/cron.d/announce')
 
         # remove reportip
@@ -313,10 +316,30 @@ PROMPT 0
         """
         # part 3; make sure the guest announces itself
         self.log.debug("Step 3: Guest announcement")
+
+        scriptfile = os.path.join(self.icicle_tmp, "script")
+
+        if g_handle.exists("/etc/NetworkManager/dispatcher.d"):
+            with open(scriptfile, 'w') as f:
+                f.write("""\
+#!/bin/bash
+
+if [ "$1" = "eth0" -a "$2" = "up" ]; then
+    echo -n "!$DHCP4_IP_ADDRESS,%s!" > /dev/ttyS1
+fi
+""" % (self.uuid))
+
+            try:
+                g_handle.upload(scriptfile,
+                                '/etc/NetworkManager/dispatcher.d/99-reportip')
+                g_handle.chmod(0755,
+                               '/etc/NetworkManager/dispatcher.d/99-reportip')
+            finally:
+                os.unlink(scriptfile)
+
         if not g_handle.exists('/usr/sbin/cron'):
             raise oz.OzException.OzException("cron not installed on the image, cannot continue")
 
-        scriptfile = os.path.join(self.icicle_tmp, "script")
         with open(scriptfile, 'w') as f:
             f.write("""\
 #!/bin/bash
@@ -330,7 +353,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
 
         try:
             g_handle.upload(scriptfile, '/root/reportip')
-            g_handle.chmod(0o755, '/root/reportip')
+            g_handle.chmod(0755, '/root/reportip')
         finally:
             os.unlink(scriptfile)
 

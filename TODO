@@ -92,38 +92,16 @@
 16. We should add additional commands section.  In particular, we should have
     "pre" package installation and "post" package installation command
     sections.
-17. On distributions that use NetworkManager, we can speed up the customization
-    and ICICLE generation step by using dbus-monitor to monitor when
-    NetworkManager has brought up the network.  This should save us an average
-    of 30 seconds per customization.  The script to do this would look
-    something like:
-
-#!/bin/sh
-#
-# This script will be executed *after* all the other init scripts.
-# You can put your own initialization stuff in here if you don't
-# want to do the full Sys V style init stuff.
-
-while true; do
-gdbus introspect --system --dest org.freedesktop.NetworkManager --object-path
-/org/freedesktop/NetworkManager/Devices/0 | grep "State = 100" > /dev/null
-if [ $? -eq 0 ]
-then
-  break
-fi
-sleep 1
-done
-
-18. Support hashes for the root password support.
-19. Add a mode where we use a reverse ssh tunnel with a SOCKS proxy to
+17. Support hashes for the root password support.
+18. Add a mode where we use a reverse ssh tunnel with a SOCKS proxy to
     download the packages.  This means that the packages need to be visible to
     the imagefactory machine, but not necessarily to the instance.
-20. During customization/icicle generation, we should check to make sure that
+19. During customization/icicle generation, we should check to make sure that
     the bridge listed in the libvirt XML matches up with what we detected (if
     anything).  This isn't really an issue when doing oz-install -g -u, but if
     you use the short-circuit oz-customize or oz-generate-icicle, the user
     could have fed us bad data.
-21. Currently we use libguestfs to extract the installation ISO, make changes
+20. Currently we use libguestfs to extract the installation ISO, make changes
     to it, and then rebundle the ISO using mkisofs.  This is time consuming,
     partially because we are doing two copies of the ISO (once from the ISO to
     the filesystem, and once from the filesystem to the new ISO), and partially
@@ -133,6 +111,6 @@ done
     directory, and only modifying the small bits we need to.  Then we can pack
     the whole thing back up using mkisofs.  This gets rid of the first copy, so
     it should cut our initial time in half (plus or minus the page cache).
-22. Change setup.py to make the directories /var/lib/oz/*.  Since that is
+21. Change setup.py to make the directories /var/lib/oz/*.  Since that is
     repeated in both of the RPM and deb building stuff, it would be better to
     just do it on python setup.py install instead.
