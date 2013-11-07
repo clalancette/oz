@@ -1258,7 +1258,8 @@ class Guest(object):
                 continue
             package = self.lxml_subelement(packages, "package", None,
                                            {'name':line})
-            self.lxml_subelement(packet, "extra", extra[index])
+            if extra:
+                self.lxml_subelement(package, "extra", extra[index])
 
         return lxml.etree.tostring(icicle, pretty_print=True)
 
