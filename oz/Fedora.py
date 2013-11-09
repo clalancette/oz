@@ -31,10 +31,6 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
     """
     def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,
                  brokenisomethod, output_disk=None, macaddress=None):
-        # FIXME: For consistency most of the __init__ functions take self, tdl,
-        # config, auto, output_disk (in that order).  However, in order to not
-        # break imagefactory, we want to make output_disk have a default of
-        # None, and we can't do that without putting output_disk at the end.
         directkernel = "cpio"
         if tdl.update in ["16", "17"]:
             directkernel = None

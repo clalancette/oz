@@ -32,10 +32,6 @@ class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
     """
     def __init__(self, tdl, config, auto, nicmodel, diskbus, output_disk=None,
                  macaddress=None):
-        # FIXME: For consistency most of the __init__ functions take self, tdl,
-        # config, auto, output_disk (in that order).  However, in order to not
-        # break imagefactory, we want to make output_disk have a default of
-        # None, and we can't do that without putting output_disk at the end.
         oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, auto,
                                             output_disk, nicmodel, diskbus,
                                             True, True, "cpio", macaddress)
