@@ -57,8 +57,6 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
 
         self.casper_initrd = initrd
 
-        self.tunnels = {}
-
         self.ssh_startuplink = None
         self.cron_startuplink = None
 

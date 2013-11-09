@@ -79,13 +79,12 @@ class LinuxCDGuest(oz.Guest.CDGuest):
 
         return runlevel
 
-    def guest_execute_command(self, guestaddr, command, timeout=10,
-                              tunnels=None):
+    def guest_execute_command(self, guestaddr, command, timeout=10):
         """
         Method to execute a command on the guest and return the output.
         """
         return oz.ozutil.ssh_execute_command(guestaddr, self.sshprivkey,
-                                             command, timeout, tunnels)
+                                             command, timeout)
 
     def guest_live_upload(self, guestaddr, file_to_upload, destination,
                           timeout=10):
@@ -161,6 +160,19 @@ class LinuxCDGuest(oz.Guest.CDGuest):
     def _install_packages(self, guestaddr, packstr):
         raise oz.OzException.OzException("Customization is not implemented for this guest type")
 
+    def _customize_repos(self, guestaddr):
+        raise oz.OzException.OzException("Customization is not implemented for this guest type")
+
+    def _remove_repos(self, guestaddr):
+        """
+        Method to remove all files associated with non-persistent repos
+        """
+        for repo in list(self.tdl.repositories.values()):
+            if not repo.persistent:
+                for remotefile in repo.remotefiles:
+                    self.guest_execute_command(guestaddr,
+                                               "rm -f %s" % (remotefile))
+
     def do_customize(self, guestaddr):
         """
         Method to customize by installing additional packages and files.
@@ -184,8 +196,6 @@ class LinuxCDGuest(oz.Guest.CDGuest):
         self.log.debug("Running custom commands")
         for cmd in self.tdl.commands:
             self.guest_execute_command(guestaddr, cmd.read())
-
-        self._remove_host_aliases(guestaddr)
 
         self.log.debug("Removing non-persisted repos")
         self._remove_repos(guestaddr)

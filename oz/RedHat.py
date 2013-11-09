@@ -28,7 +28,6 @@ except ImportError:
     import ConfigParser as configparser
 import gzip
 import guestfs
-import pycurl
 
 import oz.Guest
 import oz.Linux
@@ -79,10 +78,6 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                                         self.tdl.distro + self.tdl.update + self.tdl.arch + "-ramdisk")
 
         self.cmdline = "method=" + self.url + " ks=file:/ks.cfg"
-
-        # two layer dict to track required tunnels
-        # self.tunnels[hostname][port]
-        self.tunnels = {}
 
     def _generate_new_iso(self):
         """
@@ -731,254 +726,20 @@ class RedHatLinuxCDYumGuest(RedHatLinuxCDGuest):
 
         return url
 
-    _protocol_to_default_port = {
-        'http': '80',
-        'https': '443',
-        'ftp': '21',
-        }
-
-    def _deconstruct_repo_url(self, repourl):
-        """
-        Method to extract the protocol, port and other details from a repo URL
-        returns tuple: (protocol, hostname, port, path)
-        """
-        # FIXME: Make an offering to the regex gods to simplify this
-        url_regex = r"^(.*)(://)([^/:]+)(:)([0-9]+)([/]+)(.*)$|^(.*)(://)([^/:]+)([/]+)(.*)$"
-
-        sr = re.search(url_regex, repourl)
-        if sr:
-            if sr.group(1):
-                # URL with port in it
-                (protocol, hostname, port, path) = sr.group(1, 3, 5, 7)
-            else:
-                # URL without port
-                (protocol, hostname, path) = sr.group(8, 10, 12)
-                port = self._protocol_to_default_port[protocol]
-            return (protocol, hostname, port, path)
-        else:
-            raise oz.OzException.OzException("Could not decode URL (%s) for port forwarding" % (repourl))
-
-    def _discover_repo_locality(self, repo_url, guestaddr, certdict):
-        """
-        Internal method to discover whether a repository is reachable from the
-        guest or not.  It is used by customize_repos to decide which method to
-        use to reach the repository.
-        """
-        # this is the path to the metadata XML
-        full_url = repo_url + "/repodata/repomd.xml"
-
-        # first, check if we can access it from the host
-        def _writefunc(buf):
-            """
-            pycurl callback to store the data
-            """
-            pass
-
-        crl = pycurl.Curl()
-        crl.setopt(crl.URL, full_url)
-        crl.setopt(crl.CONNECTTIMEOUT, 5)
-        crl.setopt(crl.WRITEFUNCTION, _writefunc)
-
-        curlargs = ""
-        if "sslclientcert" in certdict:
-            crl.setopt(crl.SSLCERT, certdict["sslclientcert"]["localname"])
-            curlargs += "--cert %s " % (certdict["sslclientcert"]["remotename"])
-        if "sslclientkey" in certdict:
-            crl.setopt(crl.SSLKEY,  certdict["sslclientkey"]["localname"])
-            curlargs += "--key %s " % (certdict["sslclientkey"]["remotename"])
-        if "sslcacert" in certdict:
-            crl.setopt(crl.CAINFO,  certdict["sslcacert"]["localname"])
-            curlargs += "--cacert %s " % (certdict["sslcacert"]["remotename"])
-        else:
-            # We enforce either setting a ca cert or setting no verify in TDL
-            # If this is a non-SSL connection setting this option is benign
-            crl.setopt(crl.SSL_VERIFYPEER, 0)
-            crl.setopt(crl.SSL_VERIFYHOST, 0)
-            curlargs += "--insecure "
-
-        try:
-            crl.perform()
-            # if we reach here, then the perform succeeded, which means we
-            # could reach the repo from the host
-            host = True
-        except pycurl.error as err:
-            # if we got an exception, then we could not reach the repo from
-            # the host
-            self.log.debug("Unable to route to the repo host from here, and SSH tunnel will never be established")
-            self.log.debug(err)
-            host = False
-        crl.close()
-
-        # now check if we can access it remotely
-        try:
-            self.guest_execute_command(guestaddr,
-                                       "curl --silent %s %s" % (curlargs, full_url))
-            # if we reach here, then the perform succeeded, which means we
-            # could reach the repo from the guest
-            guest = True
-        except oz.ozutil.SubprocessException as err:
-            # if we got an exception, then we could not reach the repo from
-            self.log.debug("Unable to route to the repo host from the guest, will attempt to establish an SSH tunnel")
-            self.log.debug(err)
-            # the guest
-            guest = False
-
-        return host, guest
-
-    def _remove_repos(self, guestaddr):
-        """
-        Method to remove all files associated with non-persistent repos
-        """
-        for repo in list(self.tdl.repositories.values()):
-            if not repo.persistent:
-                for remotefile in repo.remotefiles:
-                    self.guest_execute_command(guestaddr,
-                                               "rm -f %s" % (remotefile))
-            else:
-                if len(self.tunnels) > 0:
-                    for remotefile in repo.remotefiles:
-                        (protocol, hostname, port, path) = self._deconstruct_repo_url(repo.url)
-                        if (hostname in self.tunnels) and (port in self.tunnels[hostname]):
-                            remote_tun_port = self.tunnels[hostname][port]
-                            self.guest_execute_command(guestaddr,
-                                                       "sed -i -e 's|^baseurl=.*$|baseurl=%s|' %s" % (repo.url, remotefile))
-
-    def _remove_host_aliases(self, guestaddr):
-        if len(self.tunnels) > 0:
-            for repo in list(self.tdl.repositories.values()):
-                (protocol, hostname, port, path) = self._deconstruct_repo_url(repo.url)
-                self.log.debug("Removing tunnel host entry for %s from host %s" % (hostname, guestaddr))
-                self.guest_execute_command(guestaddr,
-                                           "mv -f /etc/hosts.backup /etc/hosts; restorecon /etc/hosts")
-
     def _customize_repos(self, guestaddr):
         """
         Method to generate and upload custom repository files based on the TDL.
         """
-
-        # Starting point for our tunnels - this is the port used on our
-        # remote instance
-        tunport = 50000
-
         self.log.debug("Installing additional repository files")
 
-        self._remotecertdir = "/etc/pki/ozrepos"
-        self._remotecertdir_created = False
-
         for repo in list(self.tdl.repositories.values()):
-
-            certdict = {}
-
-            # Add a property to track remote files that may need deleting if
-            # the repo is not persistent
-            repo.remotefiles = []
-
-            def _add_remote_host_alias(hostname):
-                """
-                Internal function to make requests in the guest for a certain
-                host resolve to localhost, which will pump the data over a
-                tunnel.
-                """
-                self.log.debug("Modifying /etc/hosts on %s to make %s resolve to localhost tunnel port" % (guestaddr, hostname))
-                self.guest_execute_command(guestaddr,
-                                           "test -f /etc/hosts.backup || cp /etc/hosts /etc/hosts.backup; sed -i -e 's/localhost.localdomain/localhost.localdomain %s/g' /etc/hosts" % hostname)
-
-            # before we can do the locality check below we need to be sure any
-            # required cert material is already available in file form on both
-            # the guest and the host - do that here and remember the lines
-            # we need to add to the repo file
-            # Create the local copies of any needed SSL files
-            def _create_certfiles(repo, cert, fileext, propname):
-                """
-                Internal function to copy certificate data to the guest.  This
-                is necessary when doing tunneling to make sure that any neeeded
-                SSL certificates are in place.
-                """
-                certdict[propname] = {}
-                filename = "%s-%s" % (repo.name.replace(" ", "_"), fileext)
-                localname = os.path.join(self.icicle_tmp, filename)
-                certdict[propname]["localname"] = localname
-                with open(localname, 'w') as f:
-                    f.write(cert)
-
-                try:
-                    remotename = os.path.join(self._remotecertdir, filename)
-                    if not self._remotecertdir_created:
-                        self.guest_execute_command(guestaddr,
-                                                   "mkdir -p %s" % (self._remotecertdir))
-                        self._remotecertdir_created = True
-
-                    self.guest_live_upload(guestaddr, localname, remotename)
-                except:
-                    os.unlink(localname)
-                    raise
-
-                repo.remotefiles.append(remotename)
-                certdict[propname]["remotename"] = remotename
-                certdict[propname]["repoline"] = "%s=%s\n" % (propname,
-                                                              remotename)
-            try:
-                if repo.clientcert:
-                    _create_certfiles(repo, repo.clientcert, "client.crt",
-                                     "sslclientcert")
-                if repo.clientkey:
-                    _create_certfiles(repo, repo.clientkey, "client.key",
-                                     "sslclientkey")
-                if repo.cacert:
-                    _create_certfiles(repo, repo.cacert, "ca.pem", "sslcacert")
-
-                # here we go through a repo and check if it is accessible from
-                # the host and/or the guest.  If a repository is available from
-                # the guest, we use the repository directly from the guest.  If
-                # the repository is *only* available from the host, then we
-                # tunnel it through to the guest.  If it is available from
-                # neither, we raise an exception
-                host, guest = self._discover_repo_locality(repo.url, guestaddr,
-                                                           certdict)
-            finally:
-                # Clean up any local copies of the cert files
-                for cert in certdict:
-                    if os.path.isfile(certdict[cert]["localname"]):
-                        os.unlink(certdict[cert]["localname"])
-                # FIXME: Clean these up on the remote end of things if we fail
-                # anywhere below
-
-            if not host and not guest:
-                raise oz.OzException.OzException("Could not reach repository %s from the host or the guest, aborting" % (repo.url))
-
             filename = repo.name.replace(" ", "_") + ".repo"
             localname = os.path.join(self.icicle_tmp, filename)
             with open(localname, 'w') as f:
                 f.write("[%s]\n" % repo.name.replace(" ", "_"))
                 f.write("name=%s\n" % repo.name)
-                if host and not guest:
-                    remote_tun_port = tunport
-                    (protocol, hostname, port, path) = self._deconstruct_repo_url(repo.url)
-                    if (hostname in self.tunnels) and (port in self.tunnels[hostname]):
-                        # We are already tunneling this hostname and port - use the
-                        # existing one
-                        remote_tun_port = self.tunnels[hostname][port]
-                    else:
-                        # New tunnel required
-                        if not (hostname in self.tunnels):
-                            _add_remote_host_alias(hostname)
-                            self.tunnels[hostname] = {}
-                        self.tunnels[hostname][port] = str(remote_tun_port)
-                        tunport = tunport + 1
-                    remote_url = "%s://%s:%s/%s" % (protocol, hostname,
-                                                    remote_tun_port, path)
-                    f.write("# This is a tunneled version of local repo: (%s)\n" % (repo.url))
-                    f.write("baseurl=%s\n" % remote_url)
-                else:
-                    f.write("baseurl=%s\n" % repo.url)
-
                 f.write("skip_if_unavailable=1\n")
                 f.write("enabled=1\n")
-
-                # Now write in any remembered repo lines from our earlier SSL cert
-                # activities
-                for cert in certdict:
-                    f.write(certdict[cert]["repoline"])
 
                 if repo.sslverify:
                     f.write("sslverify=1\n")
@@ -993,13 +754,11 @@ class RedHatLinuxCDYumGuest(RedHatLinuxCDGuest):
             try:
                 remotename = os.path.join("/etc/yum.repos.d/", filename)
                 self.guest_live_upload(guestaddr, localname, remotename)
-                repo.remotefiles.append(remotename)
             finally:
                 os.unlink(localname)
 
     def _install_packages(self, guestaddr, packstr):
-        self.guest_execute_command(guestaddr, 'yum -y install %s' % (packstr),
-                                   tunnels=self.tunnels)
+        self.guest_execute_command(guestaddr, 'yum -y install %s' % (packstr))
 
 class RedHatFDGuest(oz.Guest.FDGuest):
     """
