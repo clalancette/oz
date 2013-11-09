@@ -542,8 +542,9 @@ class Guest(object):
                 capacity = os.path.getsize(backing_filename) / 1024 / 1024 / 1024
                 backing_format = 'raw'
             backing = self.lxml_subelement(vol, "backingStore")
-            lxml_subelement(backing, "path", backing_filename)
-            lxml_subelement(backing, "format", None, {"type":backing_format})
+            self.lxml_subelement(backing, "path", backing_filename)
+            self.lxml_subelement(backing, "format", None,
+                                 {"type":backing_format})
 
         self.lxml_subelement(vol, "capacity", str(capacity), {'unit':'G'})
         vol_xml = lxml.etree.tostring(vol, pretty_print=True)
