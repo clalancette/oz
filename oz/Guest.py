@@ -389,12 +389,13 @@ class Guest(object):
             self.path = path
             self.bus = bus
 
-    def lxml_subelement(self, root, name, text=None, attributes={}):
+    def lxml_subelement(self, root, name, text=None, attributes=None):
         tmp = lxml.etree.SubElement(root, name)
         if text is not None:
             tmp.text = text
-        for k,v in attributes.items():
-            tmp.set(k, v)
+        if attributes is not None:
+            for k, v in attributes.items():
+                tmp.set(k, v)
         return tmp
 
     def _generate_serial_xml(self, devices):
@@ -1240,7 +1241,7 @@ class Guest(object):
 
         return addr
 
-    def _output_icicle_xml(self, lines, description, extra=[]):
+    def _output_icicle_xml(self, lines, description, extra=None):
         """
         Generate ICICLE XML based on the data supplied.  The parameter 'lines'
         is expected to be an list of strings, with one package per list item.
@@ -1253,12 +1254,12 @@ class Guest(object):
             self.lxml_subelement(icicle, "description", description)
         packages = self.lxml_subelement(icicle, "packages")
 
-        for index,line in enumerate(lines):
+        for index, line in enumerate(lines):
             if line == "":
                 continue
             package = self.lxml_subelement(packages, "package", None,
                                            {'name':line})
-            if extra:
+            if extra is not None:
                 self.lxml_subelement(package, "extra", extra[index])
 
         return lxml.etree.tostring(icicle, pretty_print=True)
