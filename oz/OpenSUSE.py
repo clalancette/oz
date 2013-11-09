@@ -54,7 +54,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         outname = os.path.join(self.iso_contents, "autoinst.xml")
 
         if self.default_auto_file():
-            doc = lxml.etree.parse(self.autoyast)
+            doc = lxml.etree.parse(self.auto)
 
             pw = doc.xpath('/suse:profile/suse:users/suse:user/suse:user_password',
                            namespaces={'suse':'http://www.suse.com/1.0/yast2ns'})
@@ -62,7 +62,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
                 raise oz.OzException.OzException("Invalid SUSE autoyast file; expected single user_password, saw %d" % (len(pw)))
             pw[0].text = self.rootpw
 
-            f = open(outfile, 'w')
+            f = open(outname, 'w')
             f.write(lxml.etree.tostring(doc, pretty_print=True))
             f.close()
         else:
@@ -83,7 +83,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         lines.append("  kernel linux\n")
         lines.append("  append initrd=initrd splash=silent instmode=cd autoyast=default")
 
-        with open(isolinux.cfg, 'w') as f:
+        with open(isolinux_cfg, 'w') as f:
             f.writelines(lines)
 
     def _generate_new_iso(self):
