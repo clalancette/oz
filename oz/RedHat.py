@@ -331,7 +331,7 @@ label customiso
         scriptfile = os.path.join(self.icicle_tmp, "script")
         with open(scriptfile, 'w') as f:
             f.write("""\
-#!/bin/bash\n")
+#!/bin/bash
 DEV=$(/bin/awk '{if ($2 == 0) print $1}' /proc/net/route) &&
 [ -z "$DEV" ] && exit 0
 ADDR=$(/sbin/ip -4 -o addr show dev $DEV | /bin/awk '{print $4}' | /bin/cut -d/ -f1) &&
