@@ -26,7 +26,7 @@ import oz.ozutil
 import oz.RedHat
 import oz.OzException
 
-class RHEL3Guest(oz.RedHat.RedHatCDGuest):
+class RHEL3Guest(oz.RedHat.RedHatLinuxCDGuest):
     """
     Class for RHEL-3 GOLD, U1, U2, U3, U4, U5, U6, U7, U8, and U9 installation.
     """
@@ -39,11 +39,12 @@ class RHEL3Guest(oz.RedHat.RedHatCDGuest):
         # although we could use ext2 for the initrdtype here (and hence get
         # fast initial installs), it isn't super reliable on RHEL-3.  Just
         # disable it and fall back to the boot.iso method which is more reliable
-        oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, auto, output_disk,
-                                         netdev, diskbus, iso_support, True,
-                                         None, macaddress)
+        oz.RedHat.RedHatLinuxCDGuest.__init__(self, tdl, config, auto,
+                                              output_disk, netdev, diskbus,
+                                              iso_support, True, None,
+                                              macaddress)
 
-        # override the sshd_config value set in RedHatCDGuest.__init__
+        # override the sshd_config value set in RedHatLinuxCDGuest.__init__
         self.sshd_config = """\
 SyslogFacility AUTHPRIV
 PasswordAuthentication yes

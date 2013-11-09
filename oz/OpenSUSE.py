@@ -23,23 +23,20 @@ import re
 import shutil
 import os
 import lxml.etree
-import libvirt
-import time
 
-import oz.Guest
+import oz.Linux
 import oz.ozutil
 import oz.OzException
-import oz.linuxutil
 
-class OpenSUSEGuest(oz.Guest.CDGuest):
+class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
     """
     Class for OpenSUSE installation.
     """
     def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus,
                  macaddress):
-        oz.Guest.CDGuest.__init__(self, tdl, config, auto, output_disk,
-                                  nicmodel, None, None, diskbus, True, False,
-                                  macaddress)
+        oz.Linux.LinuxCDGuest.__init__(self, tdl, config, auto, output_disk,
+                                       nicmodel, diskbus, True, False,
+                                       macaddress)
 
         self.reboots = 1
         if self.tdl.update in ["10.3"]:
@@ -109,40 +106,6 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
         """
         return self._do_install(timeout, force, self.reboots)
 
-    def _shutdown_guest(self, guestaddr, libvirt_dom):
-        """
-        Method to shutdown the guest (gracefully at first, then with prejudice).
-        """
-        if guestaddr is not None:
-            try:
-                self.guest_execute_command(guestaddr, 'shutdown -h now')
-                if not self._wait_for_guest_shutdown(libvirt_dom):
-                    self.log.warn("Guest did not shutdown in time, going to kill")
-                else:
-                    libvirt_dom = None
-            except:
-                self.log.warn("Failed shutting down guest, forcibly killing")
-
-        if libvirt_dom is not None:
-            try:
-                libvirt_dom.destroy()
-            except libvirt.libvirtError:
-                # the destroy failed for some reason.  This can happen if
-                # _wait_for_guest_shutdown times out, but the domain shuts
-                # down before we get to destroy.  Check to make sure that the
-                # domain is gone from the list of running domains; if so, just
-                # continue on; if not, re-raise the error.
-                for domid in self.libvirt_conn.listDomainsID():
-                    if domid == libvirt_dom.ID():
-                        raise
-
-    def guest_execute_command(self, guestaddr, command, timeout=10):
-        """
-        Method to execute a command on the guest and return the output.
-        """
-        return oz.ozutil.ssh_execute_command(guestaddr, self.sshprivkey,
-                                             command, timeout)
-
     def _image_ssh_teardown_step_1(self, g_handle):
         """
         First step to undo _image_ssh_setup (remove authorized keys).
@@ -180,7 +143,7 @@ class OpenSUSEGuest(oz.Guest.CDGuest):
 
         # reset the service link
         self.log.debug("Resetting cron service")
-        runlevel = oz.linuxutil.get_default_runlevel(g_handle)
+        runlevel = self.get_default_runlevel(g_handle)
         startuplink = '/etc/rc.d/rc' + runlevel + ".d/S06cron"
         self._guestfs_path_restore(g_handle, startuplink)
 
@@ -321,7 +284,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
         finally:
             os.unlink(announcefile)
 
-        runlevel = oz.linuxutil.get_default_runlevel(g_handle)
+        runlevel = self.get_default_runlevel(g_handle)
         startuplink = '/etc/rc.d/rc' + runlevel + ".d/S06cron"
         self._guestfs_path_backup(g_handle, startuplink)
         g_handle.ln_sf('/etc/init.d/cron', startuplink)
@@ -371,206 +334,24 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
                                        "zypper addrepo %s %s" % (repo.url,
                                                                  repo.name))
 
-    def guest_live_upload(self, guestaddr, file_to_upload, destination,
-                          timeout=10):
-        """
-        Method to copy a file to the live guest.
-        """
-        return oz.ozutil.scp_copy_file(guestaddr, self.sshprivkey,
-                                       file_to_upload, destination, timeout)
+    def _install_packages(self, guestaddr, packstr):
+        # due to a bug in OpenSUSE 11.1, we want to remove the default
+        # CD repo first
+        stdout, stderr, retcode = self.guest_execute_command(guestaddr,
+                                                             'zypper repos -d')
+        removerepos = []
+        for line in stdout.split('\n'):
+            if re.match("^[0-9]+", line):
+                split = line.split('|')
 
-    def _customize_files(self, guestaddr):
-        """
-        Method to upload the custom files specified in the TDL to the guest.
-        """
-        self.log.info("Uploading custom files")
-        for name, fp in list(self.tdl.files.items()):
-            # all of the self.tdl.files are named temporary files; we just need
-            # to fetch the name out and have scp upload it
-            self.guest_live_upload(guestaddr, fp.name, name)
-
-    def do_customize(self, guestaddr):
-        """
-        Method to customize by installing additional packages and files.
-        """
-        if not self.tdl.packages and not self.tdl.files and not self.tdl.commands:
-            # no work to do, just return
-            return
-
-        self._customize_repos(guestaddr)
-
-        self.log.debug("Installing custom packages")
-        packstr = ''
-        for package in self.tdl.packages:
-            packstr += package.name + ' '
-
-        if packstr != '':
-            # due to a bug in OpenSUSE 11.1, we want to remove the default
-            # CD repo first
-            stdout, stderr, retcode = self.guest_execute_command(guestaddr,
-                                                                 'zypper repos -d')
-            removerepos = []
-            for line in stdout.split('\n'):
-                if re.match("^[0-9]+", line):
-                    split = line.split('|')
-
-                    if re.match("^cd://", split[7].strip()):
-                        removerepos.append(split[0].strip())
-            for repo in removerepos:
-                self.guest_execute_command(guestaddr,
-                                           'zypper removerepo %s' % (repo))
-
+                if re.match("^cd://", split[7].strip()):
+                    removerepos.append(split[0].strip())
+        for repo in removerepos:
             self.guest_execute_command(guestaddr,
-                                       'zypper -n install %s' % (packstr))
+                                       'zypper removerepo %s' % (repo))
 
-        self._customize_files(guestaddr)
-
-        self.log.debug("Running custom commands")
-        for cmd in self.tdl.commands:
-            self.guest_execute_command(guestaddr, cmd.read())
-
-        self.log.debug("Syncing")
-        self.guest_execute_command(guestaddr, 'sync')
-
-    def _test_ssh_connection(self, guestaddr):
-        """
-        Internal method to test out the ssh connection before we try to use it.
-        Under systemd, the IP address of a guest can come up and reportip can
-        run before the ssh key is generated and sshd starts up.  This check
-        makes sure that we allow an additional 30 seconds (1 second per ssh
-        attempt) for sshd to finish initializing.
-        """
-        self.log.debug("Testing ssh connection")
-        count = 30
-        success = False
-        while count > 0:
-            try:
-                self.log.debug("Testing ssh connection, try %d" % (count))
-                start = time.time()
-                stdout, stderr, retcode = self.guest_execute_command(guestaddr,
-                                                                     'ls',
-                                                                     timeout=1)
-                self.log.debug("Succeeded")
-                success = True
-                break
-            except:
-                # ensure that we spent at least one second before trying again
-                end = time.time()
-                if (end - start) < 1:
-                    time.sleep(1 - (end - start))
-                count -= 1
-
-        if not success:
-            self.log.debug("Failed to connect to ssh on running guest")
-            raise oz.OzException.OzException("Failed to connect to ssh on running guest")
-
-    def _internal_customize(self, libvirt_xml, action):
-        """
-        Internal method to customize and optionally generate an ICICLE for the
-        operating system after initial installation.
-        """
-        # the "action" input is actually a tri-state:
-        # action = "gen_and_mode" means to generate the icicle and to
-        #          potentially make modifications
-        # action = "gen_only" means to generate the icicle only, and not
-        #          look at any modifications
-        # action = "mod_only" means to not generate the icicle, but still
-        #          potentially make modifications
-
-        self.log.info("Customizing image")
-
-        if not self.tdl.packages and not self.tdl.files and not self.tdl.commands:
-            if action == "mod_only":
-                self.log.info("No additional packages, files, or commands to install, and icicle generation not requested, skipping customization")
-                return
-            elif action == "gen_and_mod":
-                # It is actually possible to get here with a "gen_and_mod"
-                # action but a TDL that contains no real customizations.
-                # In the "safe ICICLE" code below it is important to know
-                # when we are truly in a "gen_only" state so we modify
-                # the action here if we detect that ICICLE generation is the
-                # only task to be done.
-                # FIXME: See about doing this test earlier or in a more generic
-                # way
-                self.log.debug("Asked to gen_and_mod but no mods are present - changing action to gen_only")
-                action = "gen_only"
-
-        # when doing an oz-install with -g, this isn't necessary as it will
-        # just replace the port with the same port.  However, it is very
-        # necessary when doing an oz-customize since the serial port might
-        # not match what is specified in the libvirt XML
-        modified_xml = self._modify_libvirt_xml_for_serial(libvirt_xml)
-
-        if action == "gen_only" and self.safe_icicle_gen:
-            # We are only generating ICICLE and the user has asked us to do
-            # this without modifying the completed image by booting it.
-            # Create a copy on write snapshot to use for ICICLE
-            # generation - discard when finished
-            cow_diskimage = self.diskimage + "-icicle-snap.qcow2"
-            self._internal_generate_diskimage(force=True,
-                                              backing_filename=self.diskimage,
-                                              image_filename=cow_diskimage)
-            modified_xml = self._modify_libvirt_xml_diskimage(modified_xml, cow_diskimage, 'qcow2')
-
-        self._collect_setup(modified_xml)
-
-        icicle = None
-        try:
-            libvirt_dom = self.libvirt_conn.createXML(modified_xml, 0)
-
-            try:
-                guestaddr = None
-                guestaddr = self._wait_for_guest_boot(libvirt_dom)
-                self._test_ssh_connection(guestaddr)
-
-                if action == "gen_and_mod":
-                    self.do_customize(guestaddr)
-                    icicle = self.do_icicle(guestaddr)
-                elif action == "gen_only":
-                    icicle = self.do_icicle(guestaddr)
-                elif action == "mod_only":
-                    self.do_customize(guestaddr)
-                else:
-                    raise oz.OzException.OzException("Invalid customize action %s; this is a programming error" % (action))
-            finally:
-                if action == "gen_only" and self.safe_icicle_gen:
-                    # if this is a gen_only and safe_icicle_gen, there is no
-                    # reason to wait around for the guest to shutdown; we'll
-                    # be removing the overlay file anyway.  Just destroy it
-                    libvirt_dom.destroy()
-                else:
-                    self._shutdown_guest(guestaddr, libvirt_dom)
-        finally:
-            if action == "gen_only" and self.safe_icicle_gen:
-                # no need to teardown because we simply discard the file
-                # containing those changes
-                os.unlink(cow_diskimage)
-            else:
-                self._collect_teardown(modified_xml)
-
-        return icicle
-
-    def customize(self, libvirt_xml):
-        """
-        Method to customize the operating system after installation.
-        """
-        return self._internal_customize(libvirt_xml, "mod_only")
-
-    def customize_and_generate_icicle(self, libvirt_xml):
-        """
-        Method to customize and generate the ICICLE for an operating system
-        after installation.  This is equivalent to calling customize() and
-        generate_icicle() back-to-back, but is faster.
-        """
-        return self._internal_customize(libvirt_xml, "gen_and_mod")
-
-    def generate_icicle(self, libvirt_xml):
-        """
-        Method to generate the ICICLE from an operating system after
-        installation.  The ICICLE contains information about packages and
-        other configuration on the diskimage.
-        """
-        return self._internal_customize(libvirt_xml, "gen_only")
+        self.guest_execute_command(guestaddr,
+                                   'zypper -n install %s' % (packstr))
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):

@@ -26,15 +26,15 @@ import oz.ozutil
 import oz.RedHat
 import oz.OzException
 
-class RHEL5Guest(oz.RedHat.RedHatCDYumGuest):
+class RHEL5Guest(oz.RedHat.RedHatLinuxCDYumGuest):
     """
     Class for RHEL-5 GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9 and U10 installation.
     """
     def __init__(self, tdl, config, auto, nicmodel, diskbus, output_disk=None,
                  macaddress=None):
-        oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, auto,
-                                            output_disk, nicmodel, diskbus,
-                                            True, True, "cpio", macaddress)
+        oz.RedHat.RedHatLinuxCDYumGuest.__init__(self, tdl, config, auto,
+                                                 output_disk, nicmodel, diskbus,
+                                                 True, True, "cpio", macaddress)
 
     def _modify_iso(self):
         """

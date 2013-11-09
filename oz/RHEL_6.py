@@ -25,15 +25,15 @@ import oz.ozutil
 import oz.RedHat
 import oz.OzException
 
-class RHEL6Guest(oz.RedHat.RedHatCDYumGuest):
+class RHEL6Guest(oz.RedHat.RedHatLinuxCDYumGuest):
     """
     Class for RHEL-6 installation
     """
     def __init__(self, tdl, config, auto, output_disk=None, netdev=None,
                  diskbus=None, macaddress=None):
-        oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, auto,
-                                            output_disk, netdev, diskbus,
-                                            True, True, "cpio", macaddress)
+        oz.RedHat.RedHatLinuxCDYumGuest.__init__(self, tdl, config, auto,
+                                                 output_disk, netdev, diskbus,
+                                                 True, True, "cpio", macaddress)
 
     def _modify_iso(self):
         """

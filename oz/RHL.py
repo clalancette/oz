@@ -27,7 +27,7 @@ import oz.ozutil
 import oz.RedHat
 import oz.OzException
 
-class RHL9Guest(oz.RedHat.RedHatCDGuest):
+class RHL9Guest(oz.RedHat.RedHatLinuxCDGuest):
     """
     Class for RHL-9 installation.
     """
@@ -35,9 +35,9 @@ class RHL9Guest(oz.RedHat.RedHatCDGuest):
                  macaddress):
         # RHL-9 doesn't support direct kernel/initrd booting; it hangs right
         # after unpacking the initrd
-        oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, auto, output_disk,
-                                         netdev, diskbus, False, True, None,
-                                         macaddress)
+        oz.RedHat.RedHatLinuxCDGuest.__init__(self, tdl, config, auto,
+                                              output_disk, netdev, diskbus,
+                                              False, True, None, macaddress)
 
         if self.tdl.arch != "i386":
             raise oz.OzException.OzException("Invalid arch " + self.tdl.arch + "for RHL guest")

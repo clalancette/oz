@@ -25,7 +25,7 @@ import oz.ozutil
 import oz.RedHat
 import oz.OzException
 
-class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
+class FedoraCoreGuest(oz.RedHat.RedHatLinuxCDGuest):
     """
     Class for Fedora Core 1, 2, 3, 4, 5, and 6 installation.
     """
@@ -34,9 +34,10 @@ class FedoraCoreGuest(oz.RedHat.RedHatCDGuest):
         initrdtype = "cpio"
         if tdl.update in ["1", "2", "3"]:
             initrdtype = "ext2"
-        oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, auto, output_disk,
-                                         netdev, diskbus, True, True,
-                                         initrdtype, macaddress)
+        oz.RedHat.RedHatLinuxCDGuest.__init__(self, tdl, config, auto,
+                                              output_disk, netdev, diskbus,
+                                              True, True, initrdtype,
+                                              macaddress)
 
         # FIXME: if doing an ISO install, we have to check that the ISO passed
         # in is the DVD, not the CD (since we can't change disks midway)

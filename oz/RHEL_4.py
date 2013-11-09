@@ -26,7 +26,7 @@ import oz.ozutil
 import oz.RedHat
 import oz.OzException
 
-class RHEL4Guest(oz.RedHat.RedHatCDGuest):
+class RHEL4Guest(oz.RedHat.RedHatLinuxCDGuest):
     """
     Class for RHEL-4 GOLD, U1, U2, U3, U4, U5, U6, U7, U8, and U9 installation.
     """
@@ -35,9 +35,9 @@ class RHEL4Guest(oz.RedHat.RedHatCDGuest):
         # we set initrdtype to None because RHEL-4 spews errors using direct
         # kernel/initrd booting.  The odd part is that it actually works, but
         # it looks ugly so for now we will just always use the boot.iso method
-        oz.RedHat.RedHatCDGuest.__init__(self, tdl, config, auto, output_disk,
-                                         nicmodel, diskbus, True, True, None,
-                                         macaddress)
+        oz.RedHat.RedHatLinuxCDGuest.__init__(self, tdl, config, auto,
+                                              output_disk, nicmodel, diskbus,
+                                              True, True, None, macaddress)
 
     def _modify_iso(self):
         """

@@ -25,7 +25,7 @@ import oz.ozutil
 import oz.RedHat
 import oz.OzException
 
-class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
+class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
     """
     Class for Fedora 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, and 19 installation.
     """
@@ -34,9 +34,9 @@ class FedoraGuest(oz.RedHat.RedHatCDYumGuest):
         directkernel = "cpio"
         if tdl.update in ["16", "17"]:
             directkernel = None
-        oz.RedHat.RedHatCDYumGuest.__init__(self, tdl, config, auto,
-                                            output_disk, nicmodel, diskbus,
-                                            True, True, directkernel,
+        oz.RedHat.RedHatLinuxCDYumGuest.__init__(self, tdl, config, auto,
+                                                 output_disk, nicmodel, diskbus,
+                                                 True, True, directkernel,
                                             macaddress)
 
         self.haverepo = haverepo
