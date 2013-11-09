@@ -64,7 +64,7 @@ class MageiaGuest(oz.Guest.CDGuest):
         if not os.path.exists(pathdir):
             pathdir = self.iso_contents
 
-        outname = "/tmp/auto_inst.cfg"
+        outname = os.path.join(self.icicle_tmp, "auto_inst.cfg")
 
         if self.default_auto_file():
 
