@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<domain type="qemu">
+  <name>tester</name>
+  <memory>1048576</memory>
+  <currentMemory>1048576</currentMemory>
+  <uuid>%s</uuid>
+  <clock offset="utc"/>
+  <vcpu>1</vcpu>
+  <features>
+    <acpi/>
+    <apic/>
+    <pae/>
+  </features>
+  <os>
+    <type>hvm</type>
+    <boot dev="hd"/>
+  </os>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>destroy</on_reboot>
+  <on_crash>destroy</on_crash>
+  <devices>
+    <graphics port="-1" type="vnc"/>
+    <interface type="bridge">
+      <source bridge="%s"/>
+      <target dev="vnet7"/>
+      <mac address="52:54:00:04:cc:a6"/>
+      <model type="virtio"/>
+    </interface>
+    <input bus="ps2" type="mouse"/>
+    <serial type="pty">
+      <target port="0"/>
+    </serial>
+    <serial type="tcp">
+      <source mode="bind" host="127.0.0.1" service="%s"/>
+      <protocol type="raw"/>
+      <target port="1"/>
+    </serial>
+    <disk device="disk" type="file">
+      <target dev="vda" bus="virtio"/>
+      <driver name="qemu" type="raw"/>
+    </disk>
+  </devices>
+</domain>

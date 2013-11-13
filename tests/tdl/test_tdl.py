@@ -90,7 +90,25 @@ tests = {
     "test-53-command-http-url.tdl": True,
     "test-54-files-file-url.tdl": True,
     "test-55-files-http-url.tdl": True,
+    "test-56-invalid-disk-size.tdl": False,
+    "test-57-invalid-disk-size.tdl": False,
+    "test-58-disk-size-terabyte.tdl": True,
+    "test-59-command-sorting.tdl": True,
 }
+
+def get_tdl(filename):
+    # locate full path for tdl file
+    tdl_prefix = ''
+    for tdl_prefix in ['tests/tdl/', 'tdl/', '']:
+        if os.path.isfile(tdl_prefix + filename):
+            break
+    if not os.path.isfile(tdl_prefix + filename):
+        raise Exception('Unable to locate TDL: %s' % filename)
+    tdl_file = tdl_prefix + filename
+
+    # Grab TDL object
+    tdl = validate_ozlib(tdl_file)
+    return tdl
 
 # Validate oz handling of tdl file
 def validate_ozlib(tdl_file):
@@ -156,19 +174,9 @@ def test():
                 yield '%s_%s' % (test_name, tst.__name__), handle_exception,\
                     tst, tdl_file
 
-def test_persistent(tdl='test-43-persistent-repos.tdl'):
-    # locate full path for tdl file
-    tdl_prefix = ''
-    for tdl_prefix in ['tests/tdl/', 'tdl/', '']:
-        if os.path.isfile(tdl_prefix + tdl):
-            break
-    if not os.path.isfile(tdl_prefix + tdl):
-        raise Exception('Unable to locate TDL: %s' % tdl)
-    tdl_file = tdl_prefix + tdl
-    test_name = os.path.splitext(tdl,)[0]
-
-    # Grab TDL object
-    tdl = validate_ozlib(tdl_file)
+def test_persistent(filename='test-43-persistent-repos.tdl'):
+    tdl = get_tdl(filename)
+    test_name = os.path.splitext(filename,)[0]
 
     def assert_persistent_value(persistent, value):
         assert persistent == value, \
@@ -179,3 +187,77 @@ def test_persistent(tdl='test-43-persistent-repos.tdl'):
             yield '%s_%s' % (test_name, repo.name), assert_persistent_value, repo.persistent, True
         else:
             yield '%s_%s' % (test_name, repo.name), assert_persistent_value, repo.persistent, False
+
+def test_command_sorting():
+    tdl = get_tdl('test-59-command-sorting.tdl')
+
+    assert tdl.commands[0].read() == 'echo "hello" > /tmp/foo'
+    assert tdl.commands[1].read() == 'echo "there" > /tmp/foobar'
+    assert tdl.commands[2].read() == 'echo "there" > /tmp/bar'
+
+def test_command_mixed_positions():
+    """
+    Done as its own test as the code should throw but schema passes
+    """
+    with py.test.raises(oz.OzException.OzException):
+        tdl = get_tdl("test-60-command-mix-positions-and-not.tdl")
+
+def test_command_duplicate_positions():
+    """
+    Done as its own test as the code should throw but schema passes
+    """
+    with py.test.raises(oz.OzException.OzException):
+        tdl = get_tdl("test-61-command-duplicate-position.tdl")
+
+def test_repository_localhost():
+    with py.test.raises(oz.OzException.OzException):
+        tdl = get_tdl("test-62-repository-localhost.tdl")
+
+def test_merge_packages():
+    packages = """\
+<packages>
+  <package name="git"/>
+</packages>
+"""
+
+    tdl = get_tdl("test-16-signed-repository.tdl")
+    tdl.merge_packages(packages)
+
+    assert len(tdl.packages) == 2
+    for package in tdl.packages:
+        assert package.name in ['git', 'chris']
+
+def test_merge_packages_duplicates():
+    packages = """\
+<packages>
+  <package name="git"/>
+  <package name='chris'>
+    <repository>myrepo</repository>
+    <file>myfilename</file>
+    <arguments>args</arguments>
+  </package>
+  <package name="git"/>
+</packages>
+"""
+
+    tdl = get_tdl("test-16-signed-repository.tdl")
+    tdl.merge_packages(packages)
+
+    assert len(tdl.packages) == 2
+    for package in tdl.packages:
+        assert package.name in ['git', 'chris']
+
+
+def test_merge_repositories():
+    repos = """\
+<repositories>
+  <repository name="anotherrepo">
+    <url>http://another/world</url>
+  </repository>
+</repositories>
+"""
+    tdl = get_tdl("test-16-signed-repository.tdl")
+    tdl.merge_repositories(repos)
+    assert len(tdl.repositories) == 2
+    for repo in list(tdl.repositories.values()):
+        assert repo.name in ['anotherrepo', 'myrepo']

@@ -1,0 +1,23 @@
+<template>
+  <name>f12jeos</name>
+  <os>
+    <name>Fedora</name>
+    <version>12</version>
+    <arch>i386</arch>
+    <install type='url'>
+      <url>http://download.fedoraproject.org/pub/fedora/linux/releases/12/Fedora/x86_64/os/</url>
+    </install>
+  </os>
+  <description>My Fedora 12 JEOS image</description>
+  <commands>
+    <command name='cmd1' position="1">
+echo "hello" > /tmp/foo
+    </command>
+    <command name='cmd2' position="3">
+echo "there" > /tmp/bar
+    </command>
+    <command name='cmd3' position="2">
+echo "there" > /tmp/foobar
+    </command>
+  </commands>
+</template>

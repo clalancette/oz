@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import sys
+import getpass
 try:
     import configparser
 except ImportError:
@@ -60,6 +61,15 @@ def default_route():
 # doesn't really matter; it just has to have an IP address
 route = default_route()
 
+def setup_guest(xml, macaddress=None):
+    tdl = oz.TDL.TDL(xml)
+
+    config = configparser.SafeConfigParser()
+    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+
+    guest = oz.GuestFactory.guest_factory(tdl, config, None, macaddress=macaddress)
+    return guest
+
 tdlxml = """
 <template>
   <name>tester</name>
@@ -74,24 +84,32 @@ tdlxml = """
 </template>
 """
 
+tdlxml2 = """
+<template>
+  <name>tester</name>
+  <os>
+    <name>Fedora</name>
+    <version>14</version>
+    <arch>x86_64</arch>
+    <install type='url'>
+      <url>http://download.fedoraproject.org/pub/fedora/linux//releases/14/Fedora/x86_64/os/</url>
+    </install>
+  </os>
+  <disk>
+    <size>20</size>
+  </disk>
+</template>
+"""
+
+
 def test_geteltorito_none_src():
-    tdl = oz.TDL.TDL(tdlxml)
-
-    config = configparser.SafeConfigParser()
-    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
-
-    guest = oz.GuestFactory.guest_factory(tdl, config, None)
+    guest = setup_guest(tdlxml)
 
     with py.test.raises(oz.OzException.OzException):
         guest._geteltorito(None, None)
 
 def test_geteltorito_none_dst(tmpdir):
-    tdl = oz.TDL.TDL(tdlxml)
-
-    config = configparser.SafeConfigParser()
-    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
-
-    guest = oz.GuestFactory.guest_factory(tdl, config, None)
+    guest = setup_guest(tdlxml)
 
     src = os.path.join(str(tmpdir), 'src')
     open(src, 'w').write('src')
@@ -100,12 +118,7 @@ def test_geteltorito_none_dst(tmpdir):
         guest._geteltorito(src, None)
 
 def test_geteltorito_short_pvd(tmpdir):
-    tdl = oz.TDL.TDL(tdlxml)
-
-    config = configparser.SafeConfigParser()
-    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
-
-    guest = oz.GuestFactory.guest_factory(tdl, config, None)
+    guest = setup_guest(tdlxml)
 
     src = os.path.join(str(tmpdir), 'src')
     open(src, 'w').write('foo')
@@ -116,12 +129,7 @@ def test_geteltorito_short_pvd(tmpdir):
         guest._geteltorito(src, dst)
 
 def test_geteltorito_bogus_pvd_desc(tmpdir):
-    tdl = oz.TDL.TDL(tdlxml)
-
-    config = configparser.SafeConfigParser()
-    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
-
-    guest = oz.GuestFactory.guest_factory(tdl, config, None)
+    guest = setup_guest(tdlxml)
 
     src = os.path.join(str(tmpdir), 'src')
     fd = open(src, 'w')
@@ -135,12 +143,7 @@ def test_geteltorito_bogus_pvd_desc(tmpdir):
         guest._geteltorito(src, dst)
 
 def test_geteltorito_bogus_pvd_ident(tmpdir):
-    tdl = oz.TDL.TDL(tdlxml)
-
-    config = configparser.SafeConfigParser()
-    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
-
-    guest = oz.GuestFactory.guest_factory(tdl, config, None)
+    guest = setup_guest(tdlxml)
 
     src = os.path.join(str(tmpdir), 'src')
     fd = open(src, 'w')
@@ -155,12 +158,7 @@ def test_geteltorito_bogus_pvd_ident(tmpdir):
         guest._geteltorito(src, dst)
 
 def test_geteltorito_bogus_pvd_unused(tmpdir):
-    tdl = oz.TDL.TDL(tdlxml)
-
-    config = configparser.SafeConfigParser()
-    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
-
-    guest = oz.GuestFactory.guest_factory(tdl, config, None)
+    guest = setup_guest(tdlxml)
 
     src = os.path.join(str(tmpdir), 'src')
     fd = open(src, 'w')
@@ -177,12 +175,7 @@ def test_geteltorito_bogus_pvd_unused(tmpdir):
         guest._geteltorito(src, dst)
 
 def test_geteltorito_bogus_pvd_unused2(tmpdir):
-    tdl = oz.TDL.TDL(tdlxml)
-
-    config = configparser.SafeConfigParser()
-    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
-
-    guest = oz.GuestFactory.guest_factory(tdl, config, None)
+    guest = setup_guest(tdlxml)
 
     src = os.path.join(str(tmpdir), 'src')
     fd = open(src, 'w')
@@ -203,12 +196,7 @@ def test_geteltorito_bogus_pvd_unused2(tmpdir):
         guest._geteltorito(src, dst)
 
 def test_geteltorito_short_boot_sector(tmpdir):
-    tdl = oz.TDL.TDL(tdlxml)
-
-    config = configparser.SafeConfigParser()
-    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
-
-    guest = oz.GuestFactory.guest_factory(tdl, config, None)
+    guest = setup_guest(tdlxml)
 
     src = os.path.join(str(tmpdir), 'src')
     fd = open(src, 'w')
@@ -229,12 +217,7 @@ def test_geteltorito_short_boot_sector(tmpdir):
         guest._geteltorito(src, dst)
 
 def test_geteltorito_bogus_boot_sector(tmpdir):
-    tdl = oz.TDL.TDL(tdlxml)
-
-    config = configparser.SafeConfigParser()
-    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
-
-    guest = oz.GuestFactory.guest_factory(tdl, config, None)
+    guest = setup_guest(tdlxml)
 
     src = os.path.join(str(tmpdir), 'src')
     fd = open(src, 'w')
@@ -258,12 +241,7 @@ def test_geteltorito_bogus_boot_sector(tmpdir):
         guest._geteltorito(src, dst)
 
 def test_geteltorito_bogus_boot_isoident(tmpdir):
-    tdl = oz.TDL.TDL(tdlxml)
-
-    config = configparser.SafeConfigParser()
-    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
-
-    guest = oz.GuestFactory.guest_factory(tdl, config, None)
+    guest = setup_guest(tdlxml)
 
     src = os.path.join(str(tmpdir), 'src')
     fd = open(src, 'w')
@@ -288,12 +266,7 @@ def test_geteltorito_bogus_boot_isoident(tmpdir):
         guest._geteltorito(src, dst)
 
 def test_geteltorito_bogus_boot_version(tmpdir):
-    tdl = oz.TDL.TDL(tdlxml)
-
-    config = configparser.SafeConfigParser()
-    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
-
-    guest = oz.GuestFactory.guest_factory(tdl, config, None)
+    guest = setup_guest(tdlxml)
 
     src = os.path.join(str(tmpdir), 'src')
     fd = open(src, 'w')
@@ -318,12 +291,7 @@ def test_geteltorito_bogus_boot_version(tmpdir):
         guest._geteltorito(src, dst)
 
 def test_geteltorito_bogus_boot_torito(tmpdir):
-    tdl = oz.TDL.TDL(tdlxml)
-
-    config = configparser.SafeConfigParser()
-    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
-
-    guest = oz.GuestFactory.guest_factory(tdl, config, None)
+    guest = setup_guest(tdlxml)
 
     src = os.path.join(str(tmpdir), 'src')
     fd = open(src, 'w')
@@ -349,12 +317,7 @@ def test_geteltorito_bogus_boot_torito(tmpdir):
         guest._geteltorito(src, dst)
 
 def test_geteltorito_bogus_bootp(tmpdir):
-    tdl = oz.TDL.TDL(tdlxml)
-
-    config = configparser.SafeConfigParser()
-    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
-
-    guest = oz.GuestFactory.guest_factory(tdl, config, None)
+    guest = setup_guest(tdlxml)
 
     src = os.path.join(str(tmpdir), 'src')
     fd = open(src, 'w')
@@ -380,3 +343,291 @@ def test_geteltorito_bogus_bootp(tmpdir):
 
     with py.test.raises(Exception):
         guest._geteltorito(src, dst)
+
+def test_init_guest():
+    guest = setup_guest(tdlxml2)
+
+    assert guest.disksize == 20
+    assert guest.image_name() == 'tester'
+    assert guest.output_image_path() == '/home/%s/.oz/images/tester.dsk' % getpass.getuser()
+    assert guest.default_auto_file() == True
+
+def test_init_guest_bad_arch():
+    tdl = oz.TDL.TDL(tdlxml)
+    tdl.arch = 'armhf'  # Done here to make sure the TDL class doesn't error
+    config = configparser.SafeConfigParser()
+    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    with py.test.raises(Exception):
+        oz.GuestFactory.guest_factory(tdl, config, None)
+
+def test_icicle_generation():
+    guest = setup_guest(tdlxml)
+    with open(os.path.dirname(__file__) + '/test.icicle', 'r') as handle:
+        test_icicle = handle.read()
+
+    packages = [
+        "accountsservice",
+        "adduser",
+        "apparmor",
+        "apt",
+        "apt-transport-https",
+        "apt-utils",
+        "apt-xapian-index",
+        "aptitude",
+        "at",
+        "base-files",
+        "base-passwd",
+        "bash",
+        "bash-completion",
+        "bind9-host",
+        "binutils",
+        "bsdmainutils",
+        "bsdutils",
+        "build-essential",
+        "busybox-initramfs",
+        "busybox-static",
+        "bzip2",
+        "ca-certificates",
+        "chef",
+        "cloud-init",
+        "cloud-initramfs-growroot",
+        "cloud-initramfs-rescuevol",
+        "cloud-utils",
+        "comerr-dev",
+        "console-setup",
+        "coreutils",
+        "cpio",
+        "cpp",
+        "cpp-4.6",
+        "crda",
+        "cron",
+        "curl",
+        "dash",
+        "dbus",
+        "debconf",
+        "debconf-i18n",
+        "debianutils",
+        "denyhosts",
+        "diffutils",
+        "discover",
+        "discover-data",
+        "dkms",
+        "dmidecode",
+        "dmsetup",
+        "dnsutils",
+        "dosfstools",
+        "dpkg",
+        "dpkg-dev",
+        "e2fslibs",
+        "e2fsprogs",
+        "ed",
+        "eject",
+        "euca2ools",
+        "fakeroot",
+        "file",
+        "findutils",
+        "friendly-recovery",
+        "ftp",
+        "fuse",
+        "g++",
+        "g++-4.6"
+    ]
+
+    icicle = guest._output_icicle_xml(packages, 'Icicle Description')
+    assert test_icicle == icicle
+
+def test_xml_generation_1():
+    # Provide a macaddress so testing is easier
+    guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
+
+    with open(os.path.dirname(__file__) + '/libvirt/test_xml_generation_1.xml', 'r') as handle:
+        test_xml = handle.read()
+
+    # Replace various smaller items as they are auto generated
+    test_xml = test_xml % (guest.uuid, route, guest.listen_port, guest.diskimage)
+
+    bootdev = 'hd'
+    installdev = None
+    libvirt = guest._generate_xml(bootdev, installdev)
+
+    assert test_xml == libvirt
+
+def test_xml_generation_2():
+    # Provide a macaddress so testing is easier
+    guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
+
+    with open(os.path.dirname(__file__) + '/libvirt/test_xml_generation_2.xml', 'r') as handle:
+        test_xml = handle.read()
+
+    # Replace various smaller items as they are auto generated
+    test_xml = test_xml % (guest.uuid, route, guest.listen_port, guest.diskimage)
+
+    bootdev = 'hd'
+    installdev = guest._InstallDev('blue', '/var/bin/foo', 'muni')
+    libvirt = guest._generate_xml(bootdev, installdev, kernel='kernel option', initrd='initrd option', cmdline='command line')
+
+    assert test_xml == libvirt
+
+def test_get_disks_and_interfaces():
+    # Provide a macaddress so testing is easier
+    guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
+
+    path = os.path.dirname(__file__) + '/libvirt/test_get_disks_and_interfaces.xml'
+
+    # Get the comparision xml
+    with open(path, 'r') as handle:
+        # Replace various smaller items as they are auto generated
+        test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
+        disks, interfaces = guest._get_disks_and_interfaces(test_xml)
+
+    assert disks == ['vda']
+    assert interfaces == ['vnet7']
+
+def test_get_disks_and_interfaces_missing_interface_target():
+    # Provide a macaddress so testing is easier
+    guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
+
+    path = os.path.dirname(__file__) + '/libvirt/test_get_disks_and_interfaces_missing_interface_target.xml'
+
+    # Get the comparision xml
+    with open(path, 'r') as handle:
+        with py.test.raises(Exception):
+            # Replace various smaller items as they are auto generated
+            test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
+            guest._get_disks_and_interfaces(test_xml)
+
+def test_get_disks_and_interfaces_missing_interface_target_device():
+    # Provide a macaddress so testing is easier
+    guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
+
+    path = os.path.dirname(__file__) + '/libvirt/test_get_disks_and_interfaces_missing_interface_target_device.xml'
+
+    # Get the comparision xml
+    with open(path, 'r') as handle:
+        with py.test.raises(Exception):
+            # Replace various smaller items as they are auto generated
+            test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
+            guest._get_disks_and_interfaces(test_xml)
+
+def test_get_disks_and_interfaces_missing_disk_target():
+    # Provide a macaddress so testing is easier
+    guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
+
+    path = os.path.dirname(__file__) + '/libvirt/test_get_disks_and_interfaces_missing_disk_target.xml'
+
+    # Get the comparision xml
+    with open(path, 'r') as handle:
+        with py.test.raises(Exception):
+            # Replace various smaller items as they are auto generated
+            test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
+            guest._get_disks_and_interfaces(test_xml)
+
+def test_get_disks_and_interfaces_missing_disk_target_device():
+    # Provide a macaddress so testing is easier
+    guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
+
+    # Get the comparision xml
+    path = os.path.dirname(__file__) + '/libvirt/test_get_disks_and_interfaces_missing_disk_target_device.xml'
+    with open(path, 'r') as handle:
+        with py.test.raises(Exception):
+            # Replace various smaller items as they are auto generated
+            test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
+            guest._get_disks_and_interfaces(test_xml)
+
+def test_modify_libvirt_xml_for_serial():
+    # Provide a macaddress so testing is easier
+    guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
+
+    # Get the comparision xml
+    path = os.path.dirname(__file__) + '/libvirt/test_modify_libvirt_xml_for_serial.xml'
+    with open(path, 'r') as handle:
+        # Replace various smaller items as they are auto generated
+        test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
+        final = guest._modify_libvirt_xml_for_serial(test_xml)
+
+    path = os.path.dirname(__file__) + '/libvirt/test_modify_libvirt_xml_for_serial_final.xml'
+    with open(path, 'r') as handle:
+        # Replace various smaller items as they are auto generated
+        final_xml = handle.read() % (guest.uuid, route, guest.diskimage, guest.listen_port)
+        assert final_xml == final
+
+def test_modify_libvirt_xml_for_serial_too_many_targets():
+    # Provide a macaddress so testing is easier
+    guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
+
+    # Get the comparision xml
+    path = os.path.dirname(__file__) + '/libvirt/test_modify_libvirt_xml_for_serial_too_many_targets.xml'
+    with open(path, 'r') as handle:
+        with py.test.raises(Exception):
+            # Replace various smaller items as they are auto generated
+            test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
+            guest._modify_libvirt_xml_for_serial(test_xml)
+
+def test_modify_libvirt_xml_for_serial_missing_devices():
+    # Provide a macaddress so testing is easier
+    guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
+
+    # Get the comparision xml
+    path = os.path.dirname(__file__) + '/libvirt/test_modify_libvirt_xml_for_serial_missing_devices.xml'
+    with open(path, 'r') as handle:
+        with py.test.raises(Exception):
+            # Replace various smaller items as they are auto generated
+            test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
+            guest._modify_libvirt_xml_for_serial(test_xml)
+
+def test_modify_libvirt_xml_for_serial_too_many_devices():
+    # Provide a macaddress so testing is easier
+    guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
+
+    # Get the comparision xml
+    path = os.path.dirname(__file__) + '/libvirt/test_modify_libvirt_xml_for_serial_too_many_devices.xml'
+    with open(path, 'r') as handle:
+        with py.test.raises(Exception):
+            # Replace various smaller items as they are auto generated
+            test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
+            guest._modify_libvirt_xml_for_serial(test_xml)
+
+
+def test_modify_libvirt_xml_diskimage():
+    # Provide a macaddress so testing is easier
+    guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
+
+    # Get the comparision xml
+    path = os.path.dirname(__file__) + '/libvirt/test_modify_libvirt_xml_diskimage.xml'
+    with open(path, 'r') as handle:
+        # Replace various smaller items as they are auto generated
+        test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
+
+        name, ext = os.path.splitext(guest.diskimage)
+        image = name + '.qcow2'
+        final = guest._modify_libvirt_xml_diskimage(test_xml, image, 'qcow2')
+
+    path = os.path.dirname(__file__) + '/libvirt/test_modify_libvirt_xml_diskimage_final.xml'
+    with open(path, 'r') as handle:
+        # Replace various smaller items as they are auto generated
+        final_xml = handle.read() % (guest.uuid, route, guest.listen_port, image)
+        assert final_xml == final
+
+def test_modify_libvirt_xml_diskimage_missing_disk_source():
+    # Provide a macaddress so testing is easier
+    guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
+
+    # Get the comparision xml
+    path = os.path.dirname(__file__) + '/libvirt/test_modify_libvirt_xml_diskimage_missing_disk_source.xml'
+    with open(path, 'r') as handle:
+        with py.test.raises(Exception):
+            # Replace various smaller items as they are auto generated
+            test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
+            guest._modify_libvirt_xml_diskimage(test_xml, guest.diskimage, 'qcow2')
+
+def test_modify_libvirt_xml_diskimage_too_many_drivers():
+    # Provide a macaddress so testing is easier
+    guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
+
+    # Get the comparision xml
+    path = os.path.dirname(__file__) + '/libvirt/test_modify_libvirt_xml_diskimage_too_many_drivers.xml'
+    with open(path, 'r') as handle:
+        with py.test.raises(Exception):
+            # Replace various smaller items as they are auto generated
+            test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
+            guest._modify_libvirt_xml_diskimage(test_xml, guest.diskimage, 'qcow2')
