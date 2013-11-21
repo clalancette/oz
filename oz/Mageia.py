@@ -60,32 +60,31 @@ class MageiaGuest(oz.Guest.CDGuest):
         self.log.debug("Copying cfg file to floppy image")
 
         pathdir = os.path.join(self.iso_contents, self.mageia_arch)
-
         if not os.path.exists(pathdir):
             pathdir = self.iso_contents
+        isolinuxdir = os.path.join(pathdir, "isolinux")
+        if not os.path.exists(isolinuxdir):
+            isolinuxdir = os.path.join(self.iso_contents, "isolinux")
 
         outname = os.path.join(self.icicle_tmp, "auto_inst.cfg")
 
-        if self.default_auto_file():
+        def _cfg_sub(line):
+            """
+            Method that is called back from oz.ozutil.copy_modify_file() to
+            modify preseed files as appropriate for Mageia.
+            """
+            if re.search("%ROOTPW%", line):
+                return line.replace("%ROOTPW%", "'" + self.rootpw + "'")
+            else:
+                return line
+        oz.ozutil.copy_modify_file(self.auto, outname, _cfg_sub)
 
-            def _cfg_sub(line):
-                """
-                Method that is called back from oz.ozutil.copy_modify_file() to
-                modify preseed files as appropriate for Mageia.
-                """
-                if re.search("'password' =>", line):
-                    return "			'password' => '" + self.rootpw + "',\n"
-                else:
-                    return line
-
-            oz.ozutil.copy_modify_file(self.auto, outname, _cfg_sub)
-        else:
-            shutil.copy(self.auto, outname)
         try:
             os.unlink(self.output_floppy)
         except:
             pass
-        oz.ozutil.subprocess_check_output(["/sbin/mkfs.msdos", "-C", 
+        exit
+        oz.ozutil.subprocess_check_output(["/sbin/mkfs.msdos", "-C",
                                            self.output_floppy, "1440"])
         oz.ozutil.subprocess_check_output(["mcopy", "-n", "-o", "-i",
                                            self.output_floppy, outname,
@@ -98,19 +97,21 @@ class MageiaGuest(oz.Guest.CDGuest):
                                            "media")):
             url = urlparse.urlparse(self.tdl.repositories['install'].url)
             install_flags=  "automatic=method:%s,ser:%s,dir:%s,int:eth0,netw:dhcp" % (url.scheme, url.hostname, url.path)
+            if url.scheme != "http" and url.scheme != "ftp":
+                raise oz.OzException.OzException("Unknown boot method install flags='%s'" % install_flags)            
         else:
             install_flags = "automatic=method:cdrom"
         self.log.debug("Modifying isolinux.cfg")
-        isolinuxcfg = os.path.join(pathdir, "isolinux", "isolinux.cfg")
+        isolinuxcfg = os.path.join(isolinuxdir, "isolinux.cfg")
         with open(isolinuxcfg, 'w') as f:
             f.write("""\
 default customiso
 timeout 1
 prompt 0
 label customiso
-  kernel alt0/vmlinuz
-  append initrd=alt0/all.rdz ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom kickstart=floppy %s
-""" % install_flags)
+  kernel %s/vmlinuz
+  append initrd=%s/all.rdz splash kickstart=floppy %s
+""" % (self.mageia_arch, self.mageia_arch, install_flags))
 
     def _generate_new_iso(self):
         """
@@ -118,18 +119,20 @@ label customiso
         """
         self.log.info("Generating new ISO")
 
-        if os.path.exists(os.path.join(self.iso_contents, self.mageia_arch)):
-            isolinuxdir = self.mageia_arch
+        if os.path.exists(os.path.join(self.iso_contents, self.mageia_arch,
+                                       "isolinux")):
+            isolinuxdir = os.path.join(self.mageia_arch, "isolinux")
         else:
-            isolinuxdir = ""
+            isolinuxdir = "isolinux"
 
-        isolinuxbin = os.path.join(isolinuxdir, "isolinux/isolinux.bin")
-        isolinuxboot = os.path.join(isolinuxdir, "isolinux/boot.cat")
+        isolinuxbin = os.path.join(isolinuxdir, "isolinux.bin")
+        isolinuxboot = os.path.join(isolinuxdir, "boot.cat")
 
         oz.ozutil.subprocess_check_output(["genisoimage", "-r", "-V", "Custom",
                                            "-J", "-l", "-no-emul-boot",
                                            "-b", isolinuxbin,
                                            "-c", isolinuxboot,
+                                           "-input-charset", "utf-8",
                                            "-boot-load-size", "4",
                                            "-cache-inodes", "-boot-info-table",
                                            "-v", "-o", self.output_iso,
