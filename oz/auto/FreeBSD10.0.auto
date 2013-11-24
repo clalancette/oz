@@ -1,0 +1,17 @@
+# Install rules.
+PARTITIONS="vtbd0"
+BSDINSTALL_DISTSITE="ftp://mirror.leaseweb.com/FreeBSD/releases/amd64/10.0-BETA3"
+DISTRIBUTIONS="kernel.txz base.txz"
+
+# Post script.
+#!/bin/sh
+###OZ###
+hostname=$(openssl rand -hex 4)
+echo "ifconfig_vtnet0=DHCP" >> /etc/rc.conf
+echo "sshd_enable=YES" >> /etc/rc.conf
+echo "hostname=$hostname" >> /etc/rc.conf
+echo "#ROOTPW#" | pw mod user root -h 0
+
+# The installer wants to reboot to the newly installed system, though at this
+# point we'd rather send the image to the cloud :)
+shutdown -h now
