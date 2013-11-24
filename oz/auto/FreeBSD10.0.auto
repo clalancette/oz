@@ -14,4 +14,4 @@ echo "#ROOTPW#" | pw mod user root -h 0
 
 # The installer wants to reboot to the newly installed system, though at this
 # point we'd rather send the image to the cloud :)
-shutdown -h now
+shutdown -p now

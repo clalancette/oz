@@ -93,7 +93,7 @@ class FreeBSD(oz.Guest.CDGuest):
         internal_timeout = timeout
         if internal_timeout is None:
             internal_timeout = 8500
-        return self._do_install(internal_timeout, force, 2)
+        return self._do_install(internal_timeout, force, 0)
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):
