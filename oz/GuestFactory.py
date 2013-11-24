@@ -59,6 +59,7 @@ os_dict = { 'Fedora': 'Fedora',
             'Mandrake': 'Mandrake',
             'Mandriva': 'Mandriva',
             'Mageia': 'Mageia',
+            'FreeBSD': 'FreeBSD',
 }
 
 def guest_factory(tdl, config, auto, output_disk=None, netdev=None,
