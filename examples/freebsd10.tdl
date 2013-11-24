@@ -1,0 +1,19 @@
+<!-- An example that shows how to do a basic install of FreeBSD 10.0
+     i386 using the ISO type install.
+-->
+<template>
+  <name>freebsd10</name>
+  <os>
+    <name>FreeBSD</name>
+    <version>10.0</version>
+    <arch>x86_64</arch>
+    <install type='iso'>
+      <iso>ftp://ftp.freebsd.org/pub/FreeBSD/releases/amd64/amd64/ISO-IMAGES/10.0/FreeBSD-10.0-BETA3-amd64-disc1.iso</iso>
+    </install>
+    <rootpw>blabla</rootpw>
+  </os>
+  <description>FreeBSD 10.0 x86_64</description>
+  <disk>
+    <size>1</size>
+  </disk>
+</template>
