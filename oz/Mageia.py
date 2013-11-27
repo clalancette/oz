@@ -111,7 +111,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     if tdl.update in ["4"]:
         return MageiaGuest(tdl, config, auto, output_disk, netdev, diskbus,
-                             macaddress)
+                           macaddress)
 
 def get_supported_string():
     """
