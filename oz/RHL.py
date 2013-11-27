@@ -75,7 +75,7 @@ class RHL9Guest(oz.RedHat.RedHatLinuxCDGuest):
     def get_auto_path(self):
         return oz.ozutil.generate_full_auto_path("RedHatLinux" + self.tdl.update + ".auto")
 
-class RHL70and71and72and73and8Guest(oz.RedHat.RedHatFDGuest):
+class RHL7xand8Guest(oz.RedHat.RedHatFDGuest):
     """
     Class for RHL 7.0, 7.1, 7.2, and 8 installation.
     """
@@ -96,13 +96,13 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
         return RHL9Guest(tdl, config, auto, output_disk, netdev, diskbus,
                          macaddress)
     if tdl.update in ["7.2", "7.3", "8"]:
-        return RHL70and71and72and73and8Guest(tdl, config, auto, output_disk,
-                                             netdev, diskbus, macaddress)
+        return RHL7xand8Guest(tdl, config, auto, output_disk, netdev, diskbus,
+                              macaddress)
     if tdl.update in ["7.0", "7.1"]:
         if netdev is None:
             netdev = "ne2k_pci"
-        return RHL70and71and72and73and8Guest(tdl, config, auto, output_disk,
-                                             netdev, diskbus, macaddress)
+        return RHL7xand8Guest(tdl, config, auto, output_disk, netdev, diskbus,
+                              macaddress)
 
 def get_supported_string():
     """
