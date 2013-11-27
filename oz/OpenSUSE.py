@@ -38,6 +38,8 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
                                        nicmodel, diskbus, True, False,
                                        macaddress)
 
+        self.crond_was_active = False
+        self.sshd_was_active = False
         self.reboots = 1
         if self.tdl.update in ["10.3"]:
             # for 10.3 we don't have a 2-stage install process so don't reboot
@@ -126,7 +128,11 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
 
         # reset the service link
         self.log.debug("Resetting sshd service")
-        self._guestfs_path_restore(g_handle, '/etc/init.d/after.local')
+        if g_handle.exists('/usr/lib/systemd/system/sshd.service'):
+            if not self.sshd_was_active:
+                g_handle.rm('/etc/systemd/system/multi-user.target.wants/sshd.service')
+        else:
+            self._guestfs_path_restore(g_handle, '/etc/init.d/after.local')
 
     def _image_ssh_teardown_step_3(self, g_handle):
         """
@@ -145,9 +151,13 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
 
         # reset the service link
         self.log.debug("Resetting cron service")
-        runlevel = self.get_default_runlevel(g_handle)
-        startuplink = '/etc/rc.d/rc' + runlevel + ".d/S06cron"
-        self._guestfs_path_restore(g_handle, startuplink)
+        if g_handle.exists('/usr/lib/systemd/system/cron.service'):
+            if not self.crond_was_active:
+                g_handle.rm('/etc/systemd/system/multi-user.target.wants/cron.service')
+        else:
+            runlevel = self.get_default_runlevel(g_handle)
+            startuplink = '/etc/rc.d/rc' + runlevel + ".d/S06cron"
+            self._guestfs_path_restore(g_handle, startuplink)
 
     def _image_ssh_teardown_step_4(self, g_handle):
         """
@@ -219,16 +229,21 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
         if not g_handle.exists('/etc/init.d/sshd') or not g_handle.exists('/usr/sbin/sshd'):
             raise oz.OzException.OzException("ssh not installed on the image, cannot continue")
 
-        self._guestfs_path_backup(g_handle, "/etc/init.d/after.local")
-
-        local = os.path.join(self.icicle_tmp, "after.local")
-        with open(local, "w") as f:
-            f.write("/sbin/service sshd start\n")
-
-        try:
-            g_handle.upload(local, "/etc/init.d/after.local")
-        finally:
-            os.unlink(local)
+        if g_handle.exists('/usr/lib/systemd/system/sshd.service'):
+            if g_handle.exists('/etc/systemd/system/multi-user.target.wants/sshd.service'):
+                self.sshd_was_active = True
+            else:
+                g_handle.ln_sf('/usr/lib/systemd/system/sshd.service',
+                               '/etc/systemd/system/multi-user.target.wants/sshd.service')
+        else:
+            self._guestfs_path_backup(g_handle, "/etc/init.d/after.local")
+            local = os.path.join(self.icicle_tmp, "after.local")
+            with open(local, "w") as f:
+                f.write("/sbin/service sshd start\n")
+            try:
+                g_handle.upload(local, "/etc/init.d/after.local")
+            finally:
+                os.unlink(local)
 
         sshd_config_file = self.icicle_tmp + "/sshd_config"
         with open(sshd_config_file, 'w') as f:
@@ -306,10 +321,17 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
         finally:
             os.unlink(announcefile)
 
-        runlevel = self.get_default_runlevel(g_handle)
-        startuplink = '/etc/rc.d/rc' + runlevel + ".d/S06cron"
-        self._guestfs_path_backup(g_handle, startuplink)
-        g_handle.ln_sf('/etc/init.d/cron', startuplink)
+        if g_handle.exists('/usr/lib/systemd/system/cron.service'):
+            if g_handle.exists('/etc/systemd/system/multi-user.target.wants/cron.service'):
+                self.crond_was_active = True
+            else:
+                g_handle.ln_sf('/lib/systemd/system/cron.service',
+                               '/etc/systemd/system/multi-user.target.wants/cron.service')
+        else:
+            runlevel = self.get_default_runlevel(g_handle)
+            startuplink = '/etc/rc.d/rc' + runlevel + ".d/S06cron"
+            self._guestfs_path_backup(g_handle, startuplink)
+            g_handle.ln_sf('/etc/init.d/cron', startuplink)
 
     def _collect_setup(self, libvirt_xml):
         """
