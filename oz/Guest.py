@@ -139,23 +139,23 @@ class Guest(object):
             self.macaddr = macaddress
 
         # configuration from 'paths' section
-        self.output_dir = oz.ozutil.config_get_key(config, 'paths',
-                                                   'output_dir',
-                                                   oz.ozutil.default_output_dir())
+        self.output_dir = oz.ozutil.config_get_path(config, 'paths',
+                                                    'output_dir',
+                                                    oz.ozutil.default_output_dir())
 
         oz.ozutil.mkdir_p(self.output_dir)
 
-        self.data_dir = oz.ozutil.config_get_key(config, 'paths',
-                                                 'data_dir',
-                                                 oz.ozutil.default_data_dir())
+        self.data_dir = oz.ozutil.config_get_path(config, 'paths',
+                                                  'data_dir',
+                                                  oz.ozutil.default_data_dir())
 
-        self.screenshot_dir = oz.ozutil.config_get_key(config, 'paths',
-                                                       'screenshot_dir',
-                                                       oz.ozutil.default_screenshot_dir(self.data_dir))
+        self.screenshot_dir = oz.ozutil.config_get_path(config, 'paths',
+                                                        'screenshot_dir',
+                                                        oz.ozutil.default_screenshot_dir())
 
-        self.sshprivkey = oz.ozutil.config_get_key(config, 'paths',
-                                                   'sshprivkey',
-                                                   oz.ozutil.default_sshprivkey())
+        self.sshprivkey = oz.ozutil.config_get_path(config, 'paths',
+                                                    'sshprivkey',
+                                                    oz.ozutil.default_sshprivkey())
 
         # configuration from 'libvirt' section
         self.libvirt_uri = oz.ozutil.config_get_key(config, 'libvirt', 'uri',

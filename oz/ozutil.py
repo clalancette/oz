@@ -667,6 +667,9 @@ def config_get_boolean_key(config, section, key, default):
 
     return retval
 
+def config_get_path(config, section, key, default):
+    return os.path.expanduser(config_get_key(config, section, key, default))
+
 def rmtree_and_sync(directory):
     """
     Function to remove a directory tree and do an fsync afterwards.  Because
@@ -709,40 +712,34 @@ def default_output_dir():
     Function to get the default path to the output directory.
     """
     if os.geteuid() == 0:
-        directory = "/var/lib/libvirt/images"
+        return "/var/lib/libvirt/images"
     else:
-        directory = "~/.oz/images"
-
-    return os.path.expanduser(directory)
+        return "~/.oz/images"
 
 def default_data_dir():
     """
     Function to get the default path to the data directory.
     """
     if os.geteuid() == 0:
-        directory = "/var/lib/oz"
+        return "/var/lib/oz"
     else:
-        directory = "~/.oz"
-
-    return os.path.expanduser(directory)
+        return "~/.oz"
 
 def default_sshprivkey():
     """
     Function to get the default path to the SSH private key.
     """
     if os.geteuid() == 0:
-        directory = "/etc/oz/id_rsa-icicle-gen"
+        return "/etc/oz/id_rsa-icicle-gen"
     else:
-        directory = "~/.oz/id_rsa-icicle-gen"
+        return "~/.oz/id_rsa-icicle-gen"
 
-    return os.path.expanduser(directory)
-
-def default_screenshot_dir(data_dir):
+def default_screenshot_dir():
     """
-    Function to get the default path to the screenshot directory. The directory is
-    generated relative to the given data directory.
+    Function to get the default path to the screenshot directory. The directory
+    is generated relative to the default data directory.
     """
-    return os.path.join(data_dir, "screenshots")
+    return os.path.join(default_data_dir(), "screenshots")
 
 def http_get_header(url, redirect=True):
     """

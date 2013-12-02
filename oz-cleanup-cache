@@ -81,8 +81,8 @@ if len(args) != 0:
 try:
     config = oz.ozutil.parse_config(config_file)
 
-    data_dir = oz.ozutil.config_get_key(config, 'paths', 'data_dir',
-                                        oz.ozutil.default_data_dir())
+    data_dir = oz.ozutil.config_get_path(config, 'paths', 'data_dir',
+                                         oz.ozutil.default_data_dir())
 
     dirs = ["floppies", "floppycontent", "icicletmp", "isocontent", "isos",
             "jeos", "kernels", "screenshots"]
