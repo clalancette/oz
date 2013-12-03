@@ -236,8 +236,6 @@ class LinuxCDGuest(oz.Guest.CDGuest):
                 # when we are truly in a "gen_only" state so we modify
                 # the action here if we detect that ICICLE generation is the
                 # only task to be done.
-                # FIXME: See about doing this test earlier or in a more generic
-                # way
                 self.log.debug("Asked to gen_and_mod but no mods are present - changing action to gen_only")
                 action = "gen_only"
 
