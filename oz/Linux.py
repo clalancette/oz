@@ -41,16 +41,13 @@ class LinuxCDGuest(oz.Guest.CDGuest):
         makes sure that we allow an additional 30 seconds (1 second per ssh
         attempt) for sshd to finish initializing.
         """
-        self.log.debug("Testing ssh connection")
         count = 30
         success = False
         while count > 0:
             try:
                 self.log.debug("Testing ssh connection, try %d" % (count))
                 start = time.time()
-                stdout, stderr, retcode = self.guest_execute_command(guestaddr,
-                                                                     'ls',
-                                                                     timeout=1)
+                self.guest_execute_command(guestaddr, 'ls', timeout=1)
                 self.log.debug("Succeeded")
                 success = True
                 break
