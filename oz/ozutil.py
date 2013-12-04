@@ -394,55 +394,6 @@ def subprocess_check_output(*popenargs, **kwargs):
         raise SubprocessException("'%s' failed(%d): %s" % (cmd, retcode, stderr), retcode)
     return (stdout, stderr, retcode)
 
-def ssh_execute_command(guestaddr, sshprivkey, command, timeout=10):
-    """
-    Function to execute a command on the guest using SSH and return the
-    output.
-    """
-    # ServerAliveInterval protects against NAT firewall timeouts
-    # on long-running commands with no output
-    #
-    # PasswordAuthentication=no prevents us from falling back to
-    # keyboard-interactive password prompting
-    #
-    # -F /dev/null makes sure that we don't use the global or per-user
-    # configuration files
-
-    return subprocess_check_output(["ssh", "-i", sshprivkey,
-                                    "-F", "/dev/null",
-                                    "-o", "ServerAliveInterval=30",
-                                    "-o", "StrictHostKeyChecking=no",
-                                    "-o", "ConnectTimeout=" + str(timeout),
-                                    "-o", "UserKnownHostsFile=/dev/null",
-                                    "-o", "PasswordAuthentication=no",
-                                    "root@" + guestaddr, command])
-
-def scp_copy_file(guestaddr, sshprivkey, file_to_upload, destination,
-                  timeout=10):
-    """
-    Function to upload a file to the guest using scp.
-    """
-    ssh_execute_command(guestaddr, sshprivkey,
-                        "mkdir -p " + os.path.dirname(destination), timeout)
-
-    # ServerAliveInterval protects against NAT firewall timeouts
-    # on long-running commands with no output
-    #
-    # PasswordAuthentication=no prevents us from falling back to
-    # keyboard-interactive password prompting
-    #
-    # -F /dev/null makes sure that we don't use the global or per-user
-    # configuration files
-    return subprocess_check_output(["scp", "-i", sshprivkey,
-                                    "-F", "/dev/null",
-                                    "-o", "ServerAliveInterval=30",
-                                    "-o", "StrictHostKeyChecking=no",
-                                    "-o", "ConnectTimeout=" + str(timeout),
-                                    "-o", "UserKnownHostsFile=/dev/null",
-                                    "-o", "PasswordAuthentication=no",
-                                    file_to_upload,
-                                    "root@" + guestaddr + ":" + destination])
-
 def mkdir_p(path):
     """
     Function to make a directory and all intermediate directories as

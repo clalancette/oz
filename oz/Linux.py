@@ -80,16 +80,50 @@ class LinuxCDGuest(oz.Guest.CDGuest):
         """
         Method to execute a command on the guest and return the output.
         """
-        return oz.ozutil.ssh_execute_command(guestaddr, self.sshprivkey,
-                                             command, timeout)
+        # ServerAliveInterval protects against NAT firewall timeouts
+        # on long-running commands with no output
+        #
+        # PasswordAuthentication=no prevents us from falling back to
+        # keyboard-interactive password prompting
+        #
+        # -F /dev/null makes sure that we don't use the global or per-user
+        # configuration files
+
+        return oz.ozutil.subprocess_check_output(["ssh", "-i", self.sshprivkey,
+                                                  "-F", "/dev/null",
+                                                  "-o", "ServerAliveInterval=30",
+                                                  "-o", "StrictHostKeyChecking=no",
+                                                  "-o", "ConnectTimeout=" + str(timeout),
+                                                  "-o", "UserKnownHostsFile=/dev/null",
+                                                  "-o", "PasswordAuthentication=no",
+                                                  "root@" + guestaddr, command])
 
     def guest_live_upload(self, guestaddr, file_to_upload, destination,
                           timeout=10):
         """
         Method to copy a file to the live guest.
         """
-        return oz.ozutil.scp_copy_file(guestaddr, self.sshprivkey,
-                                       file_to_upload, destination, timeout)
+        self.guest_execute_command(guestaddr, self.sshprivkey,
+                                   "mkdir -p " + os.path.dirname(destination),
+                                   timeout)
+
+        # ServerAliveInterval protects against NAT firewall timeouts
+        # on long-running commands with no output
+        #
+        # PasswordAuthentication=no prevents us from falling back to
+        # keyboard-interactive password prompting
+        #
+        # -F /dev/null makes sure that we don't use the global or per-user
+        # configuration files
+        return oz.ozutil.subprocess_check_output(["scp", "-i", self.sshprivkey,
+                                                  "-F", "/dev/null",
+                                                  "-o", "ServerAliveInterval=30",
+                                                  "-o", "StrictHostKeyChecking=no",
+                                                  "-o", "ConnectTimeout=" + str(timeout),
+                                                  "-o", "UserKnownHostsFile=/dev/null",
+                                                  "-o", "PasswordAuthentication=no",
+                                                  file_to_upload,
+                                                  "root@" + guestaddr + ":" + destination])
 
     def _customize_files(self, guestaddr):
         """
