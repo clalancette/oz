@@ -427,13 +427,6 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
             self._guestfs_handle_cleanup(g_handle)
             shutil.rmtree(self.icicle_tmp)
 
-    def _discover_repo_locality(self, repo_url, guestaddr, certdict):
-        """
-        Internal method to discover whether a repository is reachable from the
-        guest or not.  It is used by customize_repos to decide which method to
-        use to reach the repository.
-        """
-
     def _customize_repos(self, guestaddr):
         """
         Method to generate and upload custom repository files based on the TDL.
