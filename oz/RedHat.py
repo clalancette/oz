@@ -492,9 +492,9 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
         treeinfo = os.path.join(self.icicle_tmp, "treeinfo")
         self.log.debug("Going to write treeinfo to %s" % (treeinfo))
         treeinfofd = os.open(treeinfo, os.O_RDWR | os.O_CREAT | os.O_TRUNC)
+        fp = os.fdopen(treeinfofd)
         try:
             os.unlink(treeinfo)
-            fp = os.fdopen(treeinfofd)
             self.log.debug("Trying to get treeinfo from " + treeinfourl)
             oz.ozutil.http_download_file(treeinfourl, treeinfofd,
                                          False, self.log)
@@ -509,7 +509,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
             kernel = oz.ozutil.config_get_key(config, section, "kernel", None)
             initrd = oz.ozutil.config_get_key(config, section, "initrd", None)
         finally:
-            os.close(treeinfofd)
+            fp.close()
 
         if kernel is None or initrd is None:
             raise oz.OzException.OzException("Empty kernel or initrd")
