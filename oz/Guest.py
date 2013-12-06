@@ -1056,8 +1056,20 @@ class Guest(object):
                     return -1
             mps.sort(_compare)
             for mp_dev in mps:
-                g.mount_options('', mp_dev[1], mp_dev[0])
-
+                try:
+                    g.mount_options('', mp_dev[1], mp_dev[0])
+                except:
+                    if mp_dev[0] == '/':
+                        # If we cannot mount root, we may as well give up
+                        raise
+                    else:
+                        # some custom guests may have fstab content with
+                        # "nofail" as a mount option.  For example, images
+                        # built for EC2 with ephemeral mappings.  These
+                        # fail at this point.  Allow things to continue.
+                        # Profound failures will trigger later on during
+                        # the process.
+                        self.log.warning("Unable to mount (%s) on (%s) - trying to continue" % (mp_dev[1], mp_dev[0]))
         return g
 
     def _guestfs_remove_if_exists(self, g_handle, path):
