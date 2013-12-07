@@ -199,7 +199,7 @@ label customiso
         self.log.debug("Teardown step 4")
         self.log.debug("Removing announcement to host")
         self._guestfs_remove_if_exists(g_handle,
-                                       '/etc/NetworkManager/dispatcher.d/99-announce')
+                                       '/etc/NetworkManager/dispatcher.d/99-reportip')
 
         # remove announce cronjob
         self.log.debug("Resetting announcement to host")
