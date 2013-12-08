@@ -142,7 +142,7 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
         # remove announce cronjob
         self.log.debug("Resetting announcement to host")
         self._guestfs_remove_if_exists(g_handle,
-                                       '/etc/NetworkManager/dispatcher.d/99-announce')
+                                       '/etc/NetworkManager/dispatcher.d/99-reportip')
         self._guestfs_remove_if_exists(g_handle, '/etc/cron.d/announce')
 
         # remove reportip
