@@ -100,7 +100,8 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
                                            "-iso-level", "4", "-pad",
                                            "-allow-leading-dots", "-l",
                                            "-o", self.output_iso,
-                                           self.iso_contents])
+                                           self.iso_contents],
+                                          printfn=self.log.debug)
 
     def install(self, timeout=None, force=False):
         """

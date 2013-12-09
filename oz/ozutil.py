@@ -28,6 +28,8 @@ import stat
 import shutil
 import pycurl
 import gzip
+import time
+import select
 try:
     import configparser
 except ImportError:
@@ -366,32 +368,66 @@ def subprocess_check_output(*popenargs, **kwargs):
     if 'stderr' in kwargs:
         raise ValueError('stderr argument not allowed, it will be overridden.')
 
+    printfn = None
+    if kwargs.has_key('printfn'):
+        printfn = kwargs['printfn']
+        del kwargs['printfn']
+
     executable_exists(popenargs[0][0])
 
-    # NOTE: it is very, very important that we use temporary files for
-    # collecting stdout and stderr here.  There is a nasty bug in python
-    # subprocess; if your process produces more than 64k of data on an fd that
-    # is using subprocess.PIPE, the whole thing will hang. To avoid this, we
-    # use temporary fds to capture the data
-    stdouttmp = tempfile.TemporaryFile()
-    stderrtmp = tempfile.TemporaryFile()
+    process = subprocess.Popen(stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                               *popenargs, **kwargs)
 
-    process = subprocess.Popen(stdout=stdouttmp, stderr=stderrtmp, *popenargs,
-                               **kwargs)
-    process.communicate()
+    poller = select.poll()
+    select_POLLIN_POLLPRI = select.POLLIN | select.POLLPRI
+    poller.register(process.stdout.fileno(), select_POLLIN_POLLPRI)
+    poller.register(process.stderr.fileno(), select_POLLIN_POLLPRI)
+
+    stdout = ''
+    stderr = ''
     retcode = process.poll()
+    while retcode is None:
+        start = time.time()
+        try:
+            ready = poller.poll(1000)
+        except select.error, e:
+            if e.args[0] == errno.EINTR:
+                continue
+            raise
 
-    stdouttmp.seek(0, 0)
-    stdout = stdouttmp.read()
-    stdouttmp.close()
+        for fd, mode in ready:
+            if mode & select_POLLIN_POLLPRI:
+                data = os.read(fd, 4096)
+                if not data:
+                    poller.unregister(fd)
+                else:
+                    if printfn is not None:
+                        printfn(data)
+                    if fd == process.stdout.fileno():
+                        stdout += data
+                    else:
+                        stderr += data
+            else:
+                # Ignore hang up or errors.
+                poller.unregister(fd)
 
-    stderrtmp.seek(0, 0)
-    stderr = stderrtmp.read()
-    stderrtmp.close()
+        end = time.time()
+        if (end - start) < 1:
+            time.sleep(1 - (end - start))
+        retcode = process.poll()
+
+    tmpout, tmperr = process.communicate()
+
+    stdout += tmpout
+    stderr += tmperr
+    if printfn is not None:
+        printfn(tmperr)
+        printfn(tmpout)
 
     if retcode:
         cmd = ' '.join(*popenargs)
         raise SubprocessException("'%s' failed(%d): %s" % (cmd, retcode, stderr), retcode)
+
     return (stdout, stderr, retcode)
 
 def mkdir_p(path):

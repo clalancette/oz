@@ -72,7 +72,8 @@ class Windows_v5(Windows):
                                            "-relaxed-filenames", "-v", "-v",
                                            "-V", "Custom",
                                            "-o", self.output_iso,
-                                           self.iso_contents])
+                                           self.iso_contents],
+                                          printfn=self.log.debug)
 
     def generate_diskimage(self, size=10, force=False):
         """
@@ -173,7 +174,8 @@ class Windows_v6(Windows):
                                            "-relaxed-filenames", "-v", "-v",
                                            "-V", "Custom", "-udf",
                                            "-o", self.output_iso,
-                                           self.iso_contents])
+                                           self.iso_contents],
+                                          printfn=self.log.debug)
 
     def _modify_iso(self):
         """

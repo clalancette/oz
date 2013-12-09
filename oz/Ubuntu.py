@@ -183,7 +183,8 @@ PROMPT 0
                                            "-boot-load-size", "4",
                                            "-cache-inodes", "-boot-info-table",
                                            "-v", "-v", "-o", self.output_iso,
-                                           self.iso_contents])
+                                           self.iso_contents],
+                                          printfn=self.log.debug)
 
     def install(self, timeout=None, force=False):
         """

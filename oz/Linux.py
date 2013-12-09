@@ -96,7 +96,8 @@ class LinuxCDGuest(oz.Guest.CDGuest):
                                                   "-o", "ConnectTimeout=" + str(timeout),
                                                   "-o", "UserKnownHostsFile=/dev/null",
                                                   "-o", "PasswordAuthentication=no",
-                                                  "root@" + guestaddr, command])
+                                                  "root@" + guestaddr, command],
+                                                 printfn=self.log.debug)
 
     def guest_live_upload(self, guestaddr, file_to_upload, destination,
                           timeout=10):
@@ -123,7 +124,8 @@ class LinuxCDGuest(oz.Guest.CDGuest):
                                                   "-o", "UserKnownHostsFile=/dev/null",
                                                   "-o", "PasswordAuthentication=no",
                                                   file_to_upload,
-                                                  "root@" + guestaddr + ":" + destination])
+                                                  "root@" + guestaddr + ":" + destination],
+                                                 printfn=self.log.debug)
 
     def _customize_files(self, guestaddr):
         """

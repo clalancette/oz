@@ -44,7 +44,8 @@ class FreeBSD(oz.Guest.CDGuest):
                                            "-R", "-no-emul-boot",
                                            "-b", "boot/cdboot",
                                            "-o", self.output_iso,
-                                           self.iso_contents])
+                                           self.iso_contents],
+                                          printfn=self.log.debug)
 
     def _modify_iso(self):
         """

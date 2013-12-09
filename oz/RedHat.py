@@ -91,7 +91,8 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                                            "-boot-load-size", "4",
                                            "-boot-info-table", "-v", "-v",
                                            "-o", self.output_iso,
-                                           self.iso_contents])
+                                           self.iso_contents],
+                                          printfn=self.log.debug)
 
     def _check_iso_tree(self, customize_or_icicle):
         kernel = os.path.join(self.iso_contents, "isolinux", "vmlinuz")
@@ -824,7 +825,8 @@ class RedHatFDGuest(oz.Guest.FDGuest):
             shutil.copy(self.auto, output_ks)
 
         oz.ozutil.subprocess_check_output(["mcopy", "-i", self.output_floppy,
-                                           output_ks, "::KS.CFG"])
+                                           output_ks, "::KS.CFG"],
+                                          printfn=self.log.debug)
 
         self.log.debug("Modifying the syslinux.cfg")
 
@@ -843,11 +845,13 @@ label customboot
         # problems with the subsequent mcopy by marking it read/write.
         oz.ozutil.subprocess_check_output(["mattrib", "-r", "-i",
                                            self.output_floppy,
-                                           "::SYSLINUX.CFG"])
+                                           "::SYSLINUX.CFG"],
+                                          printfn=self.log.debug)
 
         oz.ozutil.subprocess_check_output(["mcopy", "-n", "-o", "-i",
                                            self.output_floppy, syslinux,
-                                           "::SYSLINUX.CFG"])
+                                           "::SYSLINUX.CFG"],
+                                          printfn=self.log.debug)
 
     def generate_install_media(self, force_download=False,
                                customize_or_icicle=False):

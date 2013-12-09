@@ -90,7 +90,8 @@ label customiso
                                            "-boot-load-size", "4",
                                            "-cache-inodes", "-boot-info-table",
                                            "-v", "-v", "-o", self.output_iso,
-                                           self.iso_contents])
+                                           self.iso_contents],
+                                          printfn=self.log.debug)
 
 class Mandrake82Guest(oz.Guest.CDGuest):
     """
@@ -140,7 +141,8 @@ label customiso
         cdromimg = os.path.join(self.iso_contents, "Boot", "cdrom.img")
         oz.ozutil.subprocess_check_output(["mcopy", "-n", "-o", "-i",
                                            cdromimg, syslinux,
-                                           "::SYSLINUX.CFG"])
+                                           "::SYSLINUX.CFG"],
+                                          printfn=self.log.debug)
 
     def _generate_new_iso(self):
         """
@@ -152,7 +154,8 @@ label customiso
                                            "-b", "Boot/cdrom.img",
                                            "-c", "Boot/boot.cat",
                                            "-v", "-v", "-o", self.output_iso,
-                                           self.iso_contents])
+                                           self.iso_contents],
+                                          printfn=self.log.debug)
 
     def install(self, timeout=None, force=False):
         internal_timeout = timeout
