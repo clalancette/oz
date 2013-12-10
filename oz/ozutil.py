@@ -655,7 +655,10 @@ def config_get_boolean_key(config, section, key, default):
     return retval
 
 def config_get_path(config, section, key, default):
-    return os.path.expanduser(config_get_key(config, section, key, default))
+    path = os.path.expanduser(config_get_key(config, section, key, default))
+    if not os.path.isabs(path):
+        raise Exception("Config key '%s' must have an absolute path" % (key))
+    return path
 
 def rmtree_and_sync(directory):
     """

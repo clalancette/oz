@@ -211,6 +211,9 @@ class Guest(object):
                 ext = '.dsk'
             self.diskimage = os.path.join(self.output_dir, self.tdl.name + ext)
 
+        if not os.path.isabs(self.diskimage):
+            raise oz.OzException.OzException("Output disk image must be an absolute path")
+
         self.icicle_tmp = os.path.join(self.data_dir, "icicletmp",
                                        self.tdl.name)
         self.listen_port = random.randrange(1024, 65535)
