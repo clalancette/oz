@@ -10,7 +10,7 @@
   </os>
   <description>A RHEL5 Update 7 image</description>
   <repositories>
-    <!-- Different ways to represent persistent=False -->
+    <!-- Different ways to represent persisted=False -->
     <repository name='persist-1-false'>
       <url>http://path/to/my/repo-1</url>
       <persisted>No</persisted>
@@ -35,7 +35,7 @@
       <url>http://path/to/my/repo-6</url>
       <persisted>False</persisted>
     </repository>
-    <!-- Different ways to represent persistent -->
+    <!-- Different ways to represent persisted -->
     <repository name='persist-7-true'>
       <url>http://path/to/my/repo-7</url>
       <persisted>Yes</persisted>

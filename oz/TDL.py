@@ -104,7 +104,7 @@ class Repository(object):
     url        - The URL of this repository.
     (all remaining properties are optional with defaults in parentheses)
     signed     - Whether this repository is signed (no)
-    persistent - Whether this repository should remain in the final
+    persisted - Whether this repository should remain in the final
                  image (yes)
     clientcert - An SSL client certificate to access protected content -
                  e.g. pulp repos (None)
@@ -114,12 +114,12 @@ class Repository(object):
     sslverify  - Whether yum should check the server cert against known CA
                  certs (no)
     """
-    def __init__(self, name, url, signed, persistent, clientcert, clientkey,
+    def __init__(self, name, url, signed, persisted, clientcert, clientkey,
                  cacert, sslverify):
         self.name = name
         self.url = url
         self.signed = signed
-        self.persistent = persistent
+        self.persisted = persisted
         self.clientcert = clientcert
         self.clientkey = clientkey
         self.cacert = cacert

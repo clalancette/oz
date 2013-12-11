@@ -77,7 +77,7 @@ tests = {
     "test-40-command-base64-type.tdl": True,
     "test-41-command-bogus-base64.tdl": False,
     "test-42-command-bogus-type.tdl": False,
-    "test-43-persistent-repos.tdl": True,
+    "test-43-persisted-repos.tdl": True,
     "test-44-version.tdl": True,
     "test-45-bogus-version.tdl": False,
     "test-46-duplicate-name.tdl": False,
@@ -156,7 +156,7 @@ def test():
                 yield '%s_%s' % (test_name, tst.__name__), handle_exception,\
                     tst, tdl_file
 
-def test_persistent(tdl='test-43-persistent-repos.tdl'):
+def test_persisted(tdl='test-43-persisted-repos.tdl'):
     # locate full path for tdl file
     tdl_prefix = ''
     for tdl_prefix in ['tests/tdl/', 'tdl/', '']:
@@ -170,12 +170,12 @@ def test_persistent(tdl='test-43-persistent-repos.tdl'):
     # Grab TDL object
     tdl = validate_ozlib(tdl_file)
 
-    def assert_persistent_value(persistent, value):
-        assert persistent == value, \
-            "expected %s, got %s" % (value, persistent)
+    def assert_persisted_value(persisted, value):
+        assert persisted == value, \
+            "expected %s, got %s" % (value, persisted)
 
     for repo in list(tdl.repositories.values()):
         if repo.name.endswith('true'):
-            yield '%s_%s' % (test_name, repo.name), assert_persistent_value, repo.persistent, True
+            yield '%s_%s' % (test_name, repo.name), assert_persisted_value, repo.persisted, True
         else:
-            yield '%s_%s' % (test_name, repo.name), assert_persistent_value, repo.persistent, False
+            yield '%s_%s' % (test_name, repo.name), assert_persisted_value, repo.persisted, False
