@@ -102,27 +102,15 @@ class Repository(object):
 
     name       - The name of this repository.
     url        - The URL of this repository.
-    (all remaining properties are optional with defaults in parentheses)
-    signed     - Whether this repository is signed (no)
-    persisted - Whether this repository should remain in the final
-                 image (yes)
-    clientcert - An SSL client certificate to access protected content -
-                 e.g. pulp repos (None)
-    clientkey  - An SSL client key to access protected content - e.g. pulp
-                 repos (None)
-    cacert     - A CA cert to be used to validate an https repository (None)
-    sslverify  - Whether yum should check the server cert against known CA
-                 certs (no)
+    signed     - Whether this repository is signed
+    persisted  - Whether this repository should remain in the final image
+    sslverify  - Whether SSL certificates should be verified
     """
-    def __init__(self, name, url, signed, persisted, clientcert, clientkey,
-                 cacert, sslverify):
+    def __init__(self, name, url, signed, persisted, sslverify):
         self.name = name
         self.url = url
         self.signed = signed
         self.persisted = persisted
-        self.clientcert = clientcert
-        self.clientkey = clientkey
-        self.cacert = cacert
         self.sslverify = sslverify
 
 class Package(object):
@@ -460,7 +448,7 @@ class TDL(object):
         Internal method to add the list of lxml.etree nodes from reposlist into
         the self.repositories dictionary.
         """
-        def _get_optional_repo_bool(repo, name, default='no'):
+        def _get_optional_repo_bool(repo, name, default):
             """
             Internal method to get an option boolean from a repo XML section.
             """
@@ -483,35 +471,14 @@ class TDL(object):
                                              "localhost.localdomain"]:
                 raise oz.OzException.OzException("Repositories cannot be localhost, since they must be reachable from the guest operating system")
 
-            signed = _get_optional_repo_bool(repo, 'signed')
+            signed = _get_optional_repo_bool(repo, 'signed', 'no')
 
-            persist = _get_optional_repo_bool(repo, 'persisted', default='yes')
+            persist = _get_optional_repo_bool(repo, 'persisted', 'yes')
 
-            sslverify = _get_optional_repo_bool(repo, 'sslverify')
-
-            clientcert = _xml_get_value(repo, 'clientcert', 'clientcert',
-                                        optional=True)
-            if clientcert:
-                clientcert = clientcert.strip()
-
-            clientkey = _xml_get_value(repo, 'clientkey', 'clientkey',
-                                       optional=True)
-            if clientkey:
-                clientkey = clientkey.strip()
-
-            if clientkey and not clientcert:
-                raise oz.OzException.OzException("You cannot specify a clientkey without a clientcert")
-
-            cacert = _xml_get_value(repo, 'cacert', 'cacert', optional=True)
-            if cacert:
-                cacert = cacert.strip()
-
-            if sslverify and not cacert:
-                raise oz.OzException.OzException("If sslverify is true you must also provide a ca cert")
+            sslverify = _get_optional_repo_bool(repo, 'sslverify', 'no')
 
             # no need to delete - if the name matches we just overwrite here
             self.repositories[name] = Repository(name, url, signed, persist,
-                                                 clientcert, clientkey, cacert,
                                                  sslverify)
 
     def _add_isoextras(self, extraspath, element_type):

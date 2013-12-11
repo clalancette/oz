@@ -173,26 +173,9 @@
                     </element>
                   </optional>
                   <optional>
-                    <interleave>
-                      <element name='clientcert'>
-                        <text/>
-                      </element>
-                      <optional>
-                        <element name='clientkey'>
-                          <text/>
-                        </element>
-                      </optional>
-                    </interleave>
-                  </optional>
-                  <optional>
-                    <interleave>
-                      <element name='sslverify'>
-                        <ref name='bool'/>
-                      </element>
-                      <element name='cacert'>
-                        <text/>
-                      </element>
-                    </interleave>
+                    <element name='sslverify'>
+                      <ref name='bool'/>
+                    </element>
                   </optional>
                 </interleave>
               </element>
