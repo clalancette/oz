@@ -89,7 +89,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                                            "-b", "isolinux/isolinux.bin",
                                            "-c", "isolinux/boot.cat",
                                            "-boot-load-size", "4",
-                                           "-boot-info-table", "-v", "-v",
+                                           "-boot-info-table", "-v",
                                            "-o", self.output_iso,
                                            self.iso_contents],
                                           printfn=self.log.debug)

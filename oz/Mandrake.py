@@ -89,7 +89,7 @@ label customiso
                                            "-c", "isolinux/boot.cat",
                                            "-boot-load-size", "4",
                                            "-cache-inodes", "-boot-info-table",
-                                           "-v", "-v", "-o", self.output_iso,
+                                           "-v", "-o", self.output_iso,
                                            self.iso_contents],
                                           printfn=self.log.debug)
 
@@ -153,7 +153,7 @@ label customiso
                                            "-J", "-cache-inodes",
                                            "-b", "Boot/cdrom.img",
                                            "-c", "Boot/boot.cat",
-                                           "-v", "-v", "-o", self.output_iso,
+                                           "-v", "-o", self.output_iso,
                                            self.iso_contents],
                                           printfn=self.log.debug)
 

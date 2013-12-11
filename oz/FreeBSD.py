@@ -42,7 +42,7 @@ class FreeBSD(oz.Guest.CDGuest):
         self.log.debug("Generating new ISO")
         oz.ozutil.subprocess_check_output(["genisoimage",
                                            "-R", "-no-emul-boot",
-                                           "-b", "boot/cdboot",
+                                           "-b", "boot/cdboot", "-v",
                                            "-o", self.output_iso,
                                            self.iso_contents],
                                           printfn=self.log.debug)

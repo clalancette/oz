@@ -98,7 +98,7 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
                                            "-boot-load-size", "4",
                                            "-boot-info-table", "-graft-points",
                                            "-iso-level", "4", "-pad",
-                                           "-allow-leading-dots", "-l",
+                                           "-allow-leading-dots", "-l", "-v",
                                            "-o", self.output_iso,
                                            self.iso_contents],
                                           printfn=self.log.debug)
