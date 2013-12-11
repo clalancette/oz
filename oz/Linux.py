@@ -196,16 +196,6 @@ class LinuxCDGuest(oz.Guest.CDGuest):
     def _customize_repos(self, guestaddr):
         raise oz.OzException.OzException("Customization is not implemented for this guest type")
 
-    def _remove_repos(self, guestaddr):
-        """
-        Method to remove all files associated with non-persistent repos
-        """
-        for repo in list(self.tdl.repositories.values()):
-            if not repo.persistent:
-                for remotefile in repo.remotefiles:
-                    self.guest_execute_command(guestaddr,
-                                               "rm -f %s" % (remotefile))
-
     def do_customize(self, guestaddr):
         """
         Method to customize by installing additional packages and files.
@@ -229,9 +219,6 @@ class LinuxCDGuest(oz.Guest.CDGuest):
         self.log.debug("Running custom commands")
         for cmd in self.tdl.commands:
             self.guest_execute_command(guestaddr, cmd.read())
-
-        self.log.debug("Removing non-persisted repos")
-        self._remove_repos(guestaddr)
 
         self.log.debug("Syncing")
         self.guest_execute_command(guestaddr, 'sync')
