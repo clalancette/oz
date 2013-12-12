@@ -41,7 +41,7 @@ class RHEL7Guest(oz.RedHat.RedHatLinuxCDYumGuest):
         """
         self._copy_kickstart(os.path.join(self.iso_contents, "ks.cfg"))
 
-        initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
+        initrdline = "  append initrd=initrd.img ks=cdrom:/dev/cdrom:/ks.cfg"
         if self.tdl.installtype == "url":
             initrdline += " repo=" + self.url + "\n"
         else:
