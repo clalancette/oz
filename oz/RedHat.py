@@ -763,6 +763,7 @@ class RedHatLinuxCDYumGuest(RedHatLinuxCDGuest):
             with open(localname, 'w') as f:
                 f.write("[%s]\n" % repo.name.replace(" ", "_"))
                 f.write("name=%s\n" % repo.name)
+                f.write("baseurl=%s\n" % repo.url)
                 f.write("skip_if_unavailable=1\n")
                 f.write("enabled=1\n")
 
