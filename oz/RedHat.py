@@ -786,6 +786,14 @@ class RedHatLinuxCDYumGuest(RedHatLinuxCDGuest):
     def _install_packages(self, guestaddr, packstr):
         self.guest_execute_command(guestaddr, 'yum -y install %s' % (packstr))
 
+    def _remove_repos(self, guestaddr):
+        for repo in list(self.tdl.repositories.values()):
+            if not repo.persisted:
+                filename = os.path.join("/etc/yum.repos.d",
+                                        repo.name.replace(" ", "_") + ".repo")
+                self.guest_execute_command(guestaddr, "rm -f " + filename,
+                                           timeout=30)
+
 class RedHatFDGuest(oz.Guest.FDGuest):
     """
     Class for RedHat-based floppy guests.

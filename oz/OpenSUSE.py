@@ -398,6 +398,12 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
         self.guest_execute_command(guestaddr,
                                    'zypper -n install %s' % (packstr))
 
+    def _remove_repos(self, guestaddr):
+        for repo in list(self.tdl.repositories.values()):
+            if not repo.persisted:
+                self.guest_execute_command(guestaddr,
+                                           "zypper removerepo %s" % (repo.name))
+
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):
     """

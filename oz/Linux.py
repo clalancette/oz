@@ -182,19 +182,22 @@ class LinuxCDGuest(oz.Guest.CDGuest):
         """
         Default method to set the guest up for remote access.
         """
-        raise oz.OzException.OzException("ICICLE generation and customization is not implemented for this guest type")
+        raise oz.OzException.OzException("ICICLE generation and customization is not implemented for guest %s" % (self.tdl.distro))
 
     def _collect_teardown(self, libvirt_xml):
         """
         Method to reverse the changes done in _collect_setup.
         """
-        raise oz.OzException.OzException("ICICLE generation and customization is not implemented for this guest type")
+        raise oz.OzException.OzException("ICICLE generation and customization is not implemented for guest %s" % (self.tdl.distro))
 
     def _install_packages(self, guestaddr, packstr):
-        raise oz.OzException.OzException("Customization is not implemented for this guest type")
+        raise oz.OzException.OzException("Customization is not implemented for guest %s" % (self.tdl.distro))
 
     def _customize_repos(self, guestaddr):
-        raise oz.OzException.OzException("Customization is not implemented for this guest type")
+        raise oz.OzException.OzException("Customization is not implemented for guest %s" % (self.tdl.distro))
+
+    def _remove_repos(self, guestaddr):
+        raise oz.OzException.OzException("Repository removal not implemented for guest %s" % (self.tdl.distro))
 
     def do_customize(self, guestaddr):
         """
@@ -219,6 +222,9 @@ class LinuxCDGuest(oz.Guest.CDGuest):
         self.log.debug("Running custom commands")
         for cmd in self.tdl.commands:
             self.guest_execute_command(guestaddr, cmd.read())
+
+        self.log.debug("Removing non-persisted repos")
+        self._remove_repos(guestaddr)
 
         self.log.debug("Syncing")
         self.guest_execute_command(guestaddr, 'sync')

@@ -594,6 +594,11 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
             os.unlink(self.kernelfname)
             raise
 
+    def _remove_repos(self, guestaddr):
+        # FIXME: until we switch over to doing repository add by hand (instead
+        # of using add-apt-repository), we can't really reliably implement this
+        pass
+
     def generate_install_media(self, force_download=False,
                                customize_or_icicle=False):
         """
