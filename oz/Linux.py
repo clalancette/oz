@@ -104,7 +104,7 @@ class LinuxCDGuest(oz.Guest.CDGuest):
         """
         Method to copy a file to the live guest.
         """
-        self.guest_execute_command(guestaddr, self.sshprivkey,
+        self.guest_execute_command(guestaddr,
                                    "mkdir -p " + os.path.dirname(destination),
                                    timeout)
 
