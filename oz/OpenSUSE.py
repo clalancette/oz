@@ -413,7 +413,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
         return OpenSUSEGuest(tdl, config, auto, output_disk, netdev, diskbus,
                              macaddress)
     if tdl.update in ["11.0", "11.1", "11.2", "11.3", "11.4", "12.1", "12.2",
-                      "12.3"]:
+                      "12.3", "13.1"]:
         if diskbus is None:
             diskbus = 'virtio'
         if netdev is None:
@@ -425,4 +425,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "OpenSUSE: 10.3, 11.0, 11.1, 11.2, 11.3, 11.4, 12.1, 12.2, 12.3"
+    return "OpenSUSE: 10.3, 11.0, 11.1, 11.2, 11.3, 11.4, 12.1, 12.2, 12.3, 13.1"
