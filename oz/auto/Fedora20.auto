@@ -1,0 +1,32 @@
+text
+
+auth --enableshadow --passalgo=sha512
+
+# Use CDROM installation media
+cdrom
+# Run the Setup Agent on first boot
+ignoredisk --only-use=vda
+# Keyboard layouts
+keyboard --vckeymap=us --xlayouts='us'
+# System language
+lang en_US.UTF-8
+
+# Network information
+network --bootproto=dhcp --device=eth0 --ipv6=auto --activate
+network --hostname=localhost.localdomain
+# Root password
+rootpw %ROOTPW%
+# System timezone
+timezone America/New_York --isUtc
+# System bootloader configuration
+bootloader --location=mbr --boot-drive=vda
+autopart --type=lvm
+# Partition clearing information
+clearpart --none --initlabel
+
+reboot
+
+%packages
+@core
+
+%end
