@@ -1,0 +1,37 @@
+text
+
+auth --enableshadow --passalgo=sha512
+
+# Use CDROM installation media
+cdrom
+# Run the Setup Agent on first boot
+ignoredisk --only-use=vda
+# Keyboard layouts
+keyboard --vckeymap=us --xlayouts='us'
+# System language
+lang en_US.UTF-8
+
+# Network information
+network --device eth0 --bootproto dhcp
+# Root password
+rootpw %ROOTPW%
+# System timezone
+timezone America/New_York --isUtc
+# System bootloader configuration
+bootloader --location=mbr --boot-drive=vda
+autopart --type=lvm
+# Partition clearing information
+clearpart --none --initlabel
+
+reboot
+
+%packages
+@core
+
+%end
+
+%post
+# Without this the NetworkManager announce script fires too early and gives a blank IP
+# Once this is fixed the sed below will become a NOOP
+sed -i '/Before=network\.target$/c\Before=network\.target network\.service' /usr/lib/systemd/system/NetworkManager.service
+%end
