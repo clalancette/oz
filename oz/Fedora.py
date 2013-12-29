@@ -37,7 +37,7 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
         oz.RedHat.RedHatLinuxCDYumGuest.__init__(self, tdl, config, auto,
                                                  output_disk, nicmodel, diskbus,
                                                  True, True, directkernel,
-                                            macaddress)
+                                                 macaddress)
 
         self.haverepo = haverepo
         self.brokenisomethod = brokenisomethod
@@ -98,8 +98,12 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
             netdev = 'virtio'
         if diskbus is None:
             diskbus = 'virtio'
-        return FedoraGuest(tdl, config, auto, netdev, True, diskbus, True,
-                           output_disk, macaddress)
+        if tdl.update in [ "19" ]:
+            brokenisomethod = False
+        else:
+            brokenisomethod = True
+        return FedoraGuest(tdl, config, auto, netdev, True, diskbus,
+                           brokenisomethod, output_disk, macaddress)
     if tdl.update in ["7", "8", "9"]:
         return FedoraGuest(tdl, config, auto, netdev, False, diskbus, False,
                            output_disk, macaddress)
