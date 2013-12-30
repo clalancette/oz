@@ -98,7 +98,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
             netdev = 'virtio'
         if diskbus is None:
             diskbus = 'virtio'
-        if tdl.update in [ "19" ]:
+        if tdl.update in [ "18", "19", "20" ]:
             brokenisomethod = False
         else:
             brokenisomethod = True
