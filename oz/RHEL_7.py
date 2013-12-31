@@ -45,7 +45,11 @@ class RHEL7Guest(oz.RedHat.RedHatLinuxCDYumGuest):
         if self.tdl.installtype == "url":
             initrdline += " repo=" + self.url + "\n"
         else:
-            initrdline += "\n"
+            # RHEL6 dropped this command line directive due to an Anaconda bug that
+            # has since been fixed.
+            # Note that this used to be "method=" but that has been depricated for some
+            # time.
+            initrdline += " repo=cdrom:/dev/cdrom"
         self._modify_isolinux(initrdline)
 
     def get_auto_path(self):
