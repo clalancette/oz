@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012,2013  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012,2013,2014  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -86,6 +86,8 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
                 raise oz.OzException.OzException("Ubuntu %s installs can only be done using the alternate or server CDs" % (self.tdl.update))
             if customize_or_icicle:
                 raise oz.OzException.OzException("Ubuntu customization or ICICLE generation can only be done using the alternate or server CDs")
+            if self.tdl.update == "13.10":
+                raise oz.OzException.OzException("Ubuntu 13.10 installs can only be done with the server CD")
 
     def _copy_preseed(self, outname):
         """
