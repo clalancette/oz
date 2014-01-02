@@ -73,6 +73,9 @@ class RHL9Guest(oz.RedHat.RedHatLinuxCDGuest):
         self._modify_isolinux(initrdline)
 
     def get_auto_path(self):
+        """
+        Method to create the correct path to the RHL kickstart files.
+        """
         return oz.ozutil.generate_full_auto_path("RedHatLinux" + self.tdl.update + ".auto")
 
 class RHL7xand8Guest(oz.RedHat.RedHatFDGuest):

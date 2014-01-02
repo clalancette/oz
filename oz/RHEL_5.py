@@ -95,6 +95,9 @@ class RHEL5Guest(oz.RedHat.RedHatLinuxCDYumGuest):
                     raise oz.OzException.OzException("Invalid boot.iso for SLC-5 URL install")
 
     def get_auto_path(self):
+        """
+        Method to create the correct path to the RHEL 5 kickstart file.
+        """
         return oz.ozutil.generate_full_auto_path("RHEL5.auto")
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,

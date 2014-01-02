@@ -87,6 +87,9 @@ class RHEL4Guest(oz.RedHat.RedHatLinuxCDGuest):
                     raise oz.OzException.OzException("Invalid boot.iso for CentOS-4 URL install")
 
     def get_auto_path(self):
+        """
+        Method to create the correct path to the RHEL 4 kickstart file.
+        """
         return oz.ozutil.generate_full_auto_path("RHEL4.auto")
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,

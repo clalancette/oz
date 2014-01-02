@@ -167,6 +167,9 @@ PROMPT 0
 
 
     def get_auto_path(self):
+        """
+        Method to create the correct path to the Ubuntu preseed files.
+        """
         autoname = self.tdl.distro + self.tdl.update + ".auto"
         sp = self.tdl.update.split('.')
         if len(sp) == 3:

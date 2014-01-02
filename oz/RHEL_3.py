@@ -90,6 +90,9 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             # information.  We just pass through here, doing nothing
 
     def get_auto_path(self):
+        """
+        Method to create the correct path to the RHEL 3 kickstart files.
+        """
         return oz.ozutil.generate_full_auto_path("RHEL3.auto")
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
