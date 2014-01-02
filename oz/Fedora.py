@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012,2013  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012,2013,2014  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -30,14 +30,20 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
     Class for Fedora 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, and 20 installation.
     """
     def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,
-                 brokenisomethod, output_disk=None, macaddress=None):
+                 brokenisomethod, output_disk=None, macaddress=None,
+                 assumed_update=None):
         directkernel = "cpio"
         if tdl.update in ["16", "17"]:
             directkernel = None
+        self.assumed_update = assumed_update
+
         oz.RedHat.RedHatLinuxCDYumGuest.__init__(self, tdl, config, auto,
                                                  output_disk, nicmodel, diskbus,
                                                  True, True, directkernel,
                                                  macaddress)
+
+        if self.assumed_update is not None:
+            self.log.warning("==== WARN: TDL contains Fedora update %s, which is newer than Oz knows about; pretending this is Fedora %s, but this may fail ====" % (tdl.update, assumed_update))
 
         self.haverepo = haverepo
         self.brokenisomethod = brokenisomethod
@@ -87,26 +93,51 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
             createpart = True
         return self._internal_generate_diskimage(size, force, createpart)
 
+    def get_auto_path(self):
+        """
+        Method to create the correct path to the Fedora kickstart files.
+        """
+        # If we are doing our best with an unknown Fedora update, use the
+        # newest known auto file; otherwise, do the usual thing.
+        if self.assumed_update is not None:
+            return oz.ozutil.generate_full_auto_path(self.tdl.distro + self.assumed_update + ".auto")
+        else:
+            return oz.ozutil.generate_full_auto_path(self.tdl.distro + self.tdl.update + ".auto")
+
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):
     """
     Factory method for Fedora installs.
     """
-    if tdl.update in ["10", "11", "12", "13", "14", "15", "16", "17", "18",
-                      "19", "20"]:
+    newer_distros = ["18", "19", "20"]
+
+    if int(tdl.update) > int(newer_distros[-1]):
         if netdev is None:
             netdev = 'virtio'
         if diskbus is None:
             diskbus = 'virtio'
-        if tdl.update in [ "18", "19", "20" ]:
-            brokenisomethod = False
-        else:
-            brokenisomethod = True
-        return FedoraGuest(tdl, config, auto, netdev, True, diskbus,
-                           brokenisomethod, output_disk, macaddress)
+        return FedoraGuest(tdl, config, auto, netdev, True, diskbus, False,
+                           output_disk, macaddress, newer_distros[-1])
+
+    if tdl.update in newer_distros:
+        if netdev is None:
+            netdev = 'virtio'
+        if diskbus is None:
+            diskbus = 'virtio'
+        return FedoraGuest(tdl, config, auto, netdev, True, diskbus, False,
+                           output_disk, macaddress, None)
+
+    if tdl.update in ["10", "11", "12", "13", "14", "15", "16", "17"]:
+        if netdev is None:
+            netdev = 'virtio'
+        if diskbus is None:
+            diskbus = 'virtio'
+        return FedoraGuest(tdl, config, auto, netdev, True, diskbus, True,
+                           output_disk, macaddress, None)
+
     if tdl.update in ["7", "8", "9"]:
         return FedoraGuest(tdl, config, auto, netdev, False, diskbus, False,
-                           output_disk, macaddress)
+                           output_disk, macaddress, None)
 
 def get_supported_string():
     """
