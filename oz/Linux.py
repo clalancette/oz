@@ -27,6 +27,9 @@ import oz.Guest
 import oz.OzException
 
 class LinuxCDGuest(oz.Guest.CDGuest):
+    """
+    Class for Linux installation.
+    """
     def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus,
                  iso_allowed, url_allowed, macaddress):
         oz.Guest.CDGuest.__init__(self, tdl, config, auto, output_disk,
@@ -51,7 +54,7 @@ class LinuxCDGuest(oz.Guest.CDGuest):
                 self.log.debug("Succeeded")
                 success = True
                 break
-            except:
+            except oz.ozutil.SubprocessException:
                 # ensure that we spent at least one second before trying again
                 end = time.time()
                 if (end - start) < 1:
@@ -191,12 +194,24 @@ class LinuxCDGuest(oz.Guest.CDGuest):
         raise oz.OzException.OzException("ICICLE generation and customization is not implemented for guest %s" % (self.tdl.distro))
 
     def _install_packages(self, guestaddr, packstr):
+        """
+        Internal method to install packages; expected to be overriden by
+        child classes.
+        """
         raise oz.OzException.OzException("Customization is not implemented for guest %s" % (self.tdl.distro))
 
     def _customize_repos(self, guestaddr):
+        """
+        Internal method to customize repositories; expected to be overriden by
+        child classes.
+        """
         raise oz.OzException.OzException("Customization is not implemented for guest %s" % (self.tdl.distro))
 
     def _remove_repos(self, guestaddr):
+        """
+        Internal method to remove repositories; expected to be overriden by
+        child classes.
+        """
         raise oz.OzException.OzException("Repository removal not implemented for guest %s" % (self.tdl.distro))
 
     def do_customize(self, guestaddr):
