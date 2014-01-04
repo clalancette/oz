@@ -23,6 +23,11 @@ import shutil
 import re
 import os
 import gzip
+import tempfile
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 
 import oz.Linux
 import oz.ozutil
@@ -465,7 +470,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
             repo = ''.join(['deb', info, "\n", 'deb-src', info, "\n"])
             return repo
 
-        def setup_key_server(server, key):
+        def setup_key_from_server(server, key):
             """
             Fetch GPG from a specific server and add locally
             """
@@ -475,12 +480,38 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
 
             self.guest_execute_command(guestaddr, "apt-key adv --keyserver %s --recv %s" % (server, key))
 
-        def get_fingerprints():
+        def setup_key_from_uri(uri):
+            """
+            Fetch a key file remotely, upload to guest and add the keys from the file
+            """
+            parts = urlparse(uri)
+            key_name = parts.path.split('/').pop()
+            cached_keyfile = '/tmp/' + key_name
+
+            # Fetch file
+            if parts.scheme in ['http', 'https']:
+                info = oz.ozutil.http_get_header(uri)
+                if info['HTTP-Code'] != 200:
+                    raise oz.OzException.OzException("Could not find %s" % (uri))
+
+                self.log.debug('About to download %s' % uri)
+                with tempfile.NamedTemporaryFile() as fp:
+                    oz.ozutil.http_download_file(uri, fp.fileno(), False, self.log)
+                    self.guest_live_upload(guestaddr, fp.name, cached_keyfile)
+
+            installed_keys = get_fingerprints('apt-key finger')
+            proposed_keys = get_fingerprints("gpg --with-fingerprint %s" % cached_keyfile)
+            common = set(installed_keys) & set(proposed_keys)
+            if common != set(proposed_keys):
+                self.guest_execute_command(guestaddr, 'apt-key add %s' % cached_keyfile)
+                self.guest_execute_command(guestaddr, 'rm %s' % cached_keyfile)
+
+        def get_fingerprints(cmd='apt-key finger'):
             """
             Fetches a fingerprint of a given key
             """
             keys = []
-            out, err, code = self.guest_execute_command(guestaddr, 'apt-key finger')
+            out, err, code = self.guest_execute_command(guestaddr, cmd)
             for line in out.split("\n"):
                 match = re.match(r'^\s+Key fingerprint = ([0-9A-F ]+)', line)
                 if match:
@@ -496,7 +527,9 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
             else:
                 # Process any keys if presented with them
                 if repo.keyserver and repo.key:
-                    setup_key_server(repo.keyserver, repo.key)
+                    setup_key_from_server(repo.keyserver, repo.key)
+                elif repo.key:
+                    setup_key_from_uri(repo.key)
 
                 # Save config file locally and build it, then upload to guest
                 # alphanumeric, hypen, dot and underscore allowed.

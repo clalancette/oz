@@ -224,14 +224,14 @@
                     </element>
                   </optional>
                   <optional>
-                    <interleave>
-                      <element name='keyserver'>
-                        <text/>
-                      </element>
-                      <element name='key'>
-                        <text/>
-                      </element>
-                    </interleave>
+                    <element name='keyserver'>
+                      <text/>
+                    </element>
+                  </optional>
+                  <optional>
+                    <element name='key'>
+                      <text/>
+                    </element>
                   </optional>
                 </interleave>
               </element>
