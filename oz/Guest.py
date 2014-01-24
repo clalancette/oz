@@ -517,7 +517,11 @@ class Guest(object):
         self.lxml_subelement(vol, "name", filename)
         self.lxml_subelement(vol, "allocation", "0")
         target = self.lxml_subelement(vol, "target")
-        self.lxml_subelement(target, "format", None, {"type":self.image_type})
+        if backing_filename:
+            # Only qcow2 supports image creation using a backing file
+            self.lxml_subelement(target, "format", None, {"type":"qcow2"})
+        else:
+            self.lxml_subelement(target, "format", None, {"type":self.image_type})
         # FIXME: this makes the permissions insecure, but is needed since
         # libvirt launches guests as qemu:qemu
         permissions = self.lxml_subelement(target, "permissions")
