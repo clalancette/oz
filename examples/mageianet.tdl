@@ -1,0 +1,20 @@
+<!-- An example that shows how to do a basic install of Mageia 4
+     x86_64 using the ISO type install from network boot image
+-->
+<template>
+  <name>Mageia</name>
+  <os>
+    <name>Mageia</name>
+    <version>4</version>
+    <arch>x86_64</arch>
+    <install type='iso'>
+      <iso>http://ftp.tku.edu.tw/Linux/Mageia/distrib/cauldron/x86_64/install/images/boot-nonfree.iso</iso>
+    </install>
+  </os>
+  <repositories>
+  <repository name="install">
+  <url>http://ftp.tku.edu.tw/Linux/Mageia/distrib/cauldron/x86_64/</url>
+  </repository>
+  </repositories>
+  <description>Mageia 4</description>
+</template>

@@ -1,0 +1,15 @@
+<!-- An example that shows how to do a basic install of Mageia 4
+     x86_64 using the ISO type install from a local file.
+-->
+<template>
+  <name>Mageia</name>
+  <os>
+    <name>Mageia</name>
+    <version>4</version>
+    <arch>x86_64</arch>
+    <install type='iso'>
+      <iso>file:///home/joe/git/oz/Mageia-4-alpha2-x86_64-DVD.iso</iso>
+    </install>
+  </os>
+  <description>Mageia 4</description>
+</template>

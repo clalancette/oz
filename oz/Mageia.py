@@ -25,6 +25,11 @@ import re
 import oz.Guest
 import oz.ozutil
 import oz.OzException
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
+
 
 class MageiaGuest(oz.Guest.CDGuest):
     """
@@ -32,12 +37,17 @@ class MageiaGuest(oz.Guest.CDGuest):
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
+        if netdev is None:
+            netdev = "virtio"
+        if diskbus is None:
+            diskbus = "virtio"
         oz.Guest.CDGuest.__init__(self, tdl, config, auto, output_disk, netdev,
                                   None, None, diskbus, True, False, macaddress)
 
         self.mageia_arch = self.tdl.arch
-        if self.mageia_arch == "i386":
-            self.mageia_arch = "i586"
+        self.output_floppy = os.path.join(self.output_dir,
+                                          self.tdl.name + "-" + self.tdl.installtype + "-oz.img")
+
 
     def _modify_iso(self):
         """
@@ -45,42 +55,61 @@ class MageiaGuest(oz.Guest.CDGuest):
         """
         self.log.debug("Modifying ISO")
 
-        self.log.debug("Copying cfg file")
+        self.log.debug("Copying cfg file to floppy image")
 
-        if self.tdl.update in ["4"]:
-            pathdir = os.path.join(self.iso_contents, self.mageia_arch)
-        else:
+        pathdir = os.path.join(self.iso_contents, self.mageia_arch)
+        if not os.path.exists(pathdir):
             pathdir = self.iso_contents
+        isolinuxdir = os.path.join(pathdir, "isolinux")
+        if not os.path.exists(isolinuxdir):
+            isolinuxdir = os.path.join(self.iso_contents, "isolinux")
 
-        outname = os.path.join(pathdir, "auto_inst.cfg")
+        outname = os.path.join(self.icicle_tmp, "auto_inst.cfg")
 
-        if self.default_auto_file():
+        def _cfg_sub(line):
+            """
+            Method that is called back from oz.ozutil.copy_modify_file() to
+            modify preseed files as appropriate for Mageia.
+            """
+            if re.search("%ROOTPW%", line):
+                return line.replace("%ROOTPW%", "'" + self.rootpw + "'")
+            else:
+                return line
+        oz.ozutil.copy_modify_file(self.auto, outname, _cfg_sub)
 
-            def _cfg_sub(line):
-                """
-                Method that is called back from oz.ozutil.copy_modify_file() to
-                modify preseed files as appropriate for Mageia.
-                """
-                if re.search("'password' =>", line):
-                    return "			'password' => '" + self.rootpw + "',\n"
-                else:
-                    return line
-
-            oz.ozutil.copy_modify_file(self.auto, outname, _cfg_sub)
+        try:
+            os.unlink(self.output_floppy)
+        except:
+            pass
+        exit
+        oz.ozutil.subprocess_check_output(["/sbin/mkfs.msdos", "-C",
+                                           self.output_floppy, "1440"])
+        oz.ozutil.subprocess_check_output(["mcopy", "-n", "-o", "-i",
+                                           self.output_floppy, outname,
+                                           "::AUTO_INST.CFG"])
+        try:
+            os.unlink(outname)
+        except:
+            pass
+        if not os.path.exists(os.path.join(pathdir,
+                                           "media")):
+            url = urlparse.urlparse(self.tdl.repositories['install'].url)
+            install_flags=  "automatic=method:%s,ser:%s,dir:%s,int:eth0,netw:dhcp" % (url.scheme, url.hostname, url.path)
+            if url.scheme != "http" and url.scheme != "ftp":
+                raise oz.OzException.OzException("Unknown boot method install flags='%s'" % install_flags)            
         else:
-            shutil.copy(self.auto, outname)
-
+            install_flags = "automatic=method:cdrom"
         self.log.debug("Modifying isolinux.cfg")
-        isolinuxcfg = os.path.join(pathdir, "isolinux", "isolinux.cfg")
+        isolinuxcfg = os.path.join(isolinuxdir, "isolinux.cfg")
         with open(isolinuxcfg, 'w') as f:
             f.write("""\
 default customiso
 timeout 1
 prompt 0
 label customiso
-  kernel alt0/vmlinuz
-  append initrd=alt0/all.rdz ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom kickstart=auto_inst.cfg
-""")
+  kernel %s/vmlinuz
+  append initrd=%s/all.rdz splash kickstart=floppy %s
+""" % (self.mageia_arch, self.mageia_arch, install_flags))
 
     def _generate_new_iso(self):
         """
@@ -88,29 +117,44 @@ label customiso
         """
         self.log.info("Generating new ISO")
 
-        isolinuxdir = ""
-        if self.tdl.update in ["4"]:
-            isolinuxdir = self.mageia_arch
+        if os.path.exists(os.path.join(self.iso_contents, self.mageia_arch,
+                                       "isolinux")):
+            isolinuxdir = os.path.join(self.mageia_arch, "isolinux")
+        else:
+            isolinuxdir = "isolinux"
 
-        isolinuxbin = os.path.join(isolinuxdir, "isolinux/isolinux.bin")
-        isolinuxboot = os.path.join(isolinuxdir, "isolinux/boot.cat")
+        isolinuxbin = os.path.join(isolinuxdir, "isolinux.bin")
+        isolinuxboot = os.path.join(isolinuxdir, "boot.cat")
 
         oz.ozutil.subprocess_check_output(["genisoimage", "-r", "-V", "Custom",
                                            "-J", "-l", "-no-emul-boot",
                                            "-b", isolinuxbin,
                                            "-c", isolinuxboot,
+                                           "-input-charset", "utf-8",
                                            "-boot-load-size", "4",
                                            "-cache-inodes", "-boot-info-table",
                                            "-v", "-o", self.output_iso,
                                            self.iso_contents],
                                           printfn=self.log.debug)
+    def _do_install(self, timeout=None, force=False, reboots=0,
+                    kernelfname=None, ramdiskfname=None, cmdline=None):
+        fddev = self._InstallDev("floppy", self.output_floppy, "fda")
+        return oz.Guest.CDGuest._do_install(self, timeout, force, reboots,
+                                            kernelfname, ramdiskfname, cmdline,
+                                            [fddev])
+    def cleanup_install(self):
+        try:
+            os.unlink(self.output_floppy)
+        except:
+            pass
+        return oz.Guest.CDGuest.cleanup_install(self)
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):
     """
     Factory method for Mageia installs.
     """
-    if tdl.update in ["4"]:
+    if tdl.update in ["4", "cauldron"]:
         return MageiaGuest(tdl, config, auto, output_disk, netdev, diskbus,
                            macaddress)
 
@@ -118,4 +162,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Mageia: 4"
+    return "Mageia: 4, cauldron"
