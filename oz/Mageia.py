@@ -45,8 +45,6 @@ class MageiaGuest(oz.Guest.CDGuest):
                                   None, None, diskbus, True, False, macaddress)
 
         self.mageia_arch = self.tdl.arch
-        if self.mageia_arch == "i386":
-            self.mageia_arch = "i586"
         self.output_floppy = os.path.join(self.output_dir,
                                           self.tdl.name + "-" + self.tdl.installtype + "-oz.img")
 
