@@ -154,7 +154,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for Mageia installs.
     """
-    if tdl.update in ["4"]:
+    if tdl.update in ["4", "cauldron"]:
         return MageiaGuest(tdl, config, auto, output_disk, netdev, diskbus,
                            macaddress)
 
@@ -162,4 +162,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Mageia: 4"
+    return "Mageia: 4, cauldron"
