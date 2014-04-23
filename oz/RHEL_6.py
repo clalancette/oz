@@ -71,4 +71,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "RHEL/OEL/CentOS/Scientific Linux{,CERN} 6: 0, 1, 2, 3, 4"
+    return "RHEL/OEL/CentOS/Scientific Linux{,CERN} 6: 0, 1, 2, 3, 4, 5"
