@@ -533,7 +533,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
 
                 # Save config file locally and build it, then upload to guest
                 # alphanumeric, hypen, dot and underscore allowed.
-                filename = re.sub(r'([^\.\-\_\w]|_)+', '', repo.name.replace(" ", "_")) + ".list"
+                filename = re.sub(r'([^\.\-\_\w])+', '', repo.name.replace(" ", "_")) + ".list"
                 localname = os.path.join(self.icicle_tmp, filename)
                 with open(localname, 'w') as handle:
                     # Get fragments from URL
