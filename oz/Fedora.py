@@ -24,6 +24,7 @@ import os
 import oz.ozutil
 import oz.RedHat
 import oz.OzException
+import lxml.etree
 
 class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
     """
@@ -103,6 +104,39 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
             return oz.ozutil.generate_full_auto_path(self.tdl.distro + self.assumed_update + ".auto")
         else:
             return oz.ozutil.generate_full_auto_path(self.tdl.distro + self.tdl.update + ".auto")
+
+    def _generate_serial_xml(self, devices, install_stage):
+        """
+        Method to generate the serial portion of the libvirt XML.
+        """
+        if install_stage and int(self.tdl.update) >= 14:
+            #Newer versions of Anaconda look for a named virtio chanel and, if it is present
+            #pass a great deal of helpful debug info over it.  This change to the libvirt XML
+            #allows Oz to capture and log that information
+	    serial = self.lxml_subelement(devices, "channel", None, {'type':'unix'})
+	    self.lxml_subelement(serial, "source", None,
+				  {'mode':'bind', 'path':self.listen_domain_socket})
+	    self.lxml_subelement(serial, "protocol", None, {'type':'raw'})
+	    self.lxml_subelement(serial, "target", None, {'type':'virtio', 'name':'org.fedoraproject.anaconda.log.0'})
+	    self.lxml_subelement(serial, "address", None, {'type':'virtio-serial', 'controller':'0', 'bus':'0', 'port':'0'})
+        else:
+            return super(FedoraGuest, self)._generate_serial_xml(devices, install_stage)
+
+    def _modify_libvirt_xml_for_serial(self, libvirt_xml):
+        """
+        Internal method to take input libvirt XML (which may have been provided
+        by the user) and add an appropriate serial section so that guest
+        announcement works properly.
+        NOTE: Using this function implies that we are doing a customize, not an initial install
+        We override here to delete the virtio section above if it was created, then call back to
+        the parent to delete any normal serial section and let it finish creating the new serial secion.
+        """
+        input_doc = lxml.etree.fromstring(libvirt_xml)
+        channelNodes = input_doc.xpath("/domain/devices/channel")
+        for node in channelNodes:
+            print "Removing node " + str(node)
+            node.getparent().remove(node)
+        return super(FedoraGuest, self)._modify_libvirt_xml_for_serial(lxml.etree.tostring(input_doc, pretty_print=True))
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):
