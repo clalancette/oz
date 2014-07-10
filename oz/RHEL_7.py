@@ -74,4 +74,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "RHEL 7: Beta"
+    return "RHEL 7: Beta, 0"
