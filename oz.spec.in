@@ -28,6 +28,10 @@ Requires: mtools
 Requires: python-uuid
 Requires: openssh-clients
 Requires: m2crypto
+%if 0%{?rhel} >= 6
+Requires: libguestfs-winsupport
+%endif
+Requires: winrm
 
 BuildRequires: python
 
