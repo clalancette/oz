@@ -1,5 +1,5 @@
 # Copyright (C) 2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012,2013  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2014  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -48,10 +48,9 @@ class MandrivaGuest(oz.Guest.CDGuest):
 
         self.log.debug("Copying cfg file")
 
+        pathdir = self.iso_contents
         if self.tdl.update in ["2007.0", "2008.0"]:
             pathdir = os.path.join(self.iso_contents, self.mandriva_arch)
-        else:
-            pathdir = self.iso_contents
 
         outname = os.path.join(pathdir, "auto_inst.cfg")
 

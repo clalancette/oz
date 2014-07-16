@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012,2013  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2014  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -133,10 +133,9 @@ class Guest(object):
         self.log = logging.getLogger('%s.%s' % (__name__,
                                                 self.__class__.__name__))
         self.uuid = uuid.uuid4()
+        self.macaddr = macaddress
         if macaddress is None:
             self.macaddr = oz.ozutil.generate_macaddress()
-        else:
-            self.macaddr = macaddress
 
         # configuration from 'paths' section
         self.output_dir = oz.ozutil.config_get_path(config, 'paths',
@@ -194,11 +193,10 @@ class Guest(object):
                                                                 False)
 
         # only pull a cached JEOS if it was built with the correct image type
+        jeos_extension = self.image_type
         if self.image_type == 'raw':
             # backwards compatible
             jeos_extension = 'dsk'
-        else:
-            jeos_extension = self.image_type
 
         self.jeos_filename = os.path.join(self.jeos_cache_dir,
                                           self.tdl.distro + self.tdl.update + self.tdl.arch + '.' + jeos_extension)
@@ -250,11 +248,9 @@ class Guest(object):
 
         oz.ozutil.mkdir_p(self.icicle_tmp)
 
-        self.disksize = self.tdl.disksize
-        if self.disksize is None:
-            self.disksize = 10
-        else:
-            self.disksize = int(self.disksize)
+        self.disksize = 10
+        if self.tdl.disksize is not None:
+            self.disksize = int(self.tdl.disksize)
 
         self.auto = auto
         if self.auto is None:
@@ -506,10 +502,10 @@ class Guest(object):
         self.log.info("Generating %dGB diskimage for %s" % (size,
                                                             self.tdl.name))
 
+        diskimage = self.diskimage
         if image_filename:
             diskimage = image_filename
-        else:
-            diskimage = self.diskimage
+
         directory = os.path.dirname(diskimage)
         filename = os.path.basename(diskimage)
 
@@ -523,11 +519,12 @@ class Guest(object):
         self.lxml_subelement(vol, "name", filename)
         self.lxml_subelement(vol, "allocation", "0")
         target = self.lxml_subelement(vol, "target")
+        imgtype = self.image_type
         if backing_filename:
             # Only qcow2 supports image creation using a backing file
-            self.lxml_subelement(target, "format", None, {"type":"qcow2"})
-        else:
-            self.lxml_subelement(target, "format", None, {"type":self.image_type})
+            imgtype = "qcow2"
+        self.lxml_subelement(target, "format", None, {"type":imgtype})
+
         # FIXME: this makes the permissions insecure, but is needed since
         # libvirt launches guests as qemu:qemu
         permissions = self.lxml_subelement(target, "permissions")
@@ -900,8 +897,8 @@ class Guest(object):
                     if self._get_csums(url, outdir, fd):
                         self.log.info("Original install media available, using cached version")
                         return
-                    else:
-                        self.log.info("Original available, but checksum mis-match; re-downloading")
+
+                    self.log.info("Original available, but checksum mis-match; re-downloading")
 
             # before fetching everything, make sure that we have enough
             # space on the filesystem to store the data we are about to download

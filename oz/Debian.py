@@ -1,5 +1,5 @@
 # Copyright (C) 2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012,2013  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2014  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -65,11 +65,10 @@ class DebianGuest(oz.Guest.CDGuest):
         else:
             shutil.copy(self.auto, outname)
 
+        # arch == i386
+        installdir = "/install.386"
         if self.tdl.arch == "x86_64":
             installdir = "/install.amd"
-        else:
-            # arch == i386
-            installdir = "/install.386"
 
         self.log.debug("Modifying isolinux.cfg")
         isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")

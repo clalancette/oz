@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012,2013  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2014  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -252,10 +252,9 @@ def sum_split(line, digest_bits):
 
     current += 1
 
+    filename = line[current:]
     if line[-1] == '\n':
         filename = line[current:-1]
-    else:
-        filename = line[current:]
 
     if escaped_filename:
         # FIXME: a \0 is not allowed in the sum file format, but
@@ -682,10 +681,9 @@ def parse_config(config_file):
     None, then the default configuration file is used.
     """
     if config_file is None:
+        config_file = "~/.oz/oz.cfg"
         if os.geteuid() == 0:
             config_file = "/etc/oz/oz.cfg"
-        else:
-            config_file = "~/.oz/oz.cfg"
     # if config_file was not None on input, then it was provided by the caller
     # and we use that instead
 
