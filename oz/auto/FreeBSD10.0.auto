@@ -15,6 +15,10 @@ echo "#ROOTPW#" | pw mod user root -h 0
 # Clean up any old dhclient stuff from the preparation stage.
 rm -f /var/db/dhclient.leases.*
 
+# The machine check fails pretty hard on a hypervisor running on top of AMD
+# processors, so just disable it.
+echo "hw.mca.enabled=0" >> /boot/loader.conf.local
+
 # The installer wants to reboot to the newly installed system, though at this
 # point we'd rather send the image to the cloud :)
 shutdown -p now
