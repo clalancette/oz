@@ -12,6 +12,9 @@ echo "sshd_enable=YES" >> /etc/rc.conf
 echo "hostname=$hostname" >> /etc/rc.conf
 echo "#ROOTPW#" | pw mod user root -h 0
 
+# Clean up any old dhclient stuff from the preparation stage.
+rm -f /var/db/dhclient.leases.*
+
 # The installer wants to reboot to the newly installed system, though at this
 # point we'd rather send the image to the cloud :)
 shutdown -p now
