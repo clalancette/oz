@@ -188,6 +188,9 @@
               <ref name='disk_size'/>
             </element>
           </element>
+          <element name='proxy'>
+              <ref name='proxy'/>
+          </element>
         </optional>
       </interleave>
     </element>
@@ -295,6 +298,11 @@
   <define name='disk_size'>
     <data type="string">
       <param name="pattern">([0-9]*) *([GT]?)</param>
+    </data>
+  </define>
+
+  <define name='proxy'>
+    <data type="string">
     </data>
   </define>
 
