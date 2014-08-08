@@ -289,6 +289,7 @@ class TDL(object):
         self.commands = self._parse_commands()
 
         self.disksize = self._parse_disksize()
+        self.proxy = _xml_get_value(self.doc, '/template/proxy', 'proxy')
 
         self.icicle_extra_cmd = _xml_get_value(self.doc,
                                                '/template/os/icicle/extra_command',

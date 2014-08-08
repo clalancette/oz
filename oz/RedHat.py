@@ -78,6 +78,8 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                                         self.tdl.distro + self.tdl.update + self.tdl.arch + "-ramdisk")
 
         self.cmdline = "method=" + self.url + " ks=file:/ks.cfg"
+	if self.tdl.proxy:
+		self.cmdline += " proxy=%s" % self.tdl.proxy
 
     def _generate_new_iso(self):
         """
