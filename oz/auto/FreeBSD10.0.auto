@@ -24,6 +24,17 @@ echo 'console="comconsole"' >> /boot/loader.conf.local
 sed -i.bak -E "s/^(ttyu0.+)dialup(.+)off(.+)secure/\1 vt100 on secure/" /etc/ttys
 rm -f /etc/ttys.bak
 
+# Remove some kernel modules that are probably not needed in virtual machines.
+# This results in roughly 100M more free space.
+rm -f /boot/kernel/radeon*
+rm -f /boot/kernel/snd_*
+rm -f /boot/kernel/wlan*
+rm -f /boot/kernel/iw*
+rm -f /boot/kernel/if_a*
+rm -f /boot/kernel/if_bxe*
+rm -f /boot/kernel/isp*
+rm -f /boot/kernel/rt*
+
 # The installer wants to reboot to the newly installed system, though at this
 # point we'd rather send the image to the cloud :)
 shutdown -p now
