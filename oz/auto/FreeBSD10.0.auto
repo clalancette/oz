@@ -1,5 +1,5 @@
 # Install rules.
-PARTITIONS="vtbd0"
+PARTITIONS="vtbd0 { auto freebsd-ufs / }"
 BSDINSTALL_DISTSITE="http://mirror.leaseweb.net/freebsd/releases/amd64/10.0-RELEASE/"
 DISTRIBUTIONS="kernel.txz base.txz"
 
