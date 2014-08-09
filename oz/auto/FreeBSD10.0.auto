@@ -1,6 +1,6 @@
 # Install rules.
 PARTITIONS="vtbd0"
-BSDINSTALL_DISTSITE="ftp://mirror.leaseweb.com/FreeBSD/releases/amd64/10.0-BETA3"
+BSDINSTALL_DISTSITE="http://mirror.leaseweb.net/freebsd/releases/amd64/10.0-RELEASE/"
 DISTRIBUTIONS="kernel.txz base.txz"
 
 # Post script.
