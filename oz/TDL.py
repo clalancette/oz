@@ -295,6 +295,12 @@ class TDL(object):
                                                "extra icicle command",
                                                optional=True)
 
+        self.kernel_param = _xml_get_value(self.doc,
+	                                   '/template/os/kernel/param',
+                                           'custom kernel parameter',
+                                           optional=True)
+
+
     def _parse_disksize(self):
         """
         Internal method to parse the disk size out of the TDL.

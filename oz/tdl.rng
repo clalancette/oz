@@ -32,6 +32,13 @@
                 <value>x86_64</value>
               </choice>
             </element>
+	    <optional>
+	      <element name='kernel'>
+	        <element name='param'>
+		  <text/>
+		</element>
+	      </element>
+	    </optional>
             <element name='install'>
               <choice>
                 <ref name='url'/>
