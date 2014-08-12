@@ -928,3 +928,30 @@ def check_qcow_size(filename):
         return unpack[5]
     else:
         return None
+
+def recursively_add_write_bit(inputdir):
+    for dirpath, dirnames, filenames in os.walk(inputdir):
+        # If the path is a symlink, and it is an absolute symlink, this would
+        # attempt to change the permissions of the *host* file, not the
+        # file that is relative to here.  That is no good, and could be a
+        # security problem if Oz is being run as root.  We skip all paths that
+        # are symlinks; what they point to will be changed later on.
+        if os.path.islink(dirpath):
+            continue
+
+        os.chmod(dirpath, os.stat(dirpath).st_mode|stat.S_IWUSR)
+        for name in filenames:
+            fullpath = os.path.join(dirpath, name)
+
+            # we have the same guard for symlinks as above, for the same reason
+            if os.path.islink(fullpath):
+                continue
+
+            try:
+                # if there are broken symlinks in the ISO,
+                # then the below might fail.  This probably
+                # isn't fatal, so just allow it and go on
+                os.chmod(fullpath, os.stat(fullpath).st_mode|stat.S_IWUSR)
+            except OSError as err:
+                if err.errno != errno.ENOENT:
+                    raise

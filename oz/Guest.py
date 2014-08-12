@@ -1474,22 +1474,9 @@ class CDGuest(Guest):
                     os.close(rd)
                     os.close(wr)
 
-                # since we extracted from an ISO, there are no write bits
-                # on any of the directories.  Fix that here
-                for dirpath, dirnames, filenames in os.walk(self.iso_contents):
-                    st = os.stat(dirpath)
-                    os.chmod(dirpath, st.st_mode|stat.S_IWUSR)
-                    for name in filenames:
-                        fullpath = os.path.join(dirpath, name)
-                        try:
-                            # if there are broken symlinks in the ISO,
-                            # then the below might fail.  This probably
-                            # isn't fatal, so just allow it and go on
-                            st = os.stat(fullpath)
-                            os.chmod(fullpath, st.st_mode|stat.S_IWUSR)
-                        except OSError as err:
-                            if err.errno != errno.ENOENT:
-                                raise
+                # since we extracted from an ISO, there are no write bits on
+                # any of the directories.  Fix that here.
+                oz.ozutil.recursively_add_write_bit(self.iso_contents)
             finally:
                 os.chdir(current)
         finally:
@@ -1810,17 +1797,7 @@ class CDGuest(Guest):
         # around that are not writable, which means that the rmtree below would
         # fail.  Recurse into the iso_contents tree, doing a chmod +w on
         # every file and directory to make sure the rmtree succeeds
-        for dirpath, dirnames, filenames in os.walk(self.iso_contents):
-            os.chmod(dirpath, stat.S_IWUSR|stat.S_IXUSR|stat.S_IRUSR)
-            for name in filenames:
-                try:
-                    # if there are broken symlinks in the ISO,
-                    # then the below might fail.  This probably
-                    # isn't fatal, so just allow it and go on
-                    os.chmod(os.path.join(dirpath, name), stat.S_IRUSR|stat.S_IWUSR)
-                except OSError as err:
-                    if err.errno != errno.ENOENT:
-                        raise
+        oz.ozutil.recursively_add_write_bit(self.iso_contents)
 
         oz.ozutil.rmtree_and_sync(self.iso_contents)
 
