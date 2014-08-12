@@ -10,7 +10,7 @@
       <optional>
         <attribute name='version'>
 	  <choice>
-	    <value>1.0</value>
+            <value>1.0</value>
 	  </choice>
         </attribute>
       </optional>
@@ -32,11 +32,11 @@
                 <value>x86_64</value>
               </choice>
             </element>
-	    <optional>
-	      <element name='kernelparam'>
-		<text/>
-	      </element>
-	    </optional>
+            <optional>
+              <element name='kernelparam'>
+                <text/>
+              </element>
+            </optional>
             <element name='install'>
               <choice>
                 <ref name='url'/>
@@ -137,6 +137,27 @@
         </optional>
         <optional>
           <element name='commands'>
+            <zeroOrMore>
+              <element name='command'>
+                <attribute name='name'>
+                  <text/>
+                </attribute>
+                <optional>
+                  <attribute name='position'>
+                    <ref name='number'/>
+                  </attribute>
+                </optional>
+                <choice>
+                  <ref name='rawtype'/>
+                  <ref name='base64type'/>
+                  <ref name='urltype'/>
+                </choice>
+              </element>
+            </zeroOrMore>
+          </element>
+        </optional>
+        <optional>
+          <element name='precommands'>
             <zeroOrMore>
               <element name='command'>
                 <attribute name='name'>

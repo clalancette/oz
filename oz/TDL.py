@@ -286,7 +286,8 @@ class TDL(object):
         self.repositories = {}
         self._add_repositories(self.doc.xpath('/template/repositories/repository'))
 
-        self.commands = self._parse_commands()
+        self.commands = self._parse_commands('/template/commands')
+        self.precommands = self._parse_commands('/template/precommands')
 
         self.disksize = self._parse_disksize()
 
@@ -327,7 +328,7 @@ class TDL(object):
 
         return size
 
-    def _parse_commands(self):
+    def _parse_commands(self, xpath):
         """
         Internal method to parse the commands XML and put it into order.  This
         order can either be via parse order (implicit) or by using the
@@ -340,7 +341,7 @@ class TDL(object):
         """
         tmp = []
         saw_position = False
-        for command in self.doc.xpath('/template/commands/command'):
+        for command in self.doc.xpath(xpath + "/command"):
             name = command.get('name')
             if name is None:
                 raise oz.OzException.OzException("Command without a name was given")

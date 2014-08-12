@@ -224,6 +224,9 @@ class LinuxCDGuest(oz.Guest.CDGuest):
 
         self._customize_repos(guestaddr)
 
+        for cmd in self.tdl.precommands:
+            self.guest_execute_command(guestaddr, cmd.read())
+
         self.log.debug("Installing custom packages")
         packstr = ''
         for package in self.tdl.packages:
