@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012,2013,2014  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2014  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -573,32 +573,42 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
             # hard-coded path
             initrd = "ubuntu-installer/%s/initrd.gz" % (self.debarch)
 
-        self._get_original_media('/'.join([self.url.rstrip('/'),
-                                           kernel.lstrip('/')]),
-                                 self.kernelcache, force_download)
+        (fd,outdir) = self._open_locked_file(self.kernelcache)
 
         try:
             self._get_original_media('/'.join([self.url.rstrip('/'),
-                                               initrd.lstrip('/')]),
-                                     self.initrdcache, force_download)
-        except:
-            os.unlink(self.kernelfname)
-            raise
+                                               kernel.lstrip('/')]),
+                                     fd, outdir, force_download)
 
-        # if we made it here, then we can copy the kernel into place
-        shutil.copyfile(self.kernelcache, self.kernelfname)
+            # if we made it here, then we can copy the kernel into place
+            shutil.copyfile(self.kernelcache, self.kernelfname)
+        finally:
+            os.close(fd)
+
+        (fd,outdir) = self._open_locked_file(self.initrdcache)
 
         try:
-            preseedpath = os.path.join(self.icicle_tmp, "preseed.cfg")
-            self._copy_preseed(preseedpath)
+            try:
+                self._get_original_media('/'.join([self.url.rstrip('/'),
+                                                   initrd.lstrip('/')]),
+                                         fd, outdir, force_download)
+            except:
+                os.unlink(self.kernelfname)
+                raise
 
             try:
-                self._create_cpio_initrd(preseedpath)
-            finally:
-                os.unlink(preseedpath)
-        except:
-            os.unlink(self.kernelfname)
-            raise
+                preseedpath = os.path.join(self.icicle_tmp, "preseed.cfg")
+                self._copy_preseed(preseedpath)
+
+                try:
+                    self._create_cpio_initrd(preseedpath)
+                finally:
+                    os.unlink(preseedpath)
+            except:
+                os.unlink(self.kernelfname)
+                raise
+        finally:
+            os.close(fd)
 
     def _remove_repos(self, guestaddr):
         # FIXME: until we switch over to doing repository add by hand (instead

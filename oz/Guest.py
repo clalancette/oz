@@ -830,13 +830,12 @@ class Guest(object):
 
         csumname = os.path.join(outdir,
                                 self.tdl.distro + self.tdl.update + self.tdl.arch + "-CHECKSUM")
-        csumfd = os.open(csumname, os.O_WRONLY|os.O_CREAT|os.O_TRUNC)
+
+        csumfd = self._open_locked_file(csumname)
+
+        os.ftruncate(csumfd, 0);
 
         try:
-            self.log.debug("Attempting to get the lock for %s" % (csumname))
-            fcntl.lockf(csumfd, fcntl.LOCK_EX)
-            self.log.debug("Got the lock, doing the download")
-
             self.log.debug("Checksum requested, fetching %s file" % (hashname))
             oz.ozutil.http_download_file(url, csumfd, False, self.log)
         finally:
@@ -862,68 +861,53 @@ class Guest(object):
 
         return local_sum.hexdigest() == upstream_sum
 
-    def _get_original_media(self, url, output, force_download):
+    def _get_original_media(self, url, fd, outdir, force_download):
         """
         Method to fetch the original media from url.  If the media is already
         cached locally, the cached copy will be used instead.
         """
         self.log.info("Fetching the original media")
 
-        outdir = os.path.dirname(output)
-        oz.ozutil.mkdir_p(outdir)
+        info = oz.ozutil.http_get_header(url)
 
-        fd = os.open(output, os.O_RDWR|os.O_CREAT)
+        if not 'HTTP-Code' in info or info['HTTP-Code'] >= 400 or not 'Content-Length' in info or info['Content-Length'] < 0:
+            raise oz.OzException.OzException("Could not reach destination to fetch boot media")
 
-        # from this point forward, we need to close fd on success or failure
-        try:
-            self.log.debug("Attempting to get the lock for %s" % (output))
-            fcntl.lockf(fd, fcntl.LOCK_EX)
-            self.log.debug("Got the lock, doing the download")
+        content_length = int(info['Content-Length'])
 
-            # if we reach here, the open and lock succeeded and we can download
+        if content_length == 0:
+            raise oz.OzException.OzException("Install media of 0 size detected, something is wrong")
 
-            info = oz.ozutil.http_get_header(url)
+        if not force_download:
+            if content_length == os.fstat(fd)[stat.ST_SIZE]:
+                if self._get_csums(url, outdir, fd):
+                    self.log.info("Original install media available, using cached version")
+                    return
 
-            if not 'HTTP-Code' in info or info['HTTP-Code'] >= 400 or not 'Content-Length' in info or info['Content-Length'] < 0:
-                raise oz.OzException.OzException("Could not reach destination to fetch boot media")
+                self.log.info("Original available, but checksum mis-match; re-downloading")
 
-            content_length = int(info['Content-Length'])
+        # before fetching everything, make sure that we have enough
+        # space on the filesystem to store the data we are about to download
+        devdata = os.statvfs(outdir)
+        if (devdata.f_bsize*devdata.f_bavail) < content_length:
+            raise oz.OzException.OzException("Not enough room on %s for install media" % (outdir))
 
-            if content_length == 0:
-                raise oz.OzException.OzException("Install media of 0 size detected, something is wrong")
+        # at this point we know we are going to download something.  Make
+        # sure to truncate the file so no stale data is left on the end
+        os.ftruncate(fd, 0)
 
-            if not force_download:
-                if content_length == os.fstat(fd)[stat.ST_SIZE]:
-                    if self._get_csums(url, outdir, fd):
-                        self.log.info("Original install media available, using cached version")
-                        return
+        self.log.info("Fetching the original install media from %s" % (url))
+        oz.ozutil.http_download_file(url, fd, True, self.log)
 
-                    self.log.info("Original available, but checksum mis-match; re-downloading")
+        filesize = os.fstat(fd)[stat.ST_SIZE]
 
-            # before fetching everything, make sure that we have enough
-            # space on the filesystem to store the data we are about to download
-            devdata = os.statvfs(outdir)
-            if (devdata.f_bsize*devdata.f_bavail) < content_length:
-                raise oz.OzException.OzException("Not enough room on %s for install media" % (outdir))
+        if filesize != content_length:
+            # if the length we downloaded is not the same as what we
+            # originally saw from the headers, something went wrong
+            raise oz.OzException.OzException("Expected to download %d bytes, downloaded %d" % (content_length, filesize))
 
-            # at this point we know we are going to download something.  Make
-            # sure to truncate the file so no stale data is left on the end
-            os.ftruncate(fd, 0)
-
-            self.log.info("Fetching the original install media from %s" % (url))
-            oz.ozutil.http_download_file(url, fd, True, self.log)
-
-            filesize = os.fstat(fd)[stat.ST_SIZE]
-
-            if filesize != content_length:
-                # if the length we downloaded is not the same as what we
-                # originally saw from the headers, something went wrong
-                raise oz.OzException.OzException("Expected to download %d bytes, downloaded %d" % (content_length, filesize))
-
-            if not self._get_csums(url, outdir, fd):
-                raise oz.OzException.OzException("Checksum for downloaded file does not match!")
-        finally:
-            os.close(fd)
+        if not self._get_csums(url, outdir, fd):
+            raise oz.OzException.OzException("Checksum for downloaded file does not match!")
 
     def _capture_screenshot(self, libvirt_dom):
         """
@@ -1364,6 +1348,26 @@ class Guest(object):
                 f.write(keystring)
             os.chmod(pubname, 0o644)
 
+    def _open_locked_file(self, filename):
+        """
+        Method to open and lock a file.  Returns a file descriptor referencing
+        the open and locked file.
+        """
+        outdir = os.path.dirname(filename)
+        oz.ozutil.mkdir_p(outdir)
+
+        fd = os.open(filename, os.O_RDWR|os.O_CREAT)
+
+        try:
+            self.log.debug("Attempting to get the lock for %s" % (filename))
+            fcntl.lockf(fd, fcntl.LOCK_EX)
+            self.log.debug("Got the lock for %s" % (filename))
+        except:
+            os.close(fd)
+            raise
+
+        return (fd,outdir)
+
 class CDGuest(Guest):
     """
     Class for guest installation via ISO.
@@ -1400,11 +1404,11 @@ class CDGuest(Guest):
         self.log.debug("Output ISO path: %s" % self.output_iso)
         self.log.debug("ISO content path: %s" % self.iso_contents)
 
-    def _get_original_iso(self, isourl, force_download):
+    def _get_original_iso(self, isourl, fd, outdir, force_download):
         """
         Method to fetch the original ISO for an operating system.
         """
-        self._get_original_media(isourl, self.orig_iso, force_download)
+        self._get_original_media(isourl, fd, outdir, force_download)
 
     def _copy_iso(self):
         """
@@ -1762,19 +1766,26 @@ class CDGuest(Guest):
                 shutil.copyfile(self.modified_iso_cache, self.output_iso)
                 return
 
-        self._get_original_iso(url, force_download)
-        self._check_pvd()
-        self._copy_iso()
-        self._check_iso_tree(customize_or_icicle)
+        (fd,outdir) = self._open_locked_file(self.orig_iso)
+
         try:
-            self._add_iso_extras()
-            self._modify_iso()
-            self._generate_new_iso()
-            if self.cache_modified_media:
-                self.log.info("Caching modified media for future use")
-                shutil.copyfile(self.output_iso, self.modified_iso_cache)
+            self._get_original_iso(url, fd, outdir, force_download)
+            self._check_pvd()
+            self._copy_iso()
+
+            # from here on out, we have to make sure to cleanup the exploded ISO
+            try:
+                self._check_iso_tree(customize_or_icicle)
+                self._add_iso_extras()
+                self._modify_iso()
+                self._generate_new_iso()
+                if self.cache_modified_media:
+                    self.log.info("Caching modified media for future use")
+                    shutil.copyfile(self.output_iso, self.modified_iso_cache)
+            finally:
+                self._cleanup_iso()
         finally:
-            self._cleanup_iso()
+            os.close(fd)
 
     def generate_install_media(self, force_download=False,
                                customize_or_icicle=False):
@@ -1840,11 +1851,11 @@ class FDGuest(Guest):
         self.log.debug("Output floppy path: %s" % self.output_floppy)
         self.log.debug("Floppy content path: %s" % self.floppy_contents)
 
-    def _get_original_floppy(self, floppyurl, force_download):
+    def _get_original_floppy(self, floppyurl, fd, outdir, force_download):
         """
         Method to download the original floppy if necessary.
         """
-        self._get_original_media(floppyurl, self.orig_floppy, force_download)
+        self._get_original_media(floppyurl, fd, outdir, force_download)
 
     def _copy_floppy(self):
         """

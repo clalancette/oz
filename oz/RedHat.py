@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012,2013  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2014  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -598,37 +598,47 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
             # hard-coded path
             initrd = "images/pxeboot/initrd.img"
 
-        self._get_original_media('/'.join([self.url.rstrip('/'),
-                                           kernel.lstrip('/')]),
-                                 self.kernelcache, force_download)
+        (fd,outdir) = self._open_locked_file(self.kernelcache)
 
         try:
             self._get_original_media('/'.join([self.url.rstrip('/'),
-                                               initrd.lstrip('/')]),
-                                     self.initrdcache, force_download)
-        except:
-            os.unlink(self.kernelfname)
-            raise
+                                               kernel.lstrip('/')]),
+                                     fd, outdir, force_download)
 
-        # if we made it here, then we can copy the kernel into place
-        shutil.copyfile(self.kernelcache, self.kernelfname)
+            # if we made it here, then we can copy the kernel into place
+            shutil.copyfile(self.kernelcache, self.kernelfname)
+        finally:
+            os.close(fd)
+
+        (fd,outdir) = self._open_locked_file(self.initrdcache)
 
         try:
-            kspath = os.path.join(self.icicle_tmp, "ks.cfg")
-            self._copy_kickstart(kspath)
+            try:
+                self._get_original_media('/'.join([self.url.rstrip('/'),
+                                                   initrd.lstrip('/')]),
+                                         fd, outdir, force_download)
+            except:
+                os.unlink(self.kernelfname)
+                raise
 
             try:
-                if self.initrdtype == "cpio":
-                    self._create_cpio_initrd(kspath)
-                elif self.initrdtype == "ext2":
-                    self._create_ext2_initrd(kspath)
-                else:
-                    raise oz.OzException.OzException("Invalid initrdtype, this is a programming error")
-            finally:
-                os.unlink(kspath)
-        except:
-            os.unlink(self.kernelfname)
-            raise
+                kspath = os.path.join(self.icicle_tmp, "ks.cfg")
+                self._copy_kickstart(kspath)
+
+                try:
+                    if self.initrdtype == "cpio":
+                        self._create_cpio_initrd(kspath)
+                    elif self.initrdtype == "ext2":
+                        self._create_ext2_initrd(kspath)
+                    else:
+                        raise oz.OzException.OzException("Invalid initrdtype, this is a programming error")
+                finally:
+                    os.unlink(kspath)
+            except:
+                os.unlink(self.kernelfname)
+                raise
+        finally:
+            os.close(fd)
 
     def generate_install_media(self, force_download=False,
                                customize_or_icicle=False):
@@ -885,13 +895,19 @@ label customboot
                 shutil.copyfile(self.modified_floppy_cache, self.output_floppy)
                 return
 
-        self._get_original_floppy(self.url + "/images/bootnet.img",
-                                  force_download)
-        self._copy_floppy()
+        # name of the output file
+        (fd,outdir) = self._open_locked_file(self.orig_floppy)
+
         try:
-            self._modify_floppy()
-            if self.cache_modified_media:
-                self.log.info("Caching modified media for future use")
-                shutil.copyfile(self.output_floppy, self.modified_floppy_cache)
+            self._get_original_floppy(self.url + "/images/bootnet.img", fd,
+                                      outdir, force_download)
+            self._copy_floppy()
+            try:
+                self._modify_floppy()
+                if self.cache_modified_media:
+                    self.log.info("Caching modified media for future use")
+                    shutil.copyfile(self.output_floppy, self.modified_floppy_cache)
+            finally:
+                self._cleanup_floppy()
         finally:
-            self._cleanup_floppy()
+            os.close(fd)
