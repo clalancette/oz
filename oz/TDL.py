@@ -402,7 +402,7 @@ class TDL(object):
         packslist = packsdoc.xpath('/packages/package')
         self._add_packages(packslist, True)
 
-    def _add_packages(self, packslist, remove_duplicates = False):
+    def _add_packages(self, packslist, remove_duplicates=False):
         """
         Internal method to add the list of lxml.etree nodes from packslist into
         the self.packages array.  If remove_duplicates is False (the default),
