@@ -486,7 +486,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
             raise oz.OzException.OzException("Could not find %s" % (txtcfgurl))
 
         txtcfg = os.path.join(self.icicle_tmp, "txt.cfg")
-        self.log.debug("Going to write txt.cfg to %s" % (txtcfg))
+        self.log.debug("Going to write txt.cfg to %s", txtcfg)
         txtcfgfd = os.open(txtcfg, os.O_RDWR | os.O_CREAT | os.O_TRUNC)
         os.unlink(txtcfg)
         fp = os.fdopen(txtcfgfd)
@@ -513,7 +513,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
         if kernel is None or initrd is None:
             raise oz.OzException.OzException("Empty kernel or initrd")
 
-        self.log.debug("Returning kernel %s and initrd %s" % (kernel, initrd))
+        self.log.debug("Returning kernel %s and initrd %s", kernel, initrd)
         return (kernel, initrd)
 
     def _gzip_file(self, inputfile, outputmode):
@@ -538,7 +538,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
         Internal method to create a modified CPIO initrd
         """
         extrafname = os.path.join(self.icicle_tmp, "extra.cpio")
-        self.log.debug("Writing cpio to %s" % (extrafname))
+        self.log.debug("Writing cpio to %s", extrafname)
         cpiofiledict = {}
         cpiofiledict[preseedpath] = 'preseed.cfg'
         oz.ozutil.write_cpio(cpiofiledict, extrafname)
@@ -563,12 +563,12 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
             pass
 
         if kernel is None:
-            self.log.debug("Kernel was None, trying ubuntu-installer/%s/linux" % (self.debarch))
+            self.log.debug("Kernel was None, trying ubuntu-installer/%s/linux", self.debarch)
             # we couldn't find the kernel in the txt.cfg, so try a
             # hard-coded path
             kernel = "ubuntu-installer/%s/linux" % (self.debarch)
         if initrd is None:
-            self.log.debug("Initrd was None, trying ubuntu-installer/%s/initrd.gz" % (self.debarch))
+            self.log.debug("Initrd was None, trying ubuntu-installer/%s/initrd.gz", self.debarch)
             # we couldn't find the initrd in the txt.cfg, so try a
             # hard-coded path
             initrd = "ubuntu-installer/%s/initrd.gz" % (self.debarch)

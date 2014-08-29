@@ -493,7 +493,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
             raise oz.OzException.OzException("Could not find %s" % (treeinfourl))
 
         treeinfo = os.path.join(self.icicle_tmp, "treeinfo")
-        self.log.debug("Going to write treeinfo to %s" % (treeinfo))
+        self.log.debug("Going to write treeinfo to %s", treeinfo)
         treeinfofd = os.open(treeinfo, os.O_RDWR | os.O_CREAT | os.O_TRUNC)
         fp = os.fdopen(treeinfofd)
         try:
@@ -517,7 +517,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
         if kernel is None or initrd is None:
             raise oz.OzException.OzException("Empty kernel or initrd")
 
-        self.log.debug("Returning kernel %s and initrd %s" % (kernel, initrd))
+        self.log.debug("Returning kernel %s and initrd %s", kernel, initrd)
         return (kernel, initrd)
 
     def _create_cpio_initrd(self, kspath):
@@ -527,7 +527,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
         # if initrdtype is cpio, then we can just append a gzipped
         # archive onto the end of the initrd
         extrafname = os.path.join(self.icicle_tmp, "extra.cpio")
-        self.log.debug("Writing cpio to %s" % (extrafname))
+        self.log.debug("Writing cpio to %s", extrafname)
         cpiofiledict = {}
         cpiofiledict[kspath] = 'ks.cfg'
         oz.ozutil.write_cpio(cpiofiledict, extrafname)
@@ -549,7 +549,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
         oz.ozutil.mkdir_p(tmpdir)
 
         ext2file = os.path.join(tmpdir, "initrd.ext2")
-        self.log.debug("Uncompressing initrd %s to %s" % (self.initrdfname, ext2file))
+        self.log.debug("Uncompressing initrd %s to %s", self.initrdfname, ext2file)
         inf = gzip.open(self.initrdcache, 'rb')
         outf = open(ext2file, "w")
         try:

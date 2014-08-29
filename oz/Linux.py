@@ -48,7 +48,7 @@ class LinuxCDGuest(oz.Guest.CDGuest):
         success = False
         while count > 0:
             try:
-                self.log.debug("Testing ssh connection, try %d" % (count))
+                self.log.debug("Testing ssh connection, try %d", count)
                 start = time.time()
                 self.guest_execute_command(guestaddr, 'ls', timeout=1)
                 self.log.debug("Succeeded")

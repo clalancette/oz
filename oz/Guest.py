@@ -66,7 +66,7 @@ class Guest(object):
             else:
                 raise oz.OzException.OzException("This host does not support virtualization type kvm or qemu")
 
-        self.log.debug("Libvirt type is %s" % (self.libvirt_type))
+        self.log.debug("Libvirt type is %s", self.libvirt_type)
 
     def _discover_libvirt_bridge(self):
         """
@@ -99,7 +99,7 @@ class Guest(object):
         if self.bridge_name is None:
             raise oz.OzException.OzException("Could not find a libvirt bridge.  Please run 'virsh net-start default' to start the default libvirt network, or see http://github.com/clalancette/oz/wiki/Oz-Network-Configuration for more information")
 
-        self.log.debug("libvirt bridge name is %s" % (self.bridge_name))
+        self.log.debug("libvirt bridge name is %s", self.bridge_name)
 
     def connect_to_libvirt(self):
         """
@@ -256,12 +256,12 @@ class Guest(object):
         if self.auto is None:
             self.auto = self.get_auto_path()
 
-        self.log.debug("Name: %s, UUID: %s" % (self.tdl.name, self.uuid))
-        self.log.debug("MAC: %s, distro: %s" % (self.macaddr, self.tdl.distro))
-        self.log.debug("update: %s, arch: %s, diskimage: %s" % (self.tdl.update, self.tdl.arch, self.diskimage))
-        self.log.debug("nicmodel: %s, clockoffset: %s" % (self.nicmodel, self.clockoffset))
-        self.log.debug("mousetype: %s, disk_bus: %s, disk_dev: %s" % (self.mousetype, self.disk_bus, self.disk_dev))
-        self.log.debug("icicletmp: %s, listen_port: %d" % (self.icicle_tmp, self.listen_port))
+        self.log.debug("Name: %s, UUID: %s", self.tdl.name, self.uuid)
+        self.log.debug("MAC: %s, distro: %s", self.macaddr, self.tdl.distro)
+        self.log.debug("update: %s, arch: %s, diskimage: %s", self.tdl.update, self.tdl.arch, self.diskimage)
+        self.log.debug("nicmodel: %s, clockoffset: %s", self.nicmodel, self.clockoffset)
+        self.log.debug("mousetype: %s, disk_bus: %s, disk_dev: %s", self.mousetype, self.disk_bus, self.disk_dev)
+        self.log.debug("icicletmp: %s, listen_port: %d", self.icicle_tmp, self.listen_port)
 
     def image_name(self):
         """
@@ -295,7 +295,7 @@ class Guest(object):
         Method to completely clean up an old guest, including deleting the
         disk file.  Use with caution!
         """
-        self.log.info("Cleaning up guest named %s" % (self.tdl.name))
+        self.log.info("Cleaning up guest named %s", self.tdl.name)
         try:
             dom = self.libvirt_conn.lookupByName(self.tdl.name)
             try:
@@ -318,7 +318,7 @@ class Guest(object):
         already existing guest.  In particular, if a guest with the same
         name, UUID, or diskimage already exists, this throws an exception.
         """
-        self.log.info("Checking for guest conflicts with %s" % (self.tdl.name))
+        self.log.info("Checking for guest conflicts with %s", self.tdl.name)
 
         try:
             self.libvirt_conn.lookupByName(self.tdl.name)
@@ -405,7 +405,7 @@ class Guest(object):
         """
         Method to generate libvirt XML useful for installation.
         """
-        self.log.info("Generate XML for guest %s with bootdev %s" % (self.tdl.name, bootdev))
+        self.log.info("Generate XML for guest %s with bootdev %s", self.tdl.name, bootdev)
 
         # top-level domain element
         domain = lxml.etree.Element("domain", type=self.libvirt_type)
@@ -479,7 +479,7 @@ class Guest(object):
             self.lxml_subelement(install, "target", None, {'dev':installdev.bus})
 
         xml = lxml.etree.tostring(domain, pretty_print=True)
-        self.log.debug("Generated XML:\n%s" % (xml))
+        self.log.debug("Generated XML:\n%s", xml)
 
         return xml
 
@@ -499,8 +499,7 @@ class Guest(object):
             # we'll copy the JEOS itself later on
             return
 
-        self.log.info("Generating %dGB diskimage for %s" % (size,
-                                                            self.tdl.name))
+        self.log.info("Generating %dGB diskimage for %s", size, self.tdl.name)
 
         diskimage = self.diskimage
         if image_filename:
@@ -682,7 +681,7 @@ class Guest(object):
         """
         count = 10
         while count > 0:
-            self.log.debug("Waiting for %s to complete shutdown, %d/10" % (self.tdl.name, count))
+            self.log.debug("Waiting for %s to complete shutdown, %d/10", self.tdl.name, count)
             try:
                 libvirt_dom.info()
             except libvirt.libvirtError as e:
@@ -696,15 +695,15 @@ class Guest(object):
             # seconds - re-raise
             if saved_exception:
                 self.log.debug("Libvirt Domain Info Failed:")
-                self.log.debug(" code is %d" % saved_exception.get_error_code())
-                self.log.debug(" domain is %d" % saved_exception.get_error_domain())
-                self.log.debug(" message is %s" % saved_exception.get_error_message())
-                self.log.debug(" level is %d" % saved_exception.get_error_level())
-                self.log.debug(" str1 is %s" % saved_exception.get_str1())
-                self.log.debug(" str2 is %s" % saved_exception.get_str2())
-                self.log.debug(" str3 is %s" % saved_exception.get_str3())
-                self.log.debug(" int1 is %d" % saved_exception.get_int1())
-                self.log.debug(" int2 is %d" % saved_exception.get_int2())
+                self.log.debug(" code is %d", saved_exception.get_error_code())
+                self.log.debug(" domain is %d", saved_exception.get_error_domain())
+                self.log.debug(" message is %s", saved_exception.get_error_message())
+                self.log.debug(" level is %d", saved_exception.get_error_level())
+                self.log.debug(" str1 is %s", saved_exception.get_str1())
+                self.log.debug(" str2 is %s", saved_exception.get_str2())
+                self.log.debug(" str3 is %s", saved_exception.get_str3())
+                self.log.debug(" int1 is %d", saved_exception.get_int1())
+                self.log.debug(" int2 is %d", saved_exception.get_int2())
                 raise saved_exception
             else:
                 # the passed in exception was None, just raise a generic error
@@ -728,7 +727,7 @@ class Guest(object):
         saved_exception = None
         while count > 0 and inactivity_countdown > 0:
             if count % 10 == 0:
-                self.log.debug("Waiting for %s to finish installing, %d/%d" % (self.tdl.name, count, origcount))
+                self.log.debug("Waiting for %s to finish installing, %d/%d", self.tdl.name, count, origcount)
             try:
                 total_disk_req, total_net_bytes = self._get_disk_and_net_activity(libvirt_dom, disks, interfaces)
             except libvirt.libvirtError as e:
@@ -780,7 +779,7 @@ class Guest(object):
         # We get here only if we got a libvirt exception
         self._wait_for_clean_shutdown(libvirt_dom, saved_exception)
 
-        self.log.info("Install of %s succeeded" % (self.tdl.name))
+        self.log.info("Install of %s succeeded", self.tdl.name)
 
     def _wait_for_guest_shutdown(self, libvirt_dom, count=90):
         """
@@ -791,7 +790,7 @@ class Guest(object):
         saved_exception = None
         while count > 0:
             if count % 10 == 0:
-                self.log.debug("Waiting for %s to shutdown, %d/%d" % (self.tdl.name, count, origcount))
+                self.log.debug("Waiting for %s to shutdown, %d/%d", self.tdl.name, count, origcount)
             try:
                 libvirt_dom.info()
             except libvirt.libvirtError as e:
@@ -836,7 +835,7 @@ class Guest(object):
         os.ftruncate(csumfd, 0);
 
         try:
-            self.log.debug("Checksum requested, fetching %s file" % (hashname))
+            self.log.debug("Checksum requested, fetching %s file", hashname)
             oz.ozutil.http_download_file(url, csumfd, False, self.log)
         finally:
             os.close(csumfd)
@@ -896,7 +895,7 @@ class Guest(object):
         # sure to truncate the file so no stale data is left on the end
         os.ftruncate(fd, 0)
 
-        self.log.info("Fetching the original install media from %s" % (url))
+        self.log.info("Fetching the original install media from %s", url)
         oz.ozutil.http_download_file(url, fd, True, self.log)
 
         filesize = os.fstat(fd)[stat.ST_SIZE]
@@ -979,7 +978,7 @@ class Guest(object):
             try:
                 doc = lxml.etree.fromstring(self.libvirt_conn.lookupByID(domid).XMLDesc(0))
             except:
-                self.log.debug("Could not get XML for domain ID (%s) - it may have disappeared (continuing)" % (domid))
+                self.log.debug("Could not get XML for domain ID (%s) - it may have disappeared (continuing)", domid)
                 continue
 
             namenode = doc.xpath('/domain/name')
@@ -1002,10 +1001,10 @@ class Guest(object):
                         raise oz.OzException.OzException("Cannot setup ICICLE generation on a running disk")
 
 
-        self.log.info("Setting up guestfs handle for %s" % (self.tdl.name))
+        self.log.info("Setting up guestfs handle for %s", self.tdl.name)
         g = guestfs.GuestFS()
 
-        self.log.debug("Adding disk image %s" % (input_disk))
+        self.log.debug("Adding disk image %s", input_disk)
         # NOTE: we use "add_drive_opts" here so we can specify the type
         # of the diskimage.  Otherwise it might be possible for an attacker
         # to fool libguestfs with a specially-crafted diskimage that looks
@@ -1023,7 +1022,7 @@ class Guest(object):
 
         self.log.debug("Getting mountpoints")
         for root in roots:
-            self.log.debug("Root device: %s" % root)
+            self.log.debug("Root device: %s", root)
 
             # the problem here is that the list of mountpoints returned by
             # inspect_get_mountpoints is in no particular order.  So if the
@@ -1060,7 +1059,7 @@ class Guest(object):
                         # fail at this point.  Allow things to continue.
                         # Profound failures will trigger later on during
                         # the process.
-                        self.log.warning("Unable to mount (%s) on (%s) - trying to continue" % (mp_dev[1], mp_dev[0]))
+                        self.log.warning("Unable to mount (%s) on (%s) - trying to continue", mp_dev[1], mp_dev[0])
         return g
 
     def _guestfs_remove_if_exists(self, g_handle, path):
@@ -1095,7 +1094,7 @@ class Guest(object):
         """
         Method to cleanup a handle previously setup by __guestfs_handle_setup.
         """
-        self.log.info("Cleaning up guestfs handle for %s" % (self.tdl.name))
+        self.log.info("Cleaning up guestfs handle for %s", self.tdl.name)
         self.log.debug("Syncing")
         g_handle.sync()
 
@@ -1134,7 +1133,7 @@ class Guest(object):
         self._generate_serial_xml(devices[0])
 
         xml = lxml.etree.tostring(input_doc, pretty_print=True)
-        self.log.debug("Generated XML:\n%s" % (xml))
+        self.log.debug("Generated XML:\n%s", xml)
         return xml
 
     def _modify_libvirt_xml_diskimage(self, libvirt_xml, new_diskimage,
@@ -1145,7 +1144,7 @@ class Guest(object):
         type.  Used in safe ICICLE generation to replace the "real" disk image
         file with a temporary writeable snapshot.
         """
-        self.log.debug("Modifying libvirt XML to use disk image (%s) of type (%s)" % (new_diskimage, image_type))
+        self.log.debug("Modifying libvirt XML to use disk image (%s) of type (%s)", new_diskimage, image_type)
         input_doc = lxml.etree.fromstring(libvirt_xml)
         disks = input_doc.xpath("/domain/devices/disk")
         if len(disks) != 1:
@@ -1165,7 +1164,7 @@ class Guest(object):
             raise oz.OzException.OzException("Found a disk with an unexpected number of driver sections")
 
         xml = lxml.etree.tostring(input_doc, pretty_print=True)
-        self.log.debug("Generated XML:\n%s" % (xml))
+        self.log.debug("Generated XML:\n%s", xml)
         return xml
 
     def _wait_for_guest_boot(self, libvirt_dom):
@@ -1175,7 +1174,7 @@ class Guest(object):
         the timeout, this method returns the IP address of the guest.  If that
         doesn't happen an exception is raised.
         """
-        self.log.info("Waiting for guest %s to boot" % (self.tdl.name))
+        self.log.info("Waiting for guest %s to boot", self.tdl.name)
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -1189,7 +1188,7 @@ class Guest(object):
             while count > 0:
                 do_sleep = True
                 if count % 10 == 0:
-                    self.log.debug("Waiting for guest %s to boot, %d/300" % (self.tdl.name, count))
+                    self.log.debug("Waiting for guest %s to boot, %d/300", self.tdl.name, count)
                 try:
                     # note that we have to build the data up here, since there
                     # is no guarantee that we will get the whole write in one go
@@ -1237,7 +1236,7 @@ class Guest(object):
         if addr is None:
             raise oz.OzException.OzException("Timed out waiting for guest to boot")
 
-        self.log.debug("IP address of guest is %s" % (addr))
+        self.log.debug("IP address of guest is %s", addr)
 
         return addr
 
@@ -1359,9 +1358,9 @@ class Guest(object):
         fd = os.open(filename, os.O_RDWR|os.O_CREAT)
 
         try:
-            self.log.debug("Attempting to get the lock for %s" % (filename))
+            self.log.debug("Attempting to get the lock for %s", filename)
             fcntl.lockf(fd, fcntl.LOCK_EX)
-            self.log.debug("Got the lock for %s" % (filename))
+            self.log.debug("Got the lock for %s", filename)
         except:
             os.close(fd)
             raise
@@ -1399,10 +1398,10 @@ class CDGuest(Guest):
         self.iso_contents = os.path.join(self.data_dir, "isocontent",
                                          self.tdl.name + "-" + self.tdl.installtype)
 
-        self.log.debug("Original ISO path: %s" % self.orig_iso)
-        self.log.debug("Modified ISO cache: %s" % self.modified_iso_cache)
-        self.log.debug("Output ISO path: %s" % self.output_iso)
-        self.log.debug("ISO content path: %s" % self.iso_contents)
+        self.log.debug("Original ISO path: %s", self.orig_iso)
+        self.log.debug("Modified ISO cache: %s", self.modified_iso_cache)
+        self.log.debug("Output ISO path: %s", self.output_iso)
+        self.log.debug("ISO content path: %s", self.iso_contents)
 
     def _get_original_iso(self, isourl, fd, outdir, force_download):
         """
@@ -1422,9 +1421,9 @@ class CDGuest(Guest):
                 raise
         os.makedirs(self.iso_contents)
 
-        self.log.info("Setting up guestfs handle for %s" % (self.tdl.name))
+        self.log.info("Setting up guestfs handle for %s", self.tdl.name)
         gfs = guestfs.GuestFS()
-        self.log.debug("Adding ISO image %s" % (self.orig_iso))
+        self.log.debug("Adding ISO image %s", self.orig_iso)
         gfs.add_drive_opts(self.orig_iso, readonly=1, format='raw')
         self.log.debug("Launching guestfs")
         gfs.launch()
@@ -1630,11 +1629,11 @@ class CDGuest(Guest):
         Internal method to actually run the installation.
         """
         if not force and os.access(self.jeos_filename, os.F_OK):
-            self.log.info("Found cached JEOS (%s), using it" % (self.jeos_filename))
+            self.log.info("Found cached JEOS (%s), using it", self.jeos_filename)
             oz.ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
             return self._generate_xml("hd", None)
 
-        self.log.info("Running install for %s" % (self.tdl.name))
+        self.log.info("Running install for %s", self.tdl.name)
 
         if timeout is None:
             timeout = 1200
@@ -1846,10 +1845,10 @@ class FDGuest(Guest):
         self.floppy_contents = os.path.join(self.data_dir, "floppycontent",
                                             self.tdl.name)
 
-        self.log.debug("Original floppy path: %s" % self.orig_floppy)
-        self.log.debug("Modified floppy cache: %s" % self.modified_floppy_cache)
-        self.log.debug("Output floppy path: %s" % self.output_floppy)
-        self.log.debug("Floppy content path: %s" % self.floppy_contents)
+        self.log.debug("Original floppy path: %s", self.orig_floppy)
+        self.log.debug("Modified floppy cache: %s", self.modified_floppy_cache)
+        self.log.debug("Output floppy path: %s", self.output_floppy)
+        self.log.debug("Floppy content path: %s", self.floppy_contents)
 
     def _get_original_floppy(self, floppyurl, fd, outdir, force_download):
         """
@@ -1873,7 +1872,7 @@ class FDGuest(Guest):
             oz.ozutil.copyfile_sparse(self.jeos_filename, self.diskimage)
             return self._generate_xml("hd", None)
 
-        self.log.info("Running install for %s" % (self.tdl.name))
+        self.log.info("Running install for %s", self.tdl.name)
 
         fddev = self._InstallDev("floppy", self.output_floppy, "fda")
 

@@ -43,7 +43,7 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
                                                  macaddress)
 
         if self.assumed_update is not None:
-            self.log.warning("==== WARN: TDL contains Fedora update %s, which is newer than Oz knows about; pretending this is Fedora %s, but this may fail ====" % (tdl.update, assumed_update))
+            self.log.warning("==== WARN: TDL contains Fedora update %s, which is newer than Oz knows about; pretending this is Fedora %s, but this may fail ====", tdl.update, assumed_update)
 
         self.haverepo = haverepo
         self.brokenisomethod = brokenisomethod
