@@ -31,7 +31,7 @@ class FreeBSD(oz.Guest.CDGuest):
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
-	oz.Guest.CDGuest.__init__(self, tdl, config, auto, output_disk,
+        oz.Guest.CDGuest.__init__(self, tdl, config, auto, output_disk,
                                   netdev, "localtime", "usb", diskbus, True,
                                   False, macaddress)
 
@@ -53,7 +53,11 @@ class FreeBSD(oz.Guest.CDGuest):
         """
         self.log.debug("Modifying ISO")
 
-	def _replace(line):
+        def _replace(line):
+            """
+            Method that is called back from copy_modify_file to replace
+            the rootpassword in the installerconfig file
+            """
             keys = {
                 '#ROOTPW#': self.rootpw,
             }
@@ -67,16 +71,16 @@ class FreeBSD(oz.Guest.CDGuest):
         # the post script with additional commands so it's possible to install
         # extra	packages specified in the .tdl file.
 
-	outname = os.path.join(self.iso_contents, "etc", "installerconfig")
-	oz.ozutil.copy_modify_file(self.auto, outname, _replace)
+        outname = os.path.join(self.iso_contents, "etc", "installerconfig")
+        oz.ozutil.copy_modify_file(self.auto, outname, _replace)
 
         # Make sure the iso can be mounted at boot, otherwise this error shows
         # up after booting the kernel:
         #  mountroot: waiting for device /dev/iso9660/FREEBSD_INSTALL ...
 	#  Mounting from cd9660:/dev/iso9660/FREEBSD_INSTALL failed with error 19.
 
-	loaderconf = os.path.join(self.iso_contents, "boot", "loader.conf")
-	with open(loaderconf, 'w') as conf:
+        loaderconf = os.path.join(self.iso_contents, "boot", "loader.conf")
+        with open(loaderconf, 'w') as conf:
             conf.write('vfs.root.mountfrom="cd9660:/dev/cd0"\n')
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
