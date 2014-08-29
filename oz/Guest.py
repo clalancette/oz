@@ -836,7 +836,7 @@ class Guest(object):
 
         csumfd = self._open_locked_file(csumname)
 
-        os.ftruncate(csumfd, 0);
+        os.ftruncate(csumfd, 0)
 
         try:
             self.log.debug("Checksum requested, fetching %s file", hashname)
