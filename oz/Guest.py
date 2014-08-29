@@ -608,7 +608,7 @@ class Guest(object):
             self.log.warning("Asked to create partition against a copy-on-write snapshot - ignoring")
         elif create_partition:
             g_handle = guestfs.GuestFS()
-            g_handle.add_drive_opts(self.diskimage, format=self.image_type, readonly = 0)
+            g_handle.add_drive_opts(self.diskimage, format=self.image_type, readonly=0)
             g_handle.launch()
             devices = g_handle.list_devices()
             g_handle.part_init(devices[0], "msdos")
@@ -1369,7 +1369,7 @@ class Guest(object):
             os.close(fd)
             raise
 
-        return (fd,outdir)
+        return (fd, outdir)
 
 class CDGuest(Guest):
     """
@@ -1769,7 +1769,7 @@ class CDGuest(Guest):
                 shutil.copyfile(self.modified_iso_cache, self.output_iso)
                 return
 
-        (fd,outdir) = self._open_locked_file(self.orig_iso)
+        (fd, outdir) = self._open_locked_file(self.orig_iso)
 
         try:
             self._get_original_iso(url, fd, outdir, force_download)
