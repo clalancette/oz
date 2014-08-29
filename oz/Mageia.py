@@ -108,12 +108,11 @@ label customiso
                                            "-v", "-o", self.output_iso,
                                            self.iso_contents],
                                           printfn=self.log.debug)
-    def _do_install(self, timeout=None, force=False, reboots=0,
-                    kernelfname=None, ramdiskfname=None, cmdline=None):
+    def install(self, timeout=None, force=False):
         fddev = self._InstallDev("floppy", self.output_floppy, "fda")
-        return oz.Guest.CDGuest._do_install(self, timeout, force, reboots,
-                                            kernelfname, ramdiskfname, cmdline,
-                                            [fddev])
+        return self._do_install(timeout, force, 0, None, None, None,
+                                [fddev])
+
     def cleanup_install(self):
         try:
             os.unlink(self.output_floppy)
