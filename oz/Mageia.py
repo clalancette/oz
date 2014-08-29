@@ -75,7 +75,7 @@ class MageiaGuest(oz.Guest.CDGuest):
                                            "::AUTO_INST.CFG"])
 
         self.log.debug("Modifying isolinux.cfg")
-        isolinuxcfg = os.path.join(pathdir, "isolinux", "isolinux.cfg")
+        isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
         with open(isolinuxcfg, 'w') as f:
             f.write("""\
 default customiso
