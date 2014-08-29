@@ -654,6 +654,12 @@ def config_get_boolean_key(config, section, key, default):
     return retval
 
 def config_get_path(config, section, key, default):
+    """
+    Function to get an user-expanded path out of the config file at
+    the passed in section and key.  If the value is not in the config
+    file, then the default value is returned.  If the expanded path is
+    not absolute, an error is raised.
+    """
     path = os.path.expanduser(config_get_key(config, section, key, default))
     if not os.path.isabs(path):
         raise Exception("Config key '%s' must have an absolute path" % (key))
@@ -930,6 +936,12 @@ def check_qcow_size(filename):
         return None
 
 def recursively_add_write_bit(inputdir):
+    """
+    Function to walk a directory tree, adding the write it to every file
+    and directory.  This is mostly useful right before deleting a tree of
+    files extracted from an ISO, since those were all read-only to begin
+    with.
+    """
     for dirpath, dirnames, filenames in os.walk(inputdir):
         # If the path is a symlink, and it is an absolute symlink, this would
         # attempt to change the permissions of the *host* file, not the
