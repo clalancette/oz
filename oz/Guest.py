@@ -382,6 +382,10 @@ class Guest(object):
             self.bus = bus
 
     def lxml_subelement(self, root, name, text=None, attributes=None):
+        """
+        Method to add a new element to an LXML tree, optionally include text
+        and a dictionary of attributes.
+        """
         tmp = lxml.etree.SubElement(root, name)
         if text is not None:
             tmp.text = text
