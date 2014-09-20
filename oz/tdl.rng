@@ -219,6 +219,11 @@
                     </element>
                   </optional>
                   <optional>
+                    <element name='source'>
+                      <ref name='bool'/>
+                    </element>
+                  </optional>
+                  <optional>
                     <element name='arch'>
                       <text/>
                     </element>

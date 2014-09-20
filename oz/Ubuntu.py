@@ -444,7 +444,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
         Method to generate and upload custom repository files based on the TDL.
         """
 
-        def build_repo(uri, distribution, components=['main'], trusted=False, arch=None):
+        def build_repo(uri, distribution, components=['main'], trusted=False, arch=None, source=False):
             """
             Builds a Ubuntu / Debian repo string to put into /etc/apt/sources.list.d
 
@@ -467,7 +467,11 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
                 components = components.split(' ')
 
             info = ' '.join([options, uri, distribution, ' '.join(components)])
-            repo = ''.join(['deb', info, "\n", 'deb-src', info, "\n"])
+            repo_chunks = ['deb', info, "\n"]
+            if source:
+                repo_chunks.append(['deb-src', info, "\n"])
+
+            repo = ''.join(repo_chunks)
             return repo
 
         def setup_key_from_server(server, key):
@@ -562,7 +566,8 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
                     components = ['main'] if not repo.components else repo.components
                     trusted = False if not repo.trusted else True
                     arch = None if not repo.arch else repo.arch
-                    built_repo = build_repo(uri, distribution, components, trusted, arch)
+                    source = False if not repo.source else True
+                    built_repo = build_repo(uri, distribution, components, trusted, arch, source)
                     handle.write(built_repo)
 
                 try:
