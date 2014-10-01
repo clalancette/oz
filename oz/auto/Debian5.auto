@@ -5,8 +5,8 @@ d-i console-setup/layoutcode string us
 d-i netcfg/choose_interface select auto
 d-i netcfg/get_hostname string localhost
 d-i netcfg/get_domain string localdomain
-d-i     netcfg/disable_dhcp     boolean false
-d-i	mirror/http/proxy	string
+d-i netcfg/disable_dhcp boolean false
+d-i mirror/http/proxy string
 d-i netcfg/wireless_wep string
 
 d-i clock-setup/utc boolean true
