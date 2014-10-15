@@ -28,7 +28,7 @@ import oz.OzException
 
 class RHEL5Guest(oz.RedHat.RedHatLinuxCDYumGuest):
     """
-    Class for RHEL-5 GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9 and U10 installation.
+    Class for RHEL-5 GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10 and U11 installation.
     """
     def __init__(self, tdl, config, auto, nicmodel, diskbus, output_disk=None,
                  macaddress=None):
@@ -108,7 +108,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     if tdl.update in ["GOLD", "U1", "U2", "U3"]:
         return RHEL5Guest(tdl, config, auto, netdev, diskbus, output_disk,
                           macaddress)
-    if tdl.update in ["U4", "U5", "U6", "U7", "U8", "U9", "U10"]:
+    if tdl.update in ["U4", "U5", "U6", "U7", "U8", "U9", "U10", "U11"]:
         if netdev is None:
             netdev = 'virtio'
         if diskbus is None:
@@ -120,4 +120,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "RHEL/OL/CentOS/Scientific Linux{,CERN} 5: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10"
+    return "RHEL/OL/CentOS/Scientific Linux{,CERN} 5: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10, U11"
