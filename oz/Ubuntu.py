@@ -86,6 +86,9 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
                 raise oz.OzException.OzException("Ubuntu %s installs can only be done using the alternate or server CDs" % (self.tdl.update))
             if customize_or_icicle:
                 raise oz.OzException.OzException("Ubuntu customization or ICICLE generation can only be done using the alternate or server CDs")
+            # as far as I can tell, the Ubuntu 13.10 Desktop installer always
+            # crashes during preseeded installations, so raise an error for
+            # a Desktop install
             if self.tdl.update in ["13.10"]:
                 raise oz.OzException.OzException("Ubuntu 13.10 installs can only be done with the server CD")
 
