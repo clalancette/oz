@@ -37,9 +37,6 @@ ubiquity ubiquity/reboot boolean true
 
 d-i finish-install/reboot_in_progress note
 
-# workaround for 13.04 casper bug (Desktop build only)
-ubiquity ubiquity/success_command string sed -i 's/eject -p -m.*/&; [ "$prompt" ] || return 0/' /etc/init.d/casper
-
 # In Debian/Ubuntu, ssh keys are generated at package install time.  Because
 # the disk image may be cached, we need to remove the ssh keys, but this means
 # that ssh'ing into the server won't work later.  So we remove the keys, but
