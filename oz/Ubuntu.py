@@ -30,7 +30,7 @@ import oz.OzException
 
 class UbuntuGuest(oz.Linux.LinuxCDGuest):
     """
-    Class for Ubuntu 5.04, 5.10, 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, 11.04, 11.10, 12.04, 12.10, 13.04, 13.10, and 14.04 installation.
+    Class for Ubuntu 5.04, 5.10, 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, 11.04, 11.10, 12.04, 12.10, 13.04, 13.10, 14.04, and 14.10 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, initrd, nicmodel,
                  diskbus, macaddress):
@@ -171,7 +171,7 @@ PROMPT 0
                     kernelname = "/casper/vmlinuz"
                     if self.tdl.update in ["12.04.2", "12.04.3", "12.04.4",
                                            "12.04.5", "13.04", "13.10", "14.04",
-                                           "14.04.1"] and self.tdl.arch == "x86_64":
+                                           "14.04.1", "14.10"] and self.tdl.arch == "x86_64":
                         kernelname += ".efi"
                     f.write("  kernel " + kernelname + "\n")
                     f.write("  append file=/cdrom/preseed/customiso.seed boot=casper automatic-ubiquity noprompt keyboard-configuration/layoutcode=us initrd=/casper/" + self.casper_initrd + "\n")
@@ -700,7 +700,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     if tdl.update in ["9.10", "10.04", "10.04.1", "10.04.2", "10.04.3", "10.10",
                       "11.04", "11.10", "12.04", "12.04.1", "12.04.2",
                       "12.04.3", "12.04.4", "12.04.5", "12.10", "13.04",
-                      "13.10", "14.04", "14.04.1"]:
+                      "13.10", "14.04", "14.04.1", "14.10"]:
         if netdev is None:
             netdev = 'virtio'
         if diskbus is None:
@@ -712,4 +712,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Ubuntu: 5.04, 5.10, 6.06[.1,.2], 6.10, 7.04, 7.10, 8.04[.1,.2,.3,.4], 8.10, 9.04, 9.10, 10.04[.1,.2,.3], 10.10, 11.04, 11.10, 12.04[.1,.2,.3,.4,.5], 12.10, 13.04, 13.10, 14.04[.1]"
+    return "Ubuntu: 5.04, 5.10, 6.06[.1,.2], 6.10, 7.04, 7.10, 8.04[.1,.2,.3,.4], 8.10, 9.04, 9.10, 10.04[.1,.2,.3], 10.10, 11.04, 11.10, 12.04[.1,.2,.3,.4,.5], 12.10, 13.04, 13.10, 14.04[.1], 14.10"
