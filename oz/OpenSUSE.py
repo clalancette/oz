@@ -173,6 +173,17 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
                   "/etc/ssh/ssh_host_key", "/etc/ssh/ssh_host_key.pub"]:
             self._guestfs_remove_if_exists(g_handle, f)
 
+        # Remove any lease files; this is so that subsequent boots don't try
+        # to connect to a DHCP server that is on a totally different network
+        for lease in g_handle.glob_expand("/var/lib/dhcp/*.leases"):
+            g_handle.rm_f(lease)
+
+        for lease in g_handle.glob_expand("/var/lib/dhcp6/*.leases"):
+            g_handle.rm_f(lease)
+
+        for lease in g_handle.glob_expand("/var/lib/dhcp6/*.lease"):
+            g_handle.rm_f(lease)
+
     def _collect_teardown(self, libvirt_xml):
         """
         Method to reverse the changes done in _collect_setup.
