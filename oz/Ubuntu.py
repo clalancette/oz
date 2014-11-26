@@ -296,6 +296,11 @@ PROMPT 0
                   "/etc/ssh/ssh_host_key", "/etc/ssh/ssh_host_key.pub"]:
             self._guestfs_remove_if_exists(g_handle, f)
 
+        # Remove any lease files; this is so that subsequent boots don't try
+        # to connect to a DHCP server that is on a totally different network
+        for lease in g_handle.glob_expand("/var/lib/dhcp/*.leases"):
+            g_handle.rm_f(lease)
+
     def _image_ssh_setup_step_1(self, g_handle):
         """
         First step for allowing remote access (generate and upload ssh keys).
