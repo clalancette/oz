@@ -174,7 +174,9 @@ class TDL(object):
     """
     def __init__(self, xmlstring, rootpw_required=False):
         # open the XML document
-        self.doc = lxml.etree.fromstring(xmlstring)
+        tree = lxml.etree.parse(StringIO.StringIO(xmlstring))
+        tree.xinclude()
+        self.doc = tree.getroot()
 
         # then validate the schema
         relaxng = lxml.etree.RelaxNG(file=os.path.join(os.path.dirname(__file__),
