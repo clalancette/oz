@@ -82,14 +82,15 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
     def _check_iso_tree(self, customize_or_icicle):
         # Anything prior to Ubuntu 11.04 can't have openssh installed, and
         # we thus can't customize
-        if customize_or_icicle and tdl.update in ["5.04", "5.10", "6.06",
-                                                  "6.06.1", "6.06.2", "6.10",
-                                                  "7.04", "7.10", "8.04",
-                                                  "8.04.1", "8.04.2", "8.04.3",
-                                                  "8.04.4", "8.10", "9.04",
-                                                  "9.10", "10.04", "10.04.1",
-                                                  "10.04.2", "10.04.3",
-                                                  "10.10"]:
+        if customize_or_icicle and self.tdl.update in ["5.04", "5.10", "6.06",
+                                                       "6.06.1", "6.06.2",
+                                                       "6.10", "7.04", "7.10",
+                                                       "8.04", "8.04.1",
+                                                       "8.04.2", "8.04.3",
+                                                       "8.04.4", "8.10", "9.04",
+                                                       "9.10", "10.04",
+                                                       "10.04.1", "10.04.2",
+                                                       "10.04.3", "10.10"]:
             raise oz.OzException.OzException("Customization can only be done on Ubuntu 11.04 or later")
 
         # ISOs that contain casper are desktop install CDs
