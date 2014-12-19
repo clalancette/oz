@@ -124,7 +124,7 @@ class Guest(object):
         # for backwards compatibility
         self.name = self.tdl.name
 
-        if self.tdl.arch != "i386" and self.tdl.arch != "x86_64":
+        if not self.tdl.arch in [ "i386", "x86_64", "ppc64", "ppc64le" ]:
             raise oz.OzException.OzException("Unsupported guest arch " + self.tdl.arch)
 
         if os.uname()[4] in ["i386", "i586", "i686"] and self.tdl.arch == "x86_64":
@@ -241,7 +241,11 @@ class Guest(object):
             self.rootpw = "ozrootpw"
 
         try:
-            self.url = self._check_url(iso=iso_allowed, url=url_allowed)
+            # PPC64 directory structure differs from x86; disabling ISO boots
+            if self.tdl.arch not in ["ppc64", "ppc64le"]:
+                self.url = self._check_url(iso=iso_allowed, url=url_allowed)
+            else:
+                self.url = self._check_url(iso=False, url=url_allowed)
         except:
             self.log.debug("Install URL validation failed:", exc_info=True)
             raise
@@ -1296,7 +1300,7 @@ class Guest(object):
             elif iso:
                 raise oz.OzException.OzException("%s installs must be done via iso" % (self.tdl.distro))
             elif url:
-                raise oz.OzException.OzException("%s installs must be done via url" % (self.tdl.distro))
+                raise oz.OzException.OzException("%s installs for %s must be done via url" % (self.tdl.distro, self.tdl.arch))
             else:
                 raise oz.OzException.OzException("Unknown error occurred while determining install URL")
 
