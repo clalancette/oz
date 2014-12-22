@@ -30,6 +30,8 @@
               <choice>
                 <value>i386</value>
                 <value>x86_64</value>
+                <value>ppc64</value>
+                <value>ppc64le</value>
               </choice>
             </element>
             <optional>
