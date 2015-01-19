@@ -25,6 +25,7 @@ import re
 import os
 import lxml.etree
 import shutil
+import time
 import winrm
 
 import oz.Guest
@@ -460,6 +461,7 @@ powershell.exe -ExecutionPolicy ByPass -File %SystemDrive%\send-announce.ps1
         while count > 0:
             try:
                 self.log.debug("Testing WinRM connection, try %d" % (count))
+                start = time.time()
                 self.guest_execute_command(guestaddr, 'dir', timeout=1)
                 self.log.debug("Succeeded")
                 success = True
