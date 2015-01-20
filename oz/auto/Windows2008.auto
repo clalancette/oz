@@ -78,8 +78,13 @@
 	<ProtectYourPC>3</ProtectYourPC>
       </OOBE>
       <FirstLogonCommands>
+        <SynchronousCommand wcm:action="add">
+          <Order>1</Order>
+          <Description>Configure WinRM</Description>
+          <CommandLine>C:\Windows\System32\winrm.cmd quickconfig -quiet</CommandLine>
+        </SynchronousCommand>
 	<SynchronousCommand wcm:action="add">
-	  <Order>1</Order>
+	  <Order>2</Order>
 	  <Description>Shutting down Windows</Description>
 	  <CommandLine>cmd /C shutdown /s /t 0</CommandLine>
 	</SynchronousCommand>
