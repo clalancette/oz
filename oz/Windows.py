@@ -22,8 +22,9 @@ Windows installation
 import base64
 import random
 import re
-import os
+import libvirt
 import lxml.etree
+import os
 import shutil
 import time
 import winrm
