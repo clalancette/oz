@@ -239,7 +239,7 @@ class Windows_v6(Windows):
         session_address = "http://%s:5985/wsman" % (guestaddr)
         s = winrm.Session(session_address, auth=('Administrator', self.rootpw))
         self.log.debug("Running %s on Windows guest %s" % (command, session_address))
-        r = s.run_cmd(command)
+        r = s.run_ps(command)
         return (r.std_out, r.std_err, r.status_code)
 
     def _shutdown_guest(self, guestaddr, libvirt_dom):
