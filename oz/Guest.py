@@ -124,7 +124,7 @@ class Guest(object):
         # for backwards compatibility
         self.name = self.tdl.name
 
-        if not self.tdl.arch in [ "i386", "x86_64", "ppc64", "ppc64le", "aarch64" ]:
+        if not self.tdl.arch in [ "i386", "x86_64", "ppc64", "ppc64le", "aarch64", "armv7l" ]:
             raise oz.OzException.OzException("Unsupported guest arch " + self.tdl.arch)
 
         if os.uname()[4] in ["i386", "i586", "i686"] and self.tdl.arch == "x86_64":
@@ -438,9 +438,19 @@ class Guest(object):
         self.lxml_subelement(features, "acpi")
         self.lxml_subelement(features, "apic")
         self.lxml_subelement(features, "pae")
+        # CPU
+        if self.tdl.arch in ["aarch64", "armv7l"]:
+            # Possibly related to BZ 1171501 - need host passthrough for aarch64
+            cpu = self.lxml_subelement(domain, "cpu", None, { 'mode': 'custom', 'match': 'exact' })
+            model = self.lxml_subelement(cpu, "model", "host", { 'fallback': 'allow' })
         # os
         osNode = self.lxml_subelement(domain, "os")
-        self.lxml_subelement(osNode, "type", "hvm")
+        mods = None
+        if self.tdl.arch == "aarch64":
+            mods = { 'arch': 'aarch64', 'machine': 'virt' }
+        if self.tdl.arch == "armv7l":
+            mods = { 'arch': 'armv7l', 'machine': 'virt' }
+        self.lxml_subelement(osNode, "type", "hvm", mods)
         if bootdev:
             self.lxml_subelement(osNode, "boot", None, {'dev':bootdev})
         if kernel:
@@ -448,6 +458,8 @@ class Guest(object):
         if initrd:
             self.lxml_subelement(osNode, "initrd", initrd)
         if cmdline:
+            if self.tdl.arch == "armv7l":
+                cmdline += " console=ttyAMA0"
             self.lxml_subelement(osNode, "cmdline", cmdline)
         # poweroff, reboot, crash
         self.lxml_subelement(domain, "on_poweroff", "destroy")
@@ -456,7 +468,9 @@ class Guest(object):
         # devices
         devices = self.lxml_subelement(domain, "devices")
         # graphics
-        self.lxml_subelement(devices, "graphics", None, {'port':'-1', 'type':'vnc'})
+        if not self.tdl.arch in ["aarch64", "armv7l"]:
+            # qemu for arm/aarch64 does not support a graphical console - amazingly
+            self.lxml_subelement(devices, "graphics", None, {'port':'-1', 'type':'vnc'})
         # network
         interface = self.lxml_subelement(devices, "interface", None, {'type':'bridge'})
         self.lxml_subelement(interface, "source", None, {'bridge':self.bridge_name})
