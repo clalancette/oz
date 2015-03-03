@@ -59,12 +59,12 @@ class Guest(object):
         if self.libvirt_type is None:
             doc = lxml.etree.fromstring(self.libvirt_conn.getCapabilities())
 
-            if len(doc.xpath("/capabilities/guest/arch/domain[@type='kvm']")) > 0:
+            if len(doc.xpath("/capabilities/guest/arch[@name='%s']/domain[@type='kvm']" % (self.tdl.arch))) > 0:
                 self.libvirt_type = 'kvm'
-            elif len(doc.xpath("/capabilities/guest/arch/domain[@type='qemu']")) > 0:
+            elif len(doc.xpath("/capabilities/guest/arch[@name='%s']/domain[@type='qemu']" % (self.tdl.arch))) > 0:
                 self.libvirt_type = 'qemu'
             else:
-                raise oz.OzException.OzException("This host does not support virtualization type kvm or qemu")
+                raise oz.OzException.OzException("This host does not support virtualization type kvm or qemu for TDL arch (%s)" % (self.tdl.arch))
 
         self.log.debug("Libvirt type is %s", self.libvirt_type)
 
@@ -439,8 +439,8 @@ class Guest(object):
         self.lxml_subelement(features, "apic")
         self.lxml_subelement(features, "pae")
         # CPU
-        if self.tdl.arch in ["aarch64", "armv7l"]:
-            # Possibly related to BZ 1171501 - need host passthrough for aarch64
+        if self.tdl.arch in ["aarch64", "armv7l"] and self.libvirt_type == "kvm":
+            # Possibly related to BZ 1171501 - need host passthrough for aarch64 and arm with kvm
             cpu = self.lxml_subelement(domain, "cpu", None, { 'mode': 'custom', 'match': 'exact' })
             model = self.lxml_subelement(cpu, "model", "host", { 'fallback': 'allow' })
         # os
