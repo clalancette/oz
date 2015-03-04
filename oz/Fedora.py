@@ -118,7 +118,7 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
             #Newer versions of Anaconda look for a named virtio chanel and, if it is present
             #pass a great deal of helpful debug info over it.  This change to the libvirt XML
             #allows Oz to capture and log that information
-            socket_filename = self.install_logging_domain_socket_base + "-virtio"
+            socket_filename = self.install_logging_domain_socket_dir + "/virtio"
             self.install_logging_domain_sockets.append(socket_filename)
 	    virtio = self.lxml_subelement(devices, "channel", None, {'type':'unix'})
 	    self.lxml_subelement(virtio, "source", None,
@@ -129,7 +129,7 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
 
             # Alas, some early boot information is only available via serial console
             # so we create a socket for that as well and log output from both of them
-            socket_filename = self.install_logging_domain_socket_base + "-ttyS1"
+            socket_filename = self.install_logging_domain_socket_dir + "/ttyS1"
             self.install_logging_domain_sockets.append(socket_filename)
 	    serial = self.lxml_subelement(devices, "serial", None, {'type':'unix'})
 	    self.lxml_subelement(serial, "source", None,

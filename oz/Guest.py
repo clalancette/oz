@@ -214,9 +214,14 @@ class Guest(object):
 
         self.icicle_tmp = os.path.join(self.data_dir, "icicletmp",
                                        self.tdl.name)
-        self.listen_domain_socket = os.path.join("/tmp","oz-listenter-%s" % (self.uuid))
+        self._tmp_socket_dir = tempfile.mkdtemp('', 'tmp-oz-listener')
+        # Need to allow qemu access, just give away the directory
+        subprocess.check_call(['chown', 'qemu:qemu', self._tmp_socket_dir])
+        # We need to allow sVirt restricted domains access to our sockets
+        subprocess.check_call(['chcon', '-h', '-t', 'svirt_home_t', self._tmp_socket_dir])
+        self.listen_domain_socket = os.path.join(self._tmp_socket_dir, "serial")
 
-        self.install_logging_domain_socket_base = os.path.join("/tmp","oz-listenter-%s" % (self.uuid))
+        self.install_logging_domain_socket_dir = self._tmp_socket_dir
         self.install_logging_domain_sockets = [ ]
 
         self.connect_to_libvirt()
