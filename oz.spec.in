@@ -84,6 +84,9 @@ fi
 %{_mandir}/man1/*
 
 %changelog
+* Sat Mar  7 2015 Chris Lalancette <clalancette@gmail.com> - 0.13.0-1
+- Release 0.13.0
+
 * Wed Jan  1 2014 Chris Lalancette <clalancette@gmail.com> - 0.12.0-1
 - Release 0.12.0
 
