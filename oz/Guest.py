@@ -516,12 +516,14 @@ class Guest(object):
         directory = os.path.dirname(diskimage)
         filename = os.path.basename(diskimage)
 
+        # create the pool XML
         pool = lxml.etree.Element("pool", type="dir")
         self.lxml_subelement(pool, "name", "oztempdir" + str(uuid.uuid4()))
         target = self.lxml_subelement(pool, "target")
         self.lxml_subelement(target, "path", directory)
         pool_xml = lxml.etree.tostring(pool, pretty_print=True)
 
+        # create the volume XML
         vol = lxml.etree.Element("volume", type="file")
         self.lxml_subelement(vol, "name", filename)
         self.lxml_subelement(vol, "allocation", "0")
@@ -582,6 +584,14 @@ class Guest(object):
             pool = self.libvirt_conn.storagePoolCreateXML(pool_xml, 0)
             started = True
 
+        # libvirt will not allow us to do certain operations (like a refresh)
+        # while other operations are happening on a pool (like creating a new
+        # volume).  Since we don't exactly know which other processes might be
+        # running on the system, we take a system-wide Oz lock to ensure that
+        # these succeed.  In most cases these operations will be fast and thus
+        # the lock will not be held very long.
+        lockfile = os.path.join(self.icicle_tmp, "libvirt_pool_lockfile")
+        (refresh_lock,outdir) = self._open_locked_file(lockfile)
         pool.refresh(0)
 
         # this is a bit complicated, because of the cases that can
@@ -607,6 +617,9 @@ class Guest(object):
         finally:
             if started:
                 pool.destroy()
+
+        # remember to unlock the refresh lock
+        os.close(refresh_lock)
 
         if create_partition:
             if backing_filename:
