@@ -840,7 +840,7 @@ class Guest(object):
         csumname = os.path.join(outdir,
                                 self.tdl.distro + self.tdl.update + self.tdl.arch + "-CHECKSUM")
 
-        csumfd = self._open_locked_file(csumname)
+        (csumfd,outdir) = self._open_locked_file(csumname)
 
         os.ftruncate(csumfd, 0)
 
