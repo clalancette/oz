@@ -608,16 +608,18 @@ class Guest(object):
             if started:
                 pool.destroy()
 
-        if create_partition and backing_filename:
-            self.log.warning("Asked to create partition against a copy-on-write snapshot - ignoring")
-        elif create_partition:
-            g_handle = guestfs.GuestFS()
-            g_handle.add_drive_opts(self.diskimage, format=self.image_type, readonly=0)
-            g_handle.launch()
-            devices = g_handle.list_devices()
-            g_handle.part_init(devices[0], "msdos")
-            g_handle.part_add(devices[0], 'p', 1, 2)
-            g_handle.close()
+        if create_partition:
+            if backing_filename:
+                self.log.warning("Asked to create partition against a copy-on-write snapshot - ignoring")
+            else:
+                g_handle = guestfs.GuestFS()
+                g_handle.add_drive_opts(self.diskimage, format=self.image_type,
+                                        readonly=0)
+                g_handle.launch()
+                devices = g_handle.list_devices()
+                g_handle.part_init(devices[0], "msdos")
+                g_handle.part_add(devices[0], 'p', 1, 2)
+                g_handle.close()
 
     def generate_diskimage(self, size=10, force=False):
         """
