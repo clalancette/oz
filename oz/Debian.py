@@ -29,7 +29,7 @@ import oz.OzException
 
 class DebianGuest(oz.Guest.CDGuest):
     """
-    Class for Debian 5, 6 and 7 installation.
+    Class for Debian 5, 6, 7 and 8 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
@@ -73,7 +73,7 @@ class DebianGuest(oz.Guest.CDGuest):
         self.log.debug("Modifying isolinux.cfg")
         isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
         extra = ""
-        if self.tdl.update in ["7"]:
+        if self.tdl.update in ["7", "8"]:
             extra = "auto=true "
 
         with open(isolinuxcfg, 'w') as f:
@@ -108,7 +108,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for Debian installs.
     """
-    if tdl.update in ["5", "6", "7"]:
+    if tdl.update in ["5", "6", "7", "8"]:
         if netdev is None:
             netdev = 'virtio'
         if diskbus is None:
@@ -120,4 +120,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Debian: 5, 6, 7"
+    return "Debian: 5, 6, 7, 8"
