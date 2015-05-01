@@ -205,8 +205,8 @@ class TDL(object):
 
         self.arch = _xml_get_value(self.doc, '/template/os/arch',
                                    'OS architecture')
-        if self.arch not in [ "i386", "x86_64", "ppc64", "ppc64le" ]:
-            raise oz.OzException.OzException("Architecture must be one of 'i386, x86_64, ppc64, or ppc64le'")
+        if self.arch not in [ "i386", "x86_64", "ppc64", "ppc64le", "aarch64" ]:
+            raise oz.OzException.OzException("Architecture must be one of 'i386, x86_64, ppc64, ppc64le, or aarch64'")
 
         self.key = _xml_get_value(self.doc, '/template/os/key', 'OS key',
                                   optional=True)

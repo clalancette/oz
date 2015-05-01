@@ -32,6 +32,7 @@
                 <value>x86_64</value>
                 <value>ppc64</value>
                 <value>ppc64le</value>
+                <value>aarch64</value>
               </choice>
             </element>
             <optional>
