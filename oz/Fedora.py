@@ -109,7 +109,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for Fedora installs.
     """
-    newer_distros = ["18", "19", "20", "21"]
+    newer_distros = ["20", "21"]
 
     if int(tdl.update) > int(newer_distros[-1]):
         if netdev is None:
@@ -127,7 +127,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
         return FedoraGuest(tdl, config, auto, netdev, True, diskbus, False,
                            output_disk, macaddress, None)
 
-    if tdl.update in ["10", "11", "12", "13", "14", "15", "16", "17"]:
+    if tdl.update in ["10", "11", "12", "13", "14", "15", "16", "17", "18", "19"]:
         if netdev is None:
             netdev = 'virtio'
         if diskbus is None:
