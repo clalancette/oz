@@ -27,7 +27,7 @@ import oz.OzException
 
 class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
     """
-    Class for Fedora 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, and 21 installation.
+    Class for Fedora 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, and 22 installation.
     """
     def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,
                  brokenisomethod, output_disk=None, macaddress=None,
@@ -54,7 +54,7 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
         """
         self._copy_kickstart(os.path.join(self.iso_contents, "ks.cfg"))
 
-        if self.tdl.update in ["17", "18", "19", "20", "21"]:
+        if self.tdl.update in ["17", "18", "19", "20", "21", "22"]:
             initrdline = "  append initrd=initrd.img ks=cdrom:/dev/cdrom:/ks.cfg"
         else:
             initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
@@ -109,7 +109,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for Fedora installs.
     """
-    newer_distros = ["20", "21"]
+    newer_distros = ["20", "21", "22"]
 
     if int(tdl.update) > int(newer_distros[-1]):
         if netdev is None:
@@ -143,4 +143,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Fedora: 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21"
+    return "Fedora: 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22"
