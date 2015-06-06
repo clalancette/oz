@@ -446,10 +446,8 @@ class Guest(object):
         # os
         osNode = self.lxml_subelement(domain, "os")
         mods = None
-        if self.tdl.arch == "aarch64":
-            mods = { 'arch': 'aarch64', 'machine': 'virt' }
-        if self.tdl.arch == "armv7l":
-            mods = { 'arch': 'armv7l', 'machine': 'virt' }
+        if self.tdl.arch in ["aarch64", "armv7l"]:
+            mods = { 'arch': self.tdl.arch, 'machine': 'virt' }
         self.lxml_subelement(osNode, "type", "hvm", mods)
         if bootdev:
             self.lxml_subelement(osNode, "boot", None, {'dev':bootdev})
