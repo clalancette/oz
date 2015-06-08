@@ -43,6 +43,7 @@ import base64
 import hashlib
 import errno
 import re
+import StringIO
 
 import oz.ozutil
 import oz.OzException
@@ -58,7 +59,6 @@ class Guest(object):
         """
         if self.libvirt_type is None:
             doc = lxml.etree.fromstring(self.libvirt_conn.getCapabilities())
-
             if len(doc.xpath("/capabilities/guest/arch/domain[@type='kvm']")) > 0:
                 self.libvirt_type = 'kvm'
             elif len(doc.xpath("/capabilities/guest/arch/domain[@type='qemu']")) > 0:
@@ -219,7 +219,15 @@ class Guest(object):
 
         self.icicle_tmp = os.path.join(self.data_dir, "icicletmp",
                                        self.tdl.name)
-        self.listen_port = random.randrange(1024, 65535)
+        self._tmp_socket_dir = tempfile.mkdtemp('', 'tmp-oz-listener')
+        # Need to allow qemu access, just give away the directory
+        subprocess.check_call(['chown', 'qemu:qemu', self._tmp_socket_dir])
+        # We need to allow sVirt restricted domains access to our sockets
+        subprocess.check_call(['chcon', '-h', '-t', 'svirt_home_t', self._tmp_socket_dir])
+        self.listen_domain_socket = os.path.join(self._tmp_socket_dir, "serial")
+
+        self.install_logging_domain_socket_dir = self._tmp_socket_dir
+        self.install_logging_domain_sockets = [ ]
 
         self.connect_to_libvirt()
 
@@ -270,7 +278,7 @@ class Guest(object):
         self.log.debug("update: %s, arch: %s, diskimage: %s", self.tdl.update, self.tdl.arch, self.diskimage)
         self.log.debug("nicmodel: %s, clockoffset: %s", self.nicmodel, self.clockoffset)
         self.log.debug("mousetype: %s, disk_bus: %s, disk_dev: %s", self.mousetype, self.disk_bus, self.disk_dev)
-        self.log.debug("icicletmp: %s, listen_port: %d", self.icicle_tmp, self.listen_port)
+        self.log.debug("icicletmp: %s, listen_domain_socket: %s", self.icicle_tmp, self.listen_domain_socket)
 
     def image_name(self):
         """
@@ -403,13 +411,15 @@ class Guest(object):
                 tmp.set(k, v)
         return tmp
 
-    def _generate_serial_xml(self, devices):
+    def _generate_serial_xml(self, devices, install_stage):
         """
         Method to generate the serial portion of the libvirt XML.
+        install_stage: True if generating for initial install, False otherwise
+                       Ignored here, used in sub-classes
         """
-        serial = self.lxml_subelement(devices, "serial", None, {'type':'tcp'})
+        serial = self.lxml_subelement(devices, "serial", None, {'type':'unix'})
         self.lxml_subelement(serial, "source", None,
-                             {'mode':'bind', 'host':'127.0.0.1', 'service':str(self.listen_port)})
+                             {'mode':'bind', 'path':self.listen_domain_socket})
         self.lxml_subelement(serial, "protocol", None, {'type':'raw'})
         self.lxml_subelement(serial, "target", None, {'port':'1'})
 
@@ -473,7 +483,7 @@ class Guest(object):
         console = self.lxml_subelement(devices, "serial", None, {'type':'pty'})
         self.lxml_subelement(console, "target", None, {'port':'0'})
         # serial
-        self._generate_serial_xml(devices)
+        self._generate_serial_xml(devices, True)
         # boot disk
         bootDisk = self.lxml_subelement(devices, "disk", None, {'device':'disk', 'type':'file'})
         self.lxml_subelement(bootDisk, "target", None, {'dev':self.disk_dev, 'bus':self.disk_bus})
@@ -738,7 +748,7 @@ class Guest(object):
                 raise oz.OzException.OzException("Unknown libvirt error")
 
     def _wait_for_install_finish(self, libvirt_dom, count,
-                                 inactivity_timeout=300):
+                                 inactivity_timeout=1000):
         """
         Method to wait for an installation to finish.  This will wait around
         until either the VM has gone away (at which point it is assumed the
@@ -753,9 +763,52 @@ class Guest(object):
         inactivity_countdown = inactivity_timeout
         origcount = count
         saved_exception = None
+
+        socket_work_list = [ ]
+        for socket_filename in self.install_logging_domain_sockets:
+            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            sock.settimeout(0.1)
+            sock.connect(socket_filename)
+            data = StringIO.StringIO()
+            socket_work_list.append( { 'socket':sock, 'data':data, 'filename':socket_filename } )
+
         while count > 0 and inactivity_countdown > 0:
             if count % 10 == 0:
                 self.log.debug("Waiting for %s to finish installing, %d/%d", self.tdl.name, count, origcount)
+
+            def _log_complete_lines(data, log):
+		for line in data:
+		    if line[-1] != '\n':
+			# This is an incomplete line - don't print it yet - move the pointer back
+			# and allow it to print out on the next time around
+			data.seek(0-len(line),2)
+			break
+		    else:
+                        log.debug(line.rstrip())
+
+            for socket_stream in socket_work_list:
+		# Save most recently logged location in string
+		data=socket_stream['data']
+		origpos=data.tell()
+		# Now seek to end to write new content
+		data.seek(0,2)
+		try:
+                    # Without some sort of limit on this loop we could end up with either frequent
+                    # small outputs or truly massive outputs keeping us in the stream log loop forever
+                    # This should cover most reasonable log quantities while protecting from an endless
+                    # loop.
+                    # The virtual serial port in particular tends to produce very short reads on recv()
+                    # calls.  In testing they were often 1 or 2 bytes.  This requires a very large number
+                    # of calls to keep up with the stream of early boot debug output from Anaconda
+                    # TODO: A better option?  Possibly a worker thread?
+                    for i in range(1, 102400):
+			data.write(socket_stream['socket'].recv(512))
+		except socket.timeout:
+                    pass
+                finally:
+		    data.seek(origpos)
+		    _log_complete_lines(data, self.log)
+
             try:
                 total_disk_req, total_net_bytes = self._get_disk_and_net_activity(libvirt_dom, disks, interfaces)
             except libvirt.libvirtError as e:
@@ -791,6 +844,13 @@ class Guest(object):
             last_network_activity = total_net_bytes
             count -= 1
             time.sleep(1)
+
+        try:
+            for socket_stream in socket_work_list:
+                socket_stream['socket'].close()
+                os.unlink(socket_stream['filename'])
+        except:
+            pass
 
         # We get here because of a libvirt exception, an absolute timeout, or
         # an I/O timeout; we sort this out below
@@ -1134,6 +1194,7 @@ class Guest(object):
         Internal method to take input libvirt XML (which may have been provided
         by the user) and add an appropriate serial section so that guest
         announcement works properly.
+        NOTE: Using this function implies that we are doing a customize, not an initial install
         """
         input_doc = lxml.etree.fromstring(libvirt_xml)
         serialNode = input_doc.xpath("/domain/devices/serial")
@@ -1158,7 +1219,8 @@ class Guest(object):
         elif devlen > 1:
             raise oz.OzException.OzException("%d devices sections specified, something is wrong with the libvirt XML" % (devlen))
 
-        self._generate_serial_xml(devices[0])
+        # We pass False to let the generator know we are customizing, not doing an install
+        self._generate_serial_xml(devices[0], False)
 
         xml = lxml.etree.tostring(input_doc, pretty_print=True)
         self.log.debug("Generated XML:\n%s", xml)
@@ -1204,11 +1266,11 @@ class Guest(object):
         """
         self.log.info("Waiting for guest %s to boot", self.tdl.name)
 
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
         try:
             sock.settimeout(1)
-            sock.connect(('127.0.0.1', self.listen_port))
+            sock.connect(self.listen_domain_socket)
 
             addr = None
             count = 300
@@ -1260,6 +1322,7 @@ class Guest(object):
                 count -= 1
         finally:
             sock.close()
+            os.unlink(self.listen_domain_socket)
 
         if addr is None:
             raise oz.OzException.OzException("Timed out waiting for guest to boot")
