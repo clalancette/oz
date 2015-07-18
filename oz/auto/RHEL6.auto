@@ -23,5 +23,6 @@ reboot
 
 %packages --nobase
 openssh-server
+openssh-clients
 
 %post
