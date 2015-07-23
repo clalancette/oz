@@ -521,6 +521,15 @@ def copy_modify_file(inname, outname, subfunc):
     infile.close()
     outfile.close()
 
+def create_default_directory():
+    """When not running a root, check if the '~/.oz' directory is
+       preset and create it if not"""
+    home_dir = os.path.expanduser('~')
+    if os.geteuid() != 0:
+	default_dir = '%s/.oz' % (home_dir)
+        if not os.path.isdir(default_dir):
+            os.mkdir(default_dir)
+
 def write_cpio(inputdict, outputfile):
     """
     Function to write a CPIO archive in the "New ASCII Format".  The
@@ -687,8 +696,11 @@ def parse_config(config_file):
     None, then the default configuration file is used.
     """
     if config_file is None:
-        config_file = "~/.oz/oz.cfg"
         if os.geteuid() == 0:
+            config_file = "/etc/oz/oz.cfg"
+        elif os.path.isfile("~/.oz/oz.cfg"):
+            config_file = "~/.oz/oz.cfg"
+        else:
             config_file = "/etc/oz/oz.cfg"
     # if config_file was not None on input, then it was provided by the caller
     # and we use that instead
