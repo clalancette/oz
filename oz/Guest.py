@@ -124,7 +124,7 @@ class Guest(object):
         # for backwards compatibility
         self.name = self.tdl.name
 
-        if not self.tdl.arch in [ "i386", "x86_64", "ppc64", "ppc64le", "aarch64", "armv7l" ]:
+        if not self.tdl.arch in [ "i386", "i686", "x86_64", "ppc64", "ppc64le", "aarch64", "armv7l" ]:
             raise oz.OzException.OzException("Unsupported guest arch " + self.tdl.arch)
 
         if os.uname()[4] in ["i386", "i586", "i686"] and self.tdl.arch == "x86_64":
