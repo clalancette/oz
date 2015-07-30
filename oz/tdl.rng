@@ -33,6 +33,7 @@
                 <value>ppc64</value>
                 <value>ppc64le</value>
                 <value>aarch64</value>
+                <value>armv7l</value>
               </choice>
             </element>
             <optional>

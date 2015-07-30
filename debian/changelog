@@ -1,3 +1,9 @@
+oz (0.14.0-1) unstable; urgency=low
+
+  * Update to Oz 0.14.0
+
+ -- Chris Lalancette <clalancette@gmail.com>  Fri, 26 Jun 2015 14:37:00 -0500
+
 oz (0.13.0-1) unstable; urgency=low
 
   * Update to Oz 0.13.0

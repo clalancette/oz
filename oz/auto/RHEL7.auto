@@ -18,6 +18,7 @@ autopart --type=lvm
 reboot
 
 %packages
+openssh-clients
 @core
 
 %end
