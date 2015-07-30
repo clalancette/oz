@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012-2014  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2015  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -27,7 +27,7 @@ import oz.OzException
 
 class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
     """
-    Class for Fedora 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, and 22 installation.
+    Class for Fedora 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, and 23 installation.
     """
     def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,
                  brokenisomethod, output_disk=None, macaddress=None,
@@ -54,7 +54,7 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
         """
         self._copy_kickstart(os.path.join(self.iso_contents, "ks.cfg"))
 
-        if self.tdl.update in ["17", "18", "19", "20", "21", "22"]:
+        if self.tdl.update in ["17", "18", "19", "20", "21", "22", "23"]:
             initrdline = "  append initrd=initrd.img ks=cdrom:/dev/cdrom:/ks.cfg"
         else:
             initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
@@ -109,7 +109,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for Fedora installs.
     """
-    newer_distros = ["20", "21", "22"]
+    newer_distros = ["21", "22", "23"]
 
     if int(tdl.update) > int(newer_distros[-1]):
         if netdev is None:
@@ -127,7 +127,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
         return FedoraGuest(tdl, config, auto, netdev, True, diskbus, False,
                            output_disk, macaddress, None)
 
-    if tdl.update in ["10", "11", "12", "13", "14", "15", "16", "17", "18", "19"]:
+    if tdl.update in ["10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"]:
         if netdev is None:
             netdev = 'virtio'
         if diskbus is None:
@@ -143,4 +143,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Fedora: 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22"
+    return "Fedora: 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23"
