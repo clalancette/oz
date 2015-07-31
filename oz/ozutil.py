@@ -686,19 +686,21 @@ def parse_config(config_file):
     Function to parse the configuration file.  If the passed in config_file is
     None, then the default configuration file is used.
     """
-    if config_file is None:
-        config_file = "~/.oz/oz.cfg"
-        if os.geteuid() == 0:
-            config_file = "/etc/oz/oz.cfg"
-        mkdir_p(os.path.dirname(config_file))
-    # if config_file was not None on input, then it was provided by the caller
-    # and we use that instead
-
-    config_file = os.path.expanduser(config_file)
-
     config = configparser.SafeConfigParser()
-    if os.access(config_file, os.F_OK):
-        config.read(config_file)
+    if config_file is not None:
+        # If the config_file passed in is not None, then we want to try to read
+        # that config file (after expanding it).  If that config file doesn't
+        # exist, we want to throw an error (which is why we use readfp here).
+        config.readfp(open(os.path.expanduser(config_file)))
+    else:
+        # The config file was not passed in, so we want to use one of the
+        # defaults.  First we check to see if a ~/.oz/oz.cfg exists; if it does,
+        # we use that.  Otherwise we fall back to the system-wide version in
+        # /etc/oz/oz.cfg.  If neither of those exist, we don't throw an error
+        # but instead let Oz pick sane defaults internally.
+        parsed = config.read(os.path.expanduser("~/.oz/oz.cfg"))
+        if len(parsed) == 0:
+            config.read("/etc/oz/oz.cfg")
 
     return config
 
