@@ -690,6 +690,7 @@ def parse_config(config_file):
         config_file = "~/.oz/oz.cfg"
         if os.geteuid() == 0:
             config_file = "/etc/oz/oz.cfg"
+        mkdir_p(os.path.dirname(config_file))
     # if config_file was not None on input, then it was provided by the caller
     # and we use that instead
 
