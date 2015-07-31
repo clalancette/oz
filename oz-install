@@ -140,6 +140,7 @@ if not generate_icicle and icicle_file is not None:
     sys.exit(3)
 
 try:
+    oz.ozutil.create_default_directory()
     config = oz.ozutil.parse_config(config_file)
 
     logging.basicConfig(level=loglevel, format=logformat)
