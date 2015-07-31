@@ -59,12 +59,19 @@ class Guest(object):
         if self.libvirt_type is None:
             doc = lxml.etree.fromstring(self.libvirt_conn.getCapabilities())
 
-            if len(doc.xpath("/capabilities/guest/arch[@name='%s']/domain[@type='kvm']" % (self.tdl.arch))) > 0:
+            # Libvirt calls the old intel 32-bit architecture i686, while we
+            # refer to it as i686.  Do the mapping here, since we need to look
+            # up the libvirt name.
+            libvirtarch = self.tdl.arch
+            if libvirtarch == 'i386':
+                libvirtarch = 'i686'
+
+            if len(doc.xpath("/capabilities/guest/arch[@name='%s']/domain[@type='kvm']" % (libvirtarch))) > 0:
                 self.libvirt_type = 'kvm'
-            elif len(doc.xpath("/capabilities/guest/arch[@name='%s']/domain[@type='qemu']" % (self.tdl.arch))) > 0:
+            elif len(doc.xpath("/capabilities/guest/arch[@name='%s']/domain[@type='qemu']" % (libvirtarch))) > 0:
                 self.libvirt_type = 'qemu'
             else:
-                raise oz.OzException.OzException("This host does not support virtualization type kvm or qemu for TDL arch (%s)" % (self.tdl.arch))
+                raise oz.OzException.OzException("This host does not support virtualization type kvm or qemu for TDL arch (%s)" % (libvirtarch))
 
         self.log.debug("Libvirt type is %s", self.libvirt_type)
 
