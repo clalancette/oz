@@ -29,6 +29,7 @@
             <element name='arch'>
               <choice>
                 <value>i386</value>
+                <value>i686</value>
                 <value>x86_64</value>
                 <value>ppc64</value>
                 <value>ppc64le</value>
