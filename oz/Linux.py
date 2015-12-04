@@ -99,6 +99,7 @@ class LinuxCDGuest(oz.Guest.CDGuest):
                                                   "-o", "ConnectTimeout=" + str(timeout),
                                                   "-o", "UserKnownHostsFile=/dev/null",
                                                   "-o", "PasswordAuthentication=no",
+                                                  "-o", "IdentitiesOnly yes",
                                                   "root@" + guestaddr, command],
                                                  printfn=self.log.debug)
 
@@ -126,6 +127,7 @@ class LinuxCDGuest(oz.Guest.CDGuest):
                                                   "-o", "ConnectTimeout=" + str(timeout),
                                                   "-o", "UserKnownHostsFile=/dev/null",
                                                   "-o", "PasswordAuthentication=no",
+                                                  "-o", "IdentitiesOnly yes",
                                                   file_to_upload,
                                                   "root@" + guestaddr + ":" + destination],
                                                  printfn=self.log.debug)
