@@ -111,7 +111,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     newer_distros = ["21", "22", "23"]
 
-    if int(tdl.update) > int(newer_distros[-1]):
+    if tdl.update == 'rawhide' or int(tdl.update) > int(newer_distros[-1]):
         if netdev is None:
             netdev = 'virtio'
         if diskbus is None:
