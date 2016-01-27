@@ -33,7 +33,6 @@ except ImportError:
 import stat
 import lxml.etree
 import logging
-import random
 import guestfs
 import socket
 import struct
@@ -226,7 +225,13 @@ class Guest(object):
 
         self.icicle_tmp = os.path.join(self.data_dir, "icicletmp",
                                        self.tdl.name)
-        self.listen_port = random.randrange(1024, 65535)
+
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # Bind to port 0 which will use a free socket to listen to.
+        sock.bind(("", 0))
+        self.listen_port = sock.getsockname()[1]
+        # Close the socket to free it up for libvirt
+        sock.close()
 
         self.connect_to_libvirt()
 
