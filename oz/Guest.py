@@ -203,6 +203,16 @@ class Guest(object):
                                                                 'safe_generation',
                                                                 False)
 
+        # configuration of 'timeouts' section
+        self.default_install_timeout = int(oz.ozutil.config_get_key(config, 'timeouts',
+                                                                            'install', 1200))
+        self.inactivity_timeout = int(oz.ozutil.config_get_key(config, 'timeouts',
+                                                               'inactivity', 300))
+        self.boot_timeout = int(oz.ozutil.config_get_key(config, 'timeouts',
+                                                                 'boot', 300))
+        self.shutdown_timeout = int(oz.ozutil.config_get_key(config, 'timeouts',
+                                                                     'shutdown', 90))
+
         # only pull a cached JEOS if it was built with the correct image type
         jeos_extension = self.image_type
         if self.image_type == 'raw':
@@ -761,8 +771,7 @@ class Guest(object):
                 # the passed in exception was None, just raise a generic error
                 raise oz.OzException.OzException("Unknown libvirt error")
 
-    def _wait_for_install_finish(self, libvirt_dom, count,
-                                 inactivity_timeout=300):
+    def _wait_for_install_finish(self, libvirt_dom, count):
         """
         Method to wait for an installation to finish.  This will wait around
         until either the VM has gone away (at which point it is assumed the
@@ -774,7 +783,7 @@ class Guest(object):
 
         last_disk_activity = 0
         last_network_activity = 0
-        inactivity_countdown = inactivity_timeout
+        inactivity_countdown = self.inactivity_timeout
         origcount = count
         saved_exception = None
         while count > 0 and inactivity_countdown > 0:
@@ -809,7 +818,7 @@ class Guest(object):
                 inactivity_countdown -= 1
             else:
                 # if we did see some activity, then we can reset the timer
-                inactivity_countdown = inactivity_timeout
+                inactivity_countdown = self.inactivity_timeout
 
             last_disk_activity = total_disk_req
             last_network_activity = total_net_bytes
@@ -826,18 +835,19 @@ class Guest(object):
             # if we saw no disk or network activity in the countdown window,
             # we presume the install has hung.  Fail here
             screenshot_text = self._capture_screenshot(libvirt_dom)
-            raise oz.OzException.OzException("No disk activity in %d seconds, failing.  %s" % (inactivity_timeout, screenshot_text))
+            raise oz.OzException.OzException("No disk activity in %d seconds, failing.  %s" % (self.inactivity_timeout, screenshot_text))
 
         # We get here only if we got a libvirt exception
         self._wait_for_clean_shutdown(libvirt_dom, saved_exception)
 
         self.log.info("Install of %s succeeded", self.tdl.name)
 
-    def _wait_for_guest_shutdown(self, libvirt_dom, count=90):
+    def _wait_for_guest_shutdown(self, libvirt_dom):
         """
         Method to wait around for orderly shutdown of a running guest.  Returns
         True if the guest shutdown in the specified time, False otherwise.
         """
+        count = self.shutdown_timeout
         origcount = count
         saved_exception = None
         while count > 0:
@@ -1235,12 +1245,12 @@ class Guest(object):
             sock.connect(('127.0.0.1', self.listen_port))
 
             addr = None
-            count = 300
+            count = self.boot_timeout
             data = ''
             while count > 0:
                 do_sleep = True
                 if count % 10 == 0:
-                    self.log.debug("Waiting for guest %s to boot, %d/300", self.tdl.name, count)
+                    self.log.debug("Waiting for guest %s to boot, %d/%d", self.tdl.name, count, self.boot_timeout)
                 try:
                     # note that we have to build the data up here, since there
                     # is no guarantee that we will get the whole write in one go
