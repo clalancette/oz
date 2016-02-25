@@ -3,7 +3,7 @@ text
 keyboard us
 lang en_US.UTF-8
 skipx
-network --device eth0 --bootproto dhcp
+network --device ens3 --bootproto dhcp
 rootpw %ROOTPW%
 firewall --disabled
 authconfig --enableshadow --enablemd5
