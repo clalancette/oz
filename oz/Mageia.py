@@ -38,9 +38,6 @@ class MageiaGuest(oz.Guest.CDGuest):
         self.mageia_arch = self.tdl.arch
         if self.mageia_arch == "i386":
             self.mageia_arch = "i586"
-        self.output_floppy = os.path.join(self.output_dir,
-                                          self.tdl.name + "-" + self.tdl.installtype + "-oz.img")
-
 
     def _modify_iso(self):
         """
@@ -113,13 +110,6 @@ label customiso
         fddev = self._InstallDev("floppy", self.output_floppy, "fda")
         return self._do_install(timeout, force, 0, None, None, None,
                                 [fddev])
-
-    def cleanup_install(self):
-        try:
-            os.unlink(self.output_floppy)
-        except:
-            pass
-        return oz.Guest.CDGuest.cleanup_install(self)
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):

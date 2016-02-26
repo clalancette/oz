@@ -45,9 +45,6 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
             # for 10.3 we don't have a 2-stage install process so don't reboot
             self.reboots = 0
 
-        self.output_floppy = os.path.join(self.output_dir,
-                                          self.tdl.name + "-" + self.tdl.installtype + "-oz.img")
-
     def _modify_iso(self):
         """
         Method to make the boot ISO auto-boot with appropriate parameters.
@@ -126,13 +123,6 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
         if self.tdl.update == "13.2":
             extrainstalldevs = [self._InstallDev("floppy", self.output_floppy, "fda")]
         return self._do_install(timeout, force, self.reboots, None, None, None, extrainstalldevs)
-
-    def cleanup_install(self):
-        try:
-            os.unlink(self.output_floppy)
-        except:
-            pass
-        return oz.Guest.CDGuest.cleanup_install(self)
 
     def _image_ssh_teardown_step_1(self, g_handle):
         """

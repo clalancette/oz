@@ -1449,6 +1449,9 @@ class CDGuest(Guest):
                                        self.tdl.name + "-" + self.tdl.installtype + "-oz.iso")
         self.iso_contents = os.path.join(self.data_dir, "isocontent",
                                          self.tdl.name + "-" + self.tdl.installtype)
+        # An optional floppy disk to be used for installation
+        self.output_floppy = os.path.join(self.output_dir,
+                                          self.tdl.name + "-" + self.tdl.installtype + "-oz.img")
 
         self.log.debug("Original ISO path: %s", self.orig_iso)
         self.log.debug("Modified ISO cache: %s", self.modified_iso_cache)
@@ -1871,6 +1874,11 @@ class CDGuest(Guest):
 
         try:
             os.unlink(self.output_iso)
+        except:
+            pass
+
+        try:
+            os.unlink(self.output_floppy)
         except:
             pass
 
