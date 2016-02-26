@@ -108,6 +108,7 @@ label customiso
                                            "-v", "-o", self.output_iso,
                                            self.iso_contents],
                                           printfn=self.log.debug)
+
     def install(self, timeout=None, force=False):
         fddev = self._InstallDev("floppy", self.output_floppy, "fda")
         return self._do_install(timeout, force, 0, None, None, None,

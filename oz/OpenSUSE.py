@@ -45,6 +45,9 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
             # for 10.3 we don't have a 2-stage install process so don't reboot
             self.reboots = 0
 
+        self.output_floppy = os.path.join(self.output_dir,
+                                          self.tdl.name + "-" + self.tdl.installtype + "-oz.img")
+
     def _modify_iso(self):
         """
         Method to make the boot ISO auto-boot with appropriate parameters.
@@ -68,6 +71,13 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
         else:
             shutil.copy(self.auto, outname)
 
+        if self.tdl.update == "13.2":
+            oz.ozutil.subprocess_check_output(["/sbin/mkfs.msdos", "-C",
+                                               self.output_floppy, "1440"])
+            oz.ozutil.subprocess_check_output(["mcopy", "-n", "-o", "-i",
+                                               self.output_floppy, outname,
+                                               "::autoinst.xml"])
+
         self.log.debug("Modifying the boot options")
         isolinux_cfg = os.path.join(self.iso_contents, "boot", self.tdl.arch,
                                     "loader", "isolinux.cfg")
@@ -81,7 +91,12 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
                 lines[index] = "default customiso\n"
         lines.append("label customiso\n")
         lines.append("  kernel linux\n")
-        lines.append("  append initrd=initrd splash=silent instmode=cd autoyast=default")
+        if self.tdl.update == "13.2":
+            # OpenSUSE 13.2 has an utterly broken autoyast that can't figure out
+            # how to read the autoinst.xml from the CD.  Use a floppy instead.
+            lines.append("  append initrd=initrd splash=silent autoyast=floppy:///autoinst.xml")
+        else:
+            lines.append("  append initrd=initrd splash=silent instmode=cd autoyast=default")
 
         with open(isolinux_cfg, 'w') as f:
             f.writelines(lines)
@@ -107,7 +122,17 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
         """
         Method to run the operating system installation.
         """
-        return self._do_install(timeout, force, self.reboots)
+        extrainstalldevs = None
+        if self.tdl.update == "13.2":
+            extrainstalldevs = [self._InstallDev("floppy", self.output_floppy, "fda")]
+        return self._do_install(timeout, force, self.reboots, None, None, None, extrainstalldevs)
+
+    def cleanup_install(self):
+        try:
+            os.unlink(self.output_floppy)
+        except:
+            pass
+        return oz.Guest.CDGuest.cleanup_install(self)
 
     def _image_ssh_teardown_step_1(self, g_handle):
         """
@@ -424,7 +449,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
         return OpenSUSEGuest(tdl, config, auto, output_disk, netdev, diskbus,
                              macaddress)
     if tdl.update in ["11.0", "11.1", "11.2", "11.3", "11.4", "12.1", "12.2",
-                      "12.3", "13.1"]:
+                      "12.3", "13.1", "13.2"]:
         if diskbus is None:
             diskbus = 'virtio'
         if netdev is None:
@@ -436,4 +461,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "OpenSUSE: 10.3, 11.0, 11.1, 11.2, 11.3, 11.4, 12.1, 12.2, 12.3, 13.1"
+    return "OpenSUSE: 10.3, 11.0, 11.1, 11.2, 11.3, 11.4, 12.1, 12.2, 12.3, 13.1, 13.2"
