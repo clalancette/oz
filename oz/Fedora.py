@@ -127,7 +127,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
         return FedoraGuest(tdl, config, auto, netdev, True, diskbus, False,
                            output_disk, macaddress, None)
 
-    if tdl.update in ["10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"]:
+    if tdl.update in ["9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"]:
         if netdev is None:
             netdev = 'virtio'
         if diskbus is None:
@@ -135,7 +135,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
         return FedoraGuest(tdl, config, auto, netdev, True, diskbus, True,
                            output_disk, macaddress, None)
 
-    if tdl.update in ["7", "8", "9"]:
+    if tdl.update in ["7", "8"]:
         return FedoraGuest(tdl, config, auto, netdev, False, diskbus, False,
                            output_disk, macaddress, None)
 
