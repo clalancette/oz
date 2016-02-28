@@ -109,7 +109,11 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for Fedora installs.
     """
-    newer_distros = ["21", "22", "23"]
+
+    # The newer_distros list is actually a list of distros that have similar
+    # installation requirements.  Thus, even if the particular distro isn't
+    # supported anymore, it should not be removed from the list.
+    newer_distros = ["19", "20", "21", "22", "23"]
 
     if tdl.update == 'rawhide' or int(tdl.update) > int(newer_distros[-1]):
         if netdev is None:
@@ -127,7 +131,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
         return FedoraGuest(tdl, config, auto, netdev, True, diskbus, False,
                            output_disk, macaddress, None)
 
-    if tdl.update in ["9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"]:
+    if tdl.update in ["9", "10", "11", "12", "13", "14", "15", "16", "17", "18"]:
         if netdev is None:
             netdev = 'virtio'
         if diskbus is None:
