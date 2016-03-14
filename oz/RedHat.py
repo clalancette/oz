@@ -334,6 +334,11 @@ label customiso
         # part 4; make sure the guest announces itself
         self.log.debug("Step 4: Guest announcement")
 
+        if self.tdl.arch in [ 'ppc64', 'ppc64le' ]:
+            announce_device = '/dev/hvc1'
+        else:
+            announce_device = '/dev/ttyS1' 
+
         scriptfile = os.path.join(self.icicle_tmp, "script")
 
         if g_handle.exists("/etc/NetworkManager/dispatcher.d"):
@@ -342,9 +347,9 @@ label customiso
 #!/bin/bash
 
 if [ "$1" = "eth0" -a "$2" = "up" ]; then
-    echo -n "!$DHCP4_IP_ADDRESS,%s!" > /dev/ttyS1
+    echo -n "!$DHCP4_IP_ADDRESS,%s!" > %s
 fi
-""" % (self.uuid))
+""" % (self.uuid, announce_device))
 
             try:
                 g_handle.upload(scriptfile,
@@ -364,8 +369,8 @@ DEV=$(/bin/awk '{if ($2 == 0) print $1}' /proc/net/route) &&
 [ -z "$DEV" ] && exit 0
 ADDR=$(/sbin/ip -4 -o addr show dev $DEV | /bin/awk '{print $4}' | /bin/cut -d/ -f1) &&
 [ -z "$ADDR" ] && exit 0
-echo -n "!$ADDR,%s!" > /dev/ttyS1
-""" % (self.uuid))
+echo -n "!$ADDR,%s!" > %s
+""" % (self.uuid, announce_device))
 
         try:
             g_handle.upload(scriptfile, '/root/reportip')
