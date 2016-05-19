@@ -699,7 +699,7 @@ def parse_config(config_file):
         # /etc/oz/oz.cfg.  If neither of those exist, we don't throw an error
         # but instead let Oz pick sane defaults internally.
         parsed = config.read(os.path.expanduser("~/.oz/oz.cfg"))
-        if len(parsed) == 0:
+        if len(parsed) == 0 and os.geteuid() == 0:
             config.read("/etc/oz/oz.cfg")
 
     return config
