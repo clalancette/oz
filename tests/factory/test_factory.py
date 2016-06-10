@@ -232,7 +232,7 @@ def test_all():
             for arch in ["i386", "x86_64"]:
                 for installtype in ["url", "iso"]:
                     expect_success(distro, version, arch, installtype)
-    # bad RHEL-6 version
+    # bad RHEL-7 version
     expect_fail("RHEL-7", "U99", "x86_64", "url")
 
 
