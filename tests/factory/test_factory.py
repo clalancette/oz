@@ -219,12 +219,22 @@ def test_all():
 
     # RHEL-6
     for distro in ["RHEL-6", "CentOS-6", "ScientificLinux-6", "OEL-6"]:
-        for version in ["0", "1", "2", "3", "4"]:
+        for version in ["0", "1", "2", "3", "4", "5", "6", "7", "8"]:
             for arch in ["i386", "x86_64"]:
                 for installtype in ["url", "iso"]:
                     expect_success(distro, version, arch, installtype)
     # bad RHEL-6 version
     expect_fail("RHEL-6", "U10", "x86_64", "url")
+
+    # RHEL-7
+    for distro in ["RHEL-7", "CentOS-7"]:
+        for version in ["0", "1", "2"]:
+            for arch in ["i386", "x86_64"]:
+                for installtype in ["url", "iso"]:
+                    expect_success(distro, version, arch, installtype)
+    # bad RHEL-6 version
+    expect_fail("RHEL-7", "U99", "x86_64", "url")
+
 
     # Debian
     for version in ["5", "6", "7"]:
