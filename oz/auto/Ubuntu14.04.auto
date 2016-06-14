@@ -43,8 +43,18 @@ d-i finish-install/reboot_in_progress note
 # setup a service that will generate the keys on boot if necessary.
 d-i preseed/late_command string \
     in-target rm -f /etc/ssh/ssh_host_dsa_key /etc/ssh/ssh_host_dsa_key.pub /etc/ssh/ssh_host_ecdsa_key /etc/ssh/ssh_host_ecdsa_key.pub /etc/ssh/ssh_host_rsa_key /etc/ssh/ssh_host_rsa_key.pub /etc/ssh/ssh_host_ed25519_key /etc/ssh/ssh_host_ed25519_key.pub ; \
-    echo '#! /bin/sh' > /target/etc/init.d/oz-generate-ssh ; \
+    echo '#! /bin/sh' >> /target/etc/init.d/oz-generate-ssh ; \
     echo '#' >> /target/etc/init.d/oz-generate-ssh ; \
+    echo '### BEGIN INIT INFO' >> /target/etc/init.d/oz-generate-ssh ; \
+    echo '# Provides:          oz-generate-ssh' >> /target/etc/init.d/oz-generate-ssh ; \
+    echo '# Required-Start:    $local_fs $network' >> /target/etc/init.d/oz-generate-ssh ; \
+    echo '# Required-Stop:     $local_fs' >> /target/etc/init.d/oz-generate-ssh ; \
+    echo '# Default-Start:     2 3 4 5' >> /target/etc/init.d/oz-generate-ssh ; \
+    echo '# Default-Stop:      0 1 6' >> /target/etc/init.d/oz-generate-ssh ; \
+    echo '# Short-Description: oz-generate-ssh' >> /target/etc/init.d/oz-generate-ssh ; \
+    echo '# Description:       regenerate ssh keys on first boot' >> /target/etc/init.d/oz-generate-ssh ; \
+    echo '### END INIT INFO' >> /target/etc/init.d/oz-generate-ssh ; \
+    echo '' >> /target/etc/init.d/oz-generate-ssh ; \
     echo '# Debian/Ubuntu generate ssh host keys at package installation time.' >> /target/etc/init.d/oz-generate-ssh ; \
     echo '# This is problematic for Oz, since the final disk image may be cached' >> /target/etc/init.d/oz-generate-ssh ; \
     echo '# and reused, leading to duplicate host keys.  To work around this, Oz' >> /target/etc/init.d/oz-generate-ssh ; \
