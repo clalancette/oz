@@ -28,7 +28,7 @@ import oz.OzException
 
 class MageiaGuest(oz.Guest.CDGuest):
     """
-    Class for Mageia 4 installation.
+    Class for Mageia 4 and 5 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
@@ -73,8 +73,10 @@ class MageiaGuest(oz.Guest.CDGuest):
 
         self.log.debug("Modifying isolinux.cfg")
         isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
-        with open(isolinuxcfg, 'w') as f:
-            f.write("""\
+
+        if self.tdl.update in ["4"]:
+            with open(isolinuxcfg, 'w') as f:
+                f.write("""\
 default customiso
 timeout 1
 prompt 0
@@ -83,6 +85,16 @@ label customiso
   append initrd=alt0/all.rdz ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom kickstart=floppy
 """)
 
+        elif self.tdl.update in ["5"]:
+            with open(isolinuxcfg, 'w') as f:
+                f.write("""\
+default customiso
+timeout 1
+prompt 0
+label customiso
+  kernel %s/vmlinuz
+  append initrd=%s/all.rdz automatic=method:cdrom kickstart=floppy
+""" % (self.mageia_arch, self.mageia_arch))
     def _generate_new_iso(self):
         """
         Method to create a new ISO based on the modified CD/DVD.
@@ -92,6 +104,8 @@ label customiso
         isolinuxdir = ""
         if self.tdl.update in ["4"]:
             isolinuxdir = self.mageia_arch
+        elif self.tdl.update in ["5"]:
+            isolinuxdir = ""
 
         isolinuxbin = os.path.join(isolinuxdir, "isolinux/isolinux.bin")
         isolinuxboot = os.path.join(isolinuxdir, "isolinux/boot.cat")
@@ -116,7 +130,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for Mageia installs.
     """
-    if tdl.update in ["4"]:
+    if tdl.update in ["4", "5"]:
         return MageiaGuest(tdl, config, auto, output_disk, netdev, diskbus,
                            macaddress)
 
@@ -124,4 +138,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Mageia: 4"
+    return "Mageia: 4, 5"
