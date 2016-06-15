@@ -1704,7 +1704,7 @@ class CDGuest(Guest):
             timeout = 1200
 
         cddev = self._InstallDev("cdrom", self.output_iso, "hdc")
-        if extrainstalldevs != None:
+        if extrainstalldevs is not None:
             extrainstalldevs.append(cddev)
             cddev = extrainstalldevs
         reboots_to_go = reboots

@@ -116,7 +116,7 @@ def runtest(args):
     config = configparser.SafeConfigParser()
     config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
-    if os.getenv('DEBUG') != None:
+    if os.getenv('DEBUG') is not None:
         logging.basicConfig(level=logging.DEBUG, format="%(message)s")
     else:
         logging.basicConfig(level=logging.ERROR, format="%(message)s")

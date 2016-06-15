@@ -210,7 +210,7 @@ def test_stb_none():
 
 
 def test_stb_invalid():
-    if oz.ozutil.string_to_bool('foobar') != None:
+    if oz.ozutil.string_to_bool('foobar') is not None:
         raise Exception("Expected None return from string_to_bool")
 
 # test oz.ozutil.generate_macaddress
