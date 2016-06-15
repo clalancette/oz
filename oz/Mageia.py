@@ -21,6 +21,10 @@ Mageia installation
 import shutil
 import os
 import re
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
 
 import oz.Linux
 import oz.ozutil
@@ -33,7 +37,7 @@ class MageiaGuest(oz.Linux.LinuxCDGuest):
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
         oz.Linux.LinuxCDGuest.__init__(self, tdl, config, auto, output_disk,
-                                       netdev, diskbus, True, False,
+                                       netdev, diskbus, True, True,
                                        macaddress)
 
         self.mageia_arch = self.tdl.arch
@@ -82,25 +86,27 @@ class MageiaGuest(oz.Linux.LinuxCDGuest):
             isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
 
         if self.tdl.update in ["2", "3", "4"]:
-            with open(isolinuxcfg, 'w') as f:
-                f.write("""\
-default customiso
-timeout 1
-prompt 0
-label customiso
-  kernel alt0/vmlinuz
-  append initrd=alt0/all.rdz ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom kickstart=floppy
-""")
+            kernel = "alt0/vmlinuz"
+            initrd = "alt0/all.rdz"
+            flags = "ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom"
         elif self.tdl.update in ["4.1", "5"]:
-            with open(isolinuxcfg, 'w') as f:
+            kernel = "%s/vmlinuz" % (self.mageia_arch)
+            initrd = "%s/all.rdz" % (self.mageia_arch)
+            if self.tdl.installtype == "url":
+                url = urlparse.urlparse(self.tdl.url)
+                flags = "automatic=method:%s,ser:%s,dir:%s,int:eth0,netw:dhcp" % (url.scheme, url.hostname, url.path)
+            else:
+                flags = "automatic=method:cdrom"
+
+        with open(isolinuxcfg, 'w') as f:
                 f.write("""\
 default customiso
 timeout 1
 prompt 0
 label customiso
-  kernel %s/vmlinuz
-  append initrd=%s/all.rdz automatic=method:cdrom kickstart=floppy
-""" % (self.mageia_arch, self.mageia_arch))
+  kernel %s
+  append initrd=%s kickstart=floppy %s
+""" % (kernel, initrd, flags))
 
     def _generate_new_iso(self):
         """
@@ -385,6 +391,21 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
 
         return self._output_icicle_xml(package_split, self.tdl.description,
                                        extrasplit)
+
+    def generate_install_media(self, force_download=False,
+                               customize_or_icicle=False):
+        """
+        Method to generate the install media for Mageia based operating
+        systems.  If force_download is False (the default), then the
+        original media will only be fetched if it is not cached locally.  If
+        force_download is True, then the original media will be downloaded
+        regardless of whether it is cached locally.
+        """
+        fetchurl = self.url
+        if self.tdl.installtype == 'url':
+            fetchurl += "/install/images/boot.iso"
+        return self._iso_generate_install_media(fetchurl, force_download,
+                                                customize_or_icicle)
 
     def install(self, timeout=None, force=False):
         fddev = self._InstallDev("floppy", self.output_floppy, "fda")
