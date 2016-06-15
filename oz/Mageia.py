@@ -28,7 +28,7 @@ import oz.OzException
 
 class MageiaGuest(oz.Guest.CDGuest):
     """
-    Class for Mageia 4, 4.1, and 5 installation.
+    Class for Mageia 3, 4, 4.1, and 5 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
@@ -72,9 +72,12 @@ class MageiaGuest(oz.Guest.CDGuest):
                                            "::AUTO_INST.CFG"])
 
         self.log.debug("Modifying isolinux.cfg")
-        isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
+        if self.tdl.update in ["3"]:
+            isolinuxcfg = os.path.join(self.iso_contents, self.mageia_arch, "isolinux", "isolinux.cfg")
+        else:
+            isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
 
-        if self.tdl.update in ["4"]:
+        if self.tdl.update in ["3", "4"]:
             with open(isolinuxcfg, 'w') as f:
                 f.write("""\
 default customiso
@@ -84,7 +87,6 @@ label customiso
   kernel alt0/vmlinuz
   append initrd=alt0/all.rdz ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom kickstart=floppy
 """)
-
         elif self.tdl.update in ["4.1", "5"]:
             with open(isolinuxcfg, 'w') as f:
                 f.write("""\
@@ -95,6 +97,7 @@ label customiso
   kernel %s/vmlinuz
   append initrd=%s/all.rdz automatic=method:cdrom kickstart=floppy
 """ % (self.mageia_arch, self.mageia_arch))
+
     def _generate_new_iso(self):
         """
         Method to create a new ISO based on the modified CD/DVD.
@@ -102,7 +105,7 @@ label customiso
         self.log.info("Generating new ISO")
 
         isolinuxdir = ""
-        if self.tdl.update in ["4"]:
+        if self.tdl.update in ["3", "4"]:
             isolinuxdir = self.mageia_arch
         elif self.tdl.update in ["4.1", "5"]:
             isolinuxdir = ""
@@ -130,7 +133,11 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for Mageia installs.
     """
-    if tdl.update in ["4", "4.1", "5"]:
+    if tdl.update in ["3", "4", "4.1", "5"]:
+        if netdev is None:
+            netdev = 'virtio'
+        if diskbus is None:
+            diskbus = 'virtio'
         return MageiaGuest(tdl, config, auto, output_disk, netdev, diskbus,
                            macaddress)
 
@@ -138,4 +145,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Mageia: 4, 4.1, 5"
+    return "Mageia: 3, 4, 4.1, 5"
