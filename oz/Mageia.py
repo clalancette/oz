@@ -28,7 +28,7 @@ import oz.OzException
 
 class MageiaGuest(oz.Guest.CDGuest):
     """
-    Class for Mageia 3, 4, 4.1, and 5 installation.
+    Class for Mageia 2, 3, 4, 4.1, and 5 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
@@ -72,12 +72,12 @@ class MageiaGuest(oz.Guest.CDGuest):
                                            "::AUTO_INST.CFG"])
 
         self.log.debug("Modifying isolinux.cfg")
-        if self.tdl.update in ["3"]:
+        if self.tdl.update in ["2", "3"]:
             isolinuxcfg = os.path.join(self.iso_contents, self.mageia_arch, "isolinux", "isolinux.cfg")
         else:
             isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
 
-        if self.tdl.update in ["3", "4"]:
+        if self.tdl.update in ["2", "3", "4"]:
             with open(isolinuxcfg, 'w') as f:
                 f.write("""\
 default customiso
@@ -105,7 +105,7 @@ label customiso
         self.log.info("Generating new ISO")
 
         isolinuxdir = ""
-        if self.tdl.update in ["3", "4"]:
+        if self.tdl.update in ["2", "3", "4"]:
             isolinuxdir = self.mageia_arch
         elif self.tdl.update in ["4.1", "5"]:
             isolinuxdir = ""
@@ -133,7 +133,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for Mageia installs.
     """
-    if tdl.update in ["3", "4", "4.1", "5"]:
+    if tdl.update in ["2", "3", "4", "4.1", "5"]:
         if netdev is None:
             netdev = 'virtio'
         if diskbus is None:
@@ -145,4 +145,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Mageia: 3, 4, 4.1, 5"
+    return "Mageia: 2, 3, 4, 4.1, 5"
