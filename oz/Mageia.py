@@ -28,7 +28,7 @@ import oz.OzException
 
 class MageiaGuest(oz.Guest.CDGuest):
     """
-    Class for Mageia 4 and 5 installation.
+    Class for Mageia 4, 4.1, and 5 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
@@ -85,7 +85,7 @@ label customiso
   append initrd=alt0/all.rdz ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom kickstart=floppy
 """)
 
-        elif self.tdl.update in ["5"]:
+        elif self.tdl.update in ["4.1", "5"]:
             with open(isolinuxcfg, 'w') as f:
                 f.write("""\
 default customiso
@@ -104,7 +104,7 @@ label customiso
         isolinuxdir = ""
         if self.tdl.update in ["4"]:
             isolinuxdir = self.mageia_arch
-        elif self.tdl.update in ["5"]:
+        elif self.tdl.update in ["4.1", "5"]:
             isolinuxdir = ""
 
         isolinuxbin = os.path.join(isolinuxdir, "isolinux/isolinux.bin")
@@ -130,7 +130,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for Mageia installs.
     """
-    if tdl.update in ["4", "5"]:
+    if tdl.update in ["4", "4.1", "5"]:
         return MageiaGuest(tdl, config, auto, output_disk, netdev, diskbus,
                            macaddress)
 
@@ -138,4 +138,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Mageia: 4, 5"
+    return "Mageia: 4, 4.1, 5"
