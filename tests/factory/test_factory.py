@@ -159,12 +159,10 @@ def test_all():
 
     # Fedora
     for version in ["7", "8", "9", "10", "11", "12", "13", "14", "15", "16",
-                    "17", "18", "19"]:
+                    "17", "18", "19", "20", "21", "22", "23"]:
         for arch in ["i386", "x86_64"]:
             for installtype in ["url", "iso"]:
                 expect_success("Fedora", version, arch, installtype)
-    # bad Fedora version
-    expect_fail("Fedora", "24", "x86_64", "iso")
 
     # RHL
     for version in ["7.0", "7.1", "7.2", "7.3", "8", "9"]:
@@ -210,7 +208,7 @@ def test_all():
     # RHEL-5/CentOS-5
     for distro in ["RHEL-5", "CentOS-5", "ScientificLinux-5"]:
         for version in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8",
-                        "U9", "U10"]:
+                        "U9", "U10", "U11"]:
             for arch in ["i386", "x86_64"]:
                 for installtype in ["url", "iso"]:
                     expect_success(distro, version, arch, installtype)
@@ -235,19 +233,16 @@ def test_all():
     # bad RHEL-7 version
     expect_fail("RHEL-7", "U99", "x86_64", "url")
 
-
     # Debian
-    for version in ["5", "6", "7"]:
+    for version in ["5", "6", "7", "8"]:
         for arch in ["i386", "x86_64"]:
             expect_success("Debian", version, arch, "iso")
     # bad Debian version
     expect_fail("Debian", "12", "i386", "iso")
-    # invalid Debian installtype
-    expect_fail("Debian", "6", "x86_64", "url")
 
     # Windows
     expect_success("Windows", "2000", "i386", "iso")
-    for version in ["XP", "2003", "2008", "7", "8", "2012"]:
+    for version in ["XP", "2003", "2008", "7", "8", "2012", "8.1"]:
         for arch in ["i386", "x86_64"]:
             expect_success("Windows", version, arch, "iso")
     # bad Windows 2000 arch
@@ -259,7 +254,7 @@ def test_all():
 
     # OpenSUSE
     for version in ["10.3", "11.0", "11.1", "11.2", "11.3", "11.4", "12.1",
-                    "12.2", "12.3"]:
+                    "12.2", "12.3", "13.1", "13.2"]:
         for arch in ["i386", "x86_64"]:
             expect_success("OpenSUSE", version, arch, "iso")
     # bad OpenSUSE version
@@ -272,7 +267,8 @@ def test_all():
                     "7.10", "8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4",
                     "8.10", "9.04", "9.10", "10.04", "10.04.1", "10.04.2",
                     "10.04.3", "10.10", "11.04", "11.10", "12.04", "12.04.1",
-                    "12.04.2", "12.04.3", "12.10", "13.04", "13.10"]:
+                    "12.04.2", "12.04.3", "12.10", "13.04", "13.10", "14.04",
+                    "14.10", "15.04", "15.10", "16.04"]:
         for arch in ["i386", "x86_64"]:
             for installtype in ["iso", "url"]:
                 expect_success("Ubuntu", version, arch, installtype)
@@ -297,6 +293,15 @@ def test_all():
     expect_fail("Mandriva", "80", "i386", "iso")
     # bad Mandriva installtype
     expect_fail("Mandriva", "2005", "i386", "url")
+
+    # Mageia
+    for version in ["2", "3", "4", "4.1", "5"]:
+        for arch in ["i386", "x86_64"]:
+            expect_success("Mageia", version, arch, "iso")
+    # bad Mandriva version
+    expect_fail("Mageia", "80", "i386", "iso")
+    # bad Mandriva installtype
+    expect_fail("Mageia", "2005", "i386", "url")
 
     # Now run all the tests
     for tst in alltests:
