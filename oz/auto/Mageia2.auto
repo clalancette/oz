@@ -1,0 +1,139 @@
+#!/usr/bin/perl -cw
+#
+# You should check the syntax of this file before using it in an auto-install.
+# You can do this with 'perl -cw auto_inst.cfg.pl' or by executing this file
+# (note the '#!/usr/bin/perl -cw' on the first line).
+$o = {
+       'autoExitInstall' => '1',
+       'interactiveSteps' => [],
+       'no_suggests' => 1,
+       'mkbootdisk' => 0,
+       'isUpgrade' => 0,
+       'excludedocs' => 1,
+       'minimal' => 1,
+       'miscellaneous' => {
+	   'numlock' => 1,
+       },
+
+       'netc' => {
+		   'ZEROCONF_HOSTNAME' => undef,
+		   'NETWORKING' => 'yes',
+		   'NET_DEVICE' => 'eth0',
+		   'DHCP' => 'yes'
+		 },
+       'locale' => {
+		     'lang' => 'en_US',
+		     'country' => 'US',
+		     'utf8' => 1,
+		     'langs' => {
+				  'en_US' => 1
+				}
+		   },
+       'mkbootdisk' => 0,
+       'partitions' => [
+			 {
+			   'size' => 12273597,
+			   'mntpoint' => '/',
+			   'type' => 1155,
+			   'fs_type' => 'ext4'
+			 },
+			 {
+			   'size' => 1012032,
+			   'mntpoint' => 'swap',
+			   'type' => 130,
+			   'fs_type' => 'swap'
+			 },
+			 {
+                           'size' => 1024,
+			   'ratio' => 100,
+			   'mntpoint' => '/home',
+			   'type' => 1155,
+			   'fs_type' => 'ext4'
+			 }
+		       ],
+       'printer' => {
+		      'MANUALCUPSCONFIG' => undef,
+		      'BROWSEPOLLPORT' => undef,
+		      'BROWSEPOLLADDR' => undef,
+		      'SPOOLER' => undef,
+		      'configured' => {},
+		      'DEFAULT' => undef
+		    },
+       'intf' => {
+		   'eth0' => {
+			       'BROADCAST' => '',
+			       'ONBOOT' => 'yes',
+			       'BOOTPROTO' => 'dhcp',
+			       'DEVICE' => 'eth0',
+			       'NETMASK' => '255.255.255.0',
+			       'NETWORK' => ''
+			     }
+		 },
+       'authentication' => {
+			     'shadow' => 1,
+			     'md5' => 1,
+			     'local' => undef
+			   },
+       'partitioning' => {
+			   'auto_allocate' => '1',
+			   'clearall' => '1',
+			   'eraseBadPartitions' => 0
+			 },
+       'users' => [{
+'icon' => 'default',
+'realname' => 'user',
+'uid' => undef,
+'groups' => [],
+'name' => 'user',
+'shell' => '/bin/bash',
+'password' => %ROOTPW%,
+'gid' => undef
+}],
+       'security' => 2,
+       'X' => { disabled => 1 },
+       'skipped_packages' => [ 'xdm', 'shorewall',
+       'shorewall-core', 'mageia-gfxboot-theme'],
+       'default_packages' => [
+			       'basesystem-minimal',
+	                       'urpmi',
+                               'sudo',
+	                       'openssh-client',
+                               'openssh-server', 'vim-minimal'
+			     ],
+       'superuser' => {
+			'home' => '/root',
+			'shell' => '/bin/bash',
+			'realname' => 'root',
+			'password' => %ROOTPW%,
+			'uid' => '0',
+			'gid' => '0'
+		      },
+       'manualFstab' => [],
+       'libsafe' => 0,
+       'useSupermount' => '0',
+       'timezone' => {
+		       'UTC' => 1,
+		       'ntp' => undef,
+		       'timezone' => 'America/New_York'
+		     },
+       'netcnx' => {
+		     'lan' => {},
+		     'type' => 'lan'
+		   },
+       'keyboard' => {
+		       'unsafe' => 1,
+		       'GRP_TOGGLE' => '',
+		       'KEYBOARD' => 'us',
+		       'KBCHARSET' => 'C'
+		     },
+       'security_user' => '',
+       'mouse' => {
+		    'MOUSETYPE' => 'ps/2',
+		    'device' => 'psaux',
+		    'name' => 'Standard',
+		    'nbuttons' => 2,
+		    'type' => 'PS/2',
+		    'XMOUSETYPE' => 'PS/2',
+		    'EMULATEWHEEL' => undef
+		  }
+     };
