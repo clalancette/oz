@@ -516,7 +516,7 @@ class Guest(object):
         # install disk (if any)
         if not installdev:
             installdev_list = []
-        elif not type(installdev) is list:
+        elif not isinstance(installdev, list):
             installdev_list = [installdev]
         else:
             installdev_list = installdev

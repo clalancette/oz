@@ -495,8 +495,7 @@ label customiso
 
         if packstr != '':
             self.guest_execute_command(guestaddr,
-                                       'apt-get install -y %s' % (packstr),
-                                       tunnels=None)
+                                       'apt-get install -y %s' % (packstr))
 
         self._customize_files(guestaddr)
 
@@ -552,7 +551,7 @@ label customiso
             raise oz.OzException.OzException("Could not find %s" % (txtcfgurl))
 
         txtcfg = os.path.join(self.icicle_tmp, "txt.cfg")
-        self.log.debug("Going to write txt.cfg to %s" % (txtcfg))
+        self.log.debug("Going to write txt.cfg to %s", txtcfg)
         txtcfgfd = os.open(txtcfg, os.O_RDWR | os.O_CREAT | os.O_TRUNC)
         os.unlink(txtcfg)
         fp = os.fdopen(txtcfgfd)
@@ -580,7 +579,7 @@ label customiso
         if kernel is None or initrd is None:
             raise oz.OzException.OzException("Empty kernel or initrd")
 
-        self.log.debug("Returning kernel %s and initrd %s" % (kernel, initrd))
+        self.log.debug("Returning kernel %s and initrd %s", kernel, initrd)
         return (kernel, initrd)
 
     def _gzip_file(self, inputfile, outputmode):
@@ -606,7 +605,7 @@ label customiso
         Internal method to create a modified CPIO initrd
         """
         extrafname = os.path.join(self.icicle_tmp, "extra.cpio")
-        self.log.debug("Writing cpio to %s" % (extrafname))
+        self.log.debug("Writing cpio to %s", extrafname)
         cpiofiledict = {}
         cpiofiledict[preseedpath] = 'preseed.cfg'
         oz.ozutil.write_cpio(cpiofiledict, extrafname)
@@ -631,30 +630,40 @@ label customiso
             pass
 
         if kernel is None:
-            self.log.debug("Kernel was None, trying debian-installer/%s/linux" % (self.debarch))
+            self.log.debug("Kernel was None, trying debian-installer/%s/linux", self.debarch)
             # we couldn't find the kernel in the txt.cfg, so try a
             # hard-coded path
             kernel = "debian-installer/%s/linux" % (self.debarch)
         if initrd is None:
-            self.log.debug("Initrd was None, trying debian-installer/%s/initrd.gz" % (self.debarch))
+            self.log.debug("Initrd was None, trying debian-installer/%s/initrd.gz", self.debarch)
             # we couldn't find the initrd in the txt.cfg, so try a
             # hard-coded path
             initrd = "debian-installer/%s/initrd.gz" % (self.debarch)
 
-        self._get_original_media('/'.join([self.url.rstrip('/'),
-                                           kernel.lstrip('/')]),
-                                 self.kernelcache, force_download)
+        (fd, outdir) = self._open_locked_file(self.kernelcache)
 
         try:
             self._get_original_media('/'.join([self.url.rstrip('/'),
-                                               initrd.lstrip('/')]),
-                                     self.initrdcache, force_download)
-        except:
-            os.unlink(self.kernelfname)
-            raise
+                                               kernel.lstrip('/')]),
+                                     fd, outdir, force_download)
 
-        # if we made it here, then we can copy the kernel into place
-        shutil.copyfile(self.kernelcache, self.kernelfname)
+            # if we made it here, then we can copy the kernel into place
+            shutil.copyfile(self.kernelcache, self.kernelfname)
+        finally:
+            os.close(fd)
+
+        (fd, outdir) = self._open_locked_file(self.initrdcache)
+
+        try:
+            try:
+                self._get_original_media('/'.join([self.url.rstrip('/'),
+                                                   initrd.lstrip('/')]),
+                                         fd, outdir, force_download)
+            except:
+                os.unlink(self.kernelfname)
+                raise
+        finally:
+            os.close(fd)
 
         try:
             preseedpath = os.path.join(self.icicle_tmp, "preseed.cfg")

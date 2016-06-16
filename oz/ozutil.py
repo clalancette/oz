@@ -22,7 +22,6 @@ Miscellaneous utility functions.
 import os
 import random
 import subprocess
-import tempfile
 import errno
 import stat
 import shutil

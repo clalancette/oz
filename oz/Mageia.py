@@ -99,7 +99,7 @@ class MageiaGuest(oz.Linux.LinuxCDGuest):
                 flags = "automatic=method:cdrom"
 
         with open(isolinuxcfg, 'w') as f:
-                f.write("""\
+            f.write("""\
 default customiso
 timeout 1
 prompt 0
