@@ -90,8 +90,6 @@ def default_route():
 route = default_route()
 
 def runtest(args):
-    global route
-
     (distro, version, arch, installtype) = args
     print("Testing %s-%s-%s-%s..." % (distro, version, arch, installtype), end=' ')
 

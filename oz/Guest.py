@@ -685,20 +685,23 @@ class Guest(object):
         """
         return self._internal_generate_diskimage(size, force, False)
 
-    def _get_disks_and_interfaces(self, libvirt_dom):
+    def _get_disks_and_interfaces(self, libvirt_xml):
         """
         Method to figure out the disks and interfaces attached to a domain.
         The method returns two lists: the first is a list of disk devices (like
         hda, hdb, etc), and the second is a list of network devices (like vnet0,
         vnet1, etc).
         """
-        doc = lxml.etree.fromstring(libvirt_dom.XMLDesc(0))
+        doc = lxml.etree.fromstring(libvirt_xml)
         disktargets = doc.xpath("/domain/devices/disk/target")
+
         if len(disktargets) < 1:
             raise oz.OzException.OzException("Could not find disk target")
         disks = []
         for target in disktargets:
-            disks.append(target.get('dev'))
+            dev = target.get('dev')
+            if dev:
+                disks.append(dev)
         if not disks:
             raise oz.OzException.OzException("Could not find disk target device")
         inttargets = doc.xpath("/domain/devices/interface/target")
@@ -706,7 +709,9 @@ class Guest(object):
             raise oz.OzException.OzException("Could not find interface target")
         interfaces = []
         for target in inttargets:
-            interfaces.append(target.get('dev'))
+            dev = target.get('dev')
+            if dev:
+                interfaces.append(dev)
         if not interfaces:
             raise oz.OzException.OzException("Could not find interface target device")
 
@@ -779,7 +784,7 @@ class Guest(object):
         point it is assumed the install failed and raise an exception).
         """
 
-        disks, interfaces = self._get_disks_and_interfaces(libvirt_dom)
+        disks, interfaces = self._get_disks_and_interfaces(libvirt_dom.XMLDesc(0))
 
         last_disk_activity = 0
         last_network_activity = 0
@@ -1198,8 +1203,7 @@ class Guest(object):
         self.log.debug("Generated XML:\n%s", xml)
         return xml
 
-    def _modify_libvirt_xml_diskimage(self, libvirt_xml, new_diskimage,
-                                      image_type):
+    def _modify_libvirt_xml_diskimage(self, libvirt_xml, new_diskimage, image_type):
         """
         Internal method to take input libvirt XML and replace the existing disk
         image details with a new disk image file and, potentially, disk image

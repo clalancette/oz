@@ -90,7 +90,25 @@ tests = {
     "test-53-command-http-url.tdl": True,
     "test-54-files-file-url.tdl": True,
     "test-55-files-http-url.tdl": True,
+    "test-56-invalid-disk-size.tdl": False,
+    "test-57-invalid-disk-size.tdl": False,
+    "test-58-disk-size-terabyte.tdl": True,
+    "test-59-command-sorting.tdl": True,
 }
+
+def get_tdl(filename):
+    # locate full path for tdl file
+    tdl_prefix = ''
+    for tdl_prefix in ['tests/tdl/', 'tdl/', '']:
+        if os.path.isfile(tdl_prefix + filename):
+            break
+    if not os.path.isfile(tdl_prefix + filename):
+        raise Exception('Unable to locate TDL: %s' % filename)
+    tdl_file = tdl_prefix + filename
+
+    # Grab TDL object
+    tdl = validate_ozlib(tdl_file)
+    return tdl
 
 # Validate oz handling of tdl file
 def validate_ozlib(tdl_file):

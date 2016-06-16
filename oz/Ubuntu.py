@@ -553,7 +553,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
                 # there is a bit of asymmetry here in that OSs that support cpio
                 # archives have the initial initrdfname copied in the higher level
                 # function, but we delete it here.  OSs that don't support cpio,
-                # though, get the initrd created right here.  C'est le vie
+                # though, get the initrd created right here.  C'est la vie
                 os.unlink(self.initrdfname)
                 raise
 
