@@ -32,4 +32,7 @@ d-i grub-installer/bootdev string default
 d-i apt-setup/security_host string
 d-i apt-setup/services-select multiselect
 
+d-i preseed/late_command string \
+    sed -i -e 's/^deb cdrom/# deb cdrom/' /target/etc/apt/sources.list
+
 d-i finish-install/reboot_in_progress note

@@ -279,7 +279,7 @@ label customiso
 
     def _image_ssh_setup_step_3(self, g_handle):
         """
-        Fourth step for allowing remote access (make the guest announce itself
+        Third step for allowing remote access (make the guest announce itself
         on bootup).
         """
         # part 3; make sure the guest announces itself
