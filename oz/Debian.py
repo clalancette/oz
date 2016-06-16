@@ -373,92 +373,6 @@ label customiso
             self._guestfs_handle_cleanup(g_handle)
             shutil.rmtree(self.icicle_tmp)
 
-    def _internal_customize(self, libvirt_xml, action):
-        """
-        Internal method to customize and optionally generate an ICICLE for the
-        operating system after initial installation.
-        """
-        # the "action" input is actually a tri-state:
-        # action = "gen_and_mod" means to generate the icicle and to
-        #          potentially make modifications
-        # action = "gen_only" means to generate the icicle only, and not
-        #          look at any modifications
-        # action = "mod_only" means to not generate the icicle, but still
-        #          potentially make modifications
-
-        self.log.info("Customizing image")
-
-        if not self.tdl.packages and not self.tdl.files and not self.tdl.commands:
-            if action == "mod_only":
-                self.log.info("No additional packages, files, or commands to install, and icicle generation not requested, skipping customization")
-                return
-            elif action == "gen_and_mod":
-                # It is actually possible to get here with a "gen_and_mod"
-                # action but a TDL that contains no real customizations.
-                # In the "safe ICICLE" code below it is important to know
-                # when we are truly in a "gen_only" state so we modify
-                # the action here if we detect that ICICLE generation is the
-                # only task to be done.
-                # FIXME: See about doing this test earlier or in a more generic
-                # way
-                self.log.debug("Asked to gen_and_mod but no mods are present - changing action to gen_only")
-                action = "gen_only"
-
-        # when doing an oz-install with -g, this isn't necessary as it will
-        # just replace the port with the same port.  However, it is very
-        # necessary when doing an oz-customize since the serial port might
-        # not match what is specified in the libvirt XML
-        modified_xml = self._modify_libvirt_xml_for_serial(libvirt_xml)
-
-        if action == "gen_only" and self.safe_icicle_gen:
-            # We are only generating ICICLE and the user has asked us to do
-            # this without modifying the completed image by booting it.
-            # Create a copy on write snapshot to use for ICICLE
-            # generation - discard when finished
-            cow_diskimage = self.diskimage + "-icicle-snap.qcow2"
-            self._internal_generate_diskimage(force=True,
-                                              backing_filename=self.diskimage,
-                                              image_filename=cow_diskimage)
-            modified_xml = self._modify_libvirt_xml_diskimage(modified_xml, cow_diskimage, 'qcow2')
-
-        self._collect_setup(modified_xml)
-
-        icicle = None
-        try:
-            libvirt_dom = self.libvirt_conn.createXML(modified_xml, 0)
-
-            try:
-                guestaddr = None
-                guestaddr = self._wait_for_guest_boot(libvirt_dom)
-                self._test_ssh_connection(guestaddr)
-
-                if action == "gen_and_mod":
-                    self.do_customize(guestaddr)
-                    icicle = self.do_icicle(guestaddr)
-                elif action == "gen_only":
-                    icicle = self.do_icicle(guestaddr)
-                elif action == "mod_only":
-                    self.do_customize(guestaddr)
-                else:
-                    raise oz.OzException.OzException("Invalid customize action %s; this is a programming error" % (action))
-            finally:
-                if action == "gen_only" and self.safe_icicle_gen:
-                    # if this is a gen_only and safe_icicle_gen, there is no
-                    # reason to wait around for the guest to shutdown; we'll
-                    # be removing the overlay file anyway.  Just destroy it
-                    libvirt_dom.destroy()
-                else:
-                    self._shutdown_guest(guestaddr, libvirt_dom)
-        finally:
-            if action == "gen_only" and self.safe_icicle_gen:
-                # no need to teardown because we simply discard the file
-                # containing those changes
-                os.unlink(cow_diskimage)
-            else:
-                self._collect_teardown(modified_xml)
-
-        return icicle
-
     def _discover_repo_locality(self, repo_url, guestaddr, certdict):
         """
         Internal method to discover whether a repository is reachable from the
@@ -527,14 +441,6 @@ label customiso
             packages.append(line.split("\t")[0])
 
         return self._output_icicle_xml(packages, self.tdl.description)
-
-    def guest_live_upload(self, guestaddr, file_to_upload, destination,
-                          timeout=10):
-        """
-        Method to copy a file to the live guest.
-        """
-        return oz.ozutil.scp_copy_file(guestaddr, self.sshprivkey,
-                                       file_to_upload, destination, timeout)
 
     def _get_kernel_from_txt_cfg(self, fetchurl):
         """
