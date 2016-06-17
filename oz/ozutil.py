@@ -969,3 +969,43 @@ def recursively_add_write_bit(inputdir):
             except OSError as err:
                 if err.errno != errno.ENOENT:
                     raise
+
+def find_uefi_firmware(arch):
+    # Yuck.  Finding the UEFI firmware to start certain guests (like aarch64)
+    # is a really nasty process.  While slightly out of date, this blog post
+    # describes the mess: http://blog.wikichoon.com/2016/01/uefi-support-in-virt-install-and-virt.html
+    # Here, we replicate what libguestfs is doing here, which is to essentially
+    # hardcode paths where UEFI firmware can be found on popular distributions.
+    # I verified that these files exist on both Fedora/RHEL and Ubuntu.
+    # Hopefully there will be a nicer way to do this in the future.
+    class UEFI(object):
+        def __init__(self, loader, nvram):
+            self.loader = loader
+            self.nvram = nvram
+
+        def exists(self):
+            if os.path.exists(self.loader) and os.path.exists(self.nvram):
+                return True
+            return False
+
+    if arch in ['i386', 'i486', 'i586', 'i686']:
+        uefi_list = [UEFI('/usr/share/edk2.git/ovmf-ia32/OVMF_CODE-pure-efi.fd',
+                          '/usr/share/edk2.git/ovmf-ia32/OVMF_VARS-pure-efi.fd')]
+    elif arch in ['x86_64']:
+        uefi_list = [UEFI('/usr/share/OVMF/OVMF_CODE.fd',
+                          '/usr/share/OVMF/OVMF_VARS.fd'),
+                     UEFI('/usr/share/edk2.git/ovmf-x64/OVMF_CODE-pure-efi.fd',
+                          '/usr/share/edk2.git/ovmf-x64/OVMF_VARS-pure-efi.fd')]
+    elif arch in ['aarch64']:
+        uefi_list = [UEFI('/usr/share/AAVMF/AAVMF_CODE.fd',
+                          '/usr/share/AAVMF/AAVMF_VARS.fd'),
+                     UEFI('/usr/share/edk2.git/aarch64/QEMU_EFI-pflash.raw',
+                          '/usr/share/edk2.git/aarch64/vars-template-pflash.raw')]
+    else:
+        raise Exception("Invalid arch for UEFI firmware")
+
+    for uefi in uefi_list:
+        if uefi.exists():
+            return uefi.loader,uefi.nvram
+
+    raise Exception("UEFI firmware is not installed!")

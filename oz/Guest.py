@@ -481,6 +481,10 @@ class Guest(object):
             if self.tdl.arch == "armv7l":
                 cmdline += " console=ttyAMA0"
             self.lxml_subelement(osNode, "cmdline", cmdline)
+        loader,nvram = oz.ozutil.find_uefi_firmware(self.tdl.arch)
+        if self.tdl.arch == "aarch64":
+            self.lxml_subelement(osNode, "loader", loader, {'readonly': 'yes', 'type': 'pflash'})
+            self.lxml_subelement(osNode, "nvram", None, {'template': nvram})
         # poweroff, reboot, crash
         self.lxml_subelement(domain, "on_poweroff", "destroy")
         self.lxml_subelement(domain, "on_reboot", "destroy")
