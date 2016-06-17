@@ -481,6 +481,12 @@ class Guest(object):
             if self.tdl.arch == "armv7l":
                 cmdline += " console=ttyAMA0"
             self.lxml_subelement(osNode, "cmdline", cmdline)
+        # This is a hardcoded hack but it does work with the most recent externally available firmware
+        # TODO: A more elegant heuristic similar to libguestfs as detailed here:
+        # http://blog.wikichoon.com/2016/01/uefi-support-in-virt-install-and-virt.html
+        if self.tdl.arch == "aarch64":
+            self.lxml_subelement(osNode, "loader", "/usr/share/edk2.git/aarch64/QEMU_EFI-pflash.raw", { 'readonly': 'yes', 'type': 'pflash' })
+            self.lxml_subelement(osNode, "nvram", None, {'template':'/usr/share/edk2.git/aarch64/vars-template-pflash.raw'})
         # poweroff, reboot, crash
         self.lxml_subelement(domain, "on_poweroff", "destroy")
         self.lxml_subelement(domain, "on_reboot", "destroy")
