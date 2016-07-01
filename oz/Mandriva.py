@@ -40,7 +40,7 @@ class MandrivaGuest(oz.Guest.CDGuest):
         if self.mandriva_arch == "i386":
             self.mandriva_arch = "i586"
 
-    def _modify_iso(self):
+    def _modify_iso(self, iso):
         """
         Method to make the boot ISO auto-boot with appropriate parameters.
         """
@@ -48,11 +48,7 @@ class MandrivaGuest(oz.Guest.CDGuest):
 
         self.log.debug("Copying cfg file")
 
-        pathdir = self.iso_contents
-        if self.tdl.update in ["2007.0", "2008.0"]:
-            pathdir = os.path.join(self.iso_contents, self.mandriva_arch)
-
-        outname = os.path.join(pathdir, "auto_inst.cfg")
+        outname = os.path.join(self.icicle_tmp, "auto_inst.cfg")
 
         if self.default_auto_file():
 
@@ -70,8 +66,13 @@ class MandrivaGuest(oz.Guest.CDGuest):
         else:
             shutil.copy(self.auto, outname)
 
-        self.log.debug("Modifying isolinux.cfg")
-        isolinuxcfg = os.path.join(pathdir, "isolinux", "isolinux.cfg")
+        isodir = '/'
+        if self.tdl.update in ["2007.0", "2008.0"]:
+            isodir = os.path.join(isodir, self.mandriva_arch)
+        isopath = os.path.join(isodir, "auto_inst.cfg")
+        iso.add_file(isopath, rr_name="auto_inst.cfg", joliet_path=isopath)
+
+        isolinuxcfg = os.path.join(self.icicle_tmp, "isolinux.cfg")
         with open(isolinuxcfg, 'w') as f:
             f.write("""\
 default customiso
@@ -81,29 +82,28 @@ label customiso
   kernel alt0/vmlinuz
   append initrd=alt0/all.rdz ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom kickstart=auto_inst.cfg
 """)
+        iso.rm_file("/isolinux/isolinux.cfg", rr_name="isolinux.cfg", joliet_path="/isolinux/isolinux.cfg")
+        iso.add_file(isolinuxcfg, "/isolinux/isolinux.cfg", rr_name="isolinux.cfg", joliet_path="/isolinux/isolinux.cfg")
 
-    def _generate_new_iso(self):
+    def _generate_new_iso(self, iso):
         """
         Method to create a new ISO based on the modified CD/DVD.
         """
         self.log.info("Generating new ISO")
 
-        isolinuxdir = ""
-        if self.tdl.update in ["2007.0", "2008.0"]:
-            isolinuxdir = self.mandriva_arch
-
-        isolinuxbin = os.path.join(isolinuxdir, "isolinux/isolinux.bin")
-        isolinuxboot = os.path.join(isolinuxdir, "isolinux/boot.cat")
-
-        oz.ozutil.subprocess_check_output(["genisoimage", "-r", "-V", "Custom",
-                                           "-J", "-l", "-no-emul-boot",
-                                           "-b", isolinuxbin,
-                                           "-c", isolinuxboot,
-                                           "-boot-load-size", "4",
-                                           "-cache-inodes", "-boot-info-table",
-                                           "-v", "-o", self.output_iso,
-                                           self.iso_contents],
-                                          printfn=self.log.debug)
+        self.log.debug("Generating new ISO")
+        self._last_progress_percent = -1
+        def _progress_cb(done, total):
+            '''
+            Private function to print progress of ISO mastering.
+            '''
+            percent = done * 100 / total
+            if percent > 100:
+                percent = 100
+            if percent != self._last_progress_percent:
+                self._last_progress_percent = percent
+                self.log.debug("%d %%", percent)
+        iso.write(self.output_iso, progress_cb=_progress_cb)
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):

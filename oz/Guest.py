@@ -23,7 +23,6 @@ import uuid
 import libvirt
 import os
 import fcntl
-import subprocess
 import shutil
 import time
 try:
@@ -35,13 +34,12 @@ import lxml.etree
 import logging
 import guestfs
 import socket
-import struct
-import tempfile
 import M2Crypto
 import base64
 import hashlib
 import errno
 import re
+import pyiso
 
 import oz.ozutil
 import oz.OzException
@@ -1441,18 +1439,6 @@ class CDGuest(Guest):
     """
     Class for guest installation via ISO.
     """
-    class _PrimaryVolumeDescriptor(object):
-        """
-        Class to hold information about a CD's Primary Volume Descriptor.
-        """
-        def __init__(self, version, sysid, volid, space_size, set_size, seqnum):
-            self.version = version
-            self.system_identifier = sysid
-            self.volume_identifier = volid
-            self.space_size = space_size
-            self.set_size = set_size
-            self.seqnum = seqnum
-
     def __init__(self, tdl, config, auto, output_disk, nicmodel, clockoffset,
                  mousetype, diskbus, iso_allowed, url_allowed, macaddress):
         Guest.__init__(self, tdl, config, auto, output_disk, nicmodel,
@@ -1482,218 +1468,21 @@ class CDGuest(Guest):
         """
         self._get_original_media(isourl, fd, outdir, force_download)
 
-    def _copy_iso(self):
-        """
-        Method to copy the data out of an ISO onto the local filesystem.
-        """
-        self.log.info("Copying ISO contents for modification")
-        try:
-            shutil.rmtree(self.iso_contents)
-        except OSError as err:
-            if err.errno != errno.ENOENT:
-                raise
-        os.makedirs(self.iso_contents)
-
-        self.log.info("Setting up guestfs handle for %s", self.tdl.name)
-        gfs = guestfs.GuestFS()
-        self.log.debug("Adding ISO image %s", self.orig_iso)
-        gfs.add_drive_opts(self.orig_iso, readonly=1, format='raw')
-        self.log.debug("Launching guestfs")
-        gfs.launch()
-        try:
-            self.log.debug("Mounting ISO")
-            gfs.mount_options('ro', "/dev/sda", "/")
-
-            self.log.debug("Checking if there is enough space on the filesystem")
-            isostat = gfs.statvfs("/")
-            outputstat = os.statvfs(self.iso_contents)
-            if (outputstat.f_bsize*outputstat.f_bavail) < (isostat['blocks']*isostat['bsize']):
-                raise oz.OzException.OzException("Not enough room on %s to extract install media" % (self.iso_contents))
-
-            self.log.debug("Extracting ISO contents")
-            current = os.getcwd()
-            os.chdir(self.iso_contents)
-            try:
-                rd, wr = os.pipe()
-
-                try:
-                    # NOTE: it is very, very important that we use temporary
-                    # files for collecting stdout and stderr here.  There is a
-                    # nasty bug in python subprocess; if your process produces
-                    # more than 64k of data on an fd that is using
-                    # subprocess.PIPE, the whole thing will hang. To avoid
-                    # this, we use temporary fds to capture the data
-                    stdouttmp = tempfile.TemporaryFile()
-                    stderrtmp = tempfile.TemporaryFile()
-
-                    try:
-                        tar = subprocess.Popen(["tar", "-x", "-v"], stdin=rd,
-                                               stdout=stdouttmp,
-                                               stderr=stderrtmp)
-                        try:
-                            gfs.tar_out("/", "/dev/fd/%d" % wr)
-                        except:
-                            # we need this here if gfs.tar_out throws an
-                            # exception.  In that case, we need to manually
-                            # kill off the tar process and re-raise the
-                            # exception, otherwise we hang forever
-                            tar.kill()
-                            raise
-
-                        # FIXME: we really should check tar.poll() here to get
-                        # the return code, and print out stdout and stderr if
-                        # we fail.  This will make debugging problems easier
-                    finally:
-                        stdouttmp.close()
-                        stderrtmp.close()
-                finally:
-                    os.close(rd)
-                    os.close(wr)
-
-                # since we extracted from an ISO, there are no write bits on
-                # any of the directories.  Fix that here.
-                oz.ozutil.recursively_add_write_bit(self.iso_contents)
-            finally:
-                os.chdir(current)
-        finally:
-            gfs.sync()
-            gfs.umount_all()
-            gfs.kill_subprocess()
-
-    def _get_primary_volume_descriptor(self, cdfd):
-        """
-        Method to extract the primary volume descriptor from a CD.
-        """
-        # check out the primary volume descriptor to make sure it is sane
-        cdfd.seek(16*2048)
-        fmt = "=B5sBB32s32sQLL32sHHHH"
-        (desc_type, identifier, version, unused1, system_identifier, volume_identifier, unused2, space_size_le, space_size_be, unused3, set_size_le, set_size_be, seqnum_le, seqnum_be) = struct.unpack(fmt, cdfd.read(struct.calcsize(fmt)))
-
-        if desc_type != 0x1:
-            raise oz.OzException.OzException("Invalid primary volume descriptor")
-        if identifier != "CD001":
-            raise oz.OzException.OzException("invalid CD isoIdentification")
-        if unused1 != 0x0:
-            raise oz.OzException.OzException("data in unused field")
-        if unused2 != 0x0:
-            raise oz.OzException.OzException("data in 2nd unused field")
-
-        return self._PrimaryVolumeDescriptor(version, system_identifier,
-                                             volume_identifier, space_size_le,
-                                             set_size_le, seqnum_le)
-
-    def _geteltorito(self, cdfile, outfile):
+    def _geteltorito(self, iso, outfile):
         """
         Method to extract the El-Torito boot sector off of a CD and write it
         to a file.
         """
-        if cdfile is None:
-            raise oz.OzException.OzException("input iso is None")
-        if outfile is None:
-            raise oz.OzException.OzException("output file is None")
+        # FIXME: this seems to reach into a lot of internals of pyiso; we may
+        # just want to add a method to do this to pyiso.
+        extent = iso.eltorito_boot_catalog.initial_entry.get_rba()
+        size = iso.eltorito_boot_catalog.initial_entry.sector_count
 
-        cdfd = open(cdfile, "r")
-
-        self._get_primary_volume_descriptor(cdfd)
-
-        # the 17th sector contains the boot specification and the offset of the
-        # boot sector
-        cdfd.seek(17*2048)
-
-        # NOTE: With "native" alignment (the default for struct), there is
-        # some padding that happens that causes the unpacking to fail.
-        # Instead we force "standard" alignment, which has no padding
-        fmt = "=B5sB23s41sI"
-        (boot, isoIdent, version, toritoSpec, unused, bootP) = struct.unpack(fmt,
-                                                                             cdfd.read(struct.calcsize(fmt)))
-        if boot != 0x0:
-            raise oz.OzException.OzException("invalid CD boot sector")
-        if isoIdent != "CD001":
-            raise oz.OzException.OzException("invalid CD isoIdentification")
-        if version != 0x1:
-            raise oz.OzException.OzException("invalid CD version")
-        if toritoSpec != "EL TORITO SPECIFICATION":
-            raise oz.OzException.OzException("invalid CD torito specification")
-
-        # OK, this looks like a bootable CD.  Seek to the boot sector, and
-        # look for the header, 0x55, and 0xaa in the first 32 bytes
-        cdfd.seek(bootP*2048)
-        fmt = "=BBH24sHBB"
-        bootdata = cdfd.read(struct.calcsize(fmt))
-        (header, platform, unused, manu, unused2, five, aa) = struct.unpack(fmt,
-                                                                            bootdata)
-        if header != 0x1:
-            raise oz.OzException.OzException("invalid CD boot sector header")
-        if platform != 0x0 and platform != 0x1 and platform != 0x2:
-            raise oz.OzException.OzException("invalid CD boot sector platform")
-        if unused != 0x0:
-            raise oz.OzException.OzException("invalid CD unused boot sector field")
-        if five != 0x55 or aa != 0xaa:
-            raise oz.OzException.OzException("invalid CD boot sector footer")
-
-        def _checksum(data):
-            """
-            Method to compute the checksum on the ISO.  Note that this is *not*
-            a 1's complement checksum; when an addition overflows, the carry
-            bit is discarded, not added to the end.
-            """
-            s = 0
-            for i in range(0, len(data), 2):
-                w = ord(data[i]) + (ord(data[i+1]) << 8)
-                s = (s + w) & 0xffff
-            return s
-
-        csum = _checksum(bootdata)
-        if csum != 0:
-            raise oz.OzException.OzException("invalid CD checksum: expected 0, saw %d" % (csum))
-
-        # OK, everything so far has checked out.  Read the default/initial
-        # boot entry
-        cdfd.seek(bootP*2048+32)
-        fmt = "=BBHBBHIB"
-        (boot, media, loadsegment, systemtype, unused, scount, imgstart, unused2) = struct.unpack(fmt, cdfd.read(struct.calcsize(fmt)))
-
-        if boot != 0x88:
-            raise oz.OzException.OzException("invalid CD initial boot indicator")
-        if unused != 0x0 or unused2 != 0x0:
-            raise oz.OzException.OzException("invalid CD initial boot unused field")
-
-        if media == 0 or media == 4:
-            count = scount
-        elif media == 1:
-            # 1.2MB floppy in sectors
-            count = 1200*1024/512
-        elif media == 2:
-            # 1.44MB floppy in sectors
-            count = 1440*1024/512
-        elif media == 3:
-            # 2.88MB floppy in sectors
-            count = 2880*1024/512
-        else:
-            raise oz.OzException.OzException("invalid CD media type")
-
-        # finally, seek to "imgstart", and read "count" sectors, which
-        # contains the boot image
-        cdfd.seek(imgstart*2048)
-
-        # The eltorito specification section 2.5 says:
-        #
-        # Sector Count. This is the number of virtual/emulated sectors the
-        # system will store at Load Segment during the initial boot
-        # procedure.
-        #
-        # and then Section 1.5 says:
-        #
-        # Virtual Disk - A series of sectors on the CD which INT 13 presents
-        # to the system as a drive with 200 byte virtual sectors. There
-        # are 4 virtual sectors found in each sector on a CD.
-        #
-        # (note that the bytes above are in hex).  So we read count*512
-        eltoritodata = cdfd.read(count*512)
-        cdfd.close()
-
+        old = iso.cdfp.tell()
+        iso.cdfp.seek(extent*2048)
         with open(outfile, "w") as f:
-            f.write(eltoritodata)
+            f.write(iso.cdfp.read(size*512))
+        iso.cdfp.seek(old)
 
     def _do_install(self, timeout=None, force=False, reboots=0,
                     kernelfname=None, ramdiskfname=None, cmdline=None,
@@ -1746,7 +1535,7 @@ class CDGuest(Guest):
         """
         return self._do_install(timeout, force, 0)
 
-    def _check_pvd(self):
+    def _check_pvd(self, iso):
         """
         Base method to check the Primary Volume Descriptor on the ISO.  In the
         common case, do nothing; subclasses that need to check the media will
@@ -1754,31 +1543,55 @@ class CDGuest(Guest):
         """
         pass
 
-    def _check_iso_tree(self, customize_or_icicle):
+    def _check_iso_tree(self, customize_or_icicle, iso):
         """
         Base method to check the exploded ISO tree.  In the common case, do
         nothing; subclasses that need to check the tree will override this.
         """
         pass
 
-    def _add_iso_extras(self):
+    def _add_recursively(self, src, dst, iso):
+        # FIXME: what if the directory already exists on the ISO?  Error, or
+        # just add to it?
+        '''
+        A method to add all files from the source directory underneath the
+        path in dst on the ISO.  This is recursive, so will descend into
+        subdirectories and add all the files there as well.
+        '''
+        iso.add_directory("/" + dst, rr_name=dst, joliet_path="/" + dst)
+        names = os.listdir(src)
+        for name in names:
+            srcname = os.path.join(src, name)
+            if os.path.isdir(srcname):
+                self._add_recursively(srcname, os.path.join(dst, name), iso)
+            else:
+                dstname = "/" + os.path.join(dst, name)
+                self.log.debug("src is %s, dst is %s", srcname, dstname)
+                iso.add_file(srcname, dstname, rr_name=dstname, joliet_path=dstname)
+
+    def _add_iso_extras(self, iso):
         """
         Method to modify the ISO based on the directories specified in the TDL
         file. This modification is done before the final OS and is not
         expected to be override by subclasses
         """
         for isoextra in self.tdl.isoextras:
-            targetabspath = os.path.join(self.iso_contents,
-                                         isoextra.destination)
-            oz.ozutil.mkdir_p(os.path.dirname(targetabspath))
-
             parsedurl = urlparse.urlparse(isoextra.source)
             if parsedurl.scheme == 'file':
                 if isoextra.element_type == "file":
-                    oz.ozutil.copyfile_sparse(parsedurl.path, targetabspath)
+                    # Now that we've downloaded the file, put it into place on
+                    # the ISO.
+                    # FIXME: should we make sure any intermediate directories
+                    # exist for the file?
+                    isofilename = "/" + isoextra.destination
+                    iso.add_file(parsedurl.path, isofilename, rr_name=isoextra.destination, joliet_path=isofilename)
                 else:
-                    oz.ozutil.copytree_merge(parsedurl.path, targetabspath)
+                    self._add_recursively(parsedurl.path, isoextra.destination, iso)
+
             elif parsedurl.scheme == "ftp":
+                targetabspath = os.path.join(self.icicle_tmp,
+                                             isoextra.destination)
+                oz.ozutil.mkdir_p(os.path.dirname(targetabspath))
                 if isoextra.element_type == "file":
                     fd = os.open(targetabspath,
                                  os.O_CREAT|os.O_TRUNC|os.O_WRONLY)
@@ -1787,13 +1600,21 @@ class CDGuest(Guest):
                                                      self.log)
                     finally:
                         os.close(fd)
+                    # Now that we've downloaded the file, put it into place on
+                    # the ISO.
+                    isofilename = "/" + isoextra.destination
+                    iso.add_file(targetabspath, isofilename, rr_name=isoextra.destination, joliet_path=isofilename)
                 else:
+                    # FIXME: this no longer works
                     oz.ozutil.ftp_download_directory(parsedurl.hostname,
                                                      parsedurl.username,
                                                      parsedurl.password,
                                                      parsedurl.path,
                                                      targetabspath)
             elif parsedurl.scheme == "http":
+                targetabspath = os.path.join(self.icicle_tmp,
+                                             isoextra.destination)
+                oz.ozutil.mkdir_p(os.path.dirname(targetabspath))
                 if isoextra.element_type == "directory":
                     raise oz.OzException.OzException("ISO extra directories cannot be fetched over HTTP")
                 else:
@@ -1804,17 +1625,23 @@ class CDGuest(Guest):
                                                      self.log)
                     finally:
                         os.close(fd)
+                    # Now that we've downloaded the file, put it into place on
+                    # the ISO.
+                    # FIXME: should we make sure any intermediate directories
+                    # exist for the file?
+                    isofilename = "/" + isoextra.destination
+                    iso.add_file(targetabspath, isofilename, rr_name=isoextra.destination, joliet_path=isofilename)
             else:
                 raise oz.OzException.OzException("The protocol '%s' is not supported for fetching remote files or directories" % parsedurl.scheme)
 
-    def _modify_iso(self):
+    def _modify_iso(self, iso):
         """
         Base method to modify the ISO.  Subclasses are expected to override
         this.
         """
         raise oz.OzException.OzException("Internal error, subclass didn't override modify_iso")
 
-    def _generate_new_iso(self):
+    def _generate_new_iso(self, iso):
         """
         Base method to generate the new ISO.  Subclasses are expected to
         override this.
@@ -1842,20 +1669,18 @@ class CDGuest(Guest):
 
         try:
             self._get_original_iso(url, fd, outdir, force_download)
-            self._check_pvd()
-            self._copy_iso()
+            iso = pyiso.PyIso()
+            iso.open(self.orig_iso)
+            self._check_pvd(iso)
 
-            # from here on out, we have to make sure to cleanup the exploded ISO
-            try:
-                self._check_iso_tree(customize_or_icicle)
-                self._add_iso_extras()
-                self._modify_iso()
-                self._generate_new_iso()
-                if self.cache_modified_media:
-                    self.log.info("Caching modified media for future use")
-                    shutil.copyfile(self.output_iso, self.modified_iso_cache)
-            finally:
-                self._cleanup_iso()
+            self._check_iso_tree(customize_or_icicle, iso)
+            self._add_iso_extras(iso)
+            self._modify_iso(iso)
+            self._generate_new_iso(iso)
+            iso.close()
+            if self.cache_modified_media:
+                self.log.info("Caching modified media for future use")
+                shutil.copyfile(self.output_iso, self.modified_iso_cache)
         finally:
             os.close(fd)
 

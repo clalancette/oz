@@ -45,13 +45,13 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
             # for 10.3 we don't have a 2-stage install process so don't reboot
             self.reboots = 0
 
-    def _modify_iso(self):
+    def _modify_iso(self, iso):
         """
         Method to make the boot ISO auto-boot with appropriate parameters.
         """
         self.log.debug("Putting the autoyast in place")
 
-        outname = os.path.join(self.iso_contents, "autoinst.xml")
+        outname = os.path.join(self.icicle_tmp, "autoinst.xml")
 
         if self.default_auto_file():
             doc = lxml.etree.parse(self.auto)
@@ -74,13 +74,15 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
             oz.ozutil.subprocess_check_output(["mcopy", "-n", "-o", "-i",
                                                self.output_floppy, outname,
                                                "::autoinst.xml"])
+        else:
+            iso.add_file(outname, "/autoinst.xml", rr_name="autoinst.xml", joliet_path="/autoinst.xml")
 
         self.log.debug("Modifying the boot options")
-        isolinux_cfg = os.path.join(self.iso_contents, "boot", self.tdl.arch,
-                                    "loader", "isolinux.cfg")
-        f = open(isolinux_cfg, "r")
-        lines = f.readlines()
-        f.close()
+        isoname = "/boot/" + self.tdl.arch + "/loader/isolinux.cfg"
+        isolinux_cfg = os.path.join(self.icicle_tmp, "isolinux.cfg")
+        iso.get_and_write(isoname, isolinux_cfg)
+        with open(isolinux_cfg, "r") as infp:
+            lines = infp.readlines()
         for index, line in enumerate(lines):
             if re.match("timeout", line):
                 lines[index] = "timeout 1\n"
@@ -98,22 +100,26 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
         with open(isolinux_cfg, 'w') as f:
             f.writelines(lines)
 
-    def _generate_new_iso(self):
+        iso.rm_file(isoname, rr_name='isolinux.cfg', joliet_path=isoname)
+        iso.add_file(isolinux_cfg, isoname, rr_name='isolinux.cfg', joliet_path=isoname)
+
+    def _generate_new_iso(self, iso):
         """
         Method to create a new ISO based on the modified CD/DVD.
         """
-        self.log.info("Generating new ISO")
-        oz.ozutil.subprocess_check_output(["genisoimage", "-r", "-V", "Custom",
-                                           "-J", "-no-emul-boot",
-                                           "-b", "boot/" + self.tdl.arch + "/loader/isolinux.bin",
-                                           "-c", "boot/" + self.tdl.arch + "/loader/boot.cat",
-                                           "-boot-load-size", "4",
-                                           "-boot-info-table", "-graft-points",
-                                           "-iso-level", "4", "-pad",
-                                           "-allow-leading-dots", "-l", "-v",
-                                           "-o", self.output_iso,
-                                           self.iso_contents],
-                                          printfn=self.log.debug)
+        self.log.debug("Generating new ISO")
+        self._last_progress_percent = -1
+        def _progress_cb(done, total):
+            '''
+            Private function to print progress of ISO mastering.
+            '''
+            percent = done * 100 / total
+            if percent > 100:
+                percent = 100
+            if percent != self._last_progress_percent:
+                self._last_progress_percent = percent
+                self.log.debug("%d %%", percent)
+        iso.write(self.output_iso, progress_cb=_progress_cb)
 
     def install(self, timeout=None, force=False):
         """

@@ -42,13 +42,13 @@ class RHL9Guest(oz.RedHat.RedHatLinuxCDGuest):
         if self.tdl.arch != "i386":
             raise oz.OzException.OzException("Invalid arch " + self.tdl.arch + "for RHL guest")
 
-    def _modify_iso(self):
+    def _modify_iso(self, iso):
         """
         Method to modify the ISO for autoinstallation.
         """
         self.log.debug("Putting the kickstart in place")
 
-        outname = os.path.join(self.iso_contents, "ks.cfg")
+        outname = os.path.join(self.icicle_tmp, "ks.cfg")
 
         if self.default_auto_file():
             def _kssub(line):
@@ -68,9 +68,10 @@ class RHL9Guest(oz.RedHat.RedHatLinuxCDGuest):
             oz.ozutil.copy_modify_file(self.auto, outname, _kssub)
         else:
             shutil.copy(self.auto, outname)
+        iso.add_file(outname, "/ks.cfg", rr_name="ks.cfg", joliet_path="/ks.cfg")
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method=" + self.url + "\n"
-        self._modify_isolinux(initrdline)
+        self._modify_isolinux(initrdline, iso)
 
     def get_auto_path(self):
         """

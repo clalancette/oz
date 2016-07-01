@@ -47,7 +47,7 @@ class MageiaGuest(oz.Linux.LinuxCDGuest):
         self.sshd_was_active = False
         self.crond_was_active = False
 
-    def _modify_iso(self):
+    def _modify_iso(self, iso):
         """
         Method to make the boot ISO auto-boot with appropriate parameters.
         """
@@ -55,7 +55,7 @@ class MageiaGuest(oz.Linux.LinuxCDGuest):
 
         self.log.debug("Copying cfg file to floppy image")
 
-        outname = os.path.join(self.iso_contents, "auto_inst.cfg")
+        outname = os.path.join(self.icicle_tmp, "auto_inst.cfg")
 
         if self.default_auto_file():
 
@@ -72,6 +72,7 @@ class MageiaGuest(oz.Linux.LinuxCDGuest):
             oz.ozutil.copy_modify_file(self.auto, outname, _cfg_sub)
         else:
             shutil.copy(self.auto, outname)
+        iso.add_file(outname, "/auto_inst.cfg", rr_name="auto_inst.cfg", joliet_path="/auto_inst.cfg")
 
         oz.ozutil.subprocess_check_output(["/sbin/mkfs.msdos", "-C",
                                            self.output_floppy, "1440"])
@@ -80,10 +81,11 @@ class MageiaGuest(oz.Linux.LinuxCDGuest):
                                            "::AUTO_INST.CFG"])
 
         self.log.debug("Modifying isolinux.cfg")
+        isolinuxcfg = os.path.join(self.icicle_tmp, "isolinux.cfg")
         if self.tdl.update in ["2", "3"]:
-            isolinuxcfg = os.path.join(self.iso_contents, self.mageia_arch, "isolinux", "isolinux.cfg")
+            isoname = "/%s/isolinux/isolinux.cfg" % (self.mageia_arch)
         else:
-            isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
+            isoname = "/isolinux/isolinux.cfg"
 
         if self.tdl.update in ["2", "3", "4"]:
             kernel = "alt0/vmlinuz"
@@ -107,31 +109,25 @@ label customiso
   kernel %s
   append initrd=%s kickstart=floppy %s
 """ % (kernel, initrd, flags))
+        iso.add_file(isolinuxcfg, isoname, rr_name="isolinux.cfg", joliet_path=isoname)
 
-    def _generate_new_iso(self):
+    def _generate_new_iso(self, iso):
         """
         Method to create a new ISO based on the modified CD/DVD.
         """
-        self.log.info("Generating new ISO")
-
-        isolinuxdir = ""
-        if self.tdl.update in ["2", "3", "4"]:
-            isolinuxdir = self.mageia_arch
-        elif self.tdl.update in ["4.1", "5"]:
-            isolinuxdir = ""
-
-        isolinuxbin = os.path.join(isolinuxdir, "isolinux/isolinux.bin")
-        isolinuxboot = os.path.join(isolinuxdir, "isolinux/boot.cat")
-
-        oz.ozutil.subprocess_check_output(["genisoimage", "-r", "-V", "Custom",
-                                           "-J", "-l", "-no-emul-boot",
-                                           "-b", isolinuxbin,
-                                           "-c", isolinuxboot,
-                                           "-boot-load-size", "4",
-                                           "-cache-inodes", "-boot-info-table",
-                                           "-v", "-o", self.output_iso,
-                                           self.iso_contents],
-                                          printfn=self.log.debug)
+        self.log.debug("Generating new ISO")
+        self._last_progress_percent = -1
+        def _progress_cb(done, total):
+            '''
+            Private function to print progress of ISO mastering.
+            '''
+            percent = done * 100 / total
+            if percent > 100:
+                percent = 100
+            if percent != self._last_progress_percent:
+                self._last_progress_percent = percent
+                self.log.debug("%d %%", percent)
+        iso.write(self.output_iso, progress_cb=_progress_cb)
 
     def _get_service_runlevel_link(self, g_handle, service):
         """

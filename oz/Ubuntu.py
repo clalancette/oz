@@ -23,6 +23,7 @@ import shutil
 import re
 import os
 import gzip
+import pyiso
 
 import oz.Linux
 import oz.ozutil
@@ -79,7 +80,7 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         if self.tdl.update in ["5.04", "5.10"]:
             self.reboots = 1
 
-    def _check_iso_tree(self, customize_or_icicle):
+    def _check_iso_tree(self, customize_or_icicle, iso):
         # Anything prior to Ubuntu 11.04 can't have openssh installed, and
         # we thus can't customize
         if customize_or_icicle and self.tdl.update in ["5.04", "5.10", "6.06",
@@ -94,7 +95,11 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
             raise oz.OzException.OzException("Customization can only be done on Ubuntu 11.04 or later")
 
         # ISOs that contain casper are desktop install CDs
-        if os.path.isdir(os.path.join(self.iso_contents, "casper")):
+        try:
+            entry = iso.get_entry("/casper")
+            # In this case, casper existed on the ISO, so we need to check
+            # if this is a late enough version of Ubuntu where we can do the
+            # customization
             if self.tdl.update in ["6.06", "6.10", "7.04"]:
                 raise oz.OzException.OzException("Ubuntu %s installs can only be done using the alternate or server CDs" % (self.tdl.update))
             if customize_or_icicle:
@@ -104,6 +109,10 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
             # a Desktop install
             if self.tdl.update in ["13.10"]:
                 raise oz.OzException.OzException("Ubuntu 13.10 installs can only be done with the server CD")
+        except pyiso.pyisoexception.PyIsoException:
+            # If casper did *not* exist on the ISO, then this is a server or
+            # alternate CD, and we can proceed with the install
+            pass
 
     def _copy_preseed(self, outname):
         """
@@ -128,32 +137,33 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         else:
             shutil.copy(self.auto, outname)
 
-    def _modify_iso(self):
+    def _modify_iso(self, iso):
         """
         Method to make the boot ISO auto-boot with appropriate parameters.
         """
         self.log.debug("Modifying ISO")
 
         self.log.debug("Copying preseed file")
-        outname = os.path.join(self.iso_contents, "preseed", "customiso.seed")
-        outdir = os.path.dirname(outname)
-        oz.ozutil.mkdir_p(outdir)
+        outname = os.path.join(self.icicle_tmp, "customiso.seed")
+
+        try:
+            # The directory may already be there; if so, just go on
+            iso.add_directory("/PRESEED", rr_name="preseed", joliet_path="/preseed")
+        except pyiso.pyisoexception.PyIsoException:
+            pass
 
         self._copy_preseed(outname)
+        iso.add_file(outname, "/PRESEED/CUSTOMISO.SEE.;1", rr_name="customiso.seed", joliet_path="/preseed/customiso.seed")
 
         self.log.debug("Modifying isolinux.cfg")
-        isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
-                                   "isolinux.cfg")
-        isolinuxdir = os.path.dirname(isolinuxcfg)
-        if not os.path.isdir(isolinuxdir):
-            oz.ozutil.mkdir_p(isolinuxdir)
-            shutil.copyfile(os.path.join(self.iso_contents, "isolinux.bin"),
-                            os.path.join(isolinuxdir, "isolinux.bin"))
-            shutil.copyfile(os.path.join(self.iso_contents, "boot.cat"),
-                            os.path.join(isolinuxdir, "boot.cat"))
+        isolinuxcfg = os.path.join(self.icicle_tmp, "isolinux.cfg")
+        try:
+            # The directory may already be there; if so, just go on
+            iso.add_directory('/ISOLINUX', rr_name='isolinux', joliet_path='/isolinux')
+        except pyiso.pyisoexception.PyIsoException:
+            pass
 
         with open(isolinuxcfg, 'w') as f:
-
             if self.tdl.update in ["5.04", "5.10"]:
                 f.write("""\
 DEFAULT /install/vmlinuz
@@ -183,7 +193,8 @@ PROMPT 0
                         keyboard = "kbd-chooser/method=us"
                     f.write("  kernel /install/vmlinuz\n")
                     f.write("  append preseed/file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US " + keyboard + " netcfg/choose_interface=auto keyboard-configuration/layoutcode=us priority=critical initrd=/install/initrd.gz --\n")
-
+        iso.rm_file("/ISOLINUX/ISOLINUX.CFG;1", rr_name="isolinux.cfg", joliet_path="/isolinux/isolinux.cfg")
+        iso.add_file(isolinuxcfg, "/ISOLINUX/ISOLINUX.CFG.;1", rr_name="isolinux.cfg", joliet_path="/isolinux/isolinux.cfg")
 
     def get_auto_path(self):
         """
@@ -195,20 +206,23 @@ PROMPT 0
             autoname = self.tdl.distro + sp[0] + "." + sp[1] + ".auto"
         return oz.ozutil.generate_full_auto_path(autoname)
 
-    def _generate_new_iso(self):
+    def _generate_new_iso(self, iso):
         """
         Method to create a new ISO based on the modified CD/DVD.
         """
-        self.log.info("Generating new ISO")
-        oz.ozutil.subprocess_check_output(["genisoimage", "-r", "-V", "Custom",
-                                           "-J", "-l", "-no-emul-boot",
-                                           "-b", "isolinux/isolinux.bin",
-                                           "-c", "isolinux/boot.cat",
-                                           "-boot-load-size", "4",
-                                           "-cache-inodes", "-boot-info-table",
-                                           "-v", "-o", self.output_iso,
-                                           self.iso_contents],
-                                          printfn=self.log.debug)
+        self.log.debug("Generating new ISO")
+        self._last_progress_percent = -1
+        def _progress_cb(done, total):
+            '''
+            Private function to print progress of ISO mastering.
+            '''
+            percent = done * 100 / total
+            if percent > 100:
+                percent = 100
+            if percent != self._last_progress_percent:
+                self._last_progress_percent = percent
+                self.log.debug("%d %%", percent)
+        iso.write(self.output_iso, progress_cb=_progress_cb)
 
     def install(self, timeout=None, force=False):
         """

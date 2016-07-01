@@ -36,53 +36,59 @@ class FreeBSD(oz.Guest.CDGuest):
                                   netdev, "localtime", "usb", diskbus, True,
                                   False, macaddress)
 
-    def _generate_new_iso(self):
+    def _generate_new_iso(self, iso):
         """
         Method to create a new ISO based on the modified CD/DVD.
         """
         self.log.debug("Generating new ISO")
-        oz.ozutil.subprocess_check_output(["genisoimage",
-                                           "-R", "-no-emul-boot",
-                                           "-b", "boot/cdboot", "-v",
-                                           "-o", self.output_iso,
-                                           self.iso_contents],
-                                          printfn=self.log.debug)
+        self._last_progress_percent = -1
+        def _progress_cb(done, total):
+            '''
+            Private function to print progress of ISO mastering.
+            '''
+            percent = done * 100 / total
+            if percent > 100:
+                percent = 100
+            if percent != self._last_progress_percent:
+                self._last_progress_percent = percent
+                self.log.debug("%d %%", percent)
+        iso.write(self.output_iso, progress_cb=_progress_cb)
 
-    def _modify_iso(self):
+    def _modify_iso(self, iso):
         """
         Method to make the boot ISO auto-boot with appropriate parameters.
         """
         self.log.debug("Modifying ISO")
 
-        def _replace(line):
-            """
-            Method that is called back from copy_modify_file to replace
-            the rootpassword in the installerconfig file
-            """
-            keys = {
-                '#ROOTPW#': self.rootpw,
-            }
-            for key, val in keys.iteritems():
-                line = line.replace(key, val)
-            return line
+        outname = os.path.join(self.icicle_tmp, "installerconfig")
+        if self.default_auto_file():
+            def _replace(line):
+                """
+                Method that is called back from copy_modify_file to replace
+                the rootpassword in the installerconfig file
+                """
+                keys = {
+                    '#ROOTPW#': self.rootpw,
+                }
+                for key, val in keys.iteritems():
+                    line = line.replace(key, val)
+                return line
 
-        # Copy the installconfig file to /etc/ on the iso image so bsdinstall(8)
-        # can use that to do an unattended installation. This rules file
-        # contains both setup rules and a post script. This stage also prepends
-        # the post script with additional commands so it's possible to install
-        # extra	packages specified in the .tdl file.
+            oz.ozutil.copy_modify_file(self.auto, outname, _replace)
+        else:
+            shutil.copy(self.auto, outname)
 
-        outname = os.path.join(self.iso_contents, "etc", "installerconfig")
-        oz.ozutil.copy_modify_file(self.auto, outname, _replace)
+        iso.add_file(outname, "/etc/installerconfig", rr_name="installerconfig")
 
         # Make sure the iso can be mounted at boot, otherwise this error shows
         # up after booting the kernel:
         #  mountroot: waiting for device /dev/iso9660/FREEBSD_INSTALL ...
 	#  Mounting from cd9660:/dev/iso9660/FREEBSD_INSTALL failed with error 19.
 
-        loaderconf = os.path.join(self.iso_contents, "boot", "loader.conf")
+        loaderconf = os.path.join(self.icicle_tmp, "loader.conf")
         with open(loaderconf, 'w') as conf:
             conf.write('vfs.root.mountfrom="cd9660:/dev/cd0"\n')
+        iso.add_file(loaderconf, "/boot/loader.conf", rr_name="loader.conf")
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):

@@ -102,16 +102,16 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         else:
             shutil.copy(self.auto, outname)
 
-    def _modify_iso(self):
+    def _modify_iso(self, iso):
         """
         Method to make the boot ISO auto-boot with appropriate parameters.
         """
         self.log.debug("Modifying ISO")
         self.log.debug("Copying preseed file")
-        outname = os.path.join(self.iso_contents, "preseed", "customiso.seed")
-        outdir = os.path.dirname(outname)
-        oz.ozutil.mkdir_p(outdir)
+        outname = os.path.join(self.icicle_tmp, "customiso.seed")
         self._copy_preseed(outname)
+        iso.add_directory("/preseed", rr_name="preseed", joliet_path="/preseed")
+        iso.add_file(outname, "/preseed/customiso.seed", rr_name="customiso.seed", joliet_path="/preseed/customiso.seed")
 
         # arch == i386
         installdir = "/install.386"
@@ -119,7 +119,7 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
             installdir = "/install.amd"
 
         self.log.debug("Modifying isolinux.cfg")
-        isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
+        isolinuxcfg = os.path.join(self.icicle_tmp, "isolinux.cfg")
         extra = ""
         if self.tdl.update in ["7", "8"]:
             extra = "auto=true "
@@ -136,6 +136,9 @@ label customiso
   append file=/cdrom/preseed/customiso.seed %sdebian-installer/locale=en_US console-setup/layoutcode=us netcfg/choose_interface=auto priority=critical initrd=%s/initrd.gz --
 """ % (installdir, extra, installdir))
 
+        iso.rm_file("/isolinux/isolinux.cfg", rr_name="isolinux.cfg", joliet_path="/isolinux/isolinux.cfg")
+        iso.add_file(isolinuxcfg, "/isolinux/isolinux.cfg", rr_name="isolinux.cfg", joliet_path="/isolinux/isolinux.cfg")
+
     def get_auto_path(self):
         autoname = self.tdl.distro + self.tdl.update + ".auto"
         sp = self.tdl.update.split('.')
@@ -143,20 +146,23 @@ label customiso
             autoname = self.tdl.distro + sp[0] + "." + sp[1] + ".auto"
         return oz.ozutil.generate_full_auto_path(autoname)
 
-    def _generate_new_iso(self):
+    def _generate_new_iso(self, iso):
         """
         Method to create a new ISO based on the modified CD/DVD.
         """
         self.log.info("Generating new ISO")
-        oz.ozutil.subprocess_check_output(["genisoimage", "-r", "-V", "Custom",
-                                           "-J", "-l", "-no-emul-boot",
-                                           "-b", "isolinux/isolinux.bin",
-                                           "-c", "isolinux/boot.cat",
-                                           "-boot-load-size", "4",
-                                           "-cache-inodes", "-boot-info-table",
-                                           "-v", "-o", self.output_iso,
-                                           self.iso_contents],
-                                          printfn=self.log.debug)
+        self._last_progress_percent = -1
+        def _progress_cb(done, total):
+            '''
+            Private function to print progress of ISO mastering.
+            '''
+            percent = done * 100 / total
+            if percent > 100:
+                percent = 100
+            if percent != self._last_progress_percent:
+                self._last_progress_percent = percent
+                self.log.debug("%d %%", percent)
+        iso.write(self.output_iso, progress_cb=_progress_cb)
 
     def install(self, timeout=None, force=False):
         """

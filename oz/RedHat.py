@@ -28,6 +28,7 @@ except ImportError:
     import ConfigParser as configparser
 import gzip
 import guestfs
+import pyiso
 
 import oz.Guest
 import oz.Linux
@@ -81,33 +82,36 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         if self.tdl.kernel_param:
             self.cmdline += " " + self.tdl.kernel_param
 
-    def _generate_new_iso(self):
+    def _generate_new_iso(self, iso):
         """
         Method to create a new ISO based on the modified CD/DVD.
         """
         self.log.debug("Generating new ISO")
-        oz.ozutil.subprocess_check_output(["genisoimage", "-r", "-T", "-J",
-                                           "-V", "Custom", "-no-emul-boot",
-                                           "-b", "isolinux/isolinux.bin",
-                                           "-c", "isolinux/boot.cat",
-                                           "-boot-load-size", "4",
-                                           "-boot-info-table", "-v",
-                                           "-o", self.output_iso,
-                                           self.iso_contents],
-                                          printfn=self.log.debug)
+        self._last_progress_percent = -1
+        def _progress_cb(done, total):
+            '''
+            Private function to print progress of ISO mastering.
+            '''
+            percent = done * 100 / total
+            if percent > 100:
+                percent = 100
+            if percent != self._last_progress_percent:
+                self._last_progress_percent = percent
+                self.log.debug("%d %%", percent)
+        iso.write(self.output_iso, progress_cb=_progress_cb)
 
-    def _check_iso_tree(self, customize_or_icicle):
-        kernel = os.path.join(self.iso_contents, "isolinux", "vmlinuz")
-        if not os.path.exists(kernel):
+    def _check_iso_tree(self, customize_or_icicle, iso):
+        try:
+            entry = iso.get_entry("/isolinux/vmlinuz")
+        except pyiso.pyisoexception.PyIsoException:
             raise oz.OzException.OzException("Fedora/Red Hat installs can only be done using a boot.iso (netinst) or DVD image (LiveCDs are not supported)")
 
-    def _modify_isolinux(self, initrdline):
+    def _modify_isolinux(self, initrdline, iso):
         """
         Method to modify the isolinux.cfg file on a RedHat style CD.
         """
         self.log.debug("Modifying isolinux.cfg")
-        isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
-                                   "isolinux.cfg")
+        isolinuxcfg = os.path.join(self.icicle_tmp, "isolinux.cfg")
 
         with open(isolinuxcfg, "w") as f:
             f.write("""\
@@ -118,6 +122,13 @@ label customiso
   kernel vmlinuz
 %s
 """ % (initrdline))
+
+        try:
+            iso.rm_file("/isolinux/isolinux.cfg", rr_name="isolinux.cfg", joliet_path="/isolinux/isolinux.cfg")
+        except pyiso.pyisoexception.PyIsoException:
+            pass
+
+        iso.add_file(isolinuxcfg, "/isolinux/isolinux.cfg", rr_name="isolinux.cfg", joliet_path="/isolinux/isolinux.cfg")
 
     def _copy_kickstart(self, outname):
         """

@@ -53,28 +53,26 @@ X11Forwarding yes
 Subsystem	sftp	/usr/libexec/openssh/sftp-server
 """
 
-    def _modify_iso(self):
+    def _modify_iso(self, iso):
         """
         Method to make the boot ISO auto-boot with appropriate parameters.
         """
-        self._copy_kickstart(os.path.join(self.iso_contents, "ks.cfg"))
+        kscfg = os.path.join(self.icicle_tmp, "ks.cfg")
+        self._copy_kickstart(kscfg)
+        iso.add_file(kscfg, "/ks.cfg", rr_name="ks.cfg", joliet_path="/ks.cfg")
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method="
         if self.tdl.installtype == "url":
             initrdline += self.url + "\n"
         else:
             initrdline += "cdrom:/dev/cdrom\n"
-        self._modify_isolinux(initrdline)
+        self._modify_isolinux(initrdline, iso)
 
-    def _check_pvd(self):
+    def _check_pvd(self, iso):
         """
         Method to ensure the the boot ISO for an ISO install is a DVD
         """
-        cdfd = open(self.orig_iso, "r")
-        pvd = self._get_primary_volume_descriptor(cdfd)
-        cdfd.close()
-
-        if pvd.system_identifier != "LINUX                           ":
+        if iso.pvd.system_identifier != "LINUX                           ":
             raise oz.OzException.OzException("Invalid system identifier on ISO for " + self.tdl.distro + " install")
 
         if self.tdl.distro == "RHEL-3":
@@ -84,7 +82,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             # information.  We just pass through here, doing nothing
         else:
             if self.tdl.installtype == "iso":
-                if not re.match(r"CentOS-3(\.[0-9])? Disk 1", pvd.volume_identifier) and not re.match(r"CentOS-3(\.[0-9])? server", pvd.volume_identifier) and not re.match(r"CentOS-3(\.[0-9])? " + self.tdl.arch + " DVD", pvd.volume_identifier):
+                if not re.match(r"CentOS-3(\.[0-9])? Disk 1", iso.pvd.volume_identifier) and not re.match(r"CentOS-3(\.[0-9])? server", iso.pvd.volume_identifier) and not re.match(r"CentOS-3(\.[0-9])? " + self.tdl.arch + " DVD", iso.pvd.volume_identifier):
                     raise oz.OzException.OzException("Only DVDs are supported for CentOS-3 ISO installs")
             # The boot ISOs for CentOS-3 don't have a whole lot of identifying
             # information.  We just pass through here, doing nothing

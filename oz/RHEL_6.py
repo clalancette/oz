@@ -35,18 +35,20 @@ class RHEL6Guest(oz.RedHat.RedHatLinuxCDYumGuest):
                                                  output_disk, netdev, diskbus,
                                                  True, True, "cpio", macaddress)
 
-    def _modify_iso(self):
+    def _modify_iso(self, iso):
         """
         Method to modify the ISO for autoinstallation.
         """
-        self._copy_kickstart(os.path.join(self.iso_contents, "ks.cfg"))
+        kscfg = os.path.join(self.icicle_tmp, "ks.cfg")
+        self._copy_kickstart(kscfg)
+        iso.add_file(kscfg, "/ks.cfg", rr_name="ks.cfg", joliet_path="/ks.cfg")
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
         if self.tdl.installtype == "url":
             initrdline += " repo=" + self.url + "\n"
         else:
             initrdline += "\n"
-        self._modify_isolinux(initrdline)
+        self._modify_isolinux(initrdline, iso)
 
     def get_auto_path(self):
         """

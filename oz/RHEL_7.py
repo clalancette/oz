@@ -35,11 +35,13 @@ class RHEL7Guest(oz.RedHat.RedHatLinuxCDYumGuest):
                                                  output_disk, netdev, diskbus,
                                                  True, True, "cpio", macaddress)
 
-    def _modify_iso(self):
+    def _modify_iso(self, iso):
         """
         Method to modify the ISO for autoinstallation.
         """
-        self._copy_kickstart(os.path.join(self.iso_contents, "ks.cfg"))
+        kscfg = os.path.join(self.icicle_tmp, "ks.cfg")
+        self._copy_kickstart(kscfg)
+        iso.add_file(kscfg, "/ks.cfg", rr_name="ks.cfg", joliet_path="/ks.cfg")
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/dev/cdrom:/ks.cfg"
         if self.tdl.installtype == "url":
@@ -49,7 +51,7 @@ class RHEL7Guest(oz.RedHat.RedHatLinuxCDYumGuest):
             # that has since been fixed.  Note that this used to be "method="
             # but that has been deprecated for some time.
             initrdline += " repo=cdrom:/dev/cdrom"
-        self._modify_isolinux(initrdline)
+        self._modify_isolinux(initrdline, iso)
 
     def get_auto_path(self):
         """

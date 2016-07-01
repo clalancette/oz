@@ -58,7 +58,7 @@ class Windows_v5(Windows):
         if self.winarch == "x86_64":
             self.winarch = "amd64"
 
-    def _generate_new_iso(self):
+    def _generate_new_iso(self, iso):
         """
         Method to create a new ISO based on the modified CD/DVD.
         """
@@ -98,15 +98,15 @@ class Windows_v5(Windows):
             createpart = True
         return self._internal_generate_diskimage(size, force, createpart)
 
-    def _modify_iso(self):
+    def _modify_iso(self, iso):
         """
         Method to make the boot ISO auto-boot with appropriate parameters.
         """
         self.log.debug("Modifying ISO")
 
         os.mkdir(os.path.join(self.iso_contents, "cdboot"))
-        self._geteltorito(self.orig_iso, os.path.join(self.iso_contents,
-                                                      "cdboot", "boot.bin"))
+        self._geteltorito(iso, os.path.join(self.iso_contents,
+                                            "cdboot", "boot.bin"))
 
         outname = os.path.join(self.iso_contents, self.winarch, "winnt.sif")
 
@@ -159,7 +159,7 @@ class Windows_v6(Windows):
         if self.tdl.arch == "x86_64":
             self.winarch = "amd64"
 
-    def _generate_new_iso(self):
+    def _generate_new_iso(self, iso):
         """
         Method to create a new ISO based on the modified CD/DVD.
         """
@@ -177,7 +177,7 @@ class Windows_v6(Windows):
                                            self.iso_contents],
                                           printfn=self.log.debug)
 
-    def _modify_iso(self):
+    def _modify_iso(self, iso):
         """
         Method to make the boot ISO auto-boot with appropriate parameters.
         """

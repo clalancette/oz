@@ -48,11 +48,13 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
         self.haverepo = haverepo
         self.brokenisomethod = brokenisomethod
 
-    def _modify_iso(self):
+    def _modify_iso(self, iso):
         """
         Method to modify the ISO for autoinstallation.
         """
-        self._copy_kickstart(os.path.join(self.iso_contents, "ks.cfg"))
+        kscfg = os.path.join(self.icicle_tmp, "ks.cfg")
+        self._copy_kickstart(kscfg)
+        iso.add_file(kscfg, "/ks.cfg", rr_name="ks.cfg", joliet_path="/ks.cfg")
 
         if self.tdl.update in ["17", "18", "19", "20", "21", "22", "23"]:
             initrdline = "  append initrd=initrd.img ks=cdrom:/dev/cdrom:/ks.cfg"
@@ -70,7 +72,7 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
             if not self.brokenisomethod:
                 initrdline += " method=cdrom:/dev/cdrom"
             initrdline += "\n"
-        self._modify_isolinux(initrdline)
+        self._modify_isolinux(initrdline, iso)
 
     def generate_diskimage(self, size=10, force=False):
         """
