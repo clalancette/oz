@@ -48,26 +48,26 @@
               </choice>
               <optional>
                 <element name='extras'>
-                  <zeroOrMore>
-                    <element name='directory'>
-                      <attribute name='source'>
-                        <text/>
-                      </attribute>
-                      <attribute name='destination'>
-                        <text/>
-                      </attribute>
-                    </element>
-                  </zeroOrMore>
-                  <zeroOrMore>
-                    <element name='file'>
-                      <attribute name='source'>
-                        <text/>
-                      </attribute>
-                      <attribute name='destination'>
-                        <text/>
-                      </attribute>
-                    </element>
-                  </zeroOrMore>
+                  <oneOrMore>
+                    <choice>
+                      <element name='directory'>
+                        <attribute name='source'>
+                          <text/>
+                        </attribute>
+                        <attribute name='destination'>
+                          <text/>
+                        </attribute>
+                      </element>
+                      <element name='file'>
+                        <attribute name='source'>
+                          <text/>
+                        </attribute>
+                        <attribute name='destination'>
+                          <text/>
+                        </attribute>
+                      </element>
+                    </choice>
+                  </oneOrMore>
                 </element>
               </optional>
             </element>
