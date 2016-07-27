@@ -133,6 +133,25 @@ label customiso
                                            self.iso_contents],
                                           printfn=self.log.debug)
 
+    def _get_service_runlevel_link(self, g_handle, service):
+        """
+        Method to find the runlevel link(s) for a service based on the name
+        and the (detected) default runlevel.
+        """
+        runlevel = self.get_default_runlevel(g_handle)
+
+        lines = g_handle.cat('/etc/init.d/' + service).split("\n")
+        startlevel = "99"
+        for line in lines:
+            if re.match('# chkconfig:', line):
+                try:
+                    startlevel = line.split(':')[1].split()[1]
+                except:
+                    pass
+                break
+
+        return "/etc/rc" + runlevel + ".d/S" + startlevel + service
+
     def _image_ssh_teardown_step_1(self, g_handle):
         """
         First step to undo _image_ssh_setup (remove authorized keys).
