@@ -130,7 +130,7 @@ class Guest(object):
         # for backwards compatibility
         self.name = self.tdl.name
 
-        if not self.tdl.arch in [ "i386", "x86_64", "ppc64", "ppc64le", "aarch64", "armv7l" ]:
+        if not self.tdl.arch in ["i386", "x86_64", "ppc64", "ppc64le", "aarch64", "armv7l"]:
             raise oz.OzException.OzException("Unsupported guest arch " + self.tdl.arch)
 
         if os.uname()[4] in ["i386", "i586", "i686"] and self.tdl.arch == "x86_64":
@@ -173,13 +173,13 @@ class Guest(object):
                                                      1)
         # the memory in the configuration file is specified in megabytes, but
         # libvirt expects kilobytes, so multiply by 1024
-        if self.tdl.arch in [ "ppc64", "ppc64le" ]:
+        if self.tdl.arch in ["ppc64", "ppc64le"]:
             # ppc64 needs at least 2Gb RAM
             self.install_memory = int(oz.ozutil.config_get_key(config, 'libvirt',
-                                                           'memory', 2048)) * 1024
+                                                               'memory', 2048)) * 1024
         else:
             self.install_memory = int(oz.ozutil.config_get_key(config, 'libvirt',
-                                                           'memory', 1024)) * 1024
+                                                               'memory', 1024)) * 1024
         self.image_type = oz.ozutil.config_get_key(config, 'libvirt',
                                                    'image_type', 'raw')
 
@@ -205,13 +205,13 @@ class Guest(object):
 
         # configuration of 'timeouts' section
         self.default_install_timeout = int(oz.ozutil.config_get_key(config, 'timeouts',
-                                                                            'install', 1200))
+                                                                    'install', 1200))
         self.inactivity_timeout = int(oz.ozutil.config_get_key(config, 'timeouts',
                                                                'inactivity', 300))
         self.boot_timeout = int(oz.ozutil.config_get_key(config, 'timeouts',
-                                                                 'boot', 300))
+                                                         'boot', 300))
         self.shutdown_timeout = int(oz.ozutil.config_get_key(config, 'timeouts',
-                                                                     'shutdown', 90))
+                                                             'shutdown', 90))
 
         # only pull a cached JEOS if it was built with the correct image type
         jeos_extension = self.image_type
@@ -463,13 +463,13 @@ class Guest(object):
         # CPU
         if self.tdl.arch in ["aarch64", "armv7l"] and self.libvirt_type == "kvm":
             # Possibly related to BZ 1171501 - need host passthrough for aarch64 and arm with kvm
-            cpu = self.lxml_subelement(domain, "cpu", None, { 'mode': 'custom', 'match': 'exact' })
-            model = self.lxml_subelement(cpu, "model", "host", { 'fallback': 'allow' })
+            cpu = self.lxml_subelement(domain, "cpu", None, {'mode': 'custom', 'match': 'exact'})
+            model = self.lxml_subelement(cpu, "model", "host", {'fallback': 'allow'})
         # os
         osNode = self.lxml_subelement(domain, "os")
         mods = None
         if self.tdl.arch in ["aarch64", "armv7l"]:
-            mods = { 'arch': self.tdl.arch, 'machine': 'virt' }
+            mods = {'arch': self.tdl.arch, 'machine': 'virt'}
         self.lxml_subelement(osNode, "type", "hvm", mods)
         if bootdev:
             self.lxml_subelement(osNode, "boot", None, {'dev':bootdev})
@@ -940,7 +940,7 @@ class Guest(object):
 
         info = oz.ozutil.http_get_header(url)
 
-        if not 'HTTP-Code' in info or info['HTTP-Code'] >= 400 or not 'Content-Length' in info or info['Content-Length'] < 0:
+        if 'HTTP-Code' not in info or info['HTTP-Code'] >= 400 or 'Content-Length' not in info or info['Content-Length'] < 0:
             raise oz.OzException.OzException("Could not reach destination to fetch boot media")
 
         content_length = int(info['Content-Length'])

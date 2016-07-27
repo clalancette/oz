@@ -971,6 +971,10 @@ def recursively_add_write_bit(inputdir):
                     raise
 
 def find_uefi_firmware(arch):
+    '''
+    A function to find the UEFI firmware file that corresponds to a certain
+    architecture.
+    '''
     # Yuck.  Finding the UEFI firmware to start certain guests (like aarch64)
     # is a really nasty process.  While slightly out of date, this blog post
     # describes the mess: http://blog.wikichoon.com/2016/01/uefi-support-in-virt-install-and-virt.html
@@ -979,11 +983,19 @@ def find_uefi_firmware(arch):
     # I verified that these files exist on both Fedora/RHEL and Ubuntu.
     # Hopefully there will be a nicer way to do this in the future.
     class UEFI(object):
+        '''
+        A private class to hold the path to the loader and the path to the
+        NVRAM file.
+        '''
         def __init__(self, loader, nvram):
             self.loader = loader
             self.nvram = nvram
 
         def exists(self):
+            '''
+            A method that returns True if both the loader and the NVRAM files
+            exist, False otherwise.
+            '''
             if os.path.exists(self.loader) and os.path.exists(self.nvram):
                 return True
             return False

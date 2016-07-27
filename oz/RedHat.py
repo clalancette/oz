@@ -334,7 +334,7 @@ label customiso
         # part 4; make sure the guest announces itself
         self.log.debug("Step 4: Guest announcement")
 
-        if self.tdl.arch in [ 'ppc64', 'ppc64le' ]:
+        if self.tdl.arch in ['ppc64', 'ppc64le']:
             announce_device = '/dev/hvc1'
         else:
             announce_device = '/dev/ttyS1'
