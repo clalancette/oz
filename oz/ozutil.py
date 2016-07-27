@@ -673,12 +673,18 @@ def rmtree_and_sync(directory):
     cannot help if the system is otherwise very busy, but it does ensure that
     the problem is not self-inflicted.
     """
-    shutil.rmtree(directory)
-    fd = os.open(os.path.dirname(directory), os.O_RDONLY)
     try:
-        os.fsync(fd)
-    finally:
-        os.close(fd)
+        shutil.rmtree(directory)
+        fd = os.open(os.path.dirname(directory), os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    except OSError as err:
+        if err.errno == 2:
+            pass
+        else:
+            raise
 
 def parse_config(config_file):
     """
