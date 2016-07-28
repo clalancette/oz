@@ -191,13 +191,13 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
         # Remove any lease files; this is so that subsequent boots don't try
         # to connect to a DHCP server that is on a totally different network
         for lease in g_handle.glob_expand("/var/lib/dhcp/*.leases"):
-            g_handle.rm_f(lease)
+            g_handle.rm(lease)
 
         for lease in g_handle.glob_expand("/var/lib/dhcp6/*.leases"):
-            g_handle.rm_f(lease)
+            g_handle.rm(lease)
 
         for lease in g_handle.glob_expand("/var/lib/dhcp6/*.lease"):
-            g_handle.rm_f(lease)
+            g_handle.rm(lease)
 
     def _collect_teardown(self, libvirt_xml):
         """
