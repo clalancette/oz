@@ -300,7 +300,7 @@ PROMPT 0
         # Remove any lease files; this is so that subsequent boots don't try
         # to connect to a DHCP server that is on a totally different network
         for lease in g_handle.glob_expand("/var/lib/dhcp/*.leases"):
-            g_handle.rm_f(lease)
+            g_handle.rm(lease)
 
     def _image_ssh_setup_step_1(self, g_handle):
         """
