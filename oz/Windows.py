@@ -58,23 +58,6 @@ class Windows_v5(Windows):
         if self.winarch == "x86_64":
             self.winarch = "amd64"
 
-    def _generate_new_iso(self, iso):
-        """
-        Method to create a new ISO based on the modified CD/DVD.
-        """
-        self.log.debug("Generating new ISO")
-        oz.ozutil.subprocess_check_output(["genisoimage",
-                                           "-b", "cdboot/boot.bin",
-                                           "-no-emul-boot", "-boot-load-seg",
-                                           "1984", "-boot-load-size", "4",
-                                           "-iso-level", "2", "-J", "-l", "-D",
-                                           "-N", "-joliet-long",
-                                           "-relaxed-filenames", "-v",
-                                           "-V", "Custom",
-                                           "-o", self.output_iso,
-                                           self.iso_contents],
-                                          printfn=self.log.debug)
-
     def generate_diskimage(self, size=10, force=False):
         """
         Method to generate a diskimage.  By default, a blank diskimage of

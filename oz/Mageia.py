@@ -111,24 +111,6 @@ label customiso
 """ % (kernel, initrd, flags))
         iso.add_file(isolinuxcfg, isoname, rr_name="isolinux.cfg", joliet_path=isoname)
 
-    def _generate_new_iso(self, iso):
-        """
-        Method to create a new ISO based on the modified CD/DVD.
-        """
-        self.log.debug("Generating new ISO")
-        self._last_progress_percent = -1
-        def _progress_cb(done, total):
-            '''
-            Private function to print progress of ISO mastering.
-            '''
-            percent = done * 100 / total
-            if percent > 100:
-                percent = 100
-            if percent != self._last_progress_percent:
-                self._last_progress_percent = percent
-                self.log.debug("%d %%", percent)
-        iso.write(self.output_iso, progress_cb=_progress_cb)
-
     def _get_service_runlevel_link(self, g_handle, service):
         """
         Method to find the runlevel link(s) for a service based on the name

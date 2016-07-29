@@ -101,24 +101,6 @@ label customiso
             iso.rm_file("/isolinux/isolinux.cfg", rr_name="isolinux.cfg", joliet_path="/isolinux/isolinux.cfg")
             iso.add_file(isolinuxcfg, "/isolinux/isolinux.cfg", rr_name="isolinux.cfg", joliet_path="/isolinux/isolinux.cfg")
 
-    def _generate_new_iso(self, iso):
-        """
-        Method to create a new ISO based on the modified CD/DVD.
-        """
-        self.log.debug("Generating new ISO")
-        self._last_progress_percent = -1
-        def _progress_cb(done, total):
-            '''
-            Private function to print progress of ISO mastering.
-            '''
-            percent = done * 100 / total
-            if percent > 100:
-                percent = 100
-            if percent != self._last_progress_percent:
-                self._last_progress_percent = percent
-                self.log.debug("%d %%", percent)
-        iso.write(self.output_iso, progress_cb=_progress_cb)
-
     def install(self, timeout=None, force=False):
         internal_timeout = timeout
         if internal_timeout is None:

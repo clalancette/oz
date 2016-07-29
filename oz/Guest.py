@@ -1643,10 +1643,21 @@ class CDGuest(Guest):
 
     def _generate_new_iso(self, iso):
         """
-        Base method to generate the new ISO.  Subclasses are expected to
-        override this.
+        Method to create a new ISO based on the modified CD/DVD.
         """
-        raise oz.OzException.OzException("Internal error, subclass didn't override generate_new_iso")
+        self.log.info("Generating new ISO")
+        self._last_progress_percent = -1
+        def _progress_cb(done, total):
+            '''
+            Private function to print progress of ISO mastering.
+            '''
+            percent = done * 100 / total
+            if percent > 100:
+                percent = 100
+            if percent != self._last_progress_percent:
+                self._last_progress_percent = percent
+                self.log.debug("Mastering %.2d %% complete", percent)
+        iso.write(self.output_iso, progress_cb=_progress_cb)
 
     def _iso_generate_install_media(self, url, force_download,
                                     customize_or_icicle):
