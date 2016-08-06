@@ -1540,9 +1540,14 @@ class CDGuest(Guest):
                             tar.kill()
                             raise
 
-                        # FIXME: we really should check tar.poll() here to get
-                        # the return code, and print out stdout and stderr if
-                        # we fail.  This will make debugging problems easier
+                        # Make sure tar is fully done with the archive before
+                        # we can continue.
+                        tar.wait()
+                        if tar.returncode:
+                            self.log.debug('tar stdout: %s' % stdouttmp.read())
+                            self.log.debug('tar stderr: %s' % stderrtmp.read())
+                            raise oz.OzException.OzException("Tar exited with an error")
+
                     finally:
                         stdouttmp.close()
                         stderrtmp.close()
