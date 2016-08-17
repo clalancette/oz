@@ -74,6 +74,8 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
                                         self.tdl.distro + self.tdl.update + self.tdl.arch + "-ramdisk")
 
         self.cmdline = "priority=critical locale=en_US"
+        if self.tdl.kernel_param:
+            self.cmdline += " " + self.tdl.kernel_param
 
         self.reboots = 0
         if self.tdl.update in ["5.04", "5.10"]:
