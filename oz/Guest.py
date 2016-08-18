@@ -1714,7 +1714,7 @@ class CDGuest(Guest):
         self.log.info("Running install for %s", self.tdl.name)
 
         if timeout is None:
-            timeout = 1200
+            timeout = self.default_install_timeout
 
         cddev = self._InstallDev("cdrom", self.output_iso, "hdc")
         if extrainstalldevs is not None:
