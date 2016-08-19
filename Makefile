@@ -1,19 +1,21 @@
 VERSION = $(shell egrep "^VERSION" setup.py | awk '{print $$3}')
 VENV_DIR = tests/.venv
 
-sdist:
+sdist: oz.spec.in
 	python setup.py sdist
+
+oz.spec: sdist
 
 signed-tarball: sdist
 	gpg --detach-sign --armor -o dist/oz-$(VERSION).tar.gz.sign dist/oz-$(VERSION).tar.gz
 
-signed-rpm: sdist
+signed-rpm: oz.spec
 	rpmbuild -ba oz.spec --sign --define "_sourcedir `pwd`/dist"
 
-rpm: sdist
+rpm: oz.spec
 	rpmbuild -ba oz.spec --define "_sourcedir `pwd`/dist"
 
-srpm: sdist
+srpm: oz.spec
 	rpmbuild -bs oz.spec --define "_sourcedir `pwd`/dist"
 
 deb:
@@ -54,3 +56,5 @@ pylint:
 
 clean:
 	rm -rf MANIFEST build dist usr *~ oz.spec *.pyc oz/*~ oz/*.pyc examples/*~ oz/auto/*~ man/*~ docs/*~ man/*.html $(VENV_DIR) tests/tdl/*~ tests/factory/*~ tests/results.xml htmlcov
+
+.PHONY: sdist oz.spec signed-tarball signed-rpm rpm srpm deb release man2html virtualenv unittests tests test-coverage pylint clean
