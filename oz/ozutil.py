@@ -1017,6 +1017,8 @@ def find_uefi_firmware(arch):
     elif arch in ['aarch64']:
         uefi_list = [UEFI('/usr/share/AAVMF/AAVMF_CODE.fd',
                           '/usr/share/AAVMF/AAVMF_VARS.fd'),
+                     UEFI('/usr/share/edk2/aarch64/QEMU_EFI-pflash.raw',
+                          '/usr/share/edk2/aarch64/vars-template-pflash.raw'),
                      UEFI('/usr/share/edk2.git/aarch64/QEMU_EFI-pflash.raw',
                           '/usr/share/edk2.git/aarch64/vars-template-pflash.raw')]
     else:
