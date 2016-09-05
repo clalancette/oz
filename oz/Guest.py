@@ -59,7 +59,7 @@ class Guest(object):
             doc = lxml.etree.fromstring(self.libvirt_conn.getCapabilities())
 
             # Libvirt calls the old intel 32-bit architecture i686, while we
-            # refer to it as i686.  Do the mapping here, since we need to look
+            # refer to it as i386.  Do the mapping here, since we need to look
             # up the libvirt name.
             libvirtarch = self.tdl.arch
             if libvirtarch == 'i386':
