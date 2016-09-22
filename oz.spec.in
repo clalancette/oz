@@ -25,7 +25,9 @@ Requires: libvirt >= 0.9.7
 Requires: python-pycurl
 Requires: genisoimage
 Requires: mtools
+%if 0%{?fedora} < 26
 Requires: python-uuid
+%endif
 Requires: openssh-clients
 Requires: m2crypto
 
