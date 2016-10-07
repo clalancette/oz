@@ -235,11 +235,8 @@ label customiso
         in /etc/ssh.  Since this image might be cached later on, this method
         removes those keys.
         """
-        for f in ["/etc/ssh/ssh_host_dsa_key", "/etc/ssh/ssh_host_dsa_key.pub",
-                  "/etc/ssh/ssh_host_rsa_key", "/etc/ssh/ssh_host_rsa_key.pub",
-                  "/etc/ssh/ssh_host_ecdsa_key", "/etc/ssh/ssh_host_ecdsa_key.pub",
-                  "/etc/ssh/ssh_host_key", "/etc/ssh/ssh_host_key.pub"]:
-            self._guestfs_remove_if_exists(g_handle, f)
+        for key in g_handle.glob_expand("/etc/ssh/*_key*"):
+            self._guestfs_remove_if_exists(g_handle, key)
 
         # Remove any lease files; this is so that subsequent boots don't try
         # to connect to a DHCP server that is on a totally different network
