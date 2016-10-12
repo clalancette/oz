@@ -392,33 +392,9 @@ label customiso
             self.guest_execute_command(guestaddr, "echo '%s' > /etc/apt/sources.list.d/%s" % (repo.url.strip('\'"'), repo.name + "list"))
             self.guest_execute_command(guestaddr, "apt-get update")
 
-    def do_customize(self, guestaddr):
-        """
-        Method to customize by installing additional packages and files.
-        """
-        if not self.tdl.packages and not self.tdl.files and not self.tdl.commands:
-            # no work to do, just return
-            return
-
-        self._customize_repos(guestaddr)
-
-        self.log.debug("Installing custom packages")
-        packstr = ''
-        for package in self.tdl.packages:
-            packstr += package.name + ' '
-
-        if packstr != '':
-            self.guest_execute_command(guestaddr,
-                                       'apt-get install -y %s' % (packstr))
-
-        self._customize_files(guestaddr)
-
-        self.log.debug("Running custom commands")
-        for cmd in self.tdl.commands:
-            self.guest_execute_command(guestaddr, cmd.read())
-
-        self.log.debug("Syncing")
-        self.guest_execute_command(guestaddr, 'sync')
+    def _install_packages(self, guestaddr, packstr):
+        self.guest_execute_command(guestaddr,
+                                   'apt-get install -y %s' % (packstr))
 
     def do_icicle(self, guestaddr):
         """
