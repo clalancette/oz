@@ -710,6 +710,15 @@ class RedHatLinuxCDYumGuest(RedHatLinuxCDGuest):
     """
     Class for RedHat-based CD guests with yum support.
     """
+    def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus,
+                 iso_allowed, url_allowed, initrdtype, macaddress, use_yum):
+        oz.RedHat.RedHatLinuxCDGuest.__init__(self, tdl, config, auto,
+                                              output_disk, nicmodel, diskbus,
+                                              iso_allowed, url_allowed,
+                                              initrdtype, macaddress)
+
+        self.use_yum = use_yum
+
     def _check_url(self, iso=True, url=True):
         """
         Method to check if a URL specified by the user is one that will work
@@ -806,7 +815,10 @@ class RedHatLinuxCDYumGuest(RedHatLinuxCDGuest):
                 os.unlink(localname)
 
     def _install_packages(self, guestaddr, packstr):
-        self.guest_execute_command(guestaddr, 'yum -y install %s' % (packstr))
+        if self.use_yum:
+            self.guest_execute_command(guestaddr, 'yum -y install %s' % (packstr))
+        else:
+            self.guest_execute_command(guestaddr, 'dnf -y install %s' % (packstr))
 
     def _remove_repos(self, guestaddr):
         for repo in list(self.tdl.repositories.values()):

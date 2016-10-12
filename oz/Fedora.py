@@ -37,10 +37,15 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
             directkernel = None
         self.assumed_update = assumed_update
 
+        # Prior to Fedora-22, we use yum; on F-22 and later, we use dnf.
+        # Express that preference here.
+        use_yum = True
+        if tdl.update in ["22", "23", "24"]:
+            use_yum = False
         oz.RedHat.RedHatLinuxCDYumGuest.__init__(self, tdl, config, auto,
                                                  output_disk, nicmodel, diskbus,
                                                  True, True, directkernel,
-                                                 macaddress)
+                                                 macaddress, use_yum)
 
         if self.assumed_update is not None:
             self.log.warning("==== WARN: TDL contains Fedora update %s, which is newer than Oz knows about; pretending this is Fedora %s, but this may fail ====", tdl.update, assumed_update)

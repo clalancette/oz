@@ -33,7 +33,8 @@ class RHEL6Guest(oz.RedHat.RedHatLinuxCDYumGuest):
                  diskbus=None, macaddress=None):
         oz.RedHat.RedHatLinuxCDYumGuest.__init__(self, tdl, config, auto,
                                                  output_disk, netdev, diskbus,
-                                                 True, True, "cpio", macaddress)
+                                                 True, True, "cpio", macaddress,
+                                                 True)
 
     def _modify_iso(self):
         """
