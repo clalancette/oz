@@ -40,10 +40,6 @@ class MageiaGuest(oz.Linux.LinuxCDGuest):
                                        netdev, diskbus, True, True,
                                        macaddress)
 
-        self.mageia_arch = self.tdl.arch
-        if self.mageia_arch == "i386":
-            self.mageia_arch = "i586"
-
         self.sshd_was_active = False
         self.crond_was_active = False
 
@@ -80,18 +76,131 @@ class MageiaGuest(oz.Linux.LinuxCDGuest):
                                            "::AUTO_INST.CFG"])
 
         self.log.debug("Modifying isolinux.cfg")
-        if self.tdl.update in ["2", "3"]:
-            isolinuxcfg = os.path.join(self.iso_contents, self.mageia_arch, "isolinux", "isolinux.cfg")
-        else:
-            isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
+        if self.tdl.update == "2":
+            '''
+            Mageia 2 dual   - isolinux/32.cfg
+                              isolinux/64.cfg
+                              isolinux/alt0/32/vmlinuz
+                              isolinux/alt0/32/all.rdz
+                              isolinux/alt0/64/vmlinuz
+                              isolinux/alt0/64/all.rdz
+            Mageia 2 x86_64 - x86_64/isolinux/isolinux.cfg
+                              x86_64/isolinux/alt0/vmlinuz
+                              x86_64/isolinux/alt0/all.rdz
+            Mageia 2 i586   - i586/isolinux/isolinux.cfg
+                              i586/isolinux/vmlinuz
+                              i586/isolinux/all.rdz
+            '''
+            if os.path.exists(os.path.join(self.iso_contents, 'isolinux')):
+                if self.tdl.arch == "i386":
+                    mageia_arch = "32"
+                else:
+                    mageia_arch = "64"
 
-        if self.tdl.update in ["2", "3", "4"]:
-            kernel = "alt0/vmlinuz"
-            initrd = "alt0/all.rdz"
+                # This looks like a dual CD, so let's set things up that way.
+                isolinuxcfg = os.path.join(self.iso_contents, 'isolinux', mageia_arch + ".cfg")
+                self.isolinuxbin = os.path.join('isolinux', mageia_arch + ".bin")
+                kernel = "alt0/" + mageia_arch + "/vmlinuz"
+                initrd = "alt0/" + mageia_arch + "/all.rdz"
+            else:
+                # This looks like an i586 or x86_64 ISO, so set things up that way.
+                mageia_arch = self.tdl.arch
+                if self.tdl.arch == "i386":
+                    mageia_arch = "i586"
+                isolinuxcfg = os.path.join(self.iso_contents, mageia_arch, 'isolinux', 'isolinux.cfg')
+                self.isolinuxbin = os.path.join(mageia_arch, 'isolinux', 'isolinux.bin')
+                kernel = "alt0/vmlinuz"
+                initrd = "alt0/all.rdz"
             flags = "ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom"
-        elif self.tdl.update in ["4.1", "5"]:
-            kernel = "%s/vmlinuz" % (self.mageia_arch)
-            initrd = "%s/all.rdz" % (self.mageia_arch)
+        elif self.tdl.update == "3":
+            '''
+            Mageia 3 dual   - syslinux/32.cfg
+                              syslinux/64.cfg
+                              syslinux/alt0/32/vmlinuz
+                              syslinux/alt0/32/all.rdz
+                              syslinux/alt0/64/vmlinuz
+                              syslinux/alt0/64/all.rdz
+            Mageia 3 x86_64 - x86_64/isolinux/isolinux.cfg
+                              x86_64/isolinux/alt0/vmlinuz
+                              x86_64/isolinux/alt0/all.rdz
+            Mageia 3 i586   - i586/isolinux/isolinux.cfg
+                              i586/isolinux/alt0/vmlinuz
+                              i586/isolinux/alt0/all.rdz
+            '''
+            if os.path.exists(os.path.join(self.iso_contents, 'syslinux')):
+                if self.tdl.arch == "i386":
+                    mageia_arch = "32"
+                else:
+                    mageia_arch = "64"
+                isolinuxcfg = os.path.join(self.iso_contents, 'syslinux', mageia_arch + ".cfg")
+                self.isolinuxbin = os.path.join('syslinux', mageia_arch + ".bin")
+                kernel = "alt0/" + mageia_arch + "/vmlinuz"
+                initrd = "alt0/" + mageia_arch + "/all.rdz"
+            else:
+                mageia_arch = self.tdl.arch
+                if self.tdl.arch == "i386":
+                    mageia_arch = "i586"
+                isolinuxcfg = os.path.join(self.iso_contents, mageia_arch, 'isolinux', 'isolinux.cfg')
+                self.isolinuxbin = os.path.join(mageia_arch, 'isolinux', 'isolinux.bin')
+                kernel = "alt0/vmlinuz"
+                initrd = "alt0/all.rdz"
+            flags = "ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom"
+        elif self.tdl.update in ["4", "4.1", "5"]:
+            '''
+            Mageia 4 dual     - isolinux/i586.cfg
+                                isolinux/x86_64.cfg
+                                isolinux/i586/vmlinuz
+                                isolinux/i586/all.rdz
+                                isolinux/x86_64/vmlinuz
+                                isolinux/x86_64/all.rdz
+            Mageia 4 x86_64   - isolinux/isolinux.cfg
+                                isolinux/x86_64/vmlinuz
+                                isolinux/x86_64/all.rdz
+            Mageia 4 i586     - isolinux/isolinux.cfg
+                                isolinux/i586/vmlinuz
+                                isolinuz/i586/all.rdz
+            Mageia 4.1 dual   - isolinux/i586.cfg
+                                isolinux/x86_64.cfg
+                                isolinux/i586/vmlinuz
+                                isolinux/i586/all.rdz
+                                isolinux/x86_64/vmlinuz
+                                isolinux/x86_64/all.rdz
+            Mageia 4.1 x86_64 - isolinux/isolinux.cfg
+                                isolinux/x86_64/vmlinuz
+                                isolinux/x86_64/all.rdz
+            Mageia 4.1 i586 -   isolinux/isolinux.cfg
+                                isolinux/i586/vmlinuz
+                                isolinux/i586/all.rdz
+            Mageia 5 dual     - isolinux/i586.cfg
+                                isolinux/x86_64.cfg
+                                isolinux/i586/vmlinuz
+                                isolinux/i586/all.rdz
+                                isolinux/x86_64/vmlinuz
+                                isolinux/x86_64/all.rdz
+            Mageia 5 x86_64   - isolinux/isolinux.cfg
+                                isolinux/x86_64/vmlinuz
+                                isolinux/x86_64/all.rdz
+            Mageia 5 i586 -     isolinux/isolinux.cfg
+                                isolinux/i586/vmlinuz
+                                isolinux/i586/all.rdz
+            '''
+            # Starting with Mageia 4, things are a lot more regular.  The
+            # directory always starts with isolinux.  If it is a dual ISO, then
+            # there is an i586.cfg and x86_64.cfg describing how to boot each
+            # of them.  Otherwise, there is just an isolinux.cfg.  The kernel
+            # and initrd are always in the same place.
+            mageia_arch = self.tdl.arch
+            if self.tdl.arch == "i386":
+                mageia_arch = "i586"
+            if os.path.exists(os.path.join(self.iso_contents, 'isolinux', 'i586.cfg')):
+                # A dual, so use the correct cfg
+                isolinuxcfg = os.path.join(self.iso_contents, 'isolinux', mageia_arch + ".cfg")
+                self.isolinuxbin = os.path.join('isolinux', mageia_arch + ".bin")
+            else:
+                isolinuxcfg = os.path.join(self.iso_contents, 'isolinux', 'isolinux.cfg')
+                self.isolinuxbin = os.path.join('isolinux', 'isolinux.bin')
+            kernel = mageia_arch + "/vmlinuz"
+            initrd = mageia_arch + "/all.rdz"
             if self.tdl.installtype == "url":
                 url = urlparse.urlparse(self.tdl.url)
                 flags = "automatic=method:%s,ser:%s,dir:%s,int:eth0,netw:dhcp" % (url.scheme, url.hostname, url.path)
@@ -114,19 +223,10 @@ label customiso
         """
         self.log.info("Generating new ISO")
 
-        isolinuxdir = ""
-        if self.tdl.update in ["2", "3", "4"]:
-            isolinuxdir = self.mageia_arch
-        elif self.tdl.update in ["4.1", "5"]:
-            isolinuxdir = ""
-
-        isolinuxbin = os.path.join(isolinuxdir, "isolinux/isolinux.bin")
-        isolinuxboot = os.path.join(isolinuxdir, "isolinux/boot.cat")
-
         oz.ozutil.subprocess_check_output(["genisoimage", "-r", "-V", "Custom",
                                            "-J", "-l", "-no-emul-boot",
-                                           "-b", isolinuxbin,
-                                           "-c", isolinuxboot,
+                                           "-b", self.isolinuxbin,
+                                           "-c", "boot.catalog",
                                            "-boot-load-size", "4",
                                            "-cache-inodes", "-boot-info-table",
                                            "-v", "-o", self.output_iso,
