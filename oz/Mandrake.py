@@ -93,6 +93,12 @@ label customiso
                                            self.iso_contents],
                                           printfn=self.log.debug)
 
+    def install(self, timeout=None, force=False):
+        internal_timeout = timeout
+        if internal_timeout is None and self.tdl.update == "9.0":
+            internal_timeout = 2500
+        return self._do_install(internal_timeout, force, 0)
+
 class Mandrake82Guest(oz.Guest.CDGuest):
     """
     Class for Mandrake 8.2 installation.
