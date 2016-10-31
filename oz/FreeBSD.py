@@ -28,7 +28,7 @@ import oz.OzException
 
 class FreeBSD(oz.Guest.CDGuest):
     """
-    Class for FreeBSD 10.0 installation.
+    Class for FreeBSD 10.0, 10.1, 10.2, 10.3 and 11.0 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
@@ -89,7 +89,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for FreeBSD installs.
     """
-    if tdl.update in ["10.0"]:
+    if tdl.update in ["10.0", "10.1", "10.2", "10.3", "11.0",]:
         if netdev is None:
             netdev = 'virtio'
         if diskbus is None:
@@ -101,4 +101,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "FreeBSD: 10"
+    return "FreeBSD: 10, 11"
