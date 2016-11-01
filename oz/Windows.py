@@ -231,6 +231,89 @@ class Windows_v6(Windows):
             internal_timeout = 8500
         return self._do_install(internal_timeout, force, 2)
 
+class Windows_v10(Windows):
+    """
+    Class for Windows versions based on kernel 10.x (2016 and 10).
+    """
+    def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
+                 macaddress):
+        Windows.__init__(self, tdl, config, auto, output_disk, netdev, diskbus,
+                         macaddress)
+
+        self.winarch = "x86"
+        if self.tdl.arch == "x86_64":
+            self.winarch = "amd64"
+
+    def _generate_new_iso(self):
+        """
+        Method to create a new ISO based on the modified CD/DVD.
+        """
+        self.log.debug("Generating new ISO")
+        oz.ozutil.subprocess_check_output(["genisoimage",
+                                           "-b", "cdboot/boot.bin",
+                                           "-no-emul-boot", "-c", "BOOT.CAT",
+                                           "-iso-level", "2", "-J", "-l", "-D",
+                                           "-N", "-joliet-long", "-allow-limited-size",
+                                           "-relaxed-filenames", "-v",
+                                           "-V", "Custom", "-udf",
+                                           "-o", self.output_iso,
+                                           self.iso_contents],
+                                          printfn=self.log.debug)
+
+    def _modify_iso(self):
+        """
+        Method to make the boot ISO auto-boot with appropriate parameters.
+        """
+        self.log.debug("Modifying ISO")
+
+        os.mkdir(os.path.join(self.iso_contents, "cdboot"))
+        self._geteltorito(self.orig_iso, os.path.join(self.iso_contents,
+                                                      "cdboot", "boot.bin"))
+
+        outname = os.path.join(self.iso_contents, "autounattend.xml")
+
+        if self.default_auto_file():
+            # if this is the oz default unattend file, we modify certain
+            # parameters to make installation succeed
+            doc = lxml.etree.parse(self.auto)
+
+            for component in doc.xpath('/ms:unattend/ms:settings/ms:component',
+                                       namespaces={'ms':'urn:schemas-microsoft-com:unattend'}):
+                component.set('processorArchitecture', self.winarch)
+
+            keys = doc.xpath('/ms:unattend/ms:settings/ms:component/ms:ProductKey',
+                             namespaces={'ms':'urn:schemas-microsoft-com:unattend'})
+            if len(keys) != 1:
+                raise oz.OzException.OzException("Invalid autounattend file; expected 1 key, saw %d" % (len(keys)))
+            keys[0].text = self.tdl.key
+
+            adminpw = doc.xpath('/ms:unattend/ms:settings/ms:component/ms:UserAccounts/ms:AdministratorPassword/ms:Value',
+                                namespaces={'ms':'urn:schemas-microsoft-com:unattend'})
+            if len(adminpw) != 1:
+                raise oz.OzException.OzException("Invalid autounattend file; expected 1 admin password, saw %d" % (len(adminpw)))
+            adminpw[0].text = self.rootpw
+
+            autologinpw = doc.xpath('/ms:unattend/ms:settings/ms:component/ms:AutoLogon/ms:Password/ms:Value',
+                                    namespaces={'ms':'urn:schemas-microsoft-com:unattend'})
+            if len(autologinpw) != 1:
+                raise oz.OzException.OzException("Invalid autounattend file; expected 1 auto logon password, saw %d" % (len(autologinpw)))
+            autologinpw[0].text = self.rootpw
+
+            f = open(outname, 'w')
+            f.write(lxml.etree.tostring(doc, pretty_print=True))
+            f.close()
+        else:
+            # if the user provided their own unattend file, do not override
+            # their choices; the user gets to keep both pieces if something
+            # breaks
+            shutil.copy(self.auto, outname)
+
+    def install(self, timeout=None, force=False):
+        internal_timeout = timeout
+        if internal_timeout is None:
+            internal_timeout = 8500
+        return self._do_install(internal_timeout, force, 2)
+
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):
     """
@@ -242,9 +325,12 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     if tdl.update in ["2008", "7", "2012", "8", "8.1"]:
         return Windows_v6(tdl, config, auto, output_disk, netdev, diskbus,
                           macaddress)
+    if tdl.update in ["2016", "10"]:
+        return Windows_v10(tdl, config, auto, output_disk, netdev, diskbus,
+                          macaddress)
 
 def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Windows: 2000, XP, 2003, 7, 2008, 2012, 8, 8.1"
+    return "Windows: 2000, XP, 2003, 7, 2008, 2012, 8, 8.1, 2016, 10"
