@@ -67,7 +67,7 @@ os_dict = {'Fedora': 'Fedora',
           }
 
 def guest_factory(tdl, config, auto, output_disk=None, netdev=None,
-                  diskbus=None, macaddress=None):
+                  diskbus=None, macaddress=None, logserial=False):
     """
     Factory function return an appropriate Guest object based on the TDL.
     The arguments are:
@@ -89,6 +89,8 @@ def guest_factory(tdl, config, auto, output_disk=None, netdev=None,
               the default that Oz uses.
     macaddress - An optional string argument specifying the MAC address to use
                  for the guest.
+    logserial - An optional boolean argument specifying whether to attempt 
+                to extract log data from the serial console of the VM.
     """
 
     klass = None
@@ -98,7 +100,8 @@ def guest_factory(tdl, config, auto, output_disk=None, netdev=None,
             module = __import__('oz.' + importname)
             klass = getattr(module, importname).get_class(tdl, config, auto,
                                                           output_disk, netdev,
-                                                          diskbus, macaddress)
+                                                          diskbus, macaddress,
+                                                          logserial)
             break
 
     if klass is None:

@@ -39,10 +39,10 @@ class RedHatLinuxCDGuest(oz.Linux.LinuxCDGuest):
     Class for RedHat-based CD guests.
     """
     def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus,
-                 iso_allowed, url_allowed, initrdtype, macaddress):
+                 iso_allowed, url_allowed, initrdtype, macaddress, logserial):
         oz.Linux.LinuxCDGuest.__init__(self, tdl, config, auto, output_disk,
                                        nicmodel, diskbus, iso_allowed,
-                                       url_allowed, macaddress)
+                                       url_allowed, macaddress, logserial)
         self.crond_was_active = False
         self.sshd_was_active = False
         self.sshd_config = """\
@@ -78,6 +78,8 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                                         self.tdl.distro + self.tdl.update + self.tdl.arch + "-ramdisk")
 
         self.cmdline = "method=" + self.url + " ks=file:/ks.cfg"
+        if logserial:
+            self.cmdline += " " + "console=ttyS0 text systemd.log_color=false"
         if self.tdl.kernel_param:
             self.cmdline += " " + self.tdl.kernel_param
 
@@ -711,11 +713,13 @@ class RedHatLinuxCDYumGuest(RedHatLinuxCDGuest):
     Class for RedHat-based CD guests with yum support.
     """
     def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus,
-                 iso_allowed, url_allowed, initrdtype, macaddress, use_yum):
+                 iso_allowed, url_allowed, initrdtype, macaddress, use_yum,
+                 logserial):
         oz.RedHat.RedHatLinuxCDGuest.__init__(self, tdl, config, auto,
                                               output_disk, nicmodel, diskbus,
                                               iso_allowed, url_allowed,
-                                              initrdtype, macaddress)
+                                              initrdtype, macaddress,
+                                              logserial)
 
         self.use_yum = use_yum
 
