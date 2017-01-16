@@ -983,6 +983,15 @@ class Guest(object):
         """
         Method to capture a screenshot of the VM.
         """
+
+        # First check to ensure that we've got a graphics device that would even let
+        # us take a screenshot.
+        domxml = libvirt_dom.XMLDesc(0)
+        doc = lxml.etree.fromstring(domxml)
+        graphics = doc.xpath("/domain/devices/graphics")
+        if len(graphics) == 0:
+            return "No graphics device found, screenshot skipped"
+
         oz.ozutil.mkdir_p(self.screenshot_dir)
         # create a new stream
         st = libvirt_dom.connect().newStream(0)
