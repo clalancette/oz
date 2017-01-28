@@ -1,4 +1,4 @@
-pycurl
+requests
 m2crypto
 libvirt-python
 lxml

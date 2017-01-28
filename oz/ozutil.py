@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012-2016  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2017  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -25,10 +25,11 @@ import subprocess
 import errno
 import stat
 import shutil
-import pycurl
+import requests
 import gzip
 import time
 import select
+import contextlib
 try:
     import configparser
 except ImportError:
@@ -754,48 +755,13 @@ def http_get_header(url, redirect=True):
     'Redirect-URL' will always be None in the redirect=True case, and may be
     None in the redirect=True case if no redirects were required.
     """
-    info = {}
-    def _header(buf):
-        """
-        Internal function that is called back from pycurl perform() for
-        header data.
-        """
-        buf = buf.strip()
-        if len(buf) == 0:
-            return
-
-        split = buf.split(':')
-        if len(split) < 2:
-            # not a valid header; skip
-            return
-        key = split[0].strip()
-        value = split[1].strip()
-        info[key] = value
-
-    def _data(buf):
-        """
-        Empty function that is called back from pycurl perform() for body data.
-        """
-        pass
-
-    c = pycurl.Curl()
-    c.setopt(c.URL, url)
-    c.setopt(c.NOBODY, True)
-    c.setopt(c.HEADERFUNCTION, _header)
-    c.setopt(c.HEADER, True)
-    c.setopt(c.WRITEFUNCTION, _data)
-    if redirect:
-        c.setopt(c.FOLLOWLOCATION, True)
-    c.perform()
-    info['HTTP-Code'] = c.getinfo(c.HTTP_CODE)
-    if info['HTTP-Code'] == 0:
-        # if this was a file:/// URL, then the HTTP_CODE returned 0.
-        # set it to 200 to be compatible with http
-        info['HTTP-Code'] = 200
-    if not redirect:
-        info['Redirect-URL'] = c.getinfo(c.REDIRECT_URL)
-
-    c.close()
+    with contextlib.closing(requests.post(url, allow_redirects=redirect, stream=True, timeout=10)) as r:
+        info = r.headers
+        info['HTTP-Code'] = r.status_code
+        if not redirect:
+            info['Redirect-URL'] = r.headers.get('Location')
+        else:
+            info['Redirect-URL'] = None
 
     return info
 
@@ -803,45 +769,15 @@ def http_download_file(url, fd, show_progress, logger):
     """
     Function to download a file from url to file descriptor fd.
     """
-    class Progress(object):
-        """
-        Internal class to represent progress on the connection.  This is only
-        required so that we have somewhere to store the "last_mb" variable
-        that is not global.
-        """
-        def __init__(self):
-            self.last_mb = -1
-
-        def progress(self, down_total, down_current, up_total, up_current):
-            """
-            Function that is called back from the pycurl perform() method to
-            update the progress information.
-            """
-            if down_total == 0:
-                return
-            current_mb = int(down_current) / 10485760
-            if current_mb > self.last_mb or down_current == down_total:
-                self.last_mb = current_mb
-                logger.debug("%dkB of %dkB" % (down_current/1024, down_total/1024))
-
-    def _data(buf):
-        """
-        Function that is called back from the pycurl perform() method to
-        actually write data to disk.
-        """
-        write_bytes_to_fd(fd, buf)
-
-    progress = Progress()
-    c = pycurl.Curl()
-    c.setopt(c.URL, url)
-    c.setopt(c.CONNECTTIMEOUT, 5)
-    c.setopt(c.WRITEFUNCTION, _data)
-    c.setopt(c.FOLLOWLOCATION, 1)
-    if show_progress:
-        c.setopt(c.NOPROGRESS, 0)
-        c.setopt(c.PROGRESSFUNCTION, progress.progress)
-    c.perform()
-    c.close()
+    with contextlib.closing(requests.get(url, stream=True, allow_redirects=True)) as r:
+        file_size = int(r.headers.get('Content-Length'))
+        chunk_size = 10*1024*1024
+        i = 0
+        for chunk in r.iter_content(chunk_size):
+            i = i + 1
+            write_bytes_to_fd(fd, chunk)
+            if show_progress:
+                logger.debug("%dkB of %dkB" % ((i * chunk_size) / 1024, file_size / 1024))
 
 def ftp_download_directory(server, username, password, basepath, destination):
     """
