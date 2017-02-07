@@ -1026,6 +1026,6 @@ def find_uefi_firmware(arch):
 
     for uefi in uefi_list:
         if uefi.exists():
-            return uefi.loader,uefi.nvram
+            return uefi.loader, uefi.nvram
 
     raise Exception("UEFI firmware is not installed!")
