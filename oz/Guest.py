@@ -482,7 +482,7 @@ class Guest(object):
                 cmdline += " console=ttyAMA0"
             self.lxml_subelement(osNode, "cmdline", cmdline)
         if self.tdl.arch == "aarch64":
-            loader,nvram = oz.ozutil.find_uefi_firmware(self.tdl.arch)
+            loader, nvram = oz.ozutil.find_uefi_firmware(self.tdl.arch)
             self.lxml_subelement(osNode, "loader", loader, {'readonly': 'yes', 'type': 'pflash'})
             self.lxml_subelement(osNode, "nvram", None, {'template': nvram})
         # poweroff, reboot, crash
@@ -634,7 +634,7 @@ class Guest(object):
         # these succeed.  In most cases these operations will be fast and thus
         # the lock will not be held very long.
         lockfile = os.path.join(self.icicle_tmp, "libvirt_pool_lockfile")
-        (refresh_lock,outdir) = self._open_locked_file(lockfile)
+        (refresh_lock, outdir) = self._open_locked_file(lockfile)
         pool.refresh(0)
 
         # this is a bit complicated, because of the cases that can
@@ -901,7 +901,7 @@ class Guest(object):
         csumname = os.path.join(outdir,
                                 self.tdl.distro + self.tdl.update + self.tdl.arch + "-CHECKSUM")
 
-        (csumfd,outdir) = self._open_locked_file(csumname)
+        (csumfd, outdir) = self._open_locked_file(csumname)
 
         os.ftruncate(csumfd, 0)
 
