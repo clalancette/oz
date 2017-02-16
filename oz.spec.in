@@ -22,7 +22,7 @@ Requires: libvirt-daemon-config-network
 %else
 Requires: libvirt >= 0.9.7
 %endif
-Requires: python-pycurl
+Requires: python-requests
 Requires: genisoimage
 Requires: mtools
 %if 0%{?fedora} < 26
