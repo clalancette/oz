@@ -1,0 +1,23 @@
+install
+text
+keyboard us
+lang en_US.UTF-8
+skipx
+network --device ens3 --bootproto dhcp
+rootpw %ROOTPW%
+firewall --disabled
+authconfig --enableshadow --enablemd5
+selinux --enforcing
+timezone --utc America/New_York
+bootloader --location=mbr --append="console=tty0 console=ttyS0,115200"
+
+zerombr
+clearpart --all --initlabel
+autopart --type=lvm
+
+reboot
+
+%packages
+@core
+
+%end
