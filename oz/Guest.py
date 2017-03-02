@@ -42,6 +42,8 @@ import base64
 import hashlib
 import errno
 import re
+import sys
+import threading
 
 import oz.ozutil
 import oz.OzException
@@ -124,8 +126,10 @@ class Guest(object):
         self._discover_libvirt_type()
 
     def __init__(self, tdl, config, auto, output_disk, nicmodel, clockoffset,
-                 mousetype, diskbus, iso_allowed, url_allowed, macaddress):
+                 mousetype, diskbus, iso_allowed, url_allowed, macaddress,
+                 logserial):
         self.tdl = tdl
+        self.logserial = logserial
 
         # for backwards compatibility
         self.name = self.tdl.name
@@ -780,6 +784,46 @@ class Guest(object):
                 # the passed in exception was None, just raise a generic error
                 raise oz.OzException.OzException("Unknown libvirt error")
 
+    def _log_serial_console(self, stream, stop):
+        """
+        Method to connect to the serial console of a VM and log
+        the output of the console to the log. stream is the data
+        stream for us to receive information from and stop is an
+        event that we can use to know when to stop reading data
+        """
+
+        # have to use array and not a string because we need to pass
+        # by reference and not by value. if we pass a string into
+        # handler we can't modify it. We will print each line of text
+        # to the screen from the buffer. If the buffer exceeds 512
+        # then go ahead and print and don't wait for newline.
+        buf512 = []
+
+        # Handler function that is called back from the libvirt stream.
+        def handler(stream, buf, argstuple):
+            buf512, stop = argstuple
+            buf512.append(buf)
+            bufstr = ''.join(buf512)
+
+            if stop.isSet():
+                stream.finish()
+
+            # If we have some complete lines then print them out and
+            # preserve any incomplete lines. Also, if we no newline
+            # and more than 512 characters, go ahead and print.
+            if '\n' in bufstr:
+                lines = bufstr.split('\n')
+                for line in lines[:-1]:
+                    self.log.info(line)
+                del buf512[:]
+                buf512.append(lines[-1])
+            elif len(bufstr) > 512:
+                self.log.info(bufstr)
+                del buf512[:]
+
+        # pass all output from the stream to the handler
+        stream.recvAll(handler, (buf512, stop))
+
     def _wait_for_install_finish(self, libvirt_dom, count):
         """
         Method to wait for an installation to finish.  This will wait around
@@ -787,6 +831,14 @@ class Guest(object):
         install was successful), or until the timeout is reached (at which
         point it is assumed the install failed and raise an exception).
         """
+
+        if self.logserial:
+            stream = libvirt_dom.connect().newStream(0)
+            libvirt_dom.openConsole(None, stream, 0)
+            stop = threading.Event() # used to signal thread to stop
+            thread = threading.Thread(target=self._log_serial_console,
+                                      args=(stream, stop,))
+            thread.start()
 
         disks, interfaces = self._get_disks_and_interfaces(libvirt_dom.XMLDesc(0))
 
@@ -834,20 +886,28 @@ class Guest(object):
             count -= 1
             time.sleep(1)
 
-        # We get here because of a libvirt exception, an absolute timeout, or
-        # an I/O timeout; we sort this out below
-        if count == 0:
-            # if we timed out, then let's make sure to take a screenshot.
-            screenshot_text = self._capture_screenshot(libvirt_dom)
-            raise oz.OzException.OzException("Timed out waiting for install to finish.  %s" % (screenshot_text))
-        elif inactivity_countdown == 0:
-            # if we saw no disk or network activity in the countdown window,
-            # we presume the install has hung.  Fail here
-            screenshot_text = self._capture_screenshot(libvirt_dom)
-            raise oz.OzException.OzException("No disk activity in %d seconds, failing.  %s" % (self.inactivity_timeout, screenshot_text))
+        try:
+            # We get here because of a libvirt exception, an absolute timeout, or
+            # an I/O timeout; we sort this out below
+            if count == 0:
+                # if we timed out, then let's make sure to take a screenshot.
+                screenshot_text = self._capture_screenshot(libvirt_dom)
+                raise oz.OzException.OzException("Timed out waiting for install to finish.  %s" % (screenshot_text))
+            elif inactivity_countdown == 0:
+                # if we saw no disk or network activity in the countdown window,
+                # we presume the install has hung.  Fail here
+                screenshot_text = self._capture_screenshot(libvirt_dom)
+                raise oz.OzException.OzException("No disk activity in %d seconds, failing.  %s" % (self.inactivity_timeout, screenshot_text))
 
-        # We get here only if we got a libvirt exception
-        self._wait_for_clean_shutdown(libvirt_dom, saved_exception)
+            # We get here only if we got a libvirt exception
+            self._wait_for_clean_shutdown(libvirt_dom, saved_exception)
+
+        finally:
+            if self.logserial:
+                self.log.debug("signalling serial log thread stop")
+                stop.set()
+                stream.send('..........') # will unblock I/O
+                thread.join()
 
         self.log.info("Install of %s succeeded", self.tdl.name)
 
@@ -1463,10 +1523,11 @@ class CDGuest(Guest):
             self.seqnum = seqnum
 
     def __init__(self, tdl, config, auto, output_disk, nicmodel, clockoffset,
-                 mousetype, diskbus, iso_allowed, url_allowed, macaddress):
+                 mousetype, diskbus, iso_allowed, url_allowed, macaddress,
+                 logserial):
         Guest.__init__(self, tdl, config, auto, output_disk, nicmodel,
                        clockoffset, mousetype, diskbus, iso_allowed,
-                       url_allowed, macaddress)
+                       url_allowed, macaddress, logserial)
 
         self.orig_iso = os.path.join(self.data_dir, "isos",
                                      self.tdl.distro + self.tdl.update + self.tdl.arch + "-" + self.tdl.installtype + ".iso")

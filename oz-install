@@ -59,10 +59,10 @@ def usage():
     sys.exit(1)
 
 try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], 'a:b:c:d:fghi:m:n:ps:t:ux:',
+    opts, args = getopt.gnu_getopt(sys.argv[1:], 'a:b:c:d:fghil:m:n:ps:t:ux:',
                                    ['auto', 'disk-bus', 'config', 'debug',
                                     'force-download', 'generate-icicle', 'help',
-                                    'icicle', 'mac-address', 'network-device',
+                                    'icicle', 'log-serial', 'mac-address', 'network-device',
                                     'cleanup', 'disk', 'timeout', 'customize',
                                     'xmlfile'])
 except getopt.GetoptError as err:
@@ -115,6 +115,8 @@ for o, a in opts:
         usage()
     elif o in ("-i", "--icicle"):
         icicle_file = a
+    elif o in ("-l", "--log-serial"):
+        logserial = True
     elif o in ("-n", "--network-device"):
         netdev = a
     elif o in ("-m", "--mac-address"):
@@ -147,7 +149,8 @@ try:
     tdl = oz.TDL.TDL(open(args[0], 'r').read())
 
     guest = oz.GuestFactory.guest_factory(tdl, config, auto, output_disk,
-                                          netdev, diskbus, macaddress)
+                                          netdev, diskbus, macaddress,
+                                          logserial)
 
     if cleanup:
         guest.cleanup_old_guest()

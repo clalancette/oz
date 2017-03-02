@@ -31,7 +31,7 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
     """
     def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,
                  brokenisomethod, output_disk=None, macaddress=None,
-                 assumed_update=None):
+                 assumed_update=None, logserial=False):
         directkernel = "cpio"
         if tdl.update in ["16", "17"]:
             directkernel = None
@@ -45,7 +45,7 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
         oz.RedHat.RedHatLinuxCDYumGuest.__init__(self, tdl, config, auto,
                                                  output_disk, nicmodel, diskbus,
                                                  True, True, directkernel,
-                                                 macaddress, use_yum)
+                                                 macaddress, use_yum, logserial)
 
         if self.assumed_update is not None:
             self.log.warning("==== WARN: TDL contains Fedora update %s, which is newer than Oz knows about; pretending this is Fedora %s, but this may fail ====", tdl.update, assumed_update)
@@ -110,7 +110,7 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
             return oz.ozutil.generate_full_auto_path(self.tdl.distro + self.tdl.update + ".auto")
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
-              macaddress=None):
+              macaddress=None, logserial=False):
     """
     Factory method for Fedora installs.
     """
@@ -126,7 +126,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
         if diskbus is None:
             diskbus = 'virtio'
         return FedoraGuest(tdl, config, auto, netdev, True, diskbus, False,
-                           output_disk, macaddress, newer_distros[-1])
+                           output_disk, macaddress, newer_distros[-1], logserial)
 
     if tdl.update in newer_distros:
         if netdev is None:
@@ -134,7 +134,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
         if diskbus is None:
             diskbus = 'virtio'
         return FedoraGuest(tdl, config, auto, netdev, True, diskbus, False,
-                           output_disk, macaddress, None)
+                           output_disk, macaddress, None, logserial)
 
     if tdl.update in ["9", "10", "11", "12", "13", "14", "15", "16", "17", "18"]:
         if netdev is None:
@@ -142,11 +142,11 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
         if diskbus is None:
             diskbus = 'virtio'
         return FedoraGuest(tdl, config, auto, netdev, True, diskbus, True,
-                           output_disk, macaddress, None)
+                           output_disk, macaddress, None, logserial)
 
     if tdl.update in ["7", "8"]:
         return FedoraGuest(tdl, config, auto, netdev, False, diskbus, False,
-                           output_disk, macaddress, None)
+                           output_disk, macaddress, None, logserial)
 
 def get_supported_string():
     """
