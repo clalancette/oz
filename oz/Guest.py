@@ -780,7 +780,7 @@ class Guest(object):
                 # the passed in exception was None, just raise a generic error
                 raise oz.OzException.OzException("Unknown libvirt error")
 
-    def _wait_for_install_finish(self, libvirt_dom, count):
+    def _wait_for_install_finish(self, libvirt_dom, max_time):
         """
         Method to wait for an installation to finish.  This will wait around
         until either the VM has gone away (at which point it is assumed the
@@ -793,11 +793,15 @@ class Guest(object):
         last_disk_activity = 0
         last_network_activity = 0
         inactivity_countdown = self.inactivity_timeout
-        origcount = count
         saved_exception = None
-        while count > 0 and inactivity_countdown > 0:
-            if count % 10 == 0:
-                self.log.debug("Waiting for %s to finish installing, %d/%d", self.tdl.name, count, origcount)
+        now = time.time()
+        end = now + max_time
+        next_print = now
+        while now < end and inactivity_countdown > 0:
+            now = time.time()
+            if now >= next_print:
+                self.log.debug("Waiting for %s to finish installing, %d/%d", self.tdl.name, int(end) - int(now), max_time)
+                next_print = now + 10
             try:
                 total_disk_req, total_net_bytes = self._get_disk_and_net_activity(libvirt_dom, disks, interfaces)
             except libvirt.libvirtError as e:
@@ -831,12 +835,11 @@ class Guest(object):
 
             last_disk_activity = total_disk_req
             last_network_activity = total_net_bytes
-            count -= 1
             time.sleep(1)
 
         # We get here because of a libvirt exception, an absolute timeout, or
         # an I/O timeout; we sort this out below
-        if count == 0:
+        if now >= end:
             # if we timed out, then let's make sure to take a screenshot.
             screenshot_text = self._capture_screenshot(libvirt_dom)
             raise oz.OzException.OzException("Timed out waiting for install to finish.  %s" % (screenshot_text))
