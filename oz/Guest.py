@@ -740,46 +740,6 @@ class Guest(object):
 
         return total_disk_req, total_net_bytes
 
-    def _wait_for_clean_shutdown(self, libvirt_dom, saved_exception):
-        """
-        Internal method to wait for a clean shutdown of a libvirt domain that
-        is suspected to have cleanly quit.  If that domain did cleanly quit,
-        then we will hit a libvirt VIR_ERR_NO_DOMAIN exception on the very
-        first libvirt call and return with no delay.  If no exception, or some
-        other exception occurs, we wait up to 10 seconds for the domain to go
-        away.  If the domain is still there after 10 seconds then we raise the
-        original exception that was passed in.
-        """
-        count = 10
-        while count > 0:
-            self.log.debug("Waiting for %s to complete shutdown, %d/10", self.tdl.name, count)
-            try:
-                libvirt_dom.info()
-            except libvirt.libvirtError as e:
-                if e.get_error_code() == libvirt.VIR_ERR_NO_DOMAIN:
-                    break
-            count -= 1
-            time.sleep(1)
-
-        if count == 0:
-            # Got something other than the expected exception even after 10
-            # seconds - re-raise
-            if saved_exception:
-                self.log.debug("Libvirt Domain Info Failed:")
-                self.log.debug(" code is %d", saved_exception.get_error_code())
-                self.log.debug(" domain is %d", saved_exception.get_error_domain())
-                self.log.debug(" message is %s", saved_exception.get_error_message())
-                self.log.debug(" level is %d", saved_exception.get_error_level())
-                self.log.debug(" str1 is %s", saved_exception.get_str1())
-                self.log.debug(" str2 is %s", saved_exception.get_str2())
-                self.log.debug(" str3 is %s", saved_exception.get_str3())
-                self.log.debug(" int1 is %d", saved_exception.get_int1())
-                self.log.debug(" int2 is %d", saved_exception.get_int2())
-                raise saved_exception
-            else:
-                # the passed in exception was None, just raise a generic error
-                raise oz.OzException.OzException("Unknown libvirt error")
-
     def _looper(self, max_time, cb, msg):
         now = time.time()
         end = now + max_time
@@ -873,7 +833,22 @@ class Guest(object):
             raise oz.OzException.OzException("No disk activity in %d seconds, failing.  %s" % (self.inactivity_timeout, screenshot_text))
 
         # We get here only if we got a libvirt exception
-        self._wait_for_clean_shutdown(libvirt_dom, self.saved_exception)
+        if not self._wait_for_guest_shutdown(libvirt_dom):
+            if self.saved_exception:
+                self.log.debug("Libvirt Domain Info Failed:")
+                self.log.debug(" code is %d", self.saved_exception.get_error_code())
+                self.log.debug(" domain is %d", self.saved_exception.get_error_domain())
+                self.log.debug(" message is %s", self.saved_exception.get_error_message())
+                self.log.debug(" level is %d", self.saved_exception.get_error_level())
+                self.log.debug(" str1 is %s", self.saved_exception.get_str1())
+                self.log.debug(" str2 is %s", self.saved_exception.get_str2())
+                self.log.debug(" str3 is %s", self.saved_exception.get_str3())
+                self.log.debug(" int1 is %d", self.saved_exception.get_int1())
+                self.log.debug(" int2 is %d", self.saved_exception.get_int2())
+                raise self.saved_exception
+            else:
+                # the passed in exception was None, just raise a generic error
+                raise oz.OzException.OzException("Unknown libvirt error")
 
         self.log.info("Install of %s succeeded", self.tdl.name)
 
@@ -883,25 +858,22 @@ class Guest(object):
         True if the guest shutdown in the specified time, False otherwise.
         """
 
-        self.saved_exception = None
-
         def _shutdown_cb(self):
             try:
                 libvirt_dom.info()
             except libvirt.libvirtError as e:
-                self.saved_exception = e
-                return True
+                if e.get_error_code() == libvirt.VIR_ERR_NO_DOMAIN:
+                    # Here, the guest really, truly went away cleanly.  Thus, we know this
+                    # loop has successfully completed, and we can return True.
+                    return True
+
+                # In all other cases, we got some kind of exception we didn't understand.
+                # Fall through to the False return, and if we don't eventually see the
+                # VIR_ERR_NO_DOMAIN, we'll return False to the caller.
 
             return False
 
-        finished = self._looper(self.shutdown_timeout, _shutdown_cb, "shutdown")
-        if not finished:
-            return False
-
-        # We get here only if we got a libvirt exception
-        self._wait_for_clean_shutdown(libvirt_dom, saved_exception)
-
-        return True
+        return self._looper(self.shutdown_timeout, _shutdown_cb, "shutdown")
 
     def _get_csums(self, original_url, outdir, outputfd):
         """
