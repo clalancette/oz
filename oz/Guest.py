@@ -1251,69 +1251,67 @@ class Guest(object):
         """
         self.log.info("Waiting for guest %s to boot", self.tdl.name)
 
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         try:
-            sock.settimeout(1)
-            sock.connect(('127.0.0.1', self.listen_port))
+            self.sock.settimeout(1)
+            self.sock.connect(('127.0.0.1', self.listen_port))
 
-            addr = None
-            count = self.boot_timeout
-            data = ''
-            while count > 0:
-                do_sleep = True
-                if count % 10 == 0:
-                    self.log.debug("Waiting for guest %s to boot, %d/%d", self.tdl.name, count, self.boot_timeout)
+            self.addr = None
+            self.data = ''
+
+            def _boot_cb(self):
                 try:
                     # note that we have to build the data up here, since there
                     # is no guarantee that we will get the whole write in one go
-                    data += sock.recv(100)
+                    self.data += self.sock.recv(100)
                 except socket.timeout:
                     # the socket times out after 1 second.  We can just fall
-                    # through to the below code because it is a noop, *except* that
-                    # we don't want to sleep.  Set the flag
-                    do_sleep = False
+                    # through to the below code because it is a noop.
+                    pass
 
                 # OK, we got data back from the socket.  Check to see if it is
                 # is what we expect; essentially, some up-front garbage,
                 # followed by a !<ip>,<uuid>!
                 # Exclude ! from the wildcard to avoid errors when receiving two
                 # announce messages in the same string
-                match = re.search("!([^!]*?,[^!]*?)!$", data)
+                match = re.search("!([^!]*?,[^!]*?)!$", self.data)
                 if match is not None:
                     if len(match.groups()) != 1:
                         raise oz.OzException.OzException("Guest checked in with no data")
                     split = match.group(1).split(',')
                     if len(split) != 2:
                         raise oz.OzException.OzException("Guest checked in with bogus data")
-                    addr = split[0]
+                    self.addr = split[0]
                     uuidstr = split[1]
                     try:
                         # use socket.inet_aton() to validate the IP address
-                        socket.inet_aton(addr)
+                        socket.inet_aton(self.addr)
                     except socket.error:
                         raise oz.OzException.OzException("Guest checked in with invalid IP address")
 
                     if uuidstr != str(self.uuid):
                         raise oz.OzException.OzException("Guest checked in with unknown UUID")
-                    break
+                    return True
 
                 # if the data we got didn't match, we need to continue waiting.
                 # before going to sleep, make sure that the domain is still
                 # around
                 libvirt_dom.info()
-                if do_sleep:
-                    time.sleep(1)
-                count -= 1
-        finally:
-            sock.close()
 
-        if addr is None:
+                return False
+
+            finished = self._looper(self.boot_timeout, _boot_cb, "boot")
+
+        finally:
+            self.sock.close()
+
+        if self.addr is None:
             raise oz.OzException.OzException("Timed out waiting for guest to boot")
 
-        self.log.debug("IP address of guest is %s", addr)
+        self.log.debug("IP address of guest is %s", self.addr)
 
-        return addr
+        return self.addr
 
     def _output_icicle_xml(self, lines, description, extra=None):
         """
