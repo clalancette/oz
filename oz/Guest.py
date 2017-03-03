@@ -780,6 +780,31 @@ class Guest(object):
                 # the passed in exception was None, just raise a generic error
                 raise oz.OzException.OzException("Unknown libvirt error")
 
+    def _looper(self, max_time, cb, msg):
+        now = time.time()
+        end = now + max_time
+        next_print = now
+        while now < end:
+            now = time.time()
+            if now >= next_print:
+                self.log.debug("Waiting for %s to finish %s, %d/%d", self.tdl.name, msg, int(end) - int(now), max_time)
+                next_print = now + 10
+
+                if cb(self):
+                    return True
+
+            # It's possible that the callback took longer than one second.
+            # In that case, just skip our sleep altogether in an attempt to
+            # catch up.
+            sleep_time = 1.0 - (time.time() - now)
+            if sleep_time > 0:
+                # Otherwise, sleep for a time.  Note that we try to maintain
+                # on our starting boundary, so we'll sleep less than a second
+                # here almost always.
+                time.sleep(sleep_time)
+
+        return False
+
     def _wait_for_install_finish(self, libvirt_dom, max_time):
         """
         Method to wait for an installation to finish.  This will wait around
@@ -790,25 +815,20 @@ class Guest(object):
 
         disks, interfaces = self._get_disks_and_interfaces(libvirt_dom.XMLDesc(0))
 
-        last_disk_activity = 0
-        last_network_activity = 0
-        inactivity_countdown = self.inactivity_timeout
-        saved_exception = None
-        now = time.time()
-        end = now + max_time
-        next_print = now
-        while now < end and inactivity_countdown > 0:
-            now = time.time()
-            if now >= next_print:
-                self.log.debug("Waiting for %s to finish installing, %d/%d", self.tdl.name, int(end) - int(now), max_time)
-                next_print = now + 10
+        self.last_disk_activity = 0
+        self.last_network_activity = 0
+        self.inactivity_countdown = self.inactivity_timeout
+        self.saved_exception = None
+        def _finish_cb(self):
+            if self.inactivity_countdown <= 0:
+                return True
             try:
                 total_disk_req, total_net_bytes = self._get_disk_and_net_activity(libvirt_dom, disks, interfaces)
             except libvirt.libvirtError as e:
                 # we save the exception here because we want to raise it later
                 # if this was a "real" exception
-                saved_exception = e
-                break
+                self.saved_exception = e
+                return True
 
             # rd_req and wr_req are the *total* number of disk read requests and
             # write requests ever made for this domain.  Similarly rd_bytes and
@@ -825,32 +845,35 @@ class Guest(object):
             # made, however, to try to reduce false positives from things like
             # ARP requests
 
-            if (total_disk_req == last_disk_activity) and (total_net_bytes < (last_network_activity + 4096)):
+            if (total_disk_req == self.last_disk_activity) and (total_net_bytes < (self.last_network_activity + 4096)):
                 # if we saw no read or write requests since the last iteration,
                 # decrement our activity timer
-                inactivity_countdown -= 1
+                self.inactivity_countdown -= 1
             else:
                 # if we did see some activity, then we can reset the timer
-                inactivity_countdown = self.inactivity_timeout
+                self.inactivity_countdown = self.inactivity_timeout
 
-            last_disk_activity = total_disk_req
-            last_network_activity = total_net_bytes
-            time.sleep(1)
+            self.last_disk_activity = total_disk_req
+            self.last_network_activity = total_net_bytes
+
+            return False
+
+        finished = self._looper(max_time, _finish_cb, "installing")
 
         # We get here because of a libvirt exception, an absolute timeout, or
         # an I/O timeout; we sort this out below
-        if now >= end:
+        if not finished:
             # if we timed out, then let's make sure to take a screenshot.
             screenshot_text = self._capture_screenshot(libvirt_dom)
             raise oz.OzException.OzException("Timed out waiting for install to finish.  %s" % (screenshot_text))
-        elif inactivity_countdown == 0:
+        elif self.inactivity_countdown <= 0:
             # if we saw no disk or network activity in the countdown window,
             # we presume the install has hung.  Fail here
             screenshot_text = self._capture_screenshot(libvirt_dom)
             raise oz.OzException.OzException("No disk activity in %d seconds, failing.  %s" % (self.inactivity_timeout, screenshot_text))
 
         # We get here only if we got a libvirt exception
-        self._wait_for_clean_shutdown(libvirt_dom, saved_exception)
+        self._wait_for_clean_shutdown(libvirt_dom, self.saved_exception)
 
         self.log.info("Install of %s succeeded", self.tdl.name)
 
