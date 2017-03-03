@@ -882,22 +882,20 @@ class Guest(object):
         Method to wait around for orderly shutdown of a running guest.  Returns
         True if the guest shutdown in the specified time, False otherwise.
         """
-        count = self.shutdown_timeout
-        origcount = count
-        saved_exception = None
-        while count > 0:
-            if count % 10 == 0:
-                self.log.debug("Waiting for %s to shutdown, %d/%d", self.tdl.name, count, origcount)
+
+        self.saved_exception = None
+
+        def _shutdown_cb(self):
             try:
                 libvirt_dom.info()
             except libvirt.libvirtError as e:
-                saved_exception = e
-                break
-            count -= 1
-            time.sleep(1)
+                self.saved_exception = e
+                return True
 
-        # Timed Out
-        if count == 0:
+            return False
+
+        finished = self._looper(self.shutdown_timeout, _shutdown_cb, "shutdown")
+        if not finished:
             return False
 
         # We get here only if we got a libvirt exception
