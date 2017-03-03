@@ -38,6 +38,7 @@ except ImportError:
 import collections
 import ftplib
 import struct
+import fcntl
 
 def generate_full_auto_path(relative):
     """
@@ -1021,3 +1022,21 @@ def find_uefi_firmware(arch):
             return uefi.loader, uefi.nvram
 
     raise Exception("UEFI firmware is not installed!")
+
+def open_locked_file(filename):
+    """
+    A function to open and lock a file.  Returns a file descriptor referencing
+    the open and locked file.
+    """
+    outdir = os.path.dirname(filename)
+    mkdir_p(outdir)
+
+    fd = os.open(filename, os.O_RDWR|os.O_CREAT)
+
+    try:
+        fcntl.lockf(fd, fcntl.LOCK_EX)
+    except:
+        os.close(fd)
+        raise
+
+    return (fd, outdir)

@@ -608,7 +608,7 @@ echo -n "!$ADDR,%s!" > %s
             # hard-coded path
             initrd = "images/pxeboot/initrd.img"
 
-        (fd, outdir) = self._open_locked_file(self.kernelcache)
+        (fd, outdir) = oz.ozutil.open_locked_file(self.kernelcache)
 
         try:
             self._get_original_media('/'.join([self.url.rstrip('/'),
@@ -620,7 +620,7 @@ echo -n "!$ADDR,%s!" > %s
         finally:
             os.close(fd)
 
-        (fd, outdir) = self._open_locked_file(self.initrdcache)
+        (fd, outdir) = oz.ozutil.open_locked_file(self.initrdcache)
 
         try:
             try:
@@ -918,7 +918,7 @@ label customboot
                 return
 
         # name of the output file
-        (fd, outdir) = self._open_locked_file(self.orig_floppy)
+        (fd, outdir) = oz.ozutil.open_locked_file(self.orig_floppy)
 
         try:
             self._get_original_floppy(self.url + "/images/bootnet.img", fd,

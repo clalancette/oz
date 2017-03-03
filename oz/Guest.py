@@ -22,7 +22,6 @@ Main class for guest installation
 import uuid
 import libvirt
 import os
-import fcntl
 import subprocess
 import shutil
 import time
@@ -634,7 +633,7 @@ class Guest(object):
         # these succeed.  In most cases these operations will be fast and thus
         # the lock will not be held very long.
         lockfile = os.path.join(self.icicle_tmp, "libvirt_pool_lockfile")
-        (refresh_lock, outdir) = self._open_locked_file(lockfile)
+        (refresh_lock, outdir) = oz.ozutil.open_locked_file(lockfile)
         pool.refresh(0)
 
         # this is a bit complicated, because of the cases that can
@@ -897,7 +896,7 @@ class Guest(object):
         csumname = os.path.join(outdir,
                                 self.tdl.distro + self.tdl.update + self.tdl.arch + "-CHECKSUM")
 
-        (csumfd, outdir) = self._open_locked_file(csumname)
+        (csumfd, outdir) = oz.ozutil.open_locked_file(csumname)
 
         os.ftruncate(csumfd, 0)
 
@@ -1420,26 +1419,6 @@ class Guest(object):
                 f.write(keystring)
             os.chmod(pubname, 0o644)
 
-    def _open_locked_file(self, filename):
-        """
-        Method to open and lock a file.  Returns a file descriptor referencing
-        the open and locked file.
-        """
-        outdir = os.path.dirname(filename)
-        oz.ozutil.mkdir_p(outdir)
-
-        fd = os.open(filename, os.O_RDWR|os.O_CREAT)
-
-        try:
-            self.log.debug("Attempting to get the lock for %s", filename)
-            fcntl.lockf(fd, fcntl.LOCK_EX)
-            self.log.debug("Got the lock for %s", filename)
-        except:
-            os.close(fd)
-            raise
-
-        return (fd, outdir)
-
 class CDGuest(Guest):
     """
     Class for guest installation via ISO.
@@ -1846,7 +1825,7 @@ class CDGuest(Guest):
                 shutil.copyfile(self.modified_iso_cache, self.output_iso)
                 return
 
-        (fd, outdir) = self._open_locked_file(self.orig_iso)
+        (fd, outdir) = oz.ozutil.open_locked_file(self.orig_iso)
 
         try:
             self._get_original_iso(url, fd, outdir, force_download)

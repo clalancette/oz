@@ -599,7 +599,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
             # hard-coded path
             initrd = "ubuntu-installer/%s/initrd.gz" % (self.debarch)
 
-        (fd, outdir) = self._open_locked_file(self.kernelcache)
+        (fd, outdir) = oz.ozutil.open_locked_file(self.kernelcache)
 
         try:
             self._get_original_media('/'.join([self.url.rstrip('/'),
@@ -611,7 +611,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
         finally:
             os.close(fd)
 
-        (fd, outdir) = self._open_locked_file(self.initrdcache)
+        (fd, outdir) = oz.ozutil.open_locked_file(self.initrdcache)
 
         try:
             try:
