@@ -21,6 +21,7 @@ Depends: ${misc:Depends}, ${python:Depends},
  python-libvirt (>= 0.9.7),
  python-requests,
  python-m2crypto,
+ python-monotonic,
 Description: installing guest OSs with only minimal input the user
  Oz is a tool for automatically installing guest OSs with only minimal
  up-front input from the user.

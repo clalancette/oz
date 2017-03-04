@@ -30,6 +30,7 @@ Requires: python-uuid
 %endif
 Requires: openssh-clients
 Requires: m2crypto
+Requires: python-monotonic
 
 BuildRequires: python
 
