@@ -20,7 +20,6 @@ FreeBSD installation
 """
 
 import os
-import shutil
 
 import oz.Guest
 import oz.ozutil

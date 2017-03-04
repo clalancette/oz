@@ -29,7 +29,6 @@ import requests
 import gzip
 import time
 import select
-import contextlib
 import urllib
 try:
     import configparser
@@ -747,6 +746,10 @@ def default_screenshot_dir():
     return os.path.join(default_data_dir(), "screenshots")
 
 class LocalFileAdapter(requests.adapters.BaseAdapter):
+    '''
+    This class implements an adapter for requests so we can properly deal with file://
+    local files.
+    '''
     @staticmethod
     def _chkpath(method, path):
         """Return an HTTP status for the given filesystem path."""

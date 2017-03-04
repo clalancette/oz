@@ -737,6 +737,21 @@ class Guest(object):
         return total_disk_req, total_net_bytes
 
     def _looper(self, max_time, cb, msg):
+        '''
+        An internal helper method to deal with waiting for an event to occur.  Given a
+        maximum time to wait, a callback, and a message, it will wait until the maximum
+        time for the event to occur.  Each time through the loop, it will do the following:
+
+        1.  Check to see if it has been at least 10 seconds since it last logged.  If so, it
+            will log right now.
+        2.  Call the callback to check for the event.  If the callback returns True, the
+            loop quits immediately.  If it returns False, go on to step 3.
+        3.  Sleep for the portion of 1 second that was not taken up by the callback.
+
+        If the event occurred (the callback returned True), then this function returns
+        True.  If we timed out while waiting for the event to occur, this function returns
+        False.
+        '''
         now = monotonic.monotonic()
         end = now + max_time
         next_print = now
@@ -776,6 +791,9 @@ class Guest(object):
         self.inactivity_countdown = self.inactivity_timeout
         self.saved_exception = None
         def _finish_cb(self):
+            '''
+            A callback for _looper to deal with waiting for a guest to finish installing.
+            '''
             if self.inactivity_countdown <= 0:
                 return True
             try:
@@ -830,7 +848,7 @@ class Guest(object):
 
         # We get here only if we got a libvirt exception
         if not self._wait_for_guest_shutdown(libvirt_dom):
-            if self.saved_exception:
+            if self.saved_exception is not None:
                 self.log.debug("Libvirt Domain Info Failed:")
                 self.log.debug(" code is %d", self.saved_exception.get_error_code())
                 self.log.debug(" domain is %d", self.saved_exception.get_error_domain())
@@ -855,6 +873,9 @@ class Guest(object):
         """
 
         def _shutdown_cb(self):
+            '''
+            The _looper callback to wait for the guest to shutdown.
+            '''
             try:
                 libvirt_dom.info()
             except libvirt.libvirtError as e:
@@ -1106,6 +1127,9 @@ class Guest(object):
             self.data = ''
 
             def _boot_cb(self):
+                '''
+                The _looper callback to look for the guest to boot.
+                '''
                 try:
                     # note that we have to build the data up here, since there
                     # is no guarantee that we will get the whole write in one go
@@ -1372,8 +1396,8 @@ class CDGuest(Guest):
                         # we can continue.
                         tar.wait()
                         if tar.returncode:
-                            self.log.debug('tar stdout: %s' % stdouttmp.read())
-                            self.log.debug('tar stderr: %s' % stderrtmp.read())
+                            self.log.debug('tar stdout: %s', stdouttmp.read())
+                            self.log.debug('tar stderr: %s', stderrtmp.read())
                             raise oz.OzException.OzException("Tar exited with an error")
 
                     finally:
