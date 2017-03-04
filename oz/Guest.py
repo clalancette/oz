@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012-2016  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2017  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -43,6 +43,7 @@ import errno
 import re
 import monotonic
 
+import oz.GuestFSManager
 import oz.ozutil
 import oz.OzException
 
@@ -668,14 +669,9 @@ class Guest(object):
             if backing_filename:
                 self.log.warning("Asked to create partition against a copy-on-write snapshot - ignoring")
             else:
-                g_handle = guestfs.GuestFS()
-                g_handle.add_drive_opts(self.diskimage, format=self.image_type,
-                                        readonly=0)
-                g_handle.launch()
-                devices = g_handle.list_devices()
-                g_handle.part_init(devices[0], "msdos")
-                g_handle.part_add(devices[0], 'p', 1, 2)
-                g_handle.close()
+                g_handle = oz.GuestFSManager.GuestFS(self.diskimage, self.image_type)
+                g_handle.create_msdos_partition_table()
+                g_handle.cleanup()
 
     def generate_diskimage(self, size=10, force=False):
         """
@@ -1025,157 +1021,6 @@ class Guest(object):
             text = "Failed to take screenshot"
 
         return text
-
-    def _guestfs_handle_setup(self, libvirt_xml):
-        """
-        Method to setup a guestfs handle to the guest disks.
-        """
-        input_doc = lxml.etree.fromstring(libvirt_xml)
-        namenode = input_doc.xpath('/domain/name')
-        if len(namenode) != 1:
-            raise oz.OzException.OzException("invalid libvirt XML with no name")
-        input_name = namenode[0].text
-        disks = input_doc.xpath('/domain/devices/disk')
-        if len(disks) != 1:
-            self.log.warning("Oz given a libvirt domain with more than 1 disk; using the first one parsed")
-        source = disks[0].xpath('source')
-        if len(source) != 1:
-            raise oz.OzException.OzException("invalid <disk> entry without a source")
-        input_disk = source[0].get('file')
-        driver = disks[0].xpath('driver')
-        if len(driver) == 0:
-            input_disk_type = 'raw'
-        elif len(driver) == 1:
-            input_disk_type = driver[0].get('type')
-        else:
-            raise oz.OzException.OzException("invalid <disk> entry without a driver")
-
-        for domid in self.libvirt_conn.listDomainsID():
-            try:
-                doc = lxml.etree.fromstring(self.libvirt_conn.lookupByID(domid).XMLDesc(0))
-            except:
-                self.log.debug("Could not get XML for domain ID (%s) - it may have disappeared (continuing)", domid)
-                continue
-
-            namenode = doc.xpath('/domain/name')
-            if len(namenode) != 1:
-                # hm, odd, a domain without a name?
-                raise oz.OzException.OzException("Saw a domain without a name, something weird is going on")
-            if input_name == namenode[0].text:
-                raise oz.OzException.OzException("Cannot setup ICICLE generation on a running guest")
-            disks = doc.xpath('/domain/devices/disk')
-            if len(disks) < 1:
-                # odd, a domain without a disk, but don't worry about it
-                continue
-            for guestdisk in disks:
-                for source in guestdisk.xpath("source"):
-                    # FIXME: this will only work for files; we can make it work
-                    # for other things by following something like:
-                    # http://git.annexia.org/?p=libguestfs.git;a=blob;f=src/virt.c;h=2c6be3c6a2392ab8242d1f4cee9c0d1445844385;hb=HEAD#l169
-                    filename = str(source.get('file'))
-                    if filename == input_disk:
-                        raise oz.OzException.OzException("Cannot setup ICICLE generation on a running disk")
-
-
-        self.log.info("Setting up guestfs handle for %s", self.tdl.name)
-        g = guestfs.GuestFS()
-
-        self.log.debug("Adding disk image %s", input_disk)
-        # NOTE: we use "add_drive_opts" here so we can specify the type
-        # of the diskimage.  Otherwise it might be possible for an attacker
-        # to fool libguestfs with a specially-crafted diskimage that looks
-        # like a qcow2 disk (thanks to rjones for the tip)
-        g.add_drive_opts(input_disk, format=input_disk_type)
-
-        self.log.debug("Launching guestfs")
-        g.launch()
-
-        self.log.debug("Inspecting guest OS")
-        roots = g.inspect_os()
-
-        if len(roots) == 0:
-            raise oz.OzException.OzException("No operating systems found on the disk")
-
-        self.log.debug("Getting mountpoints")
-        for root in roots:
-            self.log.debug("Root device: %s", root)
-
-            # the problem here is that the list of mountpoints returned by
-            # inspect_get_mountpoints is in no particular order.  So if the
-            # diskimage contains /usr and /usr/local on different devices,
-            # but /usr/local happened to come first in the listing, the
-            # devices would get mapped improperly.  The clever solution here is
-            # to sort the mount paths by length; this will ensure that they
-            # are mounted in the right order.  Thanks to rjones for the hint,
-            # and the example code that comes from the libguestfs.org python
-            # example page.
-            mps = g.inspect_get_mountpoints(root)
-            def _compare(a, b):
-                """
-                Method to sort disks by length.
-                """
-                if len(a[0]) > len(b[0]):
-                    return 1
-                elif len(a[0]) == len(b[0]):
-                    return 0
-                else:
-                    return -1
-            mps.sort(_compare)
-            for mp_dev in mps:
-                try:
-                    g.mount_options('', mp_dev[1], mp_dev[0])
-                except:
-                    if mp_dev[0] == '/':
-                        # If we cannot mount root, we may as well give up
-                        raise
-                    else:
-                        # some custom guests may have fstab content with
-                        # "nofail" as a mount option.  For example, images
-                        # built for EC2 with ephemeral mappings.  These
-                        # fail at this point.  Allow things to continue.
-                        # Profound failures will trigger later on during
-                        # the process.
-                        self.log.warning("Unable to mount (%s) on (%s) - trying to continue", mp_dev[1], mp_dev[0])
-        return g
-
-    def _guestfs_remove_if_exists(self, g_handle, path):
-        """
-        Method to remove a file if it exists in the disk image.
-        """
-        if g_handle.exists(path):
-            g_handle.rm_rf(path)
-
-    def _guestfs_move_if_exists(self, g_handle, orig_path, replace_path):
-        """
-        Method to move a file if it exists in the disk image.
-        """
-        if g_handle.exists(orig_path):
-            g_handle.mv(orig_path, replace_path)
-
-    def _guestfs_path_backup(self, g_handle, orig):
-        """
-        Method to backup a file in the disk image.
-        """
-        self._guestfs_move_if_exists(g_handle, orig, orig + ".ozbackup")
-
-    def _guestfs_path_restore(self, g_handle, orig):
-        """
-        Method to restore a backup file in the disk image.
-        """
-        backup = orig + ".ozbackup"
-        self._guestfs_remove_if_exists(g_handle, orig)
-        self._guestfs_move_if_exists(g_handle, backup, orig)
-
-    def _guestfs_handle_cleanup(self, g_handle):
-        """
-        Method to cleanup a handle previously setup by __guestfs_handle_setup.
-        """
-        self.log.info("Cleaning up guestfs handle for %s", self.tdl.name)
-        self.log.debug("Syncing")
-        g_handle.sync()
-
-        self.log.debug("Unmounting all")
-        g_handle.umount_all()
 
     def _modify_libvirt_xml_for_serial(self, libvirt_xml):
         """

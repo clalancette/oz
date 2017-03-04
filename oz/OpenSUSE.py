@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012-2016  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2017  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,7 @@ import shutil
 import os
 import lxml.etree
 
+import oz.GuestFSManager
 import oz.Linux
 import oz.ozutil
 import oz.OzException
@@ -131,7 +132,7 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
         self.log.debug("Teardown step 1")
         # reset the authorized keys
         self.log.debug("Resetting authorized_keys")
-        self._guestfs_path_restore(g_handle, '/root/.ssh/authorized_keys')
+        g_handle.path_restore('/root/.ssh/authorized_keys')
 
     def _image_ssh_teardown_step_2(self, g_handle):
         """
@@ -140,7 +141,7 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
         self.log.debug("Teardown step 2")
         # remove custom sshd_config
         self.log.debug("Resetting sshd_config")
-        self._guestfs_path_restore(g_handle, '/etc/ssh/sshd_config')
+        g_handle.path_restore('/etc/ssh/sshd_config')
 
         # reset the service link
         self.log.debug("Resetting sshd service")
@@ -148,7 +149,7 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
             if not self.sshd_was_active:
                 g_handle.rm('/etc/systemd/system/multi-user.target.wants/sshd.service')
         else:
-            self._guestfs_path_restore(g_handle, '/etc/init.d/after.local')
+            g_handle.path_restore('/etc/init.d/after.local')
 
     def _image_ssh_teardown_step_3(self, g_handle):
         """
@@ -157,13 +158,12 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
         self.log.debug("Teardown step 3")
         # remove announce cronjob
         self.log.debug("Resetting announcement to host")
-        self._guestfs_remove_if_exists(g_handle,
-                                       '/etc/NetworkManager/dispatcher.d/99-reportip')
-        self._guestfs_remove_if_exists(g_handle, '/etc/cron.d/announce')
+        g_handle.remove_if_exists('/etc/NetworkManager/dispatcher.d/99-reportip')
+        g_handle.remove_if_exists('/etc/cron.d/announce')
 
         # remove reportip
         self.log.debug("Removing reportip")
-        self._guestfs_remove_if_exists(g_handle, '/root/reportip')
+        g_handle.remove_if_exists('/root/reportip')
 
         # reset the service link
         self.log.debug("Resetting cron service")
@@ -173,7 +173,7 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
         else:
             runlevel = self.get_default_runlevel(g_handle)
             startuplink = '/etc/rc.d/rc' + runlevel + ".d/S06cron"
-            self._guestfs_path_restore(g_handle, startuplink)
+            g_handle.path_restore(startuplink)
 
     def _image_ssh_teardown_step_4(self, g_handle):
         """
@@ -186,7 +186,7 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
                   "/etc/ssh/ssh_host_rsa_key", "/etc/ssh/ssh_host_rsa_key.pub",
                   "/etc/ssh/ssh_host_ecdsa_key", "/etc/ssh/ssh_host_ecdsa_key.pub",
                   "/etc/ssh/ssh_host_key", "/etc/ssh/ssh_host_key.pub"]:
-            self._guestfs_remove_if_exists(g_handle, f)
+            g_handle.remove_if_exists(f)
 
         # Remove any lease files; this is so that subsequent boots don't try
         # to connect to a DHCP server that is on a totally different network
@@ -205,7 +205,8 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
         """
         self.log.info("Collection Teardown")
 
-        g_handle = self._guestfs_handle_setup(libvirt_xml)
+        g_handle = oz.GuestFSManager.GuestFSLibvirtFactory(libvirt_xml, self.libvirt_conn)
+        g_handle.mount_partitions()
 
         try:
             self._image_ssh_teardown_step_1(g_handle)
@@ -216,7 +217,7 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
 
             self._image_ssh_teardown_step_4(g_handle)
         finally:
-            self._guestfs_handle_cleanup(g_handle)
+            g_handle.cleanup()
             shutil.rmtree(self.icicle_tmp)
 
     def do_icicle(self, guestaddr):
@@ -241,7 +242,7 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
         if not g_handle.exists('/root/.ssh'):
             g_handle.mkdir('/root/.ssh')
 
-        self._guestfs_path_backup(g_handle, '/root/.ssh/authorized_keys')
+        g_handle.path_backup('/root/.ssh/authorized_keys')
 
         self._generate_openssh_key(self.sshprivkey)
 
@@ -263,7 +264,7 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
                 g_handle.ln_sf('/usr/lib/systemd/system/sshd.service',
                                '/etc/systemd/system/multi-user.target.wants/sshd.service')
         else:
-            self._guestfs_path_backup(g_handle, "/etc/init.d/after.local")
+            g_handle.path_backup("/etc/init.d/after.local")
             local = os.path.join(self.icicle_tmp, "after.local")
             with open(local, "w") as f:
                 f.write("/sbin/service sshd start\n")
@@ -287,7 +288,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
 """)
 
         try:
-            self._guestfs_path_backup(g_handle, "/etc/ssh/sshd_config")
+            g_handle.path_backup("/etc/ssh/sshd_config")
             g_handle.upload(sshd_config_file, '/etc/ssh/sshd_config')
         finally:
             os.unlink(sshd_config_file)
@@ -357,7 +358,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
         else:
             runlevel = self.get_default_runlevel(g_handle)
             startuplink = '/etc/rc.d/rc' + runlevel + ".d/S06cron"
-            self._guestfs_path_backup(g_handle, startuplink)
+            g_handle.path_backup(startuplink)
             g_handle.ln_sf('/etc/init.d/cron', startuplink)
 
     def _collect_setup(self, libvirt_xml):
@@ -366,7 +367,8 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
         """
         self.log.info("Collection Setup")
 
-        g_handle = self._guestfs_handle_setup(libvirt_xml)
+        g_handle = oz.GuestFSManager.GuestFSLibvirtFactory(libvirt_xml, self.libvirt_conn)
+        g_handle.mount_partitions()
 
         # we have to do 3 things to make sure we can ssh into OpenSUSE:
         # 1)  Upload our ssh key
@@ -393,7 +395,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
                 raise
 
         finally:
-            self._guestfs_handle_cleanup(g_handle)
+            g_handle.cleanup()
 
     def _customize_repos(self, guestaddr):
         """
