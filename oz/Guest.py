@@ -41,6 +41,7 @@ import base64
 import hashlib
 import errno
 import re
+import monotonic
 
 import oz.ozutil
 import oz.OzException
@@ -740,11 +741,11 @@ class Guest(object):
         return total_disk_req, total_net_bytes
 
     def _looper(self, max_time, cb, msg):
-        now = time.time()
+        now = monotonic.monotonic()
         end = now + max_time
         next_print = now
         while now < end:
-            now = time.time()
+            now = monotonic.monotonic()
             if now >= next_print:
                 self.log.debug("Waiting for %s to finish %s, %d/%d", self.tdl.name, msg, int(end) - int(now), max_time)
                 next_print = now + 10
@@ -755,7 +756,7 @@ class Guest(object):
             # It's possible that the callback took longer than one second.
             # In that case, just skip our sleep altogether in an attempt to
             # catch up.
-            sleep_time = 1.0 - (time.time() - now)
+            sleep_time = 1.0 - (monotonic.monotonic() - now)
             if sleep_time > 0:
                 # Otherwise, sleep for a time.  Note that we try to maintain
                 # on our starting boundary, so we'll sleep less than a second
