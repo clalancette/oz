@@ -38,6 +38,7 @@ import collections
 import ftplib
 import struct
 import fcntl
+import lxml.etree
 
 def generate_full_auto_path(relative):
     """
@@ -1043,3 +1044,16 @@ def open_locked_file(filename):
         raise
 
     return (fd, outdir)
+
+def lxml_subelement(root, name, text=None, attributes=None):
+    """
+    Function to add a new element to an LXML tree, optionally include text
+    and a dictionary of attributes.
+    """
+    tmp = lxml.etree.SubElement(root, name)
+    if text is not None:
+        tmp.text = text
+    if attributes is not None:
+        for k, v in attributes.items():
+            tmp.set(k, v)
+    return tmp

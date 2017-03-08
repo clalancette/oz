@@ -413,28 +413,15 @@ class Guest(object):
             self.path = path
             self.bus = bus
 
-    def lxml_subelement(self, root, name, text=None, attributes=None):
-        """
-        Method to add a new element to an LXML tree, optionally include text
-        and a dictionary of attributes.
-        """
-        tmp = lxml.etree.SubElement(root, name)
-        if text is not None:
-            tmp.text = text
-        if attributes is not None:
-            for k, v in attributes.items():
-                tmp.set(k, v)
-        return tmp
-
     def _generate_serial_xml(self, devices):
         """
         Method to generate the serial portion of the libvirt XML.
         """
-        serial = self.lxml_subelement(devices, "serial", None, {'type':'tcp'})
-        self.lxml_subelement(serial, "source", None,
-                             {'mode':'bind', 'host':'127.0.0.1', 'service':str(self.listen_port)})
-        self.lxml_subelement(serial, "protocol", None, {'type':'raw'})
-        self.lxml_subelement(serial, "target", None, {'port':'1'})
+        serial = oz.ozutil.lxml_subelement(devices, "serial", None, {'type':'tcp'})
+        oz.ozutil.lxml_subelement(serial, "source", None,
+                                  {'mode':'bind', 'host':'127.0.0.1', 'service':str(self.listen_port)})
+        oz.ozutil.lxml_subelement(serial, "protocol", None, {'type':'raw'})
+        oz.ozutil.lxml_subelement(serial, "target", None, {'port':'1'})
 
     def _generate_xml(self, bootdev, installdev, kernel=None, initrd=None,
                       cmdline=None):
@@ -446,78 +433,78 @@ class Guest(object):
         # top-level domain element
         domain = lxml.etree.Element("domain", type=self.libvirt_type)
         # name element
-        self.lxml_subelement(domain, "name", self.tdl.name)
+        oz.ozutil.lxml_subelement(domain, "name", self.tdl.name)
         # memory elements
-        self.lxml_subelement(domain, "memory", str(self.install_memory))
-        self.lxml_subelement(domain, "currentMemory", str(self.install_memory))
+        oz.ozutil.lxml_subelement(domain, "memory", str(self.install_memory))
+        oz.ozutil.lxml_subelement(domain, "currentMemory", str(self.install_memory))
         # uuid
-        self.lxml_subelement(domain, "uuid", str(self.uuid))
+        oz.ozutil.lxml_subelement(domain, "uuid", str(self.uuid))
         # clock offset
-        self.lxml_subelement(domain, "clock", None, {'offset':self.clockoffset})
+        oz.ozutil.lxml_subelement(domain, "clock", None, {'offset':self.clockoffset})
         # vcpu
-        self.lxml_subelement(domain, "vcpu", str(self.install_cpus))
+        oz.ozutil.lxml_subelement(domain, "vcpu", str(self.install_cpus))
         # features
-        features = self.lxml_subelement(domain, "features")
-        self.lxml_subelement(features, "acpi")
-        self.lxml_subelement(features, "apic")
-        self.lxml_subelement(features, "pae")
+        features = oz.ozutil.lxml_subelement(domain, "features")
+        oz.ozutil.lxml_subelement(features, "acpi")
+        oz.ozutil.lxml_subelement(features, "apic")
+        oz.ozutil.lxml_subelement(features, "pae")
         # CPU
         if self.tdl.arch in ["aarch64", "armv7l"] and self.libvirt_type == "kvm":
             # Possibly related to BZ 1171501 - need host passthrough for aarch64 and arm with kvm
-            cpu = self.lxml_subelement(domain, "cpu", None, {'mode': 'custom', 'match': 'exact'})
-            model = self.lxml_subelement(cpu, "model", "host", {'fallback': 'allow'})
+            cpu = oz.ozutil.lxml_subelement(domain, "cpu", None, {'mode': 'custom', 'match': 'exact'})
+            model = oz.ozutil.lxml_subelement(cpu, "model", "host", {'fallback': 'allow'})
         # os
-        osNode = self.lxml_subelement(domain, "os")
+        osNode = oz.ozutil.lxml_subelement(domain, "os")
         mods = None
         if self.tdl.arch in ["aarch64", "armv7l"]:
             mods = {'arch': self.tdl.arch, 'machine': 'virt'}
-        self.lxml_subelement(osNode, "type", "hvm", mods)
+        oz.ozutil.lxml_subelement(osNode, "type", "hvm", mods)
         if bootdev:
-            self.lxml_subelement(osNode, "boot", None, {'dev':bootdev})
+            oz.ozutil.lxml_subelement(osNode, "boot", None, {'dev':bootdev})
         if kernel:
-            self.lxml_subelement(osNode, "kernel", kernel)
+            oz.ozutil.lxml_subelement(osNode, "kernel", kernel)
         if initrd:
-            self.lxml_subelement(osNode, "initrd", initrd)
+            oz.ozutil.lxml_subelement(osNode, "initrd", initrd)
         if cmdline:
             if self.tdl.arch == "armv7l":
                 cmdline += " console=ttyAMA0"
-            self.lxml_subelement(osNode, "cmdline", cmdline)
+            oz.ozutil.lxml_subelement(osNode, "cmdline", cmdline)
         if self.tdl.arch == "aarch64":
             loader, nvram = oz.ozutil.find_uefi_firmware(self.tdl.arch)
-            self.lxml_subelement(osNode, "loader", loader, {'readonly': 'yes', 'type': 'pflash'})
-            self.lxml_subelement(osNode, "nvram", None, {'template': nvram})
+            oz.ozutil.lxml_subelement(osNode, "loader", loader, {'readonly': 'yes', 'type': 'pflash'})
+            oz.ozutil.lxml_subelement(osNode, "nvram", None, {'template': nvram})
         # poweroff, reboot, crash
-        self.lxml_subelement(domain, "on_poweroff", "destroy")
-        self.lxml_subelement(domain, "on_reboot", "destroy")
-        self.lxml_subelement(domain, "on_crash", "destroy")
+        oz.ozutil.lxml_subelement(domain, "on_poweroff", "destroy")
+        oz.ozutil.lxml_subelement(domain, "on_reboot", "destroy")
+        oz.ozutil.lxml_subelement(domain, "on_crash", "destroy")
         # devices
-        devices = self.lxml_subelement(domain, "devices")
+        devices = oz.ozutil.lxml_subelement(domain, "devices")
         # graphics
         if not self.tdl.arch in ["aarch64", "armv7l"]:
             # qemu for arm/aarch64 does not support a graphical console - amazingly
-            self.lxml_subelement(devices, "graphics", None, {'port':'-1', 'type':'vnc'})
+            oz.ozutil.lxml_subelement(devices, "graphics", None, {'port':'-1', 'type':'vnc'})
         # network
-        interface = self.lxml_subelement(devices, "interface", None, {'type':'bridge'})
-        self.lxml_subelement(interface, "source", None, {'bridge':self.bridge_name})
-        self.lxml_subelement(interface, "mac", None, {'address':self.macaddr})
-        self.lxml_subelement(interface, "model", None, {'type':self.nicmodel})
+        interface = oz.ozutil.lxml_subelement(devices, "interface", None, {'type':'bridge'})
+        oz.ozutil.lxml_subelement(interface, "source", None, {'bridge':self.bridge_name})
+        oz.ozutil.lxml_subelement(interface, "mac", None, {'address':self.macaddr})
+        oz.ozutil.lxml_subelement(interface, "model", None, {'type':self.nicmodel})
         # input
         mousedict = {'bus':self.mousetype}
         if self.mousetype == "ps2":
             mousedict['type'] = 'mouse'
         elif self.mousetype == "usb":
             mousedict['type'] = 'tablet'
-        self.lxml_subelement(devices, "input", None, mousedict)
+        oz.ozutil.lxml_subelement(devices, "input", None, mousedict)
         # serial console pseudo TTY
-        console = self.lxml_subelement(devices, "serial", None, {'type':'pty'})
-        self.lxml_subelement(console, "target", None, {'port':'0'})
+        console = oz.ozutil.lxml_subelement(devices, "serial", None, {'type':'pty'})
+        oz.ozutil.lxml_subelement(console, "target", None, {'port':'0'})
         # serial
         self._generate_serial_xml(devices)
         # boot disk
-        bootDisk = self.lxml_subelement(devices, "disk", None, {'device':'disk', 'type':'file'})
-        self.lxml_subelement(bootDisk, "target", None, {'dev':self.disk_dev, 'bus':self.disk_bus})
-        self.lxml_subelement(bootDisk, "source", None, {'file':self.diskimage})
-        self.lxml_subelement(bootDisk, "driver", None, {'name':'qemu', 'type':self.image_type})
+        bootDisk = oz.ozutil.lxml_subelement(devices, "disk", None, {'device':'disk', 'type':'file'})
+        oz.ozutil.lxml_subelement(bootDisk, "target", None, {'dev':self.disk_dev, 'bus':self.disk_bus})
+        oz.ozutil.lxml_subelement(bootDisk, "source", None, {'file':self.diskimage})
+        oz.ozutil.lxml_subelement(bootDisk, "driver", None, {'name':'qemu', 'type':self.image_type})
         # install disk (if any)
         if not installdev:
             installdev_list = []
@@ -526,9 +513,9 @@ class Guest(object):
         else:
             installdev_list = installdev
         for installdev in installdev_list:
-            install = self.lxml_subelement(devices, "disk", None, {'type':'file', 'device':installdev.devicetype})
-            self.lxml_subelement(install, "source", None, {'file':installdev.path})
-            self.lxml_subelement(install, "target", None, {'dev':installdev.bus})
+            install = oz.ozutil.lxml_subelement(devices, "disk", None, {'type':'file', 'device':installdev.devicetype})
+            oz.ozutil.lxml_subelement(install, "source", None, {'file':installdev.path})
+            oz.ozutil.lxml_subelement(install, "target", None, {'dev':installdev.bus})
 
         xml = lxml.etree.tostring(domain, pretty_print=True)
         self.log.debug("Generated XML:\n%s", xml)
@@ -562,26 +549,26 @@ class Guest(object):
 
         # create the pool XML
         pool = lxml.etree.Element("pool", type="dir")
-        self.lxml_subelement(pool, "name", "oztempdir" + str(uuid.uuid4()))
-        target = self.lxml_subelement(pool, "target")
-        self.lxml_subelement(target, "path", directory)
+        oz.ozutil.lxml_subelement(pool, "name", "oztempdir" + str(uuid.uuid4()))
+        target = oz.ozutil.lxml_subelement(pool, "target")
+        oz.ozutil.lxml_subelement(target, "path", directory)
         pool_xml = lxml.etree.tostring(pool, pretty_print=True)
 
         # create the volume XML
         vol = lxml.etree.Element("volume", type="file")
-        self.lxml_subelement(vol, "name", filename)
-        self.lxml_subelement(vol, "allocation", "0")
-        target = self.lxml_subelement(vol, "target")
+        oz.ozutil.lxml_subelement(vol, "name", filename)
+        oz.ozutil.lxml_subelement(vol, "allocation", "0")
+        target = oz.ozutil.lxml_subelement(vol, "target")
         imgtype = self.image_type
         if backing_filename:
             # Only qcow2 supports image creation using a backing file
             imgtype = "qcow2"
-        self.lxml_subelement(target, "format", None, {"type":imgtype})
+        oz.ozutil.lxml_subelement(target, "format", None, {"type":imgtype})
 
         # FIXME: this makes the permissions insecure, but is needed since
         # libvirt launches guests as qemu:qemu
-        permissions = self.lxml_subelement(target, "permissions")
-        self.lxml_subelement(permissions, "mode", "0666")
+        permissions = oz.ozutil.lxml_subelement(target, "permissions")
+        oz.ozutil.lxml_subelement(permissions, "mode", "0666")
 
         capacity = size
         if backing_filename:
@@ -597,12 +584,12 @@ class Guest(object):
             else:
                 capacity = os.path.getsize(backing_filename) / 1024 / 1024 / 1024
                 backing_format = 'raw'
-            backing = self.lxml_subelement(vol, "backingStore")
-            self.lxml_subelement(backing, "path", backing_filename)
-            self.lxml_subelement(backing, "format", None,
-                                 {"type":backing_format})
+            backing = oz.ozutil.lxml_subelement(vol, "backingStore")
+            oz.ozutil.lxml_subelement(backing, "path", backing_filename)
+            oz.ozutil.lxml_subelement(backing, "format", None,
+                                      {"type":backing_format})
 
-        self.lxml_subelement(vol, "capacity", str(capacity), {'unit':'G'})
+        oz.ozutil.lxml_subelement(vol, "capacity", str(capacity), {'unit':'G'})
         vol_xml = lxml.etree.tostring(vol, pretty_print=True)
 
         # sigh.  Yes, this is racy; if a pool is defined during this loop, we
@@ -1192,16 +1179,16 @@ class Guest(object):
         """
         icicle = lxml.etree.Element("icicle")
         if description is not None:
-            self.lxml_subelement(icicle, "description", description)
-        packages = self.lxml_subelement(icicle, "packages")
+            oz.ozutil.lxml_subelement(icicle, "description", description)
+        packages = oz.ozutil.lxml_subelement(icicle, "packages")
 
         for index, line in enumerate(lines):
             if line == "":
                 continue
-            package = self.lxml_subelement(packages, "package", None,
-                                           {'name':line})
+            package = oz.ozutil.lxml_subelement(packages, "package", None,
+                                                {'name':line})
             if extra is not None:
-                self.lxml_subelement(package, "extra", extra[index])
+                oz.ozutil.lxml_subelement(package, "extra", extra[index])
 
         return lxml.etree.tostring(icicle, pretty_print=True)
 
