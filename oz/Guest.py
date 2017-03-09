@@ -615,25 +615,25 @@ class Guest(object):
             pool = self.libvirt_conn.storagePoolCreateXML(pool_xml, 0)
             started = True
 
-        # libvirt will not allow us to do certain operations (like a refresh)
-        # while other operations are happening on a pool (like creating a new
-        # volume).  Since we don't exactly know which other processes might be
-        # running on the system, we take a system-wide Oz lock to ensure that
-        # these succeed.  In most cases these operations will be fast and thus
-        # the lock will not be held very long.
-        lockfile = os.path.join(self.icicle_tmp, "libvirt_pool_lockfile")
-        (refresh_lock, outdir) = oz.ozutil.open_locked_file(lockfile)
-        pool.refresh(0)
-
-        # this is a bit complicated, because of the cases that can
-        # happen.  The cases are:
-        #
-        # 1.  The volume did not exist.  In this case, storageVolLookupByName()
-        #     throws an exception, which we just ignore.  We then go on to
-        #     create the volume
-        # 2.  The volume did exist.  In this case, storageVolLookupByName()
-        #     returns a valid volume object, and then we delete the volume
         try:
+            # libvirt will not allow us to do certain operations (like a refresh)
+            # while other operations are happening on a pool (like creating a new
+            # volume).  Since we don't exactly know which other processes might be
+            # running on the system, we take a system-wide Oz lock to ensure that
+            # these succeed.  In most cases these operations will be fast and thus
+            # the lock will not be held very long.
+            lockfile = os.path.join(self.icicle_tmp, "libvirt_pool_lockfile")
+            (refresh_lock, outdir) = oz.ozutil.open_locked_file(lockfile)
+            pool.refresh(0)
+
+            # this is a bit complicated, because of the cases that can
+            # happen.  The cases are:
+            #
+            # 1.  The volume did not exist.  In this case, storageVolLookupByName()
+            #     throws an exception, which we just ignore.  We then go on to
+            #     create the volume
+            # 2.  The volume did exist.  In this case, storageVolLookupByName()
+            #     returns a valid volume object, and then we delete the volume
             try:
                 vol = pool.storageVolLookupByName(filename)
                 vol.delete(0)
