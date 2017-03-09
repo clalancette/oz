@@ -62,6 +62,7 @@ class GuestFS(object):
             raise oz.OzException.OzException("No operating systems found on the disk")
 
         self.log.debug("Getting mountpoints")
+        already_mounted = {}
         for root in roots:
             self.log.debug("Root device: %s", root)
 
@@ -82,7 +83,22 @@ class GuestFS(object):
                 return len(a) - len(b)
             for device in sorted(mps.keys(), _compare):
                 try:
-                    self.g_handle.mount_options('', mp_dev[1], mp_dev[0])
+                    # Here we check to see if the device was already mounted.
+                    # If it was, we skip over this mountpoint and go to the
+                    # next one.  This can happen, for instance, on btrfs volumes
+                    # with snapshots.  In that case, we'll always take the
+                    # "original" backing filesystem, and not the snapshots,
+                    # which seems to work in practice.
+                    if already_mounted[device] == mps[device]:
+                        continue
+                except KeyError:
+                    # If we got a KeyError exception, we know that we haven't
+                    # yet mounted this filesystem, so continue on.
+                    pass
+
+                try:
+                    self.g_handle.mount_options('', mps[device], device)
+                    already_mounted[device] = mps[device]
                 except:
                     if device == '/':
                         # If we cannot mount root, we may as well give up
