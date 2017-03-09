@@ -418,8 +418,13 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
             if re.match("^[0-9]+", line):
                 split = line.split('|')
 
-                if re.match("^cd://", split[7].strip()):
+                column = 7
+                if self.tdl.update in ["42.1", "42.2"]:
+                    # OpenSUSE Leap has the URI in the 8th column
+                    column = 8
+                if re.match("^cd://", split[column].strip()):
                     removerepos.append(split[0].strip())
+
         for repo in removerepos:
             self.guest_execute_command(guestaddr,
                                        'zypper removerepo %s' % (repo))
