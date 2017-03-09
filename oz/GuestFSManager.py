@@ -31,7 +31,7 @@ class GuestFS(object):
     def __init__(self, input_disk, input_disk_type):
         self.log = logging.getLogger(__name__)
 
-        self.g_handle = guestfs.GuestFS()
+        self.g_handle = guestfs.GuestFS(python_return_dict=True)
 
         self.log.debug("Adding disk image %s", input_disk)
         # NOTE: we use "add_drive_opts" here so we can specify the type
@@ -79,18 +79,12 @@ class GuestFS(object):
                 """
                 Method to sort disks by length.
                 """
-                if len(a[0]) > len(b[0]):
-                    return 1
-                elif len(a[0]) == len(b[0]):
-                    return 0
-                else:
-                    return -1
-            mps.sort(_compare)
-            for mp_dev in mps:
+                return len(a) - len(b)
+            for device in sorted(mps.keys(), _compare):
                 try:
                     self.g_handle.mount_options('', mp_dev[1], mp_dev[0])
                 except:
-                    if mp_dev[0] == '/':
+                    if device == '/':
                         # If we cannot mount root, we may as well give up
                         raise
                     else:
@@ -100,7 +94,7 @@ class GuestFS(object):
                         # fail at this point.  Allow things to continue.
                         # Profound failures will trigger later on during
                         # the process.
-                        self.log.warning("Unable to mount (%s) on (%s) - trying to continue", mp_dev[1], mp_dev[0])
+                        self.log.warning("Unable to mount (%s) on (%s) - trying to continue", mps[device], device)
 
     def remove_if_exists(self, path):
         """
