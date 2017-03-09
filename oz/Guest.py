@@ -641,10 +641,7 @@ class Guest(object):
                 if e.get_error_code() != libvirt.VIR_ERR_NO_STORAGE_VOL:
                     raise
 
-            try:
-                pool.createXML(vol_xml, 0)
-            except libvirt.libvirtError as e:
-                raise
+            pool.createXML(vol_xml, 0)
         finally:
             if started:
                 pool.destroy()
