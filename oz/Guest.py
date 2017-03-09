@@ -728,13 +728,15 @@ class Guest(object):
 
         return total_disk_req, total_net_bytes
 
-    def _wait_for_install_finish(self, libvirt_dom, max_time):
+    def _wait_for_install_finish(self, xml, max_time):
         """
         Method to wait for an installation to finish.  This will wait around
         until either the VM has gone away (at which point it is assumed the
         install was successful), or until the timeout is reached (at which
         point it is assumed the install failed and raise an exception).
         """
+
+        libvirt_dom = self.libvirt_conn.createXML(xml, 0)
 
         disks, interfaces = self._get_disks_and_interfaces(libvirt_dom.XMLDesc(0))
 
@@ -1537,8 +1539,7 @@ class CDGuest(Guest):
             else:
                 xml = self._generate_xml("hd", cddev)
 
-            dom = self.libvirt_conn.createXML(xml, 0)
-            self._wait_for_install_finish(dom, timeout)
+            self._wait_for_install_finish(xml, timeout)
 
             reboots_to_go -= 1
 
@@ -1766,9 +1767,7 @@ class FDGuest(Guest):
         if timeout is None:
             timeout = 1200
 
-        dom = self.libvirt_conn.createXML(self._generate_xml("fd", fddev),
-                                          0)
-        self._wait_for_install_finish(dom, timeout)
+        self._wait_for_install_finish(self._generate_xml("fd", fddev), timeout)
 
         if self.cache_jeos:
             self.log.info("Caching JEOS")
