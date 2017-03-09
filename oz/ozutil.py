@@ -427,7 +427,7 @@ def subprocess_check_output(*popenargs, **kwargs):
 
     if retcode:
         cmd = ' '.join(*popenargs)
-        raise SubprocessException("'%s' failed(%d): %s" % (cmd, retcode, stderr), retcode)
+        raise SubprocessException("'%s' failed(%d): %s" % (cmd, retcode, stderr+stdout), retcode)
 
     return (stdout, stderr, retcode)
 
