@@ -614,16 +614,18 @@ class Guest(object):
             pool = self.libvirt_conn.storagePoolCreateXML(pool_xml, 0)
             started = True
 
-        try:
-            # libvirt will not allow us to do certain operations (like a refresh)
-            # while other operations are happening on a pool (like creating a new
-            # volume).  Since we don't exactly know which other processes might be
-            # running on the system, we take a system-wide Oz lock to ensure that
-            # these succeed.  In most cases these operations will be fast and thus
-            # the lock will not be held very long.
-            lockfile = os.path.join(self.icicle_tmp, "libvirt_pool_lockfile")
-            (refresh_lock, outdir) = oz.ozutil.open_locked_file(lockfile)
-            pool.refresh(0)
+        def _vol_create_cb(args):
+            pool = args[0]
+            vol_xml = args[1]
+
+            try:
+                pool.refresh(0)
+            except libvirt.libvirtError as e:
+                if e.get_error_code() == libvirt.VIR_ERR_INTERNAL_ERROR:
+                    # libvirt returns a VIR_ERR_INTERNAL_ERROR when the
+                    # refresh fails.
+                    return False
+                raise
 
             # this is a bit complicated, because of the cases that can
             # happen.  The cases are:
@@ -641,12 +643,19 @@ class Guest(object):
                     raise
 
             pool.createXML(vol_xml, 0)
+
+            return True
+
+        try:
+            # libvirt will not allow us to do certain operations (like a refresh)
+            # while other operations are happening on a pool (like creating a new
+            # volume).  Since we don't exactly know which other processes might be
+            # running on the system, we retry for a while until our refresh and
+            # volume creation succeed.  In most cases these operations will be fast.
+            oz.ozutil.timed_loop(90, _vol_create_cb, "Waiting for volume to be created", (pool, vol_xml))
         finally:
             if started:
                 pool.destroy()
-
-        # remember to unlock the refresh lock
-        os.close(refresh_lock)
 
         if create_partition:
             if backing_filename:
