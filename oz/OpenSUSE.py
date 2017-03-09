@@ -147,7 +147,7 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
         self.log.debug("Resetting sshd service")
         if g_handle.exists('/usr/lib/systemd/system/sshd.service'):
             if not self.sshd_was_active:
-                g_handle.rm('/etc/systemd/system/multi-user.target.wants/sshd.service')
+                g_handle.remove_if_exists('/etc/systemd/system/multi-user.target.wants/sshd.service')
         else:
             g_handle.path_restore('/etc/init.d/after.local')
 
@@ -254,7 +254,8 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
         """
         # part 2; check and setup sshd
         self.log.debug("Step 2: setup sshd")
-        if not g_handle.exists('/etc/init.d/sshd') or not g_handle.exists('/usr/sbin/sshd'):
+
+        if not g_handle.exists('/usr/sbin/sshd'):
             raise oz.OzException.OzException("ssh not installed on the image, cannot continue")
 
         if g_handle.exists('/usr/lib/systemd/system/sshd.service'):
@@ -321,7 +322,7 @@ fi
             finally:
                 os.unlink(scriptfile)
 
-        if not g_handle.exists('/etc/init.d/cron') or not g_handle.exists('/usr/sbin/cron'):
+        if not g_handle.exists('/usr/sbin/cron'):
             raise oz.OzException.OzException("cron not installed on the image, cannot continue")
 
         with open(scriptfile, 'w') as f:
