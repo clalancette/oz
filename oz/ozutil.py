@@ -39,6 +39,8 @@ import ftplib
 import struct
 import fcntl
 import lxml.etree
+import monotonic
+import logging
 
 def generate_full_auto_path(relative):
     """
@@ -1057,3 +1059,44 @@ def lxml_subelement(root, name, text=None, attributes=None):
         for k, v in attributes.items():
             tmp.set(k, v)
     return tmp
+
+def timed_loop(max_time, cb, msg, cb_arg=None):
+    '''
+    A function to deal with waiting for an event to occur.  Given a
+    maximum time to wait, a callback, and a message, it will wait until the maximum
+    time for the event to occur.  Each time through the loop, it will do the following:
+
+    1.  Check to see if it has been at least 10 seconds since it last logged.  If so, it
+        will log right now.
+    2.  Call the callback to check for the event.  If the callback returns True, the
+        loop quits immediately.  If it returns False, go on to step 3.
+    3.  Sleep for the portion of 1 second that was not taken up by the callback.
+
+    If the event occurred (the callback returned True), then this function returns
+    True.  If we timed out while waiting for the event to occur, this function returns
+    False.
+    '''
+    log = logging.getLogger('%s' % (__name__))
+    now = monotonic.monotonic()
+    end = now + max_time
+    next_print = now
+    while now < end:
+        now = monotonic.monotonic()
+        if now >= next_print:
+            log.debug("%s, %d/%d", msg, int(end) - int(now), max_time)
+            next_print = now + 10
+
+            if cb(cb_arg):
+                return True
+
+        # It's possible that the callback took longer than one second.
+        # In that case, just skip our sleep altogether in an attempt to
+        # catch up.
+        sleep_time = 1.0 - (monotonic.monotonic() - now)
+        if sleep_time > 0:
+            # Otherwise, sleep for a time.  Note that we try to maintain
+            # on our starting boundary, so we'll sleep less than a second
+            # here almost always.
+            time.sleep(sleep_time)
+
+    return False

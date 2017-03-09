@@ -41,7 +41,6 @@ import base64
 import hashlib
 import errno
 import re
-import monotonic
 
 import oz.GuestFSManager
 import oz.ozutil
@@ -720,46 +719,6 @@ class Guest(object):
 
         return total_disk_req, total_net_bytes
 
-    def _looper(self, max_time, cb, msg):
-        '''
-        An internal helper method to deal with waiting for an event to occur.  Given a
-        maximum time to wait, a callback, and a message, it will wait until the maximum
-        time for the event to occur.  Each time through the loop, it will do the following:
-
-        1.  Check to see if it has been at least 10 seconds since it last logged.  If so, it
-            will log right now.
-        2.  Call the callback to check for the event.  If the callback returns True, the
-            loop quits immediately.  If it returns False, go on to step 3.
-        3.  Sleep for the portion of 1 second that was not taken up by the callback.
-
-        If the event occurred (the callback returned True), then this function returns
-        True.  If we timed out while waiting for the event to occur, this function returns
-        False.
-        '''
-        now = monotonic.monotonic()
-        end = now + max_time
-        next_print = now
-        while now < end:
-            now = monotonic.monotonic()
-            if now >= next_print:
-                self.log.debug("Waiting for %s to finish %s, %d/%d", self.tdl.name, msg, int(end) - int(now), max_time)
-                next_print = now + 10
-
-                if cb(self):
-                    return True
-
-            # It's possible that the callback took longer than one second.
-            # In that case, just skip our sleep altogether in an attempt to
-            # catch up.
-            sleep_time = 1.0 - (monotonic.monotonic() - now)
-            if sleep_time > 0:
-                # Otherwise, sleep for a time.  Note that we try to maintain
-                # on our starting boundary, so we'll sleep less than a second
-                # here almost always.
-                time.sleep(sleep_time)
-
-        return False
-
     def _wait_for_install_finish(self, libvirt_dom, max_time):
         """
         Method to wait for an installation to finish.  This will wait around
@@ -816,7 +775,7 @@ class Guest(object):
 
             return False
 
-        finished = self._looper(max_time, _finish_cb, "installing")
+        finished = oz.ozutil.timed_loop(max_time, _finish_cb, "Waiting for %s to finish installing" % (self.tdl.name), self)
 
         # We get here because of a libvirt exception, an absolute timeout, or
         # an I/O timeout; we sort this out below
@@ -874,7 +833,7 @@ class Guest(object):
 
             return False
 
-        return self._looper(self.shutdown_timeout, _shutdown_cb, "shutdown")
+        return oz.ozutil.timed_loop(self.shutdown_timeout, _shutdown_cb, "Waiting for %s to finish shutdown" % (self.tdl.name), self)
 
     def _get_csums(self, original_url, outdir, outputfd):
         """
@@ -1154,7 +1113,7 @@ class Guest(object):
 
                 return False
 
-            finished = self._looper(self.boot_timeout, _boot_cb, "boot")
+            oz.ozutil.timed_loop(self.boot_timeout, _boot_cb, "Waiting for %s to finish boot" % (self.tdl.name), self)
 
         finally:
             self.sock.close()
