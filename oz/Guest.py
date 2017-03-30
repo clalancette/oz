@@ -41,6 +41,7 @@ import base64
 import hashlib
 import errno
 import re
+import select
 
 import oz.GuestFSManager
 import oz.ozutil
@@ -287,12 +288,16 @@ class Guest(object):
         if self.auto is None:
             self.auto = self.get_auto_path()
 
+        self.consolelog = os.path.join('/var/lib/libvirt/qemu',
+                                       self.tdl.name + "-console.log")
+
         self.log.debug("Name: %s, UUID: %s", self.tdl.name, self.uuid)
         self.log.debug("MAC: %s, distro: %s", self.macaddr, self.tdl.distro)
         self.log.debug("update: %s, arch: %s, diskimage: %s", self.tdl.update, self.tdl.arch, self.diskimage)
         self.log.debug("nicmodel: %s, clockoffset: %s", self.nicmodel, self.clockoffset)
         self.log.debug("mousetype: %s, disk_bus: %s, disk_dev: %s", self.mousetype, self.disk_bus, self.disk_dev)
         self.log.debug("icicletmp: %s, listen_port: %d", self.icicle_tmp, self.listen_port)
+        self.log.debug("consolelog: %s", self.consolelog)
 
     def image_name(self):
         """
@@ -422,8 +427,13 @@ class Guest(object):
         oz.ozutil.lxml_subelement(serial, "protocol", None, {'type':'raw'})
         oz.ozutil.lxml_subelement(serial, "target", None, {'port':'1'})
 
+    def _generate_virtio_channel(self, devices, name):
+        virtio = oz.ozutil.lxml_subelement(devices, "channel", None, {'type': 'unix'})
+        oz.ozutil.lxml_subelement(virtio, "source", None, {"mode": "bind", "path": self.consolelog})
+        oz.ozutil.lxml_subelement(virtio, "target", None, {"type": "virtio", "name": name})
+
     def _generate_xml(self, bootdev, installdev, kernel=None, initrd=None,
-                      cmdline=None):
+                      cmdline=None, virtio_channel_name=None):
         """
         Method to generate libvirt XML useful for installation.
         """
@@ -499,6 +509,9 @@ class Guest(object):
         oz.ozutil.lxml_subelement(console, "target", None, {'port':'0'})
         # serial
         self._generate_serial_xml(devices)
+        # virtio
+        if virtio_channel_name is not None:
+            self._generate_virtio_channel(devices, virtio_channel_name)
         # boot disk
         bootDisk = oz.ozutil.lxml_subelement(devices, "disk", None, {'device':'disk', 'type':'file'})
         oz.ozutil.lxml_subelement(bootDisk, "target", None, {'dev':self.disk_dev, 'bus':self.disk_bus})
@@ -744,6 +757,10 @@ class Guest(object):
         self.last_network_activity = 0
         self.inactivity_countdown = self.inactivity_timeout
         self.saved_exception = None
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.sock.connect(self.consolelog)
+        self.poller = select.poll()
+        self.poller.register(self.sock, select.POLLERR|select.POLLHUP|select.POLLNVAL|select.POLLIN|select.POLLPRI)
         def _finish_cb(self):
             '''
             A callback for _looper to deal with waiting for a guest to finish installing.
@@ -783,6 +800,16 @@ class Guest(object):
 
             self.last_disk_activity = total_disk_req
             self.last_network_activity = total_net_bytes
+
+            socketlist = self.poller.poll(1000)
+            for fd,event in socketlist:
+                if event & (select.POLLIN | select.POLLPRI):
+                    data = self.sock.recv(65536)
+                    if data:
+                        self.log.debug(data)
+                # We are ignoring all other events and the case where we get
+                # no data from the recv() call.  This is OK, since this is a
+                # debug thing anyway.
 
             return False
 
@@ -1508,7 +1535,7 @@ class CDGuest(Guest):
 
     def _do_install(self, timeout=None, force=False, reboots=0,
                     kernelfname=None, ramdiskfname=None, cmdline=None,
-                    extrainstalldevs=None):
+                    extrainstalldevs=None, virtio_channel_name=None):
         """
         Internal method to actually run the installation.
         """
@@ -1533,11 +1560,14 @@ class CDGuest(Guest):
             if reboots_to_go == reboots:
                 if kernelfname and os.access(kernelfname, os.F_OK) and ramdiskfname and os.access(ramdiskfname, os.F_OK) and cmdline:
                     xml = self._generate_xml(None, None, kernelfname,
-                                             ramdiskfname, cmdline)
+                                             ramdiskfname, cmdline,
+                                             virtio_channel_name)
                 else:
-                    xml = self._generate_xml("cdrom", cddev)
+                    xml = self._generate_xml("cdrom", cddev, None, None, None,
+                                             virtio_channel_name)
             else:
-                xml = self._generate_xml("hd", cddev)
+                xml = self._generate_xml("hd", cddev, None, None, None,
+                                         virtio_channel_name)
 
             self._wait_for_install_finish(xml, timeout)
 

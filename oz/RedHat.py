@@ -81,6 +81,8 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         if self.tdl.kernel_param:
             self.cmdline += " " + self.tdl.kernel_param
 
+        self.virtio_channel_name = None
+
     def _generate_new_iso(self):
         """
         Method to create a new ISO based on the modified CD/DVD.
@@ -697,7 +699,8 @@ echo -n "!$ADDR,%s!" > %s
         Method to run the operating system installation.
         """
         return self._do_install(timeout, force, 0, self.kernelfname,
-                                self.initrdfname, self.cmdline)
+                                self.initrdfname, self.cmdline, None,
+                                self.virtio_channel_name)
 
 class RedHatLinuxCDYumGuest(RedHatLinuxCDGuest):
     """
