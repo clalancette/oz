@@ -52,6 +52,9 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
 
         self.haverepo = haverepo
         self.brokenisomethod = brokenisomethod
+        if self.tdl.update in ["14", "15", "16", "17", "18", "19", "20", "21",
+                               "22", "23", "24", "25"]:
+            self.virtio_channel_name = 'org.fedoraproject.anaconda.log.0'
 
     def _modify_iso(self):
         """
