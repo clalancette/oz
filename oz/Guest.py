@@ -41,7 +41,6 @@ import base64
 import hashlib
 import errno
 import re
-import select
 
 import oz.GuestFSManager
 import oz.ozutil
@@ -237,12 +236,9 @@ class Guest(object):
         self.icicle_tmp = os.path.join(self.data_dir, "icicletmp",
                                        self.tdl.name)
 
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # Bind to port 0 which will use a free socket to listen to.
-        sock.bind(("", 0))
-        self.listen_port = sock.getsockname()[1]
-        # Close the socket to free it up for libvirt
-        sock.close()
+        self.listen_port = oz.ozutil.get_free_port()
+
+        self.console_listen_port = oz.ozutil.get_free_port()
 
         self.connect_to_libvirt()
 
@@ -288,16 +284,13 @@ class Guest(object):
         if self.auto is None:
             self.auto = self.get_auto_path()
 
-        self.consolelog = os.path.join('/var/lib/libvirt/qemu',
-                                       self.tdl.name + "-console.log")
-
         self.log.debug("Name: %s, UUID: %s", self.tdl.name, self.uuid)
         self.log.debug("MAC: %s, distro: %s", self.macaddr, self.tdl.distro)
         self.log.debug("update: %s, arch: %s, diskimage: %s", self.tdl.update, self.tdl.arch, self.diskimage)
         self.log.debug("nicmodel: %s, clockoffset: %s", self.nicmodel, self.clockoffset)
         self.log.debug("mousetype: %s, disk_bus: %s, disk_dev: %s", self.mousetype, self.disk_bus, self.disk_dev)
         self.log.debug("icicletmp: %s, listen_port: %d", self.icicle_tmp, self.listen_port)
-        self.log.debug("consolelog: %s", self.consolelog)
+        self.log.debug("console_listen_port: %s", self.console_listen_port)
 
     def image_name(self):
         """
@@ -428,8 +421,9 @@ class Guest(object):
         oz.ozutil.lxml_subelement(serial, "target", None, {'port':'1'})
 
     def _generate_virtio_channel(self, devices, name):
-        virtio = oz.ozutil.lxml_subelement(devices, "channel", None, {'type': 'unix'})
-        oz.ozutil.lxml_subelement(virtio, "source", None, {"mode": "bind", "path": self.consolelog})
+        virtio = oz.ozutil.lxml_subelement(devices, "channel", None, {'type': 'tcp'})
+        oz.ozutil.lxml_subelement(virtio, "source", None,
+                                  {'mode':'bind', 'host':'127.0.0.1', 'service':str(self.console_listen_port)})
         oz.ozutil.lxml_subelement(virtio, "target", None, {"type": "virtio", "name": name})
 
     def _generate_xml(self, bootdev, installdev, kernel=None, initrd=None,
@@ -761,10 +755,9 @@ class Guest(object):
         self.inactivity_countdown = self.inactivity_timeout
         self.saved_exception = None
         if self.has_consolelog:
-            self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            self.sock.connect(self.consolelog)
-            self.poller = select.poll()
-            self.poller.register(self.sock, select.POLLERR|select.POLLHUP|select.POLLNVAL|select.POLLIN|select.POLLPRI)
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.sock.settimeout(1)
+            self.sock.connect(('127.0.0.1', self.console_listen_port))
 
         def _finish_cb(self):
             '''
@@ -807,15 +800,16 @@ class Guest(object):
             self.last_network_activity = total_net_bytes
 
             if self.has_consolelog:
-                socketlist = self.poller.poll(1000)
-                for fd,event in socketlist:
-                    if event & (select.POLLIN | select.POLLPRI):
-                        data = self.sock.recv(65536)
-                        if data:
-                            self.log.debug(data)
-                    # We are ignoring all other events and the case where we get
-                    # no data from the recv() call.  This is OK, since this is a
-                    # debug thing anyway.
+                try:
+                    # note that we have to build the data up here, since there
+                    # is no guarantee that we will get the whole write in one go
+                    data = self.sock.recv(65536)
+                    if data:
+                        self.log.debug(data)
+                except socket.timeout:
+                    # the socket times out after 1 second.  We can just fall
+                    # through to the below code because it is a noop.
+                    pass
 
             return False
 
