@@ -512,6 +512,9 @@ class Guest(object):
         # virtio
         if virtio_channel_name is not None:
             self._generate_virtio_channel(devices, virtio_channel_name)
+            self.has_consolelog = True
+        else:
+            self.has_consolelog = False
         # boot disk
         bootDisk = oz.ozutil.lxml_subelement(devices, "disk", None, {'device':'disk', 'type':'file'})
         oz.ozutil.lxml_subelement(bootDisk, "target", None, {'dev':self.disk_dev, 'bus':self.disk_bus})
@@ -757,10 +760,12 @@ class Guest(object):
         self.last_network_activity = 0
         self.inactivity_countdown = self.inactivity_timeout
         self.saved_exception = None
-        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.sock.connect(self.consolelog)
-        self.poller = select.poll()
-        self.poller.register(self.sock, select.POLLERR|select.POLLHUP|select.POLLNVAL|select.POLLIN|select.POLLPRI)
+        if self.has_consolelog:
+            self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self.sock.connect(self.consolelog)
+            self.poller = select.poll()
+            self.poller.register(self.sock, select.POLLERR|select.POLLHUP|select.POLLNVAL|select.POLLIN|select.POLLPRI)
+
         def _finish_cb(self):
             '''
             A callback for _looper to deal with waiting for a guest to finish installing.
@@ -801,15 +806,16 @@ class Guest(object):
             self.last_disk_activity = total_disk_req
             self.last_network_activity = total_net_bytes
 
-            socketlist = self.poller.poll(1000)
-            for fd,event in socketlist:
-                if event & (select.POLLIN | select.POLLPRI):
-                    data = self.sock.recv(65536)
-                    if data:
-                        self.log.debug(data)
-                # We are ignoring all other events and the case where we get
-                # no data from the recv() call.  This is OK, since this is a
-                # debug thing anyway.
+            if self.has_consolelog:
+                socketlist = self.poller.poll(1000)
+                for fd,event in socketlist:
+                    if event & (select.POLLIN | select.POLLPRI):
+                        data = self.sock.recv(65536)
+                        if data:
+                            self.log.debug(data)
+                    # We are ignoring all other events and the case where we get
+                    # no data from the recv() call.  This is OK, since this is a
+                    # debug thing anyway.
 
             return False
 
