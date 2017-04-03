@@ -41,6 +41,7 @@ import fcntl
 import lxml.etree
 import monotonic
 import logging
+import socket
 
 def generate_full_auto_path(relative):
     """
@@ -1100,3 +1101,16 @@ def timed_loop(max_time, cb, msg, cb_arg=None):
             time.sleep(sleep_time)
 
     return False
+
+def get_free_port():
+    """
+    A function to find a free TCP port on the host.
+    """
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # Bind to port 0 which will use a free socket to listen to.
+    sock.bind(("", 0))
+    listen_port = sock.getsockname()[1]
+    # Close the socket to free it up for libvirt
+    sock.close()
+
+    return listen_port
