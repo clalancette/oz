@@ -20,7 +20,6 @@ Main class for guest installation
 """
 
 import uuid
-import libvirt
 import os
 import subprocess
 import shutil
@@ -30,17 +29,19 @@ try:
 except ImportError:
     import urlparse
 import stat
-import lxml.etree
 import logging
-import guestfs
 import socket
 import struct
 import tempfile
-import M2Crypto
 import base64
 import hashlib
 import errno
 import re
+
+import guestfs
+import libvirt
+import lxml.etree
+import M2Crypto
 
 import oz.GuestFSManager
 import oz.ozutil
@@ -625,6 +626,9 @@ class Guest(object):
             started = True
 
         def _vol_create_cb(args):
+            """
+            The callback used for waiting on volume creation to complete.
+            """
             pool = args[0]
             vol_xml = args[1]
 

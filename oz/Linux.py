@@ -20,8 +20,9 @@ Linux installation
 
 import re
 import time
-import libvirt
 import os
+
+import libvirt
 
 import oz.Guest
 import oz.OzException

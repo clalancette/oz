@@ -19,11 +19,12 @@
 Windows installation
 """
 
+import os
 import random
 import re
-import os
-import lxml.etree
 import shutil
+
+import lxml.etree
 
 import oz.Guest
 import oz.ozutil

@@ -19,11 +19,10 @@
 Template Description Language (TDL)
 """
 
-import lxml.etree
 import base64
+import os
 import re
 import tempfile
-import os
 try:
     import urllib.parse as urlparse
 except ImportError:
@@ -32,6 +31,8 @@ try:
     import StringIO
 except ImportError:
     from io import StringIO
+
+import lxml.etree
 
 import oz.ozutil
 import oz.OzException
