@@ -25,7 +25,6 @@ import subprocess
 import errno
 import stat
 import shutil
-import requests
 import gzip
 import time
 import select
@@ -38,10 +37,12 @@ import collections
 import ftplib
 import struct
 import fcntl
-import lxml.etree
-import monotonic
 import logging
 import socket
+
+import lxml.etree
+import monotonic
+import requests
 
 def generate_full_auto_path(relative):
     """
@@ -770,7 +771,7 @@ class LocalFileAdapter(requests.adapters.BaseAdapter):
         else:
             return 200, "OK"
 
-    def send(self, req, **kwargs):  # pylint: disable=unused-argument
+    def send(self, req, **kwargs):
         """Return the file specified by the given request
 
         @type req: C{PreparedRequest}
