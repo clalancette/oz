@@ -31,7 +31,7 @@ import oz.OzException
 
 class UbuntuGuest(oz.Linux.LinuxCDGuest):
     """
-    Class for Ubuntu 5.04, 5.10, 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, 11.04, 11.10, 12.04, 12.10, 13.04, 13.10, 14.04, 14.10, 15.04, 15.10, 16.04, and 16.10 installation.
+    Class for Ubuntu 5.04, 5.10, 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, 11.04, 11.10, 12.04, 12.10, 13.04, 13.10, 14.04, 14.10, 15.04, 15.10, 16.04, 16.10, and 17.04  installation.
     """
     def __init__(self, tdl, config, auto, output_disk, initrd, nicmodel,
                  diskbus, macaddress):
@@ -177,7 +177,7 @@ PROMPT 0
                                            "12.04.5", "13.04", "13.10", "14.04",
                                            "14.04.1", "14.04.2", "14.04.3", "14.04.4",
                                            "14.04.5", "14.10", "15.04", "15.10",
-                                           "16.04", "16.04.1", "16.10"] and self.tdl.arch == "x86_64":
+                                           "16.04", "16.04.1", "16.10", "17.04"] and self.tdl.arch == "x86_64":
                         kernelname += ".efi"
                     f.write("  kernel " + kernelname + "\n")
                     f.write("  append file=/cdrom/preseed/customiso.seed boot=casper automatic-ubiquity noprompt keyboard-configuration/layoutcode=us initrd=/casper/" + self.casper_initrd + "\n")
@@ -713,7 +713,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
                       "12.04.3", "12.04.4", "12.04.5", "12.10", "13.04",
                       "13.10", "14.04", "14.04.1", "14.04.2", "14.04.3", "14.04.4",
                       "14.04.5", "14.10", "15.04", "15.10",
-                      "16.04", "16.04.1", "16.10"]:
+                      "16.04", "16.04.1", "16.10", "17.04"]:
         if netdev is None:
             netdev = 'virtio'
         if diskbus is None:
@@ -725,4 +725,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Ubuntu: 5.04, 5.10, 6.06[.1,.2], 6.10, 7.04, 7.10, 8.04[.1,.2,.3,.4], 8.10, 9.04, 9.10, 10.04[.1,.2,.3], 10.10, 11.04, 11.10, 12.04[.1,.2,.3,.4,.5], 12.10, 13.04, 13.10, 14.04[.1,.2,.3,.4,.5], 14.10, 15.04, 15.10, 16.04[.1], 16.10"
+    return "Ubuntu: 5.04, 5.10, 6.06[.1,.2], 6.10, 7.04, 7.10, 8.04[.1,.2,.3,.4], 8.10, 9.04, 9.10, 10.04[.1,.2,.3], 10.10, 11.04, 11.10, 12.04[.1,.2,.3,.4,.5], 12.10, 13.04, 13.10, 14.04[.1,.2,.3,.4,.5], 14.10, 15.04, 15.10, 16.04[.1], 16.10, 17.04"
