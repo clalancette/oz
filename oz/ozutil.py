@@ -834,7 +834,8 @@ def http_download_file(url, fd, show_progress, logger):
     """
     with requests.Session() as requests_session:
         requests_session.mount('file://', LocalFileAdapter())
-        response = requests_session.get(url, stream=True, allow_redirects=True)
+        response = requests_session.get(url, stream=True, allow_redirects=True,
+                                        headers={'Accept-Encoding': ''})
         file_size = int(response.headers.get('Content-Length'))
         chunk_size = 10*1024*1024
         done = 0
