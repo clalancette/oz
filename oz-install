@@ -21,6 +21,7 @@ import sys
 import getopt
 import logging
 import time
+import ConfigParser
 
 import oz.TDL
 import oz.GuestFactory
@@ -141,6 +142,12 @@ if not generate_icicle and icicle_file is not None:
 
 try:
     config = oz.ozutil.parse_config(config_file)
+
+    if not timeout:
+        try:
+            timeout = config.getint("timeouts", "install")
+        except ConfigParser.NoOptionError:
+            timeout = None
 
     logging.basicConfig(level=loglevel, format=logformat)
 
