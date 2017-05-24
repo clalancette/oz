@@ -207,6 +207,41 @@
                       <ref name='bool'/>
                     </element>
                   </optional>
+                  <optional>
+                    <element name='distribution'>
+                      <text/>
+                    </element>
+                  </optional>
+                  <optional>
+                    <element name='components'>
+                      <text/>
+                    </element>
+                  </optional>
+                  <optional>
+                    <element name='trusted'>
+                      <ref name='bool'/>
+                    </element>
+                  </optional>
+                  <optional>
+                    <element name='source'>
+                      <ref name='bool'/>
+                    </element>
+                  </optional>
+                  <optional>
+                    <element name='arch'>
+                      <text/>
+                    </element>
+                  </optional>
+                  <optional>
+                    <element name='keyserver'>
+                      <text/>
+                    </element>
+                  </optional>
+                  <optional>
+                    <element name='key'>
+                      <text/>
+                    </element>
+                  </optional>
                 </interleave>
               </element>
             </zeroOrMore>
