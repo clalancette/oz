@@ -26,6 +26,7 @@ try:
 except ImportError:
     import urlparse
 
+import oz.GuestFSManager
 import oz.Linux
 import oz.ozutil
 import oz.OzException
@@ -39,10 +40,6 @@ class MageiaGuest(oz.Linux.LinuxCDGuest):
         oz.Linux.LinuxCDGuest.__init__(self, tdl, config, auto, output_disk,
                                        netdev, diskbus, True, True,
                                        macaddress)
-
-        self.mageia_arch = self.tdl.arch
-        if self.mageia_arch == "i386":
-            self.mageia_arch = "i586"
 
         self.sshd_was_active = False
         self.crond_was_active = False
@@ -80,18 +77,131 @@ class MageiaGuest(oz.Linux.LinuxCDGuest):
                                            "::AUTO_INST.CFG"])
 
         self.log.debug("Modifying isolinux.cfg")
-        if self.tdl.update in ["2", "3"]:
-            isolinuxcfg = os.path.join(self.iso_contents, self.mageia_arch, "isolinux", "isolinux.cfg")
-        else:
-            isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
+        if self.tdl.update == "2":
+            '''
+            Mageia 2 dual   - isolinux/32.cfg
+                              isolinux/64.cfg
+                              isolinux/alt0/32/vmlinuz
+                              isolinux/alt0/32/all.rdz
+                              isolinux/alt0/64/vmlinuz
+                              isolinux/alt0/64/all.rdz
+            Mageia 2 x86_64 - x86_64/isolinux/isolinux.cfg
+                              x86_64/isolinux/alt0/vmlinuz
+                              x86_64/isolinux/alt0/all.rdz
+            Mageia 2 i586   - i586/isolinux/isolinux.cfg
+                              i586/isolinux/vmlinuz
+                              i586/isolinux/all.rdz
+            '''
+            if os.path.exists(os.path.join(self.iso_contents, 'isolinux')):
+                if self.tdl.arch == "i386":
+                    mageia_arch = "32"
+                else:
+                    mageia_arch = "64"
 
-        if self.tdl.update in ["2", "3", "4"]:
-            kernel = "alt0/vmlinuz"
-            initrd = "alt0/all.rdz"
+                # This looks like a dual CD, so let's set things up that way.
+                isolinuxcfg = os.path.join(self.iso_contents, 'isolinux', mageia_arch + ".cfg")
+                self.isolinuxbin = os.path.join('isolinux', mageia_arch + ".bin")
+                kernel = "alt0/" + mageia_arch + "/vmlinuz"
+                initrd = "alt0/" + mageia_arch + "/all.rdz"
+            else:
+                # This looks like an i586 or x86_64 ISO, so set things up that way.
+                mageia_arch = self.tdl.arch
+                if self.tdl.arch == "i386":
+                    mageia_arch = "i586"
+                isolinuxcfg = os.path.join(self.iso_contents, mageia_arch, 'isolinux', 'isolinux.cfg')
+                self.isolinuxbin = os.path.join(mageia_arch, 'isolinux', 'isolinux.bin')
+                kernel = "alt0/vmlinuz"
+                initrd = "alt0/all.rdz"
             flags = "ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom"
-        elif self.tdl.update in ["4.1", "5"]:
-            kernel = "%s/vmlinuz" % (self.mageia_arch)
-            initrd = "%s/all.rdz" % (self.mageia_arch)
+        elif self.tdl.update == "3":
+            '''
+            Mageia 3 dual   - syslinux/32.cfg
+                              syslinux/64.cfg
+                              syslinux/alt0/32/vmlinuz
+                              syslinux/alt0/32/all.rdz
+                              syslinux/alt0/64/vmlinuz
+                              syslinux/alt0/64/all.rdz
+            Mageia 3 x86_64 - x86_64/isolinux/isolinux.cfg
+                              x86_64/isolinux/alt0/vmlinuz
+                              x86_64/isolinux/alt0/all.rdz
+            Mageia 3 i586   - i586/isolinux/isolinux.cfg
+                              i586/isolinux/alt0/vmlinuz
+                              i586/isolinux/alt0/all.rdz
+            '''
+            if os.path.exists(os.path.join(self.iso_contents, 'syslinux')):
+                if self.tdl.arch == "i386":
+                    mageia_arch = "32"
+                else:
+                    mageia_arch = "64"
+                isolinuxcfg = os.path.join(self.iso_contents, 'syslinux', mageia_arch + ".cfg")
+                self.isolinuxbin = os.path.join('syslinux', mageia_arch + ".bin")
+                kernel = "alt0/" + mageia_arch + "/vmlinuz"
+                initrd = "alt0/" + mageia_arch + "/all.rdz"
+            else:
+                mageia_arch = self.tdl.arch
+                if self.tdl.arch == "i386":
+                    mageia_arch = "i586"
+                isolinuxcfg = os.path.join(self.iso_contents, mageia_arch, 'isolinux', 'isolinux.cfg')
+                self.isolinuxbin = os.path.join(mageia_arch, 'isolinux', 'isolinux.bin')
+                kernel = "alt0/vmlinuz"
+                initrd = "alt0/all.rdz"
+            flags = "ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom"
+        elif self.tdl.update in ["4", "4.1", "5"]:
+            '''
+            Mageia 4 dual     - isolinux/i586.cfg
+                                isolinux/x86_64.cfg
+                                isolinux/i586/vmlinuz
+                                isolinux/i586/all.rdz
+                                isolinux/x86_64/vmlinuz
+                                isolinux/x86_64/all.rdz
+            Mageia 4 x86_64   - isolinux/isolinux.cfg
+                                isolinux/x86_64/vmlinuz
+                                isolinux/x86_64/all.rdz
+            Mageia 4 i586     - isolinux/isolinux.cfg
+                                isolinux/i586/vmlinuz
+                                isolinuz/i586/all.rdz
+            Mageia 4.1 dual   - isolinux/i586.cfg
+                                isolinux/x86_64.cfg
+                                isolinux/i586/vmlinuz
+                                isolinux/i586/all.rdz
+                                isolinux/x86_64/vmlinuz
+                                isolinux/x86_64/all.rdz
+            Mageia 4.1 x86_64 - isolinux/isolinux.cfg
+                                isolinux/x86_64/vmlinuz
+                                isolinux/x86_64/all.rdz
+            Mageia 4.1 i586 -   isolinux/isolinux.cfg
+                                isolinux/i586/vmlinuz
+                                isolinux/i586/all.rdz
+            Mageia 5 dual     - isolinux/i586.cfg
+                                isolinux/x86_64.cfg
+                                isolinux/i586/vmlinuz
+                                isolinux/i586/all.rdz
+                                isolinux/x86_64/vmlinuz
+                                isolinux/x86_64/all.rdz
+            Mageia 5 x86_64   - isolinux/isolinux.cfg
+                                isolinux/x86_64/vmlinuz
+                                isolinux/x86_64/all.rdz
+            Mageia 5 i586 -     isolinux/isolinux.cfg
+                                isolinux/i586/vmlinuz
+                                isolinux/i586/all.rdz
+            '''
+            # Starting with Mageia 4, things are a lot more regular.  The
+            # directory always starts with isolinux.  If it is a dual ISO, then
+            # there is an i586.cfg and x86_64.cfg describing how to boot each
+            # of them.  Otherwise, there is just an isolinux.cfg.  The kernel
+            # and initrd are always in the same place.
+            mageia_arch = self.tdl.arch
+            if self.tdl.arch == "i386":
+                mageia_arch = "i586"
+            if os.path.exists(os.path.join(self.iso_contents, 'isolinux', 'i586.cfg')):
+                # A dual, so use the correct cfg
+                isolinuxcfg = os.path.join(self.iso_contents, 'isolinux', mageia_arch + ".cfg")
+                self.isolinuxbin = os.path.join('isolinux', mageia_arch + ".bin")
+            else:
+                isolinuxcfg = os.path.join(self.iso_contents, 'isolinux', 'isolinux.cfg')
+                self.isolinuxbin = os.path.join('isolinux', 'isolinux.bin')
+            kernel = mageia_arch + "/vmlinuz"
+            initrd = mageia_arch + "/all.rdz"
             if self.tdl.installtype == "url":
                 url = urlparse.urlparse(self.tdl.url)
                 flags = "automatic=method:%s,ser:%s,dir:%s,int:eth0,netw:dhcp" % (url.scheme, url.hostname, url.path)
@@ -114,19 +224,10 @@ label customiso
         """
         self.log.info("Generating new ISO")
 
-        isolinuxdir = ""
-        if self.tdl.update in ["2", "3", "4"]:
-            isolinuxdir = self.mageia_arch
-        elif self.tdl.update in ["4.1", "5"]:
-            isolinuxdir = ""
-
-        isolinuxbin = os.path.join(isolinuxdir, "isolinux/isolinux.bin")
-        isolinuxboot = os.path.join(isolinuxdir, "isolinux/boot.cat")
-
         oz.ozutil.subprocess_check_output(["genisoimage", "-r", "-V", "Custom",
                                            "-J", "-l", "-no-emul-boot",
-                                           "-b", isolinuxbin,
-                                           "-c", isolinuxboot,
+                                           "-b", self.isolinuxbin,
+                                           "-c", "boot.catalog",
                                            "-boot-load-size", "4",
                                            "-cache-inodes", "-boot-info-table",
                                            "-v", "-o", self.output_iso,
@@ -159,7 +260,7 @@ label customiso
         self.log.debug("Teardown step 1")
         # reset the authorized keys
         self.log.debug("Resetting authorized_keys")
-        self._guestfs_path_restore(g_handle, '/root/.ssh/authorized_keys')
+        g_handle.path_restore('/root/.ssh/authorized_keys')
 
     def _image_ssh_teardown_step_2(self, g_handle):
         """
@@ -168,7 +269,7 @@ label customiso
         self.log.debug("Teardown step 2")
         # remove custom sshd_config
         self.log.debug("Resetting sshd_config")
-        self._guestfs_path_restore(g_handle, '/etc/ssh/sshd_config')
+        g_handle.path_restore('/etc/ssh/sshd_config')
 
         # reset the service link
         self.log.debug("Resetting sshd service")
@@ -177,7 +278,7 @@ label customiso
                 g_handle.rm('/etc/systemd/system/multi-user.target.wants/sshd.service')
         else:
             startuplink = self._get_service_runlevel_link(g_handle, 'sshd')
-            self._guestfs_path_restore(g_handle, startuplink)
+            g_handle.path_restore(startuplink)
 
     def _image_ssh_teardown_step_3(self, g_handle):
         """
@@ -186,11 +287,11 @@ label customiso
         self.log.debug("Teardown step 3")
         # remove announce cronjob
         self.log.debug("Resetting announcement to host")
-        self._guestfs_remove_if_exists(g_handle, '/etc/cron.d/announce')
+        g_handle.remove_if_exists('/etc/cron.d/announce')
 
         # remove reportip
         self.log.debug("Removing reportip")
-        self._guestfs_remove_if_exists(g_handle, '/root/reportip')
+        g_handle.remove_if_exists('/root/reportip')
 
         # reset the service link
         self.log.debug("Resetting cron service")
@@ -200,7 +301,7 @@ label customiso
         else:
             runlevel = self.get_default_runlevel(g_handle)
             startuplink = '/etc/rc.d/rc' + runlevel + ".d/S06cron"
-            self._guestfs_path_restore(g_handle, startuplink)
+            g_handle.path_restore(startuplink)
 
     def _image_ssh_teardown_step_4(self, g_handle):
         """
@@ -213,7 +314,7 @@ label customiso
                   "/etc/ssh/ssh_host_rsa_key", "/etc/ssh/ssh_host_rsa_key.pub",
                   "/etc/ssh/ssh_host_ecdsa_key", "/etc/ssh/ssh_host_ecdsa_key.pub",
                   "/etc/ssh/ssh_host_key", "/etc/ssh/ssh_host_key.pub"]:
-            self._guestfs_remove_if_exists(g_handle, f)
+            g_handle.remove_if_exists(f)
 
         # Remove any lease files; this is so that subsequent boots don't try
         # to connect to a DHCP server that is on a totally different network
@@ -232,7 +333,8 @@ label customiso
         """
         self.log.info("Collection Teardown")
 
-        g_handle = self._guestfs_handle_setup(libvirt_xml)
+        g_handle = oz.GuestFSManager.GuestFSLibvirtFactory(libvirt_xml, self.libvirt_conn)
+        g_handle.mount_partitions()
 
         try:
             self._image_ssh_teardown_step_1(g_handle)
@@ -243,7 +345,7 @@ label customiso
 
             self._image_ssh_teardown_step_4(g_handle)
         finally:
-            self._guestfs_handle_cleanup(g_handle)
+            g_handle.cleanup()
             shutil.rmtree(self.icicle_tmp)
 
     def _image_ssh_setup_step_1(self, g_handle):
@@ -255,7 +357,7 @@ label customiso
         if not g_handle.exists('/root/.ssh'):
             g_handle.mkdir('/root/.ssh')
 
-        self._guestfs_path_backup(g_handle, '/root/.ssh/authorized_keys')
+        g_handle.path_backup('/root/.ssh/authorized_keys')
 
         self._generate_openssh_key(self.sshprivkey)
 
@@ -278,7 +380,7 @@ label customiso
                                '/etc/systemd/system/multi-user.target.wants/sshd.service')
         else:
             startuplink = self._get_service_runlevel_link(g_handle, 'sshd')
-            self._guestfs_path_backup(g_handle, startuplink)
+            g_handle.path_backup(startuplink)
             g_handle.ln_sf('/etc/init.d/sshd', startuplink)
 
         sshd_config_file = self.icicle_tmp + "/sshd_config"
@@ -296,7 +398,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL
 """)
 
         try:
-            self._guestfs_path_backup(g_handle, "/etc/ssh/sshd_config")
+            g_handle.path_backup("/etc/ssh/sshd_config")
             g_handle.upload(sshd_config_file, '/etc/ssh/sshd_config')
         finally:
             os.unlink(sshd_config_file)
@@ -348,7 +450,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
         else:
             runlevel = self.get_default_runlevel(g_handle)
             startuplink = '/etc/rc.d/rc' + runlevel + ".d/S06cron"
-            self._guestfs_path_backup(g_handle, startuplink)
+            g_handle.path_backup(startuplink)
             g_handle.ln_sf('/etc/init.d/cron', startuplink)
 
     def _collect_setup(self, libvirt_xml):
@@ -357,7 +459,8 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
         """
         self.log.info("Collection Setup")
 
-        g_handle = self._guestfs_handle_setup(libvirt_xml)
+        g_handle = oz.GuestFSManager.GuestFSLibvirtFactory(libvirt_xml, self.libvirt_conn)
+        g_handle.mount_partitions()
 
         # we have to do 3 things to make sure we can ssh into OpenSUSE:
         # 1)  Upload our ssh key
@@ -384,7 +487,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
                 raise
 
         finally:
-            self._guestfs_handle_cleanup(g_handle)
+            g_handle.cleanup()
 
     def do_icicle(self, guestaddr):
         """

@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012-2016  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2017  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -27,9 +27,9 @@ try:
 except ImportError:
     import ConfigParser as configparser
 import gzip
-import guestfs
 
 import oz.Guest
+import oz.GuestFSManager
 import oz.Linux
 import oz.ozutil
 import oz.OzException
@@ -80,6 +80,8 @@ Subsystem   sftp    /usr/libexec/openssh/sftp-server
         self.cmdline = "method=" + self.url + " ks=file:/ks.cfg"
         if self.tdl.kernel_param:
             self.cmdline += " " + self.tdl.kernel_param
+
+        self.virtio_channel_name = None
 
     def _generate_new_iso(self):
         """
@@ -166,7 +168,7 @@ label customiso
         self.log.debug("Teardown step 1")
         # reset the authorized keys
         self.log.debug("Resetting authorized_keys")
-        self._guestfs_path_restore(g_handle, '/root/.ssh')
+        g_handle.path_restore('/root/.ssh')
 
     def _image_ssh_teardown_step_2(self, g_handle):
         """
@@ -175,7 +177,7 @@ label customiso
         self.log.debug("Teardown step 2")
         # remove custom sshd_config
         self.log.debug("Resetting sshd_config")
-        self._guestfs_path_restore(g_handle, '/etc/ssh/sshd_config')
+        g_handle.path_restore('/etc/ssh/sshd_config')
 
         # reset the service link
         self.log.debug("Resetting sshd service")
@@ -184,7 +186,7 @@ label customiso
                 g_handle.rm('/etc/systemd/system/multi-user.target.wants/sshd.service')
         else:
             startuplink = self._get_service_runlevel_link(g_handle, 'sshd')
-            self._guestfs_path_restore(g_handle, startuplink)
+            g_handle.path_restore(startuplink)
 
     def _image_ssh_teardown_step_3(self, g_handle):
         """
@@ -193,7 +195,7 @@ label customiso
         self.log.debug("Teardown step 3")
         # reset iptables
         self.log.debug("Resetting iptables rules")
-        self._guestfs_path_restore(g_handle, '/etc/sysconfig/iptables')
+        g_handle.path_restore('/etc/sysconfig/iptables')
 
     def _image_ssh_teardown_step_4(self, g_handle):
         """
@@ -201,16 +203,15 @@ label customiso
         """
         self.log.debug("Teardown step 4")
         self.log.debug("Removing announcement to host")
-        self._guestfs_remove_if_exists(g_handle,
-                                       '/etc/NetworkManager/dispatcher.d/99-reportip')
+        g_handle.remove_if_exists('/etc/NetworkManager/dispatcher.d/99-reportip')
 
         # remove announce cronjob
         self.log.debug("Resetting announcement to host")
-        self._guestfs_remove_if_exists(g_handle, '/etc/cron.d/announce')
+        g_handle.remove_if_exists('/etc/cron.d/announce')
 
         # remove reportip
         self.log.debug("Removing reportip")
-        self._guestfs_remove_if_exists(g_handle, '/root/reportip')
+        g_handle.remove_if_exists('/root/reportip')
 
         # reset the service link
         self.log.debug("Resetting crond service")
@@ -219,14 +220,14 @@ label customiso
                 g_handle.rm('/etc/systemd/system/multi-user.target.wants/crond.service')
         else:
             startuplink = self._get_service_runlevel_link(g_handle, 'crond')
-            self._guestfs_path_restore(g_handle, startuplink)
+            g_handle.path_restore(startuplink)
 
     def _image_ssh_teardown_step_5(self, g_handle):
         """
         Fifth step to undo _image_ssh_setup (reset SELinux).
         """
         self.log.debug("Teardown step 5")
-        self._guestfs_path_restore(g_handle, "/etc/selinux/config")
+        g_handle.path_restore("/etc/selinux/config")
 
     def _image_ssh_teardown_step_6(self, g_handle):
         """
@@ -236,7 +237,7 @@ label customiso
         removes those keys.
         """
         for key in g_handle.glob_expand("/etc/ssh/*_key*"):
-            self._guestfs_remove_if_exists(g_handle, key)
+            g_handle.remove_if_exists(key)
 
         # Remove any lease files; this is so that subsequent boots don't try
         # to connect to a DHCP server that is on a totally different network
@@ -252,7 +253,8 @@ label customiso
         """
         self.log.info("Collection Teardown")
 
-        g_handle = self._guestfs_handle_setup(libvirt_xml)
+        g_handle = oz.GuestFSManager.GuestFSLibvirtFactory(libvirt_xml, self.libvirt_conn)
+        g_handle.mount_partitions()
 
         try:
             self._image_ssh_teardown_step_1(g_handle)
@@ -267,7 +269,7 @@ label customiso
 
             self._image_ssh_teardown_step_6(g_handle)
         finally:
-            self._guestfs_handle_cleanup(g_handle)
+            g_handle.cleanup()
             shutil.rmtree(self.icicle_tmp)
 
     def _image_ssh_setup_step_1(self, g_handle):
@@ -276,10 +278,10 @@ label customiso
         """
         # part 1; upload the keys
         self.log.debug("Step 1: Uploading ssh keys")
-        self._guestfs_path_backup(g_handle, '/root/.ssh')
+        g_handle.path_backup('/root/.ssh')
         g_handle.mkdir('/root/.ssh')
 
-        self._guestfs_path_backup(g_handle, '/root/.ssh/authorized_keys')
+        g_handle.path_backup('/root/.ssh/authorized_keys')
 
         self._generate_openssh_key(self.sshprivkey)
 
@@ -302,7 +304,7 @@ label customiso
                                '/etc/systemd/system/multi-user.target.wants/sshd.service')
         else:
             startuplink = self._get_service_runlevel_link(g_handle, 'sshd')
-            self._guestfs_path_backup(g_handle, startuplink)
+            g_handle.path_backup(startuplink)
             g_handle.ln_sf('/etc/init.d/sshd', startuplink)
 
         sshd_config_file = os.path.join(self.icicle_tmp, "sshd_config")
@@ -310,7 +312,7 @@ label customiso
             f.write(self.sshd_config)
 
         try:
-            self._guestfs_path_backup(g_handle, '/etc/ssh/sshd_config')
+            g_handle.path_backup('/etc/ssh/sshd_config')
             g_handle.upload(sshd_config_file, '/etc/ssh/sshd_config')
         finally:
             os.unlink(sshd_config_file)
@@ -321,7 +323,7 @@ label customiso
         """
         # part 3; open up iptables
         self.log.debug("Step 3: Open up the firewall")
-        self._guestfs_path_backup(g_handle, '/etc/sysconfig/iptables')
+        g_handle.path_backup('/etc/sysconfig/iptables')
 
     def _image_ssh_setup_step_4(self, g_handle):
         """
@@ -392,7 +394,7 @@ echo -n "!$ADDR,%s!" > %s
                                '/etc/systemd/system/multi-user.target.wants/crond.service')
         else:
             startuplink = self._get_service_runlevel_link(g_handle, 'crond')
-            self._guestfs_path_backup(g_handle, startuplink)
+            g_handle.path_backup(startuplink)
             g_handle.ln_sf('/etc/init.d/crond', startuplink)
 
     def _image_ssh_setup_step_5(self, g_handle):
@@ -402,7 +404,7 @@ echo -n "!$ADDR,%s!" > %s
         # part 5; set SELinux to permissive mode so we don't have to deal with
         # incorrect contexts
         self.log.debug("Step 5: Set SELinux to permissive mode")
-        self._guestfs_path_backup(g_handle, '/etc/selinux/config')
+        g_handle.path_backup('/etc/selinux/config')
 
         selinuxfile = self.icicle_tmp + "/selinux"
         with open(selinuxfile, 'w') as f:
@@ -420,7 +422,8 @@ echo -n "!$ADDR,%s!" > %s
         """
         self.log.info("Collection Setup")
 
-        g_handle = self._guestfs_handle_setup(libvirt_xml)
+        g_handle = oz.GuestFSManager.GuestFSLibvirtFactory(libvirt_xml, self.libvirt_conn)
+        g_handle.mount_partitions()
 
         # we have to do 5 things to make sure we can ssh into RHEL/Fedora:
         # 1)  Upload our ssh key
@@ -461,7 +464,7 @@ echo -n "!$ADDR,%s!" > %s
                 raise
 
         finally:
-            self._guestfs_handle_cleanup(g_handle)
+            g_handle.cleanup()
 
     def do_icicle(self, guestaddr):
         """
@@ -566,18 +569,10 @@ echo -n "!$ADDR,%s!" > %s
             outf.writelines(inf)
             inf.close()
 
-            g = guestfs.GuestFS()
-            g.add_drive_opts(ext2file, format='raw')
-            self.log.debug("Launching guestfs")
-            g.launch()
-
-            g.mount_options('', g.list_devices()[0], "/")
-
-            g.upload(kspath, "/ks.cfg")
-
-            g.sync()
-            g.umount_all()
-            g.kill_subprocess()
+            g_handle = oz.GuestFSManager.GuestFS(ext2file, 'raw')
+            g_handle.mount_partitions()
+            g_handle.upload(kspath, "/ks.cfg")
+            g_handle.cleanup()
 
             # kickstart is added, lets recompress it
             oz.ozutil.gzip_create(ext2file, self.initrdfname)
@@ -608,7 +603,7 @@ echo -n "!$ADDR,%s!" > %s
             # hard-coded path
             initrd = "images/pxeboot/initrd.img"
 
-        (fd, outdir) = self._open_locked_file(self.kernelcache)
+        (fd, outdir) = oz.ozutil.open_locked_file(self.kernelcache)
 
         try:
             self._get_original_media('/'.join([self.url.rstrip('/'),
@@ -620,7 +615,7 @@ echo -n "!$ADDR,%s!" > %s
         finally:
             os.close(fd)
 
-        (fd, outdir) = self._open_locked_file(self.initrdcache)
+        (fd, outdir) = oz.ozutil.open_locked_file(self.initrdcache)
 
         try:
             try:
@@ -704,7 +699,8 @@ echo -n "!$ADDR,%s!" > %s
         Method to run the operating system installation.
         """
         return self._do_install(timeout, force, 0, self.kernelfname,
-                                self.initrdfname, self.cmdline)
+                                self.initrdfname, self.cmdline, None,
+                                self.virtio_channel_name)
 
 class RedHatLinuxCDYumGuest(RedHatLinuxCDGuest):
     """
@@ -932,7 +928,7 @@ label customboot
                 return
 
         # name of the output file
-        (fd, outdir) = self._open_locked_file(self.orig_floppy)
+        (fd, outdir) = oz.ozutil.open_locked_file(self.orig_floppy)
 
         try:
             self._get_original_floppy(self.url + "/images/bootnet.img", fd,

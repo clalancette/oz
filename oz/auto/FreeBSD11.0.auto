@@ -1,0 +1,28 @@
+# Install rules.
+PARTITIONS="vtbd0 { auto freebsd-ufs / }"
+BSDINSTALL_DISTSITE="http://mirror.leaseweb.net/freebsd/releases/amd64/11.0-RELEASE/"
+DISTRIBUTIONS="kernel.txz base.txz"
+
+# Post script.
+#!/bin/sh
+hostname=$(openssl rand -hex 4)
+echo "ifconfig_vtnet0=DHCP" >> /etc/rc.conf
+echo "sshd_enable=YES" >> /etc/rc.conf
+echo "hostname=$hostname" >> /etc/rc.conf
+echo "#ROOTPW#" | pw mod user root -h 0
+
+# Clean up any old dhclient stuff from the preparation stage.
+rm -f /var/db/dhclient.leases.*
+
+# The machine check fails pretty hard on a hypervisor running on top of AMD
+# processors, so just disable it.
+echo "hw.mca.enabled=0" >> /boot/loader.conf.local
+
+# Log kernel (boot) messages to console, so that they can be captured.
+echo 'console="vidconsole,comconsole"' >> /boot/loader.conf.local
+sed -i.bak -E "s/^(ttyu0.+)dialup(.+)off(.+)secure/\1 vt100 on secure/" /etc/ttys
+rm -f /etc/ttys.bak
+
+# The installer wants to reboot to the newly installed system, though at this
+# point we'd rather send the image to the cloud :)
+shutdown -p now

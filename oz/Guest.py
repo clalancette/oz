@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012-2016  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2017  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,7 @@ Main class for guest installation
 """
 
 import uuid
-import libvirt
 import os
-import fcntl
 import subprocess
 import shutil
 import time
@@ -31,18 +29,21 @@ try:
 except ImportError:
     import urlparse
 import stat
-import lxml.etree
 import logging
-import guestfs
 import socket
 import struct
 import tempfile
-import M2Crypto
 import base64
 import hashlib
 import errno
 import re
 
+import guestfs
+import libvirt
+import lxml.etree
+import M2Crypto
+
+import oz.GuestFSManager
 import oz.ozutil
 import oz.OzException
 
@@ -236,12 +237,9 @@ class Guest(object):
         self.icicle_tmp = os.path.join(self.data_dir, "icicletmp",
                                        self.tdl.name)
 
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # Bind to port 0 which will use a free socket to listen to.
-        sock.bind(("", 0))
-        self.listen_port = sock.getsockname()[1]
-        # Close the socket to free it up for libvirt
-        sock.close()
+        self.listen_port = oz.ozutil.get_free_port()
+
+        self.console_listen_port = oz.ozutil.get_free_port()
 
         self.connect_to_libvirt()
 
@@ -293,6 +291,7 @@ class Guest(object):
         self.log.debug("nicmodel: %s, clockoffset: %s", self.nicmodel, self.clockoffset)
         self.log.debug("mousetype: %s, disk_bus: %s, disk_dev: %s", self.mousetype, self.disk_bus, self.disk_dev)
         self.log.debug("icicletmp: %s, listen_port: %d", self.icicle_tmp, self.listen_port)
+        self.log.debug("console_listen_port: %s", self.console_listen_port)
 
     def image_name(self):
         """
@@ -412,31 +411,24 @@ class Guest(object):
             self.path = path
             self.bus = bus
 
-    def lxml_subelement(self, root, name, text=None, attributes=None):
-        """
-        Method to add a new element to an LXML tree, optionally include text
-        and a dictionary of attributes.
-        """
-        tmp = lxml.etree.SubElement(root, name)
-        if text is not None:
-            tmp.text = text
-        if attributes is not None:
-            for k, v in attributes.items():
-                tmp.set(k, v)
-        return tmp
-
     def _generate_serial_xml(self, devices):
         """
         Method to generate the serial portion of the libvirt XML.
         """
-        serial = self.lxml_subelement(devices, "serial", None, {'type':'tcp'})
-        self.lxml_subelement(serial, "source", None,
-                             {'mode':'bind', 'host':'127.0.0.1', 'service':str(self.listen_port)})
-        self.lxml_subelement(serial, "protocol", None, {'type':'raw'})
-        self.lxml_subelement(serial, "target", None, {'port':'1'})
+        serial = oz.ozutil.lxml_subelement(devices, "serial", None, {'type':'tcp'})
+        oz.ozutil.lxml_subelement(serial, "source", None,
+                                  {'mode':'bind', 'host':'127.0.0.1', 'service':str(self.listen_port)})
+        oz.ozutil.lxml_subelement(serial, "protocol", None, {'type':'raw'})
+        oz.ozutil.lxml_subelement(serial, "target", None, {'port':'1'})
+
+    def _generate_virtio_channel(self, devices, name):
+        virtio = oz.ozutil.lxml_subelement(devices, "channel", None, {'type': 'tcp'})
+        oz.ozutil.lxml_subelement(virtio, "source", None,
+                                  {'mode':'bind', 'host':'127.0.0.1', 'service':str(self.console_listen_port)})
+        oz.ozutil.lxml_subelement(virtio, "target", None, {"type": "virtio", "name": name})
 
     def _generate_xml(self, bootdev, installdev, kernel=None, initrd=None,
-                      cmdline=None):
+                      cmdline=None, virtio_channel_name=None):
         """
         Method to generate libvirt XML useful for installation.
         """
@@ -445,78 +437,84 @@ class Guest(object):
         # top-level domain element
         domain = lxml.etree.Element("domain", type=self.libvirt_type)
         # name element
-        self.lxml_subelement(domain, "name", self.tdl.name)
+        oz.ozutil.lxml_subelement(domain, "name", self.tdl.name)
         # memory elements
-        self.lxml_subelement(domain, "memory", str(self.install_memory))
-        self.lxml_subelement(domain, "currentMemory", str(self.install_memory))
+        oz.ozutil.lxml_subelement(domain, "memory", str(self.install_memory))
+        oz.ozutil.lxml_subelement(domain, "currentMemory", str(self.install_memory))
         # uuid
-        self.lxml_subelement(domain, "uuid", str(self.uuid))
+        oz.ozutil.lxml_subelement(domain, "uuid", str(self.uuid))
         # clock offset
-        self.lxml_subelement(domain, "clock", None, {'offset':self.clockoffset})
+        oz.ozutil.lxml_subelement(domain, "clock", None, {'offset':self.clockoffset})
         # vcpu
-        self.lxml_subelement(domain, "vcpu", str(self.install_cpus))
+        oz.ozutil.lxml_subelement(domain, "vcpu", str(self.install_cpus))
         # features
-        features = self.lxml_subelement(domain, "features")
-        self.lxml_subelement(features, "acpi")
-        self.lxml_subelement(features, "apic")
-        self.lxml_subelement(features, "pae")
+        features = oz.ozutil.lxml_subelement(domain, "features")
+        oz.ozutil.lxml_subelement(features, "acpi")
+        oz.ozutil.lxml_subelement(features, "apic")
+        oz.ozutil.lxml_subelement(features, "pae")
         # CPU
         if self.tdl.arch in ["aarch64", "armv7l"] and self.libvirt_type == "kvm":
             # Possibly related to BZ 1171501 - need host passthrough for aarch64 and arm with kvm
-            cpu = self.lxml_subelement(domain, "cpu", None, {'mode': 'custom', 'match': 'exact'})
-            model = self.lxml_subelement(cpu, "model", "host", {'fallback': 'allow'})
+            cpu = oz.ozutil.lxml_subelement(domain, "cpu", None, {'mode': 'custom', 'match': 'exact'})
+            model = oz.ozutil.lxml_subelement(cpu, "model", "host", {'fallback': 'allow'})
         # os
-        osNode = self.lxml_subelement(domain, "os")
+        osNode = oz.ozutil.lxml_subelement(domain, "os")
         mods = None
         if self.tdl.arch in ["aarch64", "armv7l"]:
             mods = {'arch': self.tdl.arch, 'machine': 'virt'}
-        self.lxml_subelement(osNode, "type", "hvm", mods)
+        oz.ozutil.lxml_subelement(osNode, "type", "hvm", mods)
         if bootdev:
-            self.lxml_subelement(osNode, "boot", None, {'dev':bootdev})
+            oz.ozutil.lxml_subelement(osNode, "boot", None, {'dev':bootdev})
         if kernel:
-            self.lxml_subelement(osNode, "kernel", kernel)
+            oz.ozutil.lxml_subelement(osNode, "kernel", kernel)
         if initrd:
-            self.lxml_subelement(osNode, "initrd", initrd)
+            oz.ozutil.lxml_subelement(osNode, "initrd", initrd)
         if cmdline:
             if self.tdl.arch == "armv7l":
                 cmdline += " console=ttyAMA0"
-            self.lxml_subelement(osNode, "cmdline", cmdline)
+            oz.ozutil.lxml_subelement(osNode, "cmdline", cmdline)
         if self.tdl.arch == "aarch64":
-            loader,nvram = oz.ozutil.find_uefi_firmware(self.tdl.arch)
-            self.lxml_subelement(osNode, "loader", loader, {'readonly': 'yes', 'type': 'pflash'})
-            self.lxml_subelement(osNode, "nvram", None, {'template': nvram})
+            loader, nvram = oz.ozutil.find_uefi_firmware(self.tdl.arch)
+            oz.ozutil.lxml_subelement(osNode, "loader", loader, {'readonly': 'yes', 'type': 'pflash'})
+            oz.ozutil.lxml_subelement(osNode, "nvram", None, {'template': nvram})
         # poweroff, reboot, crash
-        self.lxml_subelement(domain, "on_poweroff", "destroy")
-        self.lxml_subelement(domain, "on_reboot", "destroy")
-        self.lxml_subelement(domain, "on_crash", "destroy")
+        oz.ozutil.lxml_subelement(domain, "on_poweroff", "destroy")
+        oz.ozutil.lxml_subelement(domain, "on_reboot", "destroy")
+        oz.ozutil.lxml_subelement(domain, "on_crash", "destroy")
         # devices
-        devices = self.lxml_subelement(domain, "devices")
+        devices = oz.ozutil.lxml_subelement(domain, "devices")
         # graphics
         if not self.tdl.arch in ["aarch64", "armv7l"]:
             # qemu for arm/aarch64 does not support a graphical console - amazingly
-            self.lxml_subelement(devices, "graphics", None, {'port':'-1', 'type':'vnc'})
+            oz.ozutil.lxml_subelement(devices, "graphics", None, {'port':'-1', 'type':'vnc'})
         # network
-        interface = self.lxml_subelement(devices, "interface", None, {'type':'bridge'})
-        self.lxml_subelement(interface, "source", None, {'bridge':self.bridge_name})
-        self.lxml_subelement(interface, "mac", None, {'address':self.macaddr})
-        self.lxml_subelement(interface, "model", None, {'type':self.nicmodel})
+        interface = oz.ozutil.lxml_subelement(devices, "interface", None, {'type':'bridge'})
+        oz.ozutil.lxml_subelement(interface, "source", None, {'bridge':self.bridge_name})
+        oz.ozutil.lxml_subelement(interface, "mac", None, {'address':self.macaddr})
+        oz.ozutil.lxml_subelement(interface, "model", None, {'type':self.nicmodel})
         # input
         mousedict = {'bus':self.mousetype}
         if self.mousetype == "ps2":
             mousedict['type'] = 'mouse'
         elif self.mousetype == "usb":
             mousedict['type'] = 'tablet'
-        self.lxml_subelement(devices, "input", None, mousedict)
+        oz.ozutil.lxml_subelement(devices, "input", None, mousedict)
         # serial console pseudo TTY
-        console = self.lxml_subelement(devices, "serial", None, {'type':'pty'})
-        self.lxml_subelement(console, "target", None, {'port':'0'})
+        console = oz.ozutil.lxml_subelement(devices, "serial", None, {'type':'pty'})
+        oz.ozutil.lxml_subelement(console, "target", None, {'port':'0'})
         # serial
         self._generate_serial_xml(devices)
+        # virtio
+        if virtio_channel_name is not None:
+            self._generate_virtio_channel(devices, virtio_channel_name)
+            self.has_consolelog = True
+        else:
+            self.has_consolelog = False
         # boot disk
-        bootDisk = self.lxml_subelement(devices, "disk", None, {'device':'disk', 'type':'file'})
-        self.lxml_subelement(bootDisk, "target", None, {'dev':self.disk_dev, 'bus':self.disk_bus})
-        self.lxml_subelement(bootDisk, "source", None, {'file':self.diskimage})
-        self.lxml_subelement(bootDisk, "driver", None, {'name':'qemu', 'type':self.image_type})
+        bootDisk = oz.ozutil.lxml_subelement(devices, "disk", None, {'device':'disk', 'type':'file'})
+        oz.ozutil.lxml_subelement(bootDisk, "target", None, {'dev':self.disk_dev, 'bus':self.disk_bus})
+        oz.ozutil.lxml_subelement(bootDisk, "source", None, {'file':self.diskimage})
+        oz.ozutil.lxml_subelement(bootDisk, "driver", None, {'name':'qemu', 'type':self.image_type})
         # install disk (if any)
         if not installdev:
             installdev_list = []
@@ -525,9 +523,9 @@ class Guest(object):
         else:
             installdev_list = installdev
         for installdev in installdev_list:
-            install = self.lxml_subelement(devices, "disk", None, {'type':'file', 'device':installdev.devicetype})
-            self.lxml_subelement(install, "source", None, {'file':installdev.path})
-            self.lxml_subelement(install, "target", None, {'dev':installdev.bus})
+            install = oz.ozutil.lxml_subelement(devices, "disk", None, {'type':'file', 'device':installdev.devicetype})
+            oz.ozutil.lxml_subelement(install, "source", None, {'file':installdev.path})
+            oz.ozutil.lxml_subelement(install, "target", None, {'dev':installdev.bus})
 
         xml = lxml.etree.tostring(domain, pretty_print=True)
         self.log.debug("Generated XML:\n%s", xml)
@@ -561,26 +559,26 @@ class Guest(object):
 
         # create the pool XML
         pool = lxml.etree.Element("pool", type="dir")
-        self.lxml_subelement(pool, "name", "oztempdir" + str(uuid.uuid4()))
-        target = self.lxml_subelement(pool, "target")
-        self.lxml_subelement(target, "path", directory)
+        oz.ozutil.lxml_subelement(pool, "name", "oztempdir" + str(uuid.uuid4()))
+        target = oz.ozutil.lxml_subelement(pool, "target")
+        oz.ozutil.lxml_subelement(target, "path", directory)
         pool_xml = lxml.etree.tostring(pool, pretty_print=True)
 
         # create the volume XML
         vol = lxml.etree.Element("volume", type="file")
-        self.lxml_subelement(vol, "name", filename)
-        self.lxml_subelement(vol, "allocation", "0")
-        target = self.lxml_subelement(vol, "target")
+        oz.ozutil.lxml_subelement(vol, "name", filename)
+        oz.ozutil.lxml_subelement(vol, "allocation", "0")
+        target = oz.ozutil.lxml_subelement(vol, "target")
         imgtype = self.image_type
         if backing_filename:
             # Only qcow2 supports image creation using a backing file
             imgtype = "qcow2"
-        self.lxml_subelement(target, "format", None, {"type":imgtype})
+        oz.ozutil.lxml_subelement(target, "format", None, {"type":imgtype})
 
         # FIXME: this makes the permissions insecure, but is needed since
         # libvirt launches guests as qemu:qemu
-        permissions = self.lxml_subelement(target, "permissions")
-        self.lxml_subelement(permissions, "mode", "0666")
+        permissions = oz.ozutil.lxml_subelement(target, "permissions")
+        oz.ozutil.lxml_subelement(permissions, "mode", "0666")
 
         capacity = size
         if backing_filename:
@@ -596,12 +594,12 @@ class Guest(object):
             else:
                 capacity = os.path.getsize(backing_filename) / 1024 / 1024 / 1024
                 backing_format = 'raw'
-            backing = self.lxml_subelement(vol, "backingStore")
-            self.lxml_subelement(backing, "path", backing_filename)
-            self.lxml_subelement(backing, "format", None,
-                                 {"type":backing_format})
+            backing = oz.ozutil.lxml_subelement(vol, "backingStore")
+            oz.ozutil.lxml_subelement(backing, "path", backing_filename)
+            oz.ozutil.lxml_subelement(backing, "format", None,
+                                      {"type":backing_format})
 
-        self.lxml_subelement(vol, "capacity", str(capacity), {'unit':'G'})
+        oz.ozutil.lxml_subelement(vol, "capacity", str(capacity), {'unit':'G'})
         vol_xml = lxml.etree.tostring(vol, pretty_print=True)
 
         # sigh.  Yes, this is racy; if a pool is defined during this loop, we
@@ -627,25 +625,30 @@ class Guest(object):
             pool = self.libvirt_conn.storagePoolCreateXML(pool_xml, 0)
             started = True
 
-        # libvirt will not allow us to do certain operations (like a refresh)
-        # while other operations are happening on a pool (like creating a new
-        # volume).  Since we don't exactly know which other processes might be
-        # running on the system, we take a system-wide Oz lock to ensure that
-        # these succeed.  In most cases these operations will be fast and thus
-        # the lock will not be held very long.
-        lockfile = os.path.join(self.icicle_tmp, "libvirt_pool_lockfile")
-        (refresh_lock,outdir) = self._open_locked_file(lockfile)
-        pool.refresh(0)
+        def _vol_create_cb(args):
+            """
+            The callback used for waiting on volume creation to complete.
+            """
+            pool = args[0]
+            vol_xml = args[1]
 
-        # this is a bit complicated, because of the cases that can
-        # happen.  The cases are:
-        #
-        # 1.  The volume did not exist.  In this case, storageVolLookupByName()
-        #     throws an exception, which we just ignore.  We then go on to
-        #     create the volume
-        # 2.  The volume did exist.  In this case, storageVolLookupByName()
-        #     returns a valid volume object, and then we delete the volume
-        try:
+            try:
+                pool.refresh(0)
+            except libvirt.libvirtError as e:
+                if e.get_error_code() == libvirt.VIR_ERR_INTERNAL_ERROR:
+                    # libvirt returns a VIR_ERR_INTERNAL_ERROR when the
+                    # refresh fails.
+                    return False
+                raise
+
+            # this is a bit complicated, because of the cases that can
+            # happen.  The cases are:
+            #
+            # 1.  The volume did not exist.  In this case, storageVolLookupByName()
+            #     throws an exception, which we just ignore.  We then go on to
+            #     create the volume
+            # 2.  The volume did exist.  In this case, storageVolLookupByName()
+            #     returns a valid volume object, and then we delete the volume
             try:
                 vol = pool.storageVolLookupByName(filename)
                 vol.delete(0)
@@ -653,29 +656,28 @@ class Guest(object):
                 if e.get_error_code() != libvirt.VIR_ERR_NO_STORAGE_VOL:
                     raise
 
-            try:
-                pool.createXML(vol_xml, 0)
-            except libvirt.libvirtError as e:
-                raise
+            pool.createXML(vol_xml, 0)
+
+            return True
+
+        try:
+            # libvirt will not allow us to do certain operations (like a refresh)
+            # while other operations are happening on a pool (like creating a new
+            # volume).  Since we don't exactly know which other processes might be
+            # running on the system, we retry for a while until our refresh and
+            # volume creation succeed.  In most cases these operations will be fast.
+            oz.ozutil.timed_loop(90, _vol_create_cb, "Waiting for volume to be created", (pool, vol_xml))
         finally:
             if started:
                 pool.destroy()
-
-        # remember to unlock the refresh lock
-        os.close(refresh_lock)
 
         if create_partition:
             if backing_filename:
                 self.log.warning("Asked to create partition against a copy-on-write snapshot - ignoring")
             else:
-                g_handle = guestfs.GuestFS()
-                g_handle.add_drive_opts(self.diskimage, format=self.image_type,
-                                        readonly=0)
-                g_handle.launch()
-                devices = g_handle.list_devices()
-                g_handle.part_init(devices[0], "msdos")
-                g_handle.part_add(devices[0], 'p', 1, 2)
-                g_handle.close()
+                g_handle = oz.GuestFSManager.GuestFS(self.diskimage, self.image_type)
+                g_handle.create_msdos_partition_table()
+                g_handle.cleanup()
 
     def generate_diskimage(self, size=10, force=False):
         """
@@ -740,47 +742,7 @@ class Guest(object):
 
         return total_disk_req, total_net_bytes
 
-    def _wait_for_clean_shutdown(self, libvirt_dom, saved_exception):
-        """
-        Internal method to wait for a clean shutdown of a libvirt domain that
-        is suspected to have cleanly quit.  If that domain did cleanly quit,
-        then we will hit a libvirt VIR_ERR_NO_DOMAIN exception on the very
-        first libvirt call and return with no delay.  If no exception, or some
-        other exception occurs, we wait up to 10 seconds for the domain to go
-        away.  If the domain is still there after 10 seconds then we raise the
-        original exception that was passed in.
-        """
-        count = 10
-        while count > 0:
-            self.log.debug("Waiting for %s to complete shutdown, %d/10", self.tdl.name, count)
-            try:
-                libvirt_dom.info()
-            except libvirt.libvirtError as e:
-                if e.get_error_code() == libvirt.VIR_ERR_NO_DOMAIN:
-                    break
-            count -= 1
-            time.sleep(1)
-
-        if count == 0:
-            # Got something other than the expected exception even after 10
-            # seconds - re-raise
-            if saved_exception:
-                self.log.debug("Libvirt Domain Info Failed:")
-                self.log.debug(" code is %d", saved_exception.get_error_code())
-                self.log.debug(" domain is %d", saved_exception.get_error_domain())
-                self.log.debug(" message is %s", saved_exception.get_error_message())
-                self.log.debug(" level is %d", saved_exception.get_error_level())
-                self.log.debug(" str1 is %s", saved_exception.get_str1())
-                self.log.debug(" str2 is %s", saved_exception.get_str2())
-                self.log.debug(" str3 is %s", saved_exception.get_str3())
-                self.log.debug(" int1 is %d", saved_exception.get_int1())
-                self.log.debug(" int2 is %d", saved_exception.get_int2())
-                raise saved_exception
-            else:
-                # the passed in exception was None, just raise a generic error
-                raise oz.OzException.OzException("Unknown libvirt error")
-
-    def _wait_for_install_finish(self, libvirt_dom, count):
+    def _wait_for_install_finish(self, xml, max_time):
         """
         Method to wait for an installation to finish.  This will wait around
         until either the VM has gone away (at which point it is assumed the
@@ -788,23 +750,32 @@ class Guest(object):
         point it is assumed the install failed and raise an exception).
         """
 
+        libvirt_dom = self.libvirt_conn.createXML(xml, 0)
+
         disks, interfaces = self._get_disks_and_interfaces(libvirt_dom.XMLDesc(0))
 
-        last_disk_activity = 0
-        last_network_activity = 0
-        inactivity_countdown = self.inactivity_timeout
-        origcount = count
-        saved_exception = None
-        while count > 0 and inactivity_countdown > 0:
-            if count % 10 == 0:
-                self.log.debug("Waiting for %s to finish installing, %d/%d", self.tdl.name, count, origcount)
+        self.last_disk_activity = 0
+        self.last_network_activity = 0
+        self.inactivity_countdown = self.inactivity_timeout
+        self.saved_exception = None
+        if self.has_consolelog:
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.sock.settimeout(1)
+            self.sock.connect(('127.0.0.1', self.console_listen_port))
+
+        def _finish_cb(self):
+            '''
+            A callback for _looper to deal with waiting for a guest to finish installing.
+            '''
+            if self.inactivity_countdown <= 0:
+                return True
             try:
                 total_disk_req, total_net_bytes = self._get_disk_and_net_activity(libvirt_dom, disks, interfaces)
             except libvirt.libvirtError as e:
                 # we save the exception here because we want to raise it later
                 # if this was a "real" exception
-                saved_exception = e
-                break
+                self.saved_exception = e
+                return True
 
             # rd_req and wr_req are the *total* number of disk read requests and
             # write requests ever made for this domain.  Similarly rd_bytes and
@@ -821,33 +792,62 @@ class Guest(object):
             # made, however, to try to reduce false positives from things like
             # ARP requests
 
-            if (total_disk_req == last_disk_activity) and (total_net_bytes < (last_network_activity + 4096)):
+            if (total_disk_req == self.last_disk_activity) and (total_net_bytes < (self.last_network_activity + 4096)):
                 # if we saw no read or write requests since the last iteration,
                 # decrement our activity timer
-                inactivity_countdown -= 1
+                self.inactivity_countdown -= 1
             else:
                 # if we did see some activity, then we can reset the timer
-                inactivity_countdown = self.inactivity_timeout
+                self.inactivity_countdown = self.inactivity_timeout
 
-            last_disk_activity = total_disk_req
-            last_network_activity = total_net_bytes
-            count -= 1
-            time.sleep(1)
+            self.last_disk_activity = total_disk_req
+            self.last_network_activity = total_net_bytes
+
+            if self.has_consolelog:
+                try:
+                    # note that we have to build the data up here, since there
+                    # is no guarantee that we will get the whole write in one go
+                    data = self.sock.recv(65536)
+                    if data:
+                        self.log.debug(data)
+                except socket.timeout:
+                    # the socket times out after 1 second.  We can just fall
+                    # through to the below code because it is a noop.
+                    pass
+
+            return False
+
+        finished = oz.ozutil.timed_loop(max_time, _finish_cb, "Waiting for %s to finish installing" % (self.tdl.name), self)
 
         # We get here because of a libvirt exception, an absolute timeout, or
         # an I/O timeout; we sort this out below
-        if count == 0:
+        if not finished:
             # if we timed out, then let's make sure to take a screenshot.
             screenshot_text = self._capture_screenshot(libvirt_dom)
             raise oz.OzException.OzException("Timed out waiting for install to finish.  %s" % (screenshot_text))
-        elif inactivity_countdown == 0:
+        elif self.inactivity_countdown <= 0:
             # if we saw no disk or network activity in the countdown window,
             # we presume the install has hung.  Fail here
             screenshot_text = self._capture_screenshot(libvirt_dom)
             raise oz.OzException.OzException("No disk activity in %d seconds, failing.  %s" % (self.inactivity_timeout, screenshot_text))
 
         # We get here only if we got a libvirt exception
-        self._wait_for_clean_shutdown(libvirt_dom, saved_exception)
+        if not self._wait_for_guest_shutdown(libvirt_dom):
+            if self.saved_exception is not None:
+                self.log.debug("Libvirt Domain Info Failed:")
+                self.log.debug(" code is %d", self.saved_exception.get_error_code())
+                self.log.debug(" domain is %d", self.saved_exception.get_error_domain())
+                self.log.debug(" message is %s", self.saved_exception.get_error_message())
+                self.log.debug(" level is %d", self.saved_exception.get_error_level())
+                self.log.debug(" str1 is %s", self.saved_exception.get_str1())
+                self.log.debug(" str2 is %s", self.saved_exception.get_str2())
+                self.log.debug(" str3 is %s", self.saved_exception.get_str3())
+                self.log.debug(" int1 is %d", self.saved_exception.get_int1())
+                self.log.debug(" int2 is %d", self.saved_exception.get_int2())
+                raise self.saved_exception
+            else:
+                # the passed in exception was None, just raise a generic error
+                raise oz.OzException.OzException("Unknown libvirt error")
 
         self.log.info("Install of %s succeeded", self.tdl.name)
 
@@ -856,28 +856,26 @@ class Guest(object):
         Method to wait around for orderly shutdown of a running guest.  Returns
         True if the guest shutdown in the specified time, False otherwise.
         """
-        count = self.shutdown_timeout
-        origcount = count
-        saved_exception = None
-        while count > 0:
-            if count % 10 == 0:
-                self.log.debug("Waiting for %s to shutdown, %d/%d", self.tdl.name, count, origcount)
+
+        def _shutdown_cb(self):
+            '''
+            The _looper callback to wait for the guest to shutdown.
+            '''
             try:
                 libvirt_dom.info()
             except libvirt.libvirtError as e:
-                saved_exception = e
-                break
-            count -= 1
-            time.sleep(1)
+                if e.get_error_code() == libvirt.VIR_ERR_NO_DOMAIN:
+                    # Here, the guest really, truly went away cleanly.  Thus, we know this
+                    # loop has successfully completed, and we can return True.
+                    return True
 
-        # Timed Out
-        if count == 0:
+                # In all other cases, we got some kind of exception we didn't understand.
+                # Fall through to the False return, and if we don't eventually see the
+                # VIR_ERR_NO_DOMAIN, we'll return False to the caller.
+
             return False
 
-        # We get here only if we got a libvirt exception
-        self._wait_for_clean_shutdown(libvirt_dom, saved_exception)
-
-        return True
+        return oz.ozutil.timed_loop(self.shutdown_timeout, _shutdown_cb, "Waiting for %s to finish shutdown" % (self.tdl.name), self)
 
     def _get_csums(self, original_url, outdir, outputfd):
         """
@@ -901,7 +899,7 @@ class Guest(object):
         csumname = os.path.join(outdir,
                                 self.tdl.distro + self.tdl.update + self.tdl.arch + "-CHECKSUM")
 
-        (csumfd,outdir) = self._open_locked_file(csumname)
+        (csumfd, outdir) = oz.ozutil.open_locked_file(csumname)
 
         os.ftruncate(csumfd, 0)
 
@@ -941,7 +939,7 @@ class Guest(object):
         info = oz.ozutil.http_get_header(url)
 
         if 'HTTP-Code' not in info or info['HTTP-Code'] >= 400 or 'Content-Length' not in info or info['Content-Length'] < 0:
-            raise oz.OzException.OzException("Could not reach destination to fetch boot media")
+            raise oz.OzException.OzException("Could not reach %s to fetch boot media: %r" % (url, info))
 
         content_length = int(info['Content-Length'])
 
@@ -983,6 +981,15 @@ class Guest(object):
         """
         Method to capture a screenshot of the VM.
         """
+
+        # First check to ensure that we've got a graphics device that would even let
+        # us take a screenshot.
+        domxml = libvirt_dom.XMLDesc(0)
+        doc = lxml.etree.fromstring(domxml)
+        graphics = doc.xpath("/domain/devices/graphics")
+        if len(graphics) == 0:
+            return "No graphics device found, screenshot skipped"
+
         oz.ozutil.mkdir_p(self.screenshot_dir)
         # create a new stream
         st = libvirt_dom.connect().newStream(0)
@@ -1020,157 +1027,6 @@ class Guest(object):
             text = "Failed to take screenshot"
 
         return text
-
-    def _guestfs_handle_setup(self, libvirt_xml):
-        """
-        Method to setup a guestfs handle to the guest disks.
-        """
-        input_doc = lxml.etree.fromstring(libvirt_xml)
-        namenode = input_doc.xpath('/domain/name')
-        if len(namenode) != 1:
-            raise oz.OzException.OzException("invalid libvirt XML with no name")
-        input_name = namenode[0].text
-        disks = input_doc.xpath('/domain/devices/disk')
-        if len(disks) != 1:
-            self.log.warning("Oz given a libvirt domain with more than 1 disk; using the first one parsed")
-        source = disks[0].xpath('source')
-        if len(source) != 1:
-            raise oz.OzException.OzException("invalid <disk> entry without a source")
-        input_disk = source[0].get('file')
-        driver = disks[0].xpath('driver')
-        if len(driver) == 0:
-            input_disk_type = 'raw'
-        elif len(driver) == 1:
-            input_disk_type = driver[0].get('type')
-        else:
-            raise oz.OzException.OzException("invalid <disk> entry without a driver")
-
-        for domid in self.libvirt_conn.listDomainsID():
-            try:
-                doc = lxml.etree.fromstring(self.libvirt_conn.lookupByID(domid).XMLDesc(0))
-            except:
-                self.log.debug("Could not get XML for domain ID (%s) - it may have disappeared (continuing)", domid)
-                continue
-
-            namenode = doc.xpath('/domain/name')
-            if len(namenode) != 1:
-                # hm, odd, a domain without a name?
-                raise oz.OzException.OzException("Saw a domain without a name, something weird is going on")
-            if input_name == namenode[0].text:
-                raise oz.OzException.OzException("Cannot setup ICICLE generation on a running guest")
-            disks = doc.xpath('/domain/devices/disk')
-            if len(disks) < 1:
-                # odd, a domain without a disk, but don't worry about it
-                continue
-            for guestdisk in disks:
-                for source in guestdisk.xpath("source"):
-                    # FIXME: this will only work for files; we can make it work
-                    # for other things by following something like:
-                    # http://git.annexia.org/?p=libguestfs.git;a=blob;f=src/virt.c;h=2c6be3c6a2392ab8242d1f4cee9c0d1445844385;hb=HEAD#l169
-                    filename = str(source.get('file'))
-                    if filename == input_disk:
-                        raise oz.OzException.OzException("Cannot setup ICICLE generation on a running disk")
-
-
-        self.log.info("Setting up guestfs handle for %s", self.tdl.name)
-        g = guestfs.GuestFS()
-
-        self.log.debug("Adding disk image %s", input_disk)
-        # NOTE: we use "add_drive_opts" here so we can specify the type
-        # of the diskimage.  Otherwise it might be possible for an attacker
-        # to fool libguestfs with a specially-crafted diskimage that looks
-        # like a qcow2 disk (thanks to rjones for the tip)
-        g.add_drive_opts(input_disk, format=input_disk_type)
-
-        self.log.debug("Launching guestfs")
-        g.launch()
-
-        self.log.debug("Inspecting guest OS")
-        roots = g.inspect_os()
-
-        if len(roots) == 0:
-            raise oz.OzException.OzException("No operating systems found on the disk")
-
-        self.log.debug("Getting mountpoints")
-        for root in roots:
-            self.log.debug("Root device: %s", root)
-
-            # the problem here is that the list of mountpoints returned by
-            # inspect_get_mountpoints is in no particular order.  So if the
-            # diskimage contains /usr and /usr/local on different devices,
-            # but /usr/local happened to come first in the listing, the
-            # devices would get mapped improperly.  The clever solution here is
-            # to sort the mount paths by length; this will ensure that they
-            # are mounted in the right order.  Thanks to rjones for the hint,
-            # and the example code that comes from the libguestfs.org python
-            # example page.
-            mps = g.inspect_get_mountpoints(root)
-            def _compare(a, b):
-                """
-                Method to sort disks by length.
-                """
-                if len(a[0]) > len(b[0]):
-                    return 1
-                elif len(a[0]) == len(b[0]):
-                    return 0
-                else:
-                    return -1
-            mps.sort(_compare)
-            for mp_dev in mps:
-                try:
-                    g.mount_options('', mp_dev[1], mp_dev[0])
-                except:
-                    if mp_dev[0] == '/':
-                        # If we cannot mount root, we may as well give up
-                        raise
-                    else:
-                        # some custom guests may have fstab content with
-                        # "nofail" as a mount option.  For example, images
-                        # built for EC2 with ephemeral mappings.  These
-                        # fail at this point.  Allow things to continue.
-                        # Profound failures will trigger later on during
-                        # the process.
-                        self.log.warning("Unable to mount (%s) on (%s) - trying to continue", mp_dev[1], mp_dev[0])
-        return g
-
-    def _guestfs_remove_if_exists(self, g_handle, path):
-        """
-        Method to remove a file if it exists in the disk image.
-        """
-        if g_handle.exists(path):
-            g_handle.rm_rf(path)
-
-    def _guestfs_move_if_exists(self, g_handle, orig_path, replace_path):
-        """
-        Method to move a file if it exists in the disk image.
-        """
-        if g_handle.exists(orig_path):
-            g_handle.mv(orig_path, replace_path)
-
-    def _guestfs_path_backup(self, g_handle, orig):
-        """
-        Method to backup a file in the disk image.
-        """
-        self._guestfs_move_if_exists(g_handle, orig, orig + ".ozbackup")
-
-    def _guestfs_path_restore(self, g_handle, orig):
-        """
-        Method to restore a backup file in the disk image.
-        """
-        backup = orig + ".ozbackup"
-        self._guestfs_remove_if_exists(g_handle, orig)
-        self._guestfs_move_if_exists(g_handle, backup, orig)
-
-    def _guestfs_handle_cleanup(self, g_handle):
-        """
-        Method to cleanup a handle previously setup by __guestfs_handle_setup.
-        """
-        self.log.info("Cleaning up guestfs handle for %s", self.tdl.name)
-        self.log.debug("Syncing")
-        g_handle.sync()
-
-        self.log.debug("Unmounting all")
-        g_handle.umount_all()
 
     def _modify_libvirt_xml_for_serial(self, libvirt_xml):
         """
@@ -1246,69 +1102,70 @@ class Guest(object):
         """
         self.log.info("Waiting for guest %s to boot", self.tdl.name)
 
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         try:
-            sock.settimeout(1)
-            sock.connect(('127.0.0.1', self.listen_port))
+            self.sock.settimeout(1)
+            self.sock.connect(('127.0.0.1', self.listen_port))
 
-            addr = None
-            count = self.boot_timeout
-            data = ''
-            while count > 0:
-                do_sleep = True
-                if count % 10 == 0:
-                    self.log.debug("Waiting for guest %s to boot, %d/%d", self.tdl.name, count, self.boot_timeout)
+            self.addr = None
+            self.data = ''
+
+            def _boot_cb(self):
+                '''
+                The _looper callback to look for the guest to boot.
+                '''
                 try:
                     # note that we have to build the data up here, since there
                     # is no guarantee that we will get the whole write in one go
-                    data += sock.recv(100)
+                    self.data += self.sock.recv(100)
                 except socket.timeout:
                     # the socket times out after 1 second.  We can just fall
-                    # through to the below code because it is a noop, *except* that
-                    # we don't want to sleep.  Set the flag
-                    do_sleep = False
+                    # through to the below code because it is a noop.
+                    pass
 
                 # OK, we got data back from the socket.  Check to see if it is
                 # is what we expect; essentially, some up-front garbage,
                 # followed by a !<ip>,<uuid>!
                 # Exclude ! from the wildcard to avoid errors when receiving two
                 # announce messages in the same string
-                match = re.search("!([^!]*?,[^!]*?)!$", data)
+                match = re.search("!([^!]*?,[^!]*?)!$", self.data)
                 if match is not None:
                     if len(match.groups()) != 1:
                         raise oz.OzException.OzException("Guest checked in with no data")
                     split = match.group(1).split(',')
                     if len(split) != 2:
                         raise oz.OzException.OzException("Guest checked in with bogus data")
-                    addr = split[0]
+                    self.addr = split[0]
                     uuidstr = split[1]
                     try:
                         # use socket.inet_aton() to validate the IP address
-                        socket.inet_aton(addr)
+                        socket.inet_aton(self.addr)
                     except socket.error:
                         raise oz.OzException.OzException("Guest checked in with invalid IP address")
 
                     if uuidstr != str(self.uuid):
                         raise oz.OzException.OzException("Guest checked in with unknown UUID")
-                    break
+                    return True
 
                 # if the data we got didn't match, we need to continue waiting.
                 # before going to sleep, make sure that the domain is still
                 # around
                 libvirt_dom.info()
-                if do_sleep:
-                    time.sleep(1)
-                count -= 1
-        finally:
-            sock.close()
 
-        if addr is None:
+                return False
+
+            oz.ozutil.timed_loop(self.boot_timeout, _boot_cb, "Waiting for %s to finish boot" % (self.tdl.name), self)
+
+        finally:
+            self.sock.close()
+
+        if self.addr is None:
             raise oz.OzException.OzException("Timed out waiting for guest to boot")
 
-        self.log.debug("IP address of guest is %s", addr)
+        self.log.debug("IP address of guest is %s", self.addr)
 
-        return addr
+        return self.addr
 
     def _output_icicle_xml(self, lines, description, extra=None):
         """
@@ -1320,16 +1177,16 @@ class Guest(object):
         """
         icicle = lxml.etree.Element("icicle")
         if description is not None:
-            self.lxml_subelement(icicle, "description", description)
-        packages = self.lxml_subelement(icicle, "packages")
+            oz.ozutil.lxml_subelement(icicle, "description", description)
+        packages = oz.ozutil.lxml_subelement(icicle, "packages")
 
         for index, line in enumerate(lines):
             if line == "":
                 continue
-            package = self.lxml_subelement(packages, "package", None,
-                                           {'name':line})
+            package = oz.ozutil.lxml_subelement(packages, "package", None,
+                                                {'name':line})
             if extra is not None:
-                self.lxml_subelement(package, "extra", extra[index])
+                oz.ozutil.lxml_subelement(package, "extra", extra[index])
 
         return lxml.etree.tostring(icicle, pretty_print=True)
 
@@ -1416,26 +1273,6 @@ class Guest(object):
             with open(pubname, 'w') as f:
                 f.write(keystring)
             os.chmod(pubname, 0o644)
-
-    def _open_locked_file(self, filename):
-        """
-        Method to open and lock a file.  Returns a file descriptor referencing
-        the open and locked file.
-        """
-        outdir = os.path.dirname(filename)
-        oz.ozutil.mkdir_p(outdir)
-
-        fd = os.open(filename, os.O_RDWR|os.O_CREAT)
-
-        try:
-            self.log.debug("Attempting to get the lock for %s", filename)
-            fcntl.lockf(fd, fcntl.LOCK_EX)
-            self.log.debug("Got the lock for %s", filename)
-        except:
-            os.close(fd)
-            raise
-
-        return (fd, outdir)
 
 class CDGuest(Guest):
     """
@@ -1544,8 +1381,8 @@ class CDGuest(Guest):
                         # we can continue.
                         tar.wait()
                         if tar.returncode:
-                            self.log.debug('tar stdout: %s' % stdouttmp.read())
-                            self.log.debug('tar stderr: %s' % stderrtmp.read())
+                            self.log.debug('tar stdout: %s', stdouttmp.read())
+                            self.log.debug('tar stderr: %s', stderrtmp.read())
                             raise oz.OzException.OzException("Tar exited with an error")
 
                     finally:
@@ -1702,7 +1539,7 @@ class CDGuest(Guest):
 
     def _do_install(self, timeout=None, force=False, reboots=0,
                     kernelfname=None, ramdiskfname=None, cmdline=None,
-                    extrainstalldevs=None):
+                    extrainstalldevs=None, virtio_channel_name=None):
         """
         Internal method to actually run the installation.
         """
@@ -1727,14 +1564,16 @@ class CDGuest(Guest):
             if reboots_to_go == reboots:
                 if kernelfname and os.access(kernelfname, os.F_OK) and ramdiskfname and os.access(ramdiskfname, os.F_OK) and cmdline:
                     xml = self._generate_xml(None, None, kernelfname,
-                                             ramdiskfname, cmdline)
+                                             ramdiskfname, cmdline,
+                                             virtio_channel_name)
                 else:
-                    xml = self._generate_xml("cdrom", cddev)
+                    xml = self._generate_xml("cdrom", cddev, None, None, None,
+                                             virtio_channel_name)
             else:
-                xml = self._generate_xml("hd", cddev)
+                xml = self._generate_xml("hd", cddev, None, None, None,
+                                         virtio_channel_name)
 
-            dom = self.libvirt_conn.createXML(xml, 0)
-            self._wait_for_install_finish(dom, timeout)
+            self._wait_for_install_finish(xml, timeout)
 
             reboots_to_go -= 1
 
@@ -1843,7 +1682,7 @@ class CDGuest(Guest):
                 shutil.copyfile(self.modified_iso_cache, self.output_iso)
                 return
 
-        (fd, outdir) = self._open_locked_file(self.orig_iso)
+        (fd, outdir) = oz.ozutil.open_locked_file(self.orig_iso)
 
         try:
             self._get_original_iso(url, fd, outdir, force_download)
@@ -1962,9 +1801,7 @@ class FDGuest(Guest):
         if timeout is None:
             timeout = 1200
 
-        dom = self.libvirt_conn.createXML(self._generate_xml("fd", fddev),
-                                          0)
-        self._wait_for_install_finish(dom, timeout)
+        self._wait_for_install_finish(self._generate_xml("fd", fddev), timeout)
 
         if self.cache_jeos:
             self.log.info("Caching JEOS")

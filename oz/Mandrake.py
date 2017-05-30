@@ -93,6 +93,12 @@ label customiso
                                            self.iso_contents],
                                           printfn=self.log.debug)
 
+    def install(self, timeout=None, force=False):
+        internal_timeout = timeout
+        if internal_timeout is None and self.tdl.update == "9.0":
+            internal_timeout = 2500
+        return self._do_install(internal_timeout, force, 0)
+
 class Mandrake82Guest(oz.Guest.CDGuest):
     """
     Class for Mandrake 8.2 installation.
@@ -171,7 +177,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     if tdl.update in ["8.2"]:
         return Mandrake82Guest(tdl, config, auto, output_disk, netdev, diskbus,
                                macaddress)
-    if tdl.update in ["9.1", "9.2", "10.0", "10.1"]:
+    if tdl.update in ["9.0", "9.1", "9.2", "10.0", "10.1"]:
         return MandrakeGuest(tdl, config, auto, output_disk, netdev, diskbus,
                              macaddress)
 
@@ -179,4 +185,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Mandrake: 8.2, 9.1, 9.2, 10.0, 10.1"
+    return "Mandrake: 8.2, 9.0, 9.1, 9.2, 10.0, 10.1"
