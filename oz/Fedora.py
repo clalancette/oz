@@ -27,7 +27,7 @@ import oz.OzException
 
 class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
     """
-    Class for Fedora 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, and 25 installation.
+    Class for Fedora 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, and 26 installation.
     """
     def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,
                  brokenisomethod, output_disk=None, macaddress=None,
@@ -40,7 +40,7 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
         # Prior to Fedora-22, we use yum; on F-22 and later, we use dnf.
         # Express that preference here.
         use_yum = True
-        if tdl.update in ["22", "23", "24", "25"]:
+        if tdl.update in ["22", "23", "24", "25", "26"]:
             use_yum = False
         oz.RedHat.RedHatLinuxCDYumGuest.__init__(self, tdl, config, auto,
                                                  output_disk, nicmodel, diskbus,
@@ -53,7 +53,7 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
         self.haverepo = haverepo
         self.brokenisomethod = brokenisomethod
         if self.tdl.update in ["14", "15", "16", "17", "18", "19", "20", "21",
-                               "22", "23", "24", "25"]:
+                               "22", "23", "24", "25", "26"]:
             self.virtio_channel_name = 'org.fedoraproject.anaconda.log.0'
 
     def _modify_iso(self):
@@ -62,7 +62,7 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
         """
         self._copy_kickstart(os.path.join(self.iso_contents, "ks.cfg"))
 
-        if self.tdl.update in ["17", "18", "19", "20", "21", "22", "23", "24", "25"]:
+        if self.tdl.update in ["17", "18", "19", "20", "21", "22", "23", "24", "25", "26"]:
             initrdline = "  append initrd=initrd.img ks=cdrom:/dev/cdrom:/ks.cfg"
         else:
             initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
@@ -121,7 +121,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     # The newer_distros list is actually a list of distros that have similar
     # installation requirements.  Thus, even if the particular distro isn't
     # supported anymore, it should not be removed from the list.
-    newer_distros = ["19", "20", "21", "22", "23", "24", "25"]
+    newer_distros = ["19", "20", "21", "22", "23", "24", "25", "26"]
 
     if tdl.update == 'rawhide' or int(tdl.update) > int(newer_distros[-1]):
         if netdev is None:
@@ -163,4 +163,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Fedora: 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25"
+    return "Fedora: 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26"
