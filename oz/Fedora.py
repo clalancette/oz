@@ -25,35 +25,185 @@ import oz.ozutil
 import oz.RedHat
 import oz.OzException
 
+class FedoraConfiguration(object):
+    def __init__(self, has_virtio_channel, use_yum, use_dev_cdrom_device,
+                 createpart, directkernel, default_netdev, default_diskbus,
+                 brokenisomethod, haverepo):
+        self._has_virtio_channel = has_virtio_channel
+        self._use_yum = use_yum
+        self._use_dev_cdrom_device = use_dev_cdrom_device
+        self._createpart = createpart
+        self._directkernel = directkernel
+        self._default_netdev = default_netdev
+        self._default_diskbus = default_diskbus
+        self._brokenisomethod = brokenisomethod
+        self._haverepo = haverepo
+
+    @property
+    def has_virtio_channel(self):
+        return self._has_virtio_channel
+
+    @property
+    def use_yum(self):
+        return self._use_yum
+
+    @property
+    def use_dev_cdrom_device(self):
+        return self._use_dev_cdrom_device
+
+    @property
+    def createpart(self):
+        return self._createpart
+
+    @property
+    def directkernel(self):
+        return self._directkernel
+
+    @property
+    def default_netdev(self):
+        return self._default_netdev
+
+    @property
+    def default_diskbus(self):
+        return self._default_diskbus
+
+    @property
+    def brokenisomethod(self):
+        return self._brokenisomethod
+
+    @property
+    def haverepo(self):
+        return self._haverepo
+
+version_to_config = {
+    '26': FedoraConfiguration(has_virtio_channel=True, use_yum=False,
+                              use_dev_cdrom_device=True, createpart=False,
+                              directkernel="cpio", default_netdev='virtio',
+                              default_diskbus='virtio', brokenisomethod=False,
+                              haverepo=True),
+    '25': FedoraConfiguration(has_virtio_channel=True, use_yum=False,
+                              use_dev_cdrom_device=True, createpart=False,
+                              directkernel="cpio", default_netdev='virtio',
+                              default_diskbus='virtio', brokenisomethod=False,
+                              haverepo=True),
+    '24': FedoraConfiguration(has_virtio_channel=True, use_yum=False,
+                              use_dev_cdrom_device=True, createpart=False,
+                              directkernel="cpio", default_netdev='virtio',
+                              default_diskbus='virtio', brokenisomethod=False,
+                              haverepo=True),
+    '23': FedoraConfiguration(has_virtio_channel=True, use_yum=False,
+                              use_dev_cdrom_device=True, createpart=False,
+                              directkernel="cpio", default_netdev='virtio',
+                              default_diskbus='virtio', brokenisomethod=False,
+                              haverepo=True),
+    '22': FedoraConfiguration(has_virtio_channel=True, use_yum=False,
+                              use_dev_cdrom_device=True, createpart=False,
+                              directkernel="cpio", default_netdev='virtio',
+                              default_diskbus='virtio', brokenisomethod=False,
+                              haverepo=True),
+    '21': FedoraConfiguration(has_virtio_channel=True, use_yum=True,
+                              use_dev_cdrom_device=True, createpart=False,
+                              directkernel="cpio", default_netdev='virtio',
+                              default_diskbus='virtio', brokenisomethod=False,
+                              haverepo=True),
+    '20': FedoraConfiguration(has_virtio_channel=True, use_yum=True,
+                              use_dev_cdrom_device=True, createpart=False,
+                              directkernel="cpio", default_netdev='virtio',
+                              default_diskbus='virtio', brokenisomethod=False,
+                              haverepo=True),
+    '19': FedoraConfiguration(has_virtio_channel=True, use_yum=True,
+                              use_dev_cdrom_device=True, createpart=False,
+                              directkernel="cpio", default_netdev='virtio',
+                              default_diskbus='virtio', brokenisomethod=False,
+                              haverepo=True),
+    '18': FedoraConfiguration(has_virtio_channel=True, use_yum=True,
+                              use_dev_cdrom_device=True, createpart=False,
+                              directkernel="cpio", default_netdev='virtio',
+                              default_diskbus='virtio', brokenisomethod=True,
+                              haverepo=True),
+    '17': FedoraConfiguration(has_virtio_channel=True, use_yum=True,
+                              use_dev_cdrom_device=True, createpart=False,
+                              directkernel=None, default_netdev='virtio',
+                              default_diskbus='virtio', brokenisomethod=True,
+                              haverepo=True),
+    '16': FedoraConfiguration(has_virtio_channel=True, use_yum=True,
+                              use_dev_cdrom_device=False, createpart=False,
+                              directkernel=None, default_netdev='virtio',
+                              default_diskbus='virtio', brokenisomethod=True,
+                              haverepo=True),
+    '15': FedoraConfiguration(has_virtio_channel=True, use_yum=True,
+                              use_dev_cdrom_device=False, createpart=False,
+                              directkernel="cpio", default_netdev='virtio',
+                              default_diskbus='virtio', brokenisomethod=True,
+                              haverepo=True),
+    '14': FedoraConfiguration(has_virtio_channel=True, use_yum=True,
+                              use_dev_cdrom_device=False, createpart=False,
+                              directkernel="cpio", default_netdev='virtio',
+                              default_diskbus='virtio', brokenisomethod=True,
+                              haverepo=True),
+    '13': FedoraConfiguration(has_virtio_channel=False, use_yum=True,
+                              use_dev_cdrom_device=False, createpart=False,
+                              directkernel="cpio", default_netdev='virtio',
+                              default_diskbus='virtio', brokenisomethod=True,
+                              haverepo=True),
+    '12': FedoraConfiguration(has_virtio_channel=False, use_yum=True,
+                              use_dev_cdrom_device=False, createpart=True,
+                              directkernel="cpio", default_netdev='virtio',
+                              default_diskbus='virtio', brokenisomethod=True,
+                              haverepo=True),
+    '11': FedoraConfiguration(has_virtio_channel=False, use_yum=True,
+                              use_dev_cdrom_device=False, createpart=True,
+                              directkernel="cpio", default_netdev='virtio',
+                              default_diskbus='virtio', brokenisomethod=True,
+                              haverepo=True),
+    '10': FedoraConfiguration(has_virtio_channel=False, use_yum=True,
+                              use_dev_cdrom_device=False, createpart=False,
+                              directkernel="cpio", default_netdev='virtio',
+                              default_diskbus='virtio', brokenisomethod=True,
+                              haverepo=True),
+    '9': FedoraConfiguration(has_virtio_channel=False, use_yum=True,
+                             use_dev_cdrom_device=False, createpart=False,
+                             directkernel="cpio", default_netdev='virtio',
+                             default_diskbus='virtio', brokenisomethod=False,
+                             haverepo=True),
+    '8': FedoraConfiguration(has_virtio_channel=False, use_yum=True,
+                             use_dev_cdrom_device=False, createpart=False,
+                             directkernel="cpio", default_netdev=None,
+                             default_diskbus=None, brokenisomethod=False,
+                             haverepo=False),
+    '7': FedoraConfiguration(has_virtio_channel=False, use_yum=True,
+                             use_dev_cdrom_device=False, createpart=False,
+                             directkernel="cpio", default_netdev=None,
+                             default_diskbus=None, brokenisomethod=False,
+                             haverepo=False),
+}
+
 class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
     """
     Class for Fedora 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, and 26 installation.
     """
+    # Note that the 'brokenisomethod' and 'haverepo' parameters are completely
+    # ignored now; we leave it in place for backwards API compatibility.
     def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,
                  brokenisomethod, output_disk=None, macaddress=None,
                  assumed_update=None):
-        directkernel = "cpio"
-        if tdl.update in ["16", "17"]:
-            directkernel = None
+        self.config = version_to_config[tdl.update]
+        if nicmodel is None:
+            nicmodel = self.config.default_netdev
+        if diskbus is None:
+            diskbus = self.config.default_diskbus
         self.assumed_update = assumed_update
 
         # Prior to Fedora-22, we use yum; on F-22 and later, we use dnf.
-        # Express that preference here.
-        use_yum = True
-        if tdl.update in ["22", "23", "24", "25", "26"]:
-            use_yum = False
         oz.RedHat.RedHatLinuxCDYumGuest.__init__(self, tdl, config, auto,
                                                  output_disk, nicmodel, diskbus,
-                                                 True, True, directkernel,
-                                                 macaddress, use_yum)
+                                                 True, True, self.config.directkernel,
+                                                 macaddress, self.config.use_yum)
 
         if self.assumed_update is not None:
             self.log.warning("==== WARN: TDL contains Fedora update %s, which is newer than Oz knows about; pretending this is Fedora %s, but this may fail ====", tdl.update, assumed_update)
 
-        self.haverepo = haverepo
-        self.brokenisomethod = brokenisomethod
-        if self.tdl.update in ["14", "15", "16", "17", "18", "19", "20", "21",
-                               "22", "23", "24", "25", "26"]:
+        if self.config.has_virtio_channel:
             self.virtio_channel_name = 'org.fedoraproject.anaconda.log.0'
 
     def _modify_iso(self):
@@ -62,12 +212,12 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
         """
         self._copy_kickstart(os.path.join(self.iso_contents, "ks.cfg"))
 
-        if self.tdl.update in ["17", "18", "19", "20", "21", "22", "23", "24", "25", "26"]:
+        if self.config.use_dev_cdrom_device:
             initrdline = "  append initrd=initrd.img ks=cdrom:/dev/cdrom:/ks.cfg"
         else:
             initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
         if self.tdl.installtype == "url":
-            if self.haverepo:
+            if self.config.haverepo:
                 initrdline += " repo="
             else:
                 initrdline += " method="
@@ -75,7 +225,7 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
         else:
             # if the installtype is iso, then due to a bug in anaconda we leave
             # out the method completely
-            if not self.brokenisomethod:
+            if not self.config.brokenisomethod:
                 initrdline += " method=cdrom:/dev/cdrom"
             initrdline += "\n"
         self._modify_isolinux(initrdline)
@@ -90,16 +240,13 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
         cached JEOS exists.  See the oz-install man page for more
         information about JEOS caching.
         """
-        createpart = False
-        if self.tdl.update in ["11", "12"]:
-            # If given a blank diskimage, Fedora 11/12 stops very early in
-            # install with a message about losing all of your data on the
-            # drive (it differs between them).
-            #
-            # To avoid that message, just create a partition table that spans
-            # the entire disk
-            createpart = True
-        return self._internal_generate_diskimage(size, force, createpart)
+        # If given a blank diskimage, Fedora 11/12 stops very early in
+        # install with a message about losing all of your data on the
+        # drive (it differs between them).
+        #
+        # To avoid that message, just create a partition table that spans
+        # the entire disk
+        return self._internal_generate_diskimage(size, force, self.config.createpart)
 
     def get_auto_path(self):
         """
@@ -118,49 +265,17 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     Factory method for Fedora installs.
     """
 
-    # The newer_distros list is actually a list of distros that have similar
-    # installation requirements.  Thus, even if the particular distro isn't
-    # supported anymore, it should not be removed from the list.
-    newer_distros = ["19", "20", "21", "22", "23", "24", "25", "26"]
-
-    if tdl.update == 'rawhide' or int(tdl.update) > int(newer_distros[-1]):
-        if netdev is None:
-            netdev = 'virtio'
-        if diskbus is None:
-            diskbus = 'virtio'
+    newest = sorted(version_to_config.keys(), key=int)[-1]
+    if tdl.update == 'rawhide' or int(tdl.update) > newest:
         return FedoraGuest(tdl, config, auto, netdev, True, diskbus, False,
-                           output_disk, macaddress, newer_distros[-1])
+                           output_disk, macaddress, newest)
 
-    if tdl.update in newer_distros:
-        if netdev is None:
-            netdev = 'virtio'
-        if diskbus is None:
-            diskbus = 'virtio'
+    if tdl.update in version_to_config.keys():
         return FedoraGuest(tdl, config, auto, netdev, True, diskbus, False,
-                           output_disk, macaddress, None)
-
-    if tdl.update in ["10", "11", "12", "13", "14", "15", "16", "17", "18"]:
-        if netdev is None:
-            netdev = 'virtio'
-        if diskbus is None:
-            diskbus = 'virtio'
-        return FedoraGuest(tdl, config, auto, netdev, True, diskbus, True,
-                           output_disk, macaddress, None)
-
-    if tdl.update in ["9"]:
-        if netdev is None:
-            netdev = 'virtio'
-        if diskbus is None:
-            diskbus = 'virtio'
-        return FedoraGuest(tdl, config, auto, netdev, True, diskbus, False,
-                           output_disk, macaddress, None)
-
-    if tdl.update in ["7", "8"]:
-        return FedoraGuest(tdl, config, auto, netdev, False, diskbus, False,
                            output_disk, macaddress, None)
 
 def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Fedora: 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26"
+    return "Fedora: " + ", ".join(sorted(version_to_config.keys(), key=int))
