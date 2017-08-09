@@ -30,22 +30,94 @@ import oz.Linux
 import oz.ozutil
 import oz.OzException
 
+class OpenSUSEConfiguration(object):
+    def __init__(self, reboots, use_floppy_autoyast, extended_zypper_list,
+                 default_netdev, default_diskbus):
+        self._reboots = reboots
+        self._use_floppy_autoyast = use_floppy_autoyast
+        self._extended_zypper_list = extended_zypper_list
+        self._default_netdev = default_netdev
+        self._default_diskbus = default_diskbus
+
+    @property
+    def reboots(self):
+        return self._reboots
+
+    @property
+    def use_floppy_autoyast(self):
+        return self._use_floppy_autoyast
+
+    @property
+    def extended_zypper_list(self):
+        return self._extended_zypper_list
+
+    @property
+    def default_netdev(self):
+        return self._default_netdev
+
+    @property
+    def default_diskbus(self):
+        return self._default_diskbus
+
+version_to_config = {
+    "42.2": OpenSUSEConfiguration(reboots=1, use_floppy_autoyast=False,
+                                  extended_zypper_list=True, default_netdev='virtio',
+                                  default_diskbus='virtio'),
+    "42.1": OpenSUSEConfiguration(reboots=1, use_floppy_autoyast=False,
+                                  extended_zypper_list=True, default_netdev='virtio',
+                                  default_diskbus='virtio'),
+    "13.2": OpenSUSEConfiguration(reboots=1, use_floppy_autoyast=True,
+                                  extended_zypper_list=False, default_netdev='virtio',
+                                  default_diskbus='virtio'),
+    "13.1": OpenSUSEConfiguration(reboots=1, use_floppy_autoyast=False,
+                                  extended_zypper_list=False, default_netdev='virtio',
+                                  default_diskbus='virtio'),
+    "12.3": OpenSUSEConfiguration(reboots=1, use_floppy_autoyast=False,
+                                  extended_zypper_list=False, default_netdev='virtio',
+                                  default_diskbus='virtio'),
+    "12.2": OpenSUSEConfiguration(reboots=1, use_floppy_autoyast=False,
+                                  extended_zypper_list=False, default_netdev='virtio',
+                                  default_diskbus='virtio'),
+    "12.1": OpenSUSEConfiguration(reboots=1, use_floppy_autoyast=False,
+                                  extended_zypper_list=False, default_netdev='virtio',
+                                  default_diskbus='virtio'),
+    "11.4": OpenSUSEConfiguration(reboots=1, use_floppy_autoyast=False,
+                                  extended_zypper_list=False, default_netdev='virtio',
+                                  default_diskbus='virtio'),
+    "11.3": OpenSUSEConfiguration(reboots=1, use_floppy_autoyast=False,
+                                  extended_zypper_list=False, default_netdev='virtio',
+                                  default_diskbus='virtio'),
+    "11.2": OpenSUSEConfiguration(reboots=1, use_floppy_autoyast=False,
+                                  extended_zypper_list=False, default_netdev='virtio',
+                                  default_diskbus='virtio'),
+    "11.1": OpenSUSEConfiguration(reboots=1, use_floppy_autoyast=False,
+                                  extended_zypper_list=False, default_netdev='virtio',
+                                  default_diskbus='virtio'),
+    "11.0": OpenSUSEConfiguration(reboots=1, use_floppy_autoyast=False,
+                                  extended_zypper_list=False, default_netdev='virtio',
+                                  default_diskbus='virtio'),
+    "10.3": OpenSUSEConfiguration(reboots=0, use_floppy_autoyast=False,
+                                  extended_zypper_list=False, default_netdev=None,
+                                  default_diskbus=None),
+}
+
 class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
     """
     Class for OpenSUSE installation.
     """
     def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus,
                  macaddress):
+        self.config = version_to_config[tdl.update]
+        if netdev is None:
+            netdev = self.config.default_netdev
+        if diskbus is None:
+            diskbus = self.config.default_diskbus
         oz.Linux.LinuxCDGuest.__init__(self, tdl, config, auto, output_disk,
                                        nicmodel, diskbus, True, False,
                                        macaddress)
 
         self.crond_was_active = False
         self.sshd_was_active = False
-        self.reboots = 1
-        if self.tdl.update in ["10.3"]:
-            # for 10.3 we don't have a 2-stage install process so don't reboot
-            self.reboots = 0
 
     def _modify_iso(self):
         """
@@ -70,7 +142,7 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
         else:
             shutil.copy(self.auto, outname)
 
-        if self.tdl.update == "13.2":
+        if self.config.use_floppy_autoyast:
             oz.ozutil.subprocess_check_output(["/sbin/mkfs.msdos", "-C",
                                                self.output_floppy, "1440"])
             oz.ozutil.subprocess_check_output(["mcopy", "-n", "-o", "-i",
@@ -90,7 +162,7 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
                 lines[index] = "default customiso\n"
         lines.append("label customiso\n")
         lines.append("  kernel linux\n")
-        if self.tdl.update == "13.2":
+        if self.config.use_floppy_autoyast:
             # OpenSUSE 13.2 has an utterly broken autoyast that can't figure out
             # how to read the autoinst.xml from the CD.  Use a floppy instead.
             lines.append("  append initrd=initrd splash=silent autoyast=floppy:///autoinst.xml")
@@ -122,9 +194,9 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
         Method to run the operating system installation.
         """
         extrainstalldevs = None
-        if self.tdl.update == "13.2":
+        if self.config.use_floppy_autoyast:
             extrainstalldevs = [self._InstallDev("floppy", self.output_floppy, "fda")]
-        return self._do_install(timeout, force, self.reboots, None, None, None, extrainstalldevs)
+        return self._do_install(timeout, force, self.config.reboots, None, None, None, extrainstalldevs)
 
     def _image_ssh_teardown_step_1(self, g_handle):
         """
@@ -420,7 +492,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
                 split = line.split('|')
 
                 column = 7
-                if self.tdl.update in ["42.1", "42.2"]:
+                if self.config.extended_zypper_list:
                     # OpenSUSE Leap has the URI in the 8th column
                     column = 8
                 if re.match("^cd://", split[column].strip()):
@@ -444,15 +516,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for OpenSUSE installs.
     """
-    if tdl.update in ["10.3"]:
-        return OpenSUSEGuest(tdl, config, auto, output_disk, netdev, diskbus,
-                             macaddress)
-    if tdl.update in ["11.0", "11.1", "11.2", "11.3", "11.4", "12.1", "12.2",
-                      "12.3", "13.1", "13.2", "42.1", "42.2"]:
-        if diskbus is None:
-            diskbus = 'virtio'
-        if netdev is None:
-            netdev = 'virtio'
+    if tdl.update in version_to_config.keys():
         return OpenSUSEGuest(tdl, config, auto, output_disk, netdev, diskbus,
                              macaddress)
 
@@ -460,4 +524,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "OpenSUSE: 10.3, 11.0, 11.1, 11.2, 11.3, 11.4, 12.1, 12.2, 12.3, 13.1, 13.2, 42.1, 42.2"
+    return "OpenSUSE: " + ", ".join(sorted(version_to_config.keys()))
