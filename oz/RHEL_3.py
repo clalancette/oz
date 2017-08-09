@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012-2016  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2017  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,8 @@ import re
 import oz.ozutil
 import oz.RedHat
 import oz.OzException
+
+versions = ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9"]
 
 class RHEL3Guest(oz.RedHat.RedHatLinuxCDGuest):
     """
@@ -100,7 +102,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for RHEL-3 installs.
     """
-    if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9"]:
+    if tdl.update in versions:
         return RHEL3Guest(tdl, config, auto, output_disk, netdev, diskbus,
                           macaddress)
 
@@ -108,4 +110,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "RHEL/CentOS 3: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9"
+    return "RHEL/CentOS 3: " + ", ".join(versions)
