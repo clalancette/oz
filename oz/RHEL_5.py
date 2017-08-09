@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012-2016  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2017  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -26,12 +26,45 @@ import oz.ozutil
 import oz.RedHat
 import oz.OzException
 
+class RHEL5Configuration(object):
+    def __init__(self, default_netdev, default_diskbus):
+        self._default_netdev = default_netdev
+        self._default_diskbus = default_diskbus
+
+    @property
+    def default_netdev(self):
+        return self._default_netdev
+
+    @property
+    def default_diskbus(self):
+        return self._default_diskbus
+
+version_to_config = {
+    "U11": RHEL5Configuration(default_netdev='virtio', default_diskbus='virtio'),
+    "U10": RHEL5Configuration(default_netdev='virtio', default_diskbus='virtio'),
+    "U9": RHEL5Configuration(default_netdev='virtio', default_diskbus='virtio'),
+    "U8": RHEL5Configuration(default_netdev='virtio', default_diskbus='virtio'),
+    "U7": RHEL5Configuration(default_netdev='virtio', default_diskbus='virtio'),
+    "U6": RHEL5Configuration(default_netdev='virtio', default_diskbus='virtio'),
+    "U5": RHEL5Configuration(default_netdev='virtio', default_diskbus='virtio'),
+    "U4": RHEL5Configuration(default_netdev='virtio', default_diskbus='virtio'),
+    "U3": RHEL5Configuration(default_netdev=None, default_diskbus=None),
+    "U2": RHEL5Configuration(default_netdev=None, default_diskbus=None),
+    "U1": RHEL5Configuration(default_netdev=None, default_diskbus=None),
+    "GOLD": RHEL5Configuration(default_netdev=None, default_diskbus=None),
+}
+
 class RHEL5Guest(oz.RedHat.RedHatLinuxCDYumGuest):
     """
     Class for RHEL-5 GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10 and U11 installation.
     """
     def __init__(self, tdl, config, auto, nicmodel, diskbus, output_disk=None,
                  macaddress=None):
+        self.config = version_to_config[tdl.update]
+        if nicmodel is None:
+            nicmodel = self.config.default_netdev
+        if diskbus is None:
+            diskbus = self.config.default_diskbus
         oz.RedHat.RedHatLinuxCDYumGuest.__init__(self, tdl, config, auto,
                                                  output_disk, nicmodel, diskbus,
                                                  True, True, "cpio", macaddress,
@@ -106,14 +139,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for RHEL-5 installs.
     """
-    if tdl.update in ["GOLD", "U1", "U2", "U3"]:
-        return RHEL5Guest(tdl, config, auto, netdev, diskbus, output_disk,
-                          macaddress)
-    if tdl.update in ["U4", "U5", "U6", "U7", "U8", "U9", "U10", "U11"]:
-        if netdev is None:
-            netdev = 'virtio'
-        if diskbus is None:
-            diskbus = 'virtio'
+    if tdl.update in version_to_config.keys():
         return RHEL5Guest(tdl, config, auto, netdev, diskbus, output_disk,
                           macaddress)
 
@@ -121,4 +147,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "RHEL/OL/CentOS/Scientific Linux{,CERN} 5: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10, U11"
+    return "RHEL/OL/CentOS/Scientific Linux{,CERN} 5: " + ", ".join(sorted(version_to_config.keys()))
