@@ -25,12 +25,38 @@ import oz.Guest
 import oz.ozutil
 import oz.OzException
 
+class FreeBSDConfiguration(object):
+    def __init__(self, default_netdev, default_diskbus):
+        self._default_netdev = default_netdev
+        self._default_diskbus = default_diskbus
+
+    @property
+    def default_netdev(self):
+        return self._default_netdev
+
+    @property
+    def default_diskbus(self):
+        return self._default_diskbus
+
+version_to_config = {
+    "11.0": FreeBSDConfiguration(default_netdev='virtio', default_diskbus='virtio'),
+    "10.3": FreeBSDConfiguration(default_netdev='virtio', default_diskbus='virtio'),
+    "10.2": FreeBSDConfiguration(default_netdev='virtio', default_diskbus='virtio'),
+    "10.1": FreeBSDConfiguration(default_netdev='virtio', default_diskbus='virtio'),
+    "10.0": FreeBSDConfiguration(default_netdev='virtio', default_diskbus='virtio'),
+}
+
 class FreeBSD(oz.Guest.CDGuest):
     """
     Class for FreeBSD 10.0, 10.1, 10.2, 10.3 and 11.0 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
+        self.config = version_to_config[tdl.update]
+        if netdev is None:
+            netdev = self.config.default_netdev
+        if diskbus is None:
+            diskbus = self.config.default_diskbus
         oz.Guest.CDGuest.__init__(self, tdl, config, auto, output_disk,
                                   netdev, "localtime", "usb", diskbus, True,
                                   False, macaddress)
@@ -88,11 +114,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for FreeBSD installs.
     """
-    if tdl.update in ["10.0", "10.1", "10.2", "10.3", "11.0",]:
-        if netdev is None:
-            netdev = 'virtio'
-        if diskbus is None:
-            diskbus = 'virtio'
+    if tdl.update in version_to_config.keys():
         return FreeBSD(tdl, config, auto, output_disk, netdev, diskbus,
                        macaddress)
 
@@ -100,4 +122,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "FreeBSD: 10, 11"
+    return "FreeBSD: " + ", ".join(sorted(version_to_config.keys()))
