@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012-2016  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2017  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -25,18 +25,33 @@ import oz.ozutil
 import oz.RedHat
 import oz.OzException
 
+class FedoraCoreConfiguration(object):
+    def __init__(self, initrdtype):
+        self._initrdtype = initrdtype
+
+    @property
+    def initrdtype(self):
+        return self._initrdtype
+
+version_to_config = {
+    '6': FedoraCoreConfiguration(initrdtype='cpio'),
+    '5': FedoraCoreConfiguration(initrdtype='cpio'),
+    '4': FedoraCoreConfiguration(initrdtype='cpio'),
+    '3': FedoraCoreConfiguration(initrdtype='ext2'),
+    '2': FedoraCoreConfiguration(initrdtype='ext2'),
+    '1': FedoraCoreConfiguration(initrdtype='ext2'),
+}
+
 class FedoraCoreGuest(oz.RedHat.RedHatLinuxCDGuest):
     """
     Class for Fedora Core 1, 2, 3, 4, 5, and 6 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
-        initrdtype = "cpio"
-        if tdl.update in ["1", "2", "3"]:
-            initrdtype = "ext2"
+        self.config = version_to_config[tdl.update]
         oz.RedHat.RedHatLinuxCDGuest.__init__(self, tdl, config, auto,
                                               output_disk, netdev, diskbus,
-                                              True, True, initrdtype,
+                                              True, True, self.config.initrdtype,
                                               macaddress)
 
         # FIXME: if doing an ISO install, we have to check that the ISO passed
@@ -66,7 +81,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for Fedora Core installs.
     """
-    if tdl.update in ["1", "2", "3", "4", "5", "6"]:
+    if tdl.update in version_to_config.keys():
         return FedoraCoreGuest(tdl, config, auto, output_disk, netdev, diskbus,
                                macaddress)
 
@@ -74,4 +89,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Fedora Core: 1, 2, 3, 4, 5, 6"
+    return "Fedora Core: " + ", ".join(sorted(version_to_config.keys()))
