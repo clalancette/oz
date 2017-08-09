@@ -1,5 +1,5 @@
 # Copyright (C) 2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012-2016  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2017  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -27,6 +27,21 @@ import oz.Guest
 import oz.ozutil
 import oz.OzException
 
+class MandrivaConfiguration(object):
+    def __init__(self, old_path):
+        self._old_path = old_path
+
+    @property
+    def old_path(self):
+        return self._old_path
+
+version_to_config = {
+    "2008.0": MandrivaConfiguration(old_path=False),
+    "2007.0": MandrivaConfiguration(old_path=False),
+    "2006.0": MandrivaConfiguration(old_path=True),
+    "2005": MandrivaConfiguration(old_path=True),
+}
+
 class MandrivaGuest(oz.Guest.CDGuest):
     """
     Class for Mandriva 2005, 2006.0, 2007.0, and 2008.0 installation.
@@ -40,6 +55,8 @@ class MandrivaGuest(oz.Guest.CDGuest):
         if self.mandriva_arch == "i386":
             self.mandriva_arch = "i586"
 
+        self.config = version_to_config[tdl.update]
+
     def _modify_iso(self):
         """
         Method to make the boot ISO auto-boot with appropriate parameters.
@@ -49,7 +66,7 @@ class MandrivaGuest(oz.Guest.CDGuest):
         self.log.debug("Copying cfg file")
 
         pathdir = self.iso_contents
-        if self.tdl.update in ["2007.0", "2008.0"]:
+        if not self.config.old_path:
             pathdir = os.path.join(self.iso_contents, self.mandriva_arch)
 
         outname = os.path.join(pathdir, "auto_inst.cfg")
@@ -89,7 +106,7 @@ label customiso
         self.log.info("Generating new ISO")
 
         isolinuxdir = ""
-        if self.tdl.update in ["2007.0", "2008.0"]:
+        if not self.config.old_path:
             isolinuxdir = self.mandriva_arch
 
         isolinuxbin = os.path.join(isolinuxdir, "isolinux/isolinux.bin")
@@ -110,7 +127,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for Mandriva installs.
     """
-    if tdl.update in ["2005", "2006.0", "2007.0", "2008.0"]:
+    if tdl.update in version_to_config.keys():
         return MandrivaGuest(tdl, config, auto, output_disk, netdev, diskbus,
                              macaddress)
 
@@ -118,4 +135,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Mandriva: 2005, 2006.0, 2007.0, 2008.0"
+    return "Mandriva: " + ", ".join(sorted(version_to_config.keys()))
