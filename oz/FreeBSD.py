@@ -93,8 +93,8 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
             netdev = 'virtio'
         if diskbus is None:
             diskbus = 'virtio'
-    return FreeBSD(tdl, config, auto, output_disk, netdev, diskbus,
-                   macaddress)
+        return FreeBSD(tdl, config, auto, output_disk, netdev, diskbus,
+                       macaddress)
 
 def get_supported_string():
     """
