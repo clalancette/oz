@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012-2016  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2017  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,8 @@ RHEL-2.1 installation
 import oz.RedHat
 import oz.OzException
 
+versions = ["GOLD", "U2", "U3", "U4", "U5", "U6"]
+
 class RHEL21Guest(oz.RedHat.RedHatFDGuest):
     """
     Class for RHEL-2.1 GOLD, U2, U3, U4, U5, and U6 installation.
@@ -42,7 +44,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for RHEL-2.1 installs.
     """
-    if tdl.update in ["GOLD", "U2", "U3", "U4", "U5", "U6"]:
+    if tdl.update in versions:
         if netdev is None:
             netdev = 'pcnet'
         return RHEL21Guest(tdl, config, auto, output_disk, netdev, diskbus,
@@ -52,4 +54,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "RHEL 2.1: GOLD, U2, U3, U4, U5, U6"
+    return "RHEL 2.1: " + ", ".join(versions)
