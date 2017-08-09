@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012-2016  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2017  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -26,12 +26,43 @@ import oz.ozutil
 import oz.RedHat
 import oz.OzException
 
+class RHEL4Configuration(object):
+    def __init__(self, default_netdev, default_diskbus):
+        self._default_netdev = default_netdev
+        self._default_diskbus = default_diskbus
+
+    @property
+    def default_netdev(self):
+        return self._default_netdev
+
+    @property
+    def default_diskbus(self):
+        return self._default_diskbus
+
+version_to_config = {
+    "U9": RHEL4Configuration(default_netdev='virtio', default_diskbus='virtio'),
+    "U8": RHEL4Configuration(default_netdev='virtio', default_diskbus='virtio'),
+    "U7": RHEL4Configuration(default_netdev=None, default_diskbus=None),
+    "U6": RHEL4Configuration(default_netdev=None, default_diskbus=None),
+    "U5": RHEL4Configuration(default_netdev=None, default_diskbus=None),
+    "U4": RHEL4Configuration(default_netdev=None, default_diskbus=None),
+    "U3": RHEL4Configuration(default_netdev=None, default_diskbus=None),
+    "U2": RHEL4Configuration(default_netdev=None, default_diskbus=None),
+    "U1": RHEL4Configuration(default_netdev=None, default_diskbus=None),
+    "GOLD": RHEL4Configuration(default_netdev=None, default_diskbus=None),
+}
+
 class RHEL4Guest(oz.RedHat.RedHatLinuxCDGuest):
     """
     Class for RHEL-4 GOLD, U1, U2, U3, U4, U5, U6, U7, U8, and U9 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus,
                  macaddress):
+        self.config = version_to_config[tdl.update]
+        if nicmodel is None:
+            nicmodel = self.config.default_netdev
+        if diskbus is None:
+            diskbus = self.config.default_diskbus
         # we set initrdtype to None because RHEL-4 spews errors using direct
         # kernel/initrd booting.  The odd part is that it actually works, but
         # it looks ugly so for now we will just always use the boot.iso method
@@ -97,14 +128,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for RHEL-4 installs.
     """
-    if tdl.update in ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7"]:
-        return RHEL4Guest(tdl, config, auto, output_disk, netdev, diskbus,
-                          macaddress)
-    if tdl.update in ["U8", "U9"]:
-        if netdev is None:
-            netdev = 'virtio'
-        if diskbus is None:
-            diskbus = 'virtio'
+    if tdl.update in version_to_config.keys():
         return RHEL4Guest(tdl, config, auto, output_disk, netdev, diskbus,
                           macaddress)
 
@@ -112,4 +136,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "RHEL/CentOS/Scientific Linux 4: GOLD, U1, U2, U3, U4, U5, U6, U7, U8, U9"
+    return "RHEL/CentOS/Scientific Linux 4: " + ", ".join(sorted(version_to_config.keys()))
