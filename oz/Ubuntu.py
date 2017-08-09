@@ -19,10 +19,10 @@
 Ubuntu installation
 """
 
-import shutil
-import re
-import os
 import gzip
+import os
+import re
+import shutil
 
 import oz.GuestFSManager
 import oz.Linux

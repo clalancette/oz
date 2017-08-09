@@ -19,24 +19,24 @@
 Main class for guest installation
 """
 
-import uuid
+import base64
+import errno
+import hashlib
+import logging
 import os
-import subprocess
+import re
 import shutil
+import socket
+import stat
+import struct
+import subprocess
+import tempfile
 import time
 try:
     import urllib.parse as urlparse
 except ImportError:
     import urlparse
-import stat
-import logging
-import socket
-import struct
-import tempfile
-import base64
-import hashlib
-import errno
-import re
+import uuid
 
 import guestfs
 import libvirt

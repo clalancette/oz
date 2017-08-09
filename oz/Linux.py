@@ -18,9 +18,9 @@
 Linux installation
 """
 
+import os
 import re
 import time
-import os
 
 import libvirt
 

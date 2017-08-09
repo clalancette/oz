@@ -19,14 +19,14 @@
 Common methods for installing and configuring RedHat-based guests
 """
 
-import re
-import os
-import shutil
 try:
     import configparser
 except ImportError:
     import ConfigParser as configparser
 import gzip
+import re
+import os
+import shutil
 
 import oz.Guest
 import oz.GuestFSManager

@@ -19,8 +19,8 @@
 RHEL-4 installation
 """
 
-import re
 import os
+import re
 
 import oz.ozutil
 import oz.RedHat

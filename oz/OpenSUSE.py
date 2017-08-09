@@ -19,9 +19,10 @@
 OpenSUSE installation
 """
 
+import os
 import re
 import shutil
-import os
+
 import lxml.etree
 
 import oz.GuestFSManager

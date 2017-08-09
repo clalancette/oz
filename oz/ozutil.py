@@ -19,26 +19,26 @@
 Miscellaneous utility functions.
 """
 
-import os
-import random
-import subprocess
-import errno
-import stat
-import shutil
-import gzip
-import time
-import select
-import urllib
+import collections
 try:
     import configparser
 except ImportError:
     import ConfigParser as configparser
-import collections
-import ftplib
-import struct
+import errno
 import fcntl
+import ftplib
+import gzip
 import logging
+import os
+import random
+import select
+import shutil
 import socket
+import stat
+import struct
+import subprocess
+import time
+import urllib
 
 import lxml.etree
 import monotonic

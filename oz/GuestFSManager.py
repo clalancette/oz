@@ -19,8 +19,9 @@ Helper class for managing a GuestFS connection
 """
 
 import logging
-import lxml.etree
+
 import guestfs
+import lxml.etree
 
 import oz.OzException
 

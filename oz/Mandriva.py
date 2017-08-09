@@ -19,9 +19,9 @@
 Mandriva installation
 """
 
-import shutil
 import os
 import re
+import shutil
 
 import oz.Guest
 import oz.ozutil

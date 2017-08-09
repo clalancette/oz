@@ -18,9 +18,9 @@
 Mageia installation
 """
 
-import shutil
 import os
 import re
+import shutil
 try:
     import urllib.parse as urlparse
 except ImportError:
