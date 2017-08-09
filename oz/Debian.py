@@ -78,8 +78,6 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
             extra = "auto=true "
         self.cmdline = "priority=critical " + extra + "locale=en_US"
 
-        self.reboots = 0
-
     def _copy_preseed(self, outname):
         """
         Method to copy and modify an Debian style preseed file.
@@ -163,7 +161,7 @@ label customiso
         """
         Method to run the operating system installation.
         """
-        return self._do_install(timeout, force, self.reboots, self.kernelfname,
+        return self._do_install(timeout, force, 0, self.kernelfname,
                                 self.initrdfname, self.cmdline)
 
     def _get_service_runlevel_link(self, g_handle, service):
