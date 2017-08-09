@@ -91,7 +91,7 @@ class Windows_v5(Windows):
             # If given a blank diskimage, windows 2000 stops very early in
             # install with a message:
             #
-            #  Setup has determined that your computer's starupt hard disk is
+            #  Setup has determined that your computer's startup hard disk is
             #  new or has been erased...
             #
             # To avoid that message, create a partition table that spans

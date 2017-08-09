@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2016  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2013-2017  Chris Lalancette <clalancette@gmail.com>
 # Copyright (C) 2013       Ian McLeod <imcleod@redhat.com>
 
 # This library is free software; you can redistribute it and/or
@@ -63,7 +63,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for RHEL-7 installs.
     """
-    if tdl.update.isdigit() or tdl.update == "Beta":
+    if tdl.update.isdigit():
         if netdev is None:
             netdev = 'virtio'
         if diskbus is None:
@@ -75,4 +75,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "RHEL 7: Beta, 0, 1, 2"
+    return "RHEL 7"

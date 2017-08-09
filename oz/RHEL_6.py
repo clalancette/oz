@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012-2016  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2017  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -72,4 +72,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "RHEL/OL/CentOS/Scientific Linux{,CERN} 6: 0, 1, 2, 3, 4, 5, 6, 7, 8"
+    return "RHEL/OL/CentOS/Scientific Linux{,CERN} 6"

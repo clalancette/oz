@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012-2016  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2017  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -98,9 +98,11 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     if tdl.update in ["9"]:
         return RHL9Guest(tdl, config, auto, output_disk, netdev, diskbus,
                          macaddress)
+
     if tdl.update in ["7.2", "7.3", "8"]:
         return RHL7xand8Guest(tdl, config, auto, output_disk, netdev, diskbus,
                               macaddress)
+
     if tdl.update in ["7.0", "7.1"]:
         if netdev is None:
             netdev = "ne2k_pci"
