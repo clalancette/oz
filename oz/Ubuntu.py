@@ -19,6 +19,7 @@
 Ubuntu installation
 """
 
+import collections
 import gzip
 import os
 import re
@@ -29,12 +30,528 @@ import oz.Linux
 import oz.ozutil
 import oz.OzException
 
+class UbuntuConfiguration(object):
+    def __init__(self, reboots, can_customize, can_install_from_desktop,
+                 ancient_isolinux, efi_extension, old_kbd_chooser,
+                 extra_long_timeout, default_netdev, default_diskbus,
+                 initrdname):
+        self._reboots = reboots
+        self._can_customize = can_customize
+        self._can_install_from_desktop = can_install_from_desktop
+        self._ancient_isolinux = ancient_isolinux
+        self._efi_extension = efi_extension
+        self._old_kbd_chooser = old_kbd_chooser
+        self._extra_long_timeout = extra_long_timeout
+        self._default_netdev = default_netdev
+        self._default_diskbus = default_diskbus
+        self._initrdname = initrdname
+
+    @property
+    def reboots(self):
+        return self._reboots
+
+    @property
+    def can_customize(self):
+        return self._can_customize
+
+    @property
+    def can_install_from_desktop(self):
+        return self._can_install_from_desktop
+
+    @property
+    def ancient_isolinux(self):
+        return self._ancient_isolinux
+
+    @property
+    def efi_extension(self):
+        return self._efi_extension
+
+    @property
+    def old_kbd_chooser(self):
+        return self._old_kbd_chooser
+
+    @property
+    def extra_long_timeout(self):
+        return self._extra_long_timeout
+
+    @property
+    def default_netdev(self):
+        return self._default_netdev
+
+    @property
+    def default_diskbus(self):
+        return self._default_diskbus
+
+    @property
+    def initrdname(self):
+        return self._initrdname
+
+version_to_config = collections.OrderedDict()
+
+version_to_config["17.04"] = UbuntuConfiguration(reboots=0,
+                                                 can_customize=True,
+                                                 can_install_from_desktop=True,
+                                                 ancient_isolinux=False,
+                                                 efi_extension=True,
+                                                 old_kbd_chooser=False,
+                                                 extra_long_timeout=False,
+                                                 default_netdev='virtio',
+                                                 default_diskbus='virtio',
+                                                 initrdname='initrd.lz')
+version_to_config["16.10"] = UbuntuConfiguration(reboots=0,
+                                                 can_customize=True,
+                                                 can_install_from_desktop=True,
+                                                 ancient_isolinux=False,
+                                                 efi_extension=True,
+                                                 old_kbd_chooser=False,
+                                                 extra_long_timeout=False,
+                                                 default_netdev='virtio',
+                                                 default_diskbus='virtio',
+                                                 initrdname='initrd.lz')
+version_to_config["16.04.1"] = UbuntuConfiguration(reboots=0,
+                                                   can_customize=True,
+                                                   can_install_from_desktop=True,
+                                                   ancient_isolinux=False,
+                                                   efi_extension=True,
+                                                   old_kbd_chooser=False,
+                                                   extra_long_timeout=False,
+                                                   default_netdev='virtio',
+                                                   default_diskbus='virtio',
+                                                   initrdname='initrd.lz')
+version_to_config["16.04"] = UbuntuConfiguration(reboots=0,
+                                                 can_customize=True,
+                                                 can_install_from_desktop=True,
+                                                 ancient_isolinux=False,
+                                                 efi_extension=True,
+                                                 old_kbd_chooser=False,
+                                                 extra_long_timeout=False,
+                                                 default_netdev='virtio',
+                                                 default_diskbus='virtio',
+                                                 initrdname='initrd.lz')
+version_to_config["15.10"] = UbuntuConfiguration(reboots=0,
+                                                 can_customize=True,
+                                                 can_install_from_desktop=True,
+                                                 ancient_isolinux=False,
+                                                 efi_extension=True,
+                                                 old_kbd_chooser=False,
+                                                 extra_long_timeout=False,
+                                                 default_netdev='virtio',
+                                                 default_diskbus='virtio',
+                                                 initrdname='initrd.lz')
+version_to_config["15.04"] = UbuntuConfiguration(reboots=0,
+                                                 can_customize=True,
+                                                 can_install_from_desktop=True,
+                                                 ancient_isolinux=False,
+                                                 efi_extension=True,
+                                                 old_kbd_chooser=False,
+                                                 extra_long_timeout=False,
+                                                 default_netdev='virtio',
+                                                 default_diskbus='virtio',
+                                                 initrdname='initrd.lz')
+version_to_config["14.10"] = UbuntuConfiguration(reboots=0,
+                                                 can_customize=True,
+                                                 can_install_from_desktop=True,
+                                                 ancient_isolinux=False,
+                                                 efi_extension=True,
+                                                 old_kbd_chooser=False,
+                                                 extra_long_timeout=False,
+                                                 default_netdev='virtio',
+                                                 default_diskbus='virtio',
+                                                 initrdname='initrd.lz')
+version_to_config["14.04.5"] = UbuntuConfiguration(reboots=0,
+                                                   can_customize=True,
+                                                   can_install_from_desktop=True,
+                                                   ancient_isolinux=False,
+                                                   efi_extension=True,
+                                                   old_kbd_chooser=False,
+                                                   extra_long_timeout=False,
+                                                   default_netdev='virtio',
+                                                   default_diskbus='virtio',
+                                                   initrdname='initrd.lz')
+version_to_config["14.04.4"] = UbuntuConfiguration(reboots=0,
+                                                   can_customize=True,
+                                                   can_install_from_desktop=True,
+                                                   ancient_isolinux=False,
+                                                   efi_extension=True,
+                                                   old_kbd_chooser=False,
+                                                   extra_long_timeout=False,
+                                                   default_netdev='virtio',
+                                                   default_diskbus='virtio',
+                                                   initrdname='initrd.lz')
+version_to_config["14.04.3"] = UbuntuConfiguration(reboots=0,
+                                                   can_customize=True,
+                                                   can_install_from_desktop=True,
+                                                   ancient_isolinux=False,
+                                                   efi_extension=True,
+                                                   old_kbd_chooser=False,
+                                                   extra_long_timeout=False,
+                                                   default_netdev='virtio',
+                                                   default_diskbus='virtio',
+                                                   initrdname='initrd.lz')
+version_to_config["14.04.2"] = UbuntuConfiguration(reboots=0,
+                                                   can_customize=True,
+                                                   can_install_from_desktop=True,
+                                                   ancient_isolinux=False,
+                                                   efi_extension=True,
+                                                   old_kbd_chooser=False,
+                                                   extra_long_timeout=False,
+                                                   default_netdev='virtio',
+                                                   default_diskbus='virtio',
+                                                   initrdname='initrd.lz')
+version_to_config["14.04.1"] = UbuntuConfiguration(reboots=0,
+                                                   can_customize=True,
+                                                   can_install_from_desktop=True,
+                                                   ancient_isolinux=False,
+                                                   efi_extension=True,
+                                                   old_kbd_chooser=False,
+                                                   extra_long_timeout=False,
+                                                   default_netdev='virtio',
+                                                   default_diskbus='virtio',
+                                                   initrdname='initrd.lz')
+version_to_config["14.04"] = UbuntuConfiguration(reboots=0,
+                                                 can_customize=True,
+                                                 can_install_from_desktop=True,
+                                                 ancient_isolinux=False,
+                                                 efi_extension=True,
+                                                 old_kbd_chooser=False,
+                                                 extra_long_timeout=False,
+                                                 default_netdev='virtio',
+                                                 default_diskbus='virtio',
+                                                 initrdname='initrd.lz')
+version_to_config["13.10"] = UbuntuConfiguration(reboots=0,
+                                                 can_customize=True,
+                                                 can_install_from_desktop=False,
+                                                 ancient_isolinux=False,
+                                                 efi_extension=True,
+                                                 old_kbd_chooser=False,
+                                                 extra_long_timeout=False,
+                                                 default_netdev='virtio',
+                                                 default_diskbus='virtio',
+                                                 initrdname='initrd.lz')
+version_to_config["13.04"] = UbuntuConfiguration(reboots=0,
+                                                 can_customize=True,
+                                                 can_install_from_desktop=True,
+                                                 ancient_isolinux=False,
+                                                 efi_extension=True,
+                                                 old_kbd_chooser=False,
+                                                 extra_long_timeout=False,
+                                                 default_netdev='virtio',
+                                                 default_diskbus='virtio',
+                                                 initrdname='initrd.lz')
+version_to_config["12.10"] = UbuntuConfiguration(reboots=0, can_customize=True,
+                                                 can_install_from_desktop=True,
+                                                 ancient_isolinux=False,
+                                                 efi_extension=True,
+                                                 old_kbd_chooser=False,
+                                                 extra_long_timeout=False,
+                                                 default_netdev='virtio',
+                                                 default_diskbus='virtio',
+                                                 initrdname='initrd.lz')
+version_to_config["12.04.5"] = UbuntuConfiguration(reboots=0,
+                                                   can_customize=True,
+                                                   can_install_from_desktop=True,
+                                                   ancient_isolinux=False,
+                                                   efi_extension=True,
+                                                   old_kbd_chooser=False,
+                                                   extra_long_timeout=False,
+                                                   default_netdev='virtio',
+                                                   default_diskbus='virtio',
+                                                   initrdname='initrd.lz')
+version_to_config["12.04.4"] = UbuntuConfiguration(reboots=0,
+                                                   can_customize=True,
+                                                   can_install_from_desktop=True,
+                                                   ancient_isolinux=False,
+                                                   efi_extension=True,
+                                                   old_kbd_chooser=False,
+                                                   extra_long_timeout=False,
+                                                   default_netdev='virtio',
+                                                   default_diskbus='virtio',
+                                                   initrdname='initrd.lz')
+version_to_config["12.04.3"] = UbuntuConfiguration(reboots=0,
+                                                   can_customize=True,
+                                                   can_install_from_desktop=True,
+                                                   ancient_isolinux=False,
+                                                   efi_extension=True,
+                                                   old_kbd_chooser=False,
+                                                   extra_long_timeout=False,
+                                                   default_netdev='virtio',
+                                                   default_diskbus='virtio',
+                                                   initrdname='initrd.lz')
+version_to_config["12.04.2"] = UbuntuConfiguration(reboots=0,
+                                                   can_customize=True,
+                                                   can_install_from_desktop=True,
+                                                   ancient_isolinux=False,
+                                                   efi_extension=True,
+                                                   old_kbd_chooser=False,
+                                                   extra_long_timeout=False,
+                                                   default_netdev='virtio',
+                                                   default_diskbus='virtio',
+                                                   initrdname='initrd.lz')
+version_to_config["12.04.1"] = UbuntuConfiguration(reboots=0,
+                                                   can_customize=True,
+                                                   can_install_from_desktop=True,
+                                                   ancient_isolinux=False,
+                                                   efi_extension=False,
+                                                   old_kbd_chooser=False,
+                                                   extra_long_timeout=False,
+                                                   default_netdev='virtio',
+                                                   default_diskbus='virtio',
+                                                   initrdname='initrd.lz')
+version_to_config["12.04"] = UbuntuConfiguration(reboots=0,
+                                                 can_customize=True,
+                                 can_install_from_desktop=True,
+                                                 ancient_isolinux=False,
+                                 efi_extension=False,
+                                                 old_kbd_chooser=False,
+                                 extra_long_timeout=False,
+                                                 default_netdev='virtio',
+                                 default_diskbus='virtio',
+                                                 initrdname='initrd.lz')
+version_to_config["11.10"] = UbuntuConfiguration(reboots=0,
+                                                 can_customize=True,
+                                                 can_install_from_desktop=True,
+                                                 ancient_isolinux=False,
+                                                 efi_extension=False,
+                                                 old_kbd_chooser=False,
+                                                 extra_long_timeout=False,
+                                                 default_netdev='virtio',
+                                                 default_diskbus='virtio',
+                                                 initrdname='initrd.lz')
+version_to_config["11.04"] = UbuntuConfiguration(reboots=0,
+                                                 can_customize=True,
+                                                 can_install_from_desktop=True,
+                                                 ancient_isolinux=False,
+                                                 efi_extension=False,
+                                                 old_kbd_chooser=False,
+                                                 extra_long_timeout=False,
+                                                 default_netdev='virtio',
+                                                 default_diskbus='virtio',
+                                                 initrdname='initrd.lz')
+version_to_config["10.10"] = UbuntuConfiguration(reboots=0,
+                                                 can_customize=False,
+                                                 can_install_from_desktop=True,
+                                                 ancient_isolinux=False,
+                                                 efi_extension=False,
+                                                 old_kbd_chooser=False,
+                                                 extra_long_timeout=False,
+                                                 default_netdev='virtio',
+                                                 default_diskbus='virtio',
+                                                 initrdname='initrd.lz')
+version_to_config["10.04.3"] = UbuntuConfiguration(reboots=0,
+                                                   can_customize=False,
+                                                   can_install_from_desktop=True,
+                                                   ancient_isolinux=False,
+                                                   efi_extension=False,
+                                                   old_kbd_chooser=False,
+                                                   extra_long_timeout=False,
+                                                   default_netdev='virtio',
+                                                   default_diskbus='virtio',
+                                                   initrdname='initrd.lz')
+version_to_config["10.04.2"] = UbuntuConfiguration(reboots=0,
+                                                   can_customize=False,
+                                                   can_install_from_desktop=True,
+                                                   ancient_isolinux=False,
+                                                   efi_extension=False,
+                                                   old_kbd_chooser=False,
+                                                   extra_long_timeout=False,
+                                                   default_netdev='virtio',
+                                                   default_diskbus='virtio',
+                                                   initrdname='initrd.lz')
+version_to_config["10.04.1"] = UbuntuConfiguration(reboots=0,
+                                                   can_customize=False,
+                                                   can_install_from_desktop=True,
+                                                   ancient_isolinux=False,
+                                                   efi_extension=False,
+                                                   old_kbd_chooser=False,
+                                                   extra_long_timeout=False,
+                                                   default_netdev='virtio',
+                                                   default_diskbus='virtio',
+                                                   initrdname='initrd.lz')
+version_to_config["10.04"] = UbuntuConfiguration(reboots=0,
+                                                 can_customize=False,
+                                                 can_install_from_desktop=True,
+                                                 ancient_isolinux=False,
+                                                 efi_extension=False,
+                                                 old_kbd_chooser=False,
+                                                 extra_long_timeout=False,
+                                                 default_netdev='virtio',
+                                                 default_diskbus='virtio',
+                                                 initrdname='initrd.lz')
+version_to_config["9.10"] = UbuntuConfiguration(reboots=0,
+                                                can_customize=False,
+                                                can_install_from_desktop=True,
+                                                ancient_isolinux=False,
+                                                efi_extension=False,
+                                                old_kbd_chooser=False,
+                                                extra_long_timeout=False,
+                                                default_netdev='virtio',
+                                                default_diskbus='virtio',
+                                                initrdname='initrd.lz')
+version_to_config["9.04"] = UbuntuConfiguration(reboots=0,
+                                                can_customize=False,
+                                                can_install_from_desktop=True,
+                                                ancient_isolinux=False,
+                                                efi_extension=False,
+                                                old_kbd_chooser=False,
+                                                extra_long_timeout=False,
+                                                default_netdev='virtio',
+                                                default_diskbus='virtio',
+                                                initrdname='initrd.gz')
+version_to_config["8.10"] = UbuntuConfiguration(reboots=0,
+                                                can_customize=False,
+                                                can_install_from_desktop=True,
+                                                ancient_isolinux=False,
+                                                efi_extension=False,
+                                                old_kbd_chooser=False,
+                                                extra_long_timeout=False,
+                                                default_netdev='virtio',
+                                                default_diskbus='virtio',
+                                                initrdname='initrd.gz')
+version_to_config["8.04.4"] = UbuntuConfiguration(reboots=0,
+                                                  can_customize=False,
+                                                  can_install_from_desktop=True,
+                                                  ancient_isolinux=False,
+                                                  efi_extension=False,
+                                                  old_kbd_chooser=False,
+                                                  extra_long_timeout=False,
+                                                  default_netdev='virtio',
+                                                  default_diskbus='virtio',
+                                                  initrdname='initrd.gz')
+version_to_config["8.04.3"] = UbuntuConfiguration(reboots=0,
+                                                  can_customize=False,
+                                                  can_install_from_desktop=True,
+                                                  ancient_isolinux=False,
+                                                  efi_extension=False,
+                                                  old_kbd_chooser=False,
+                                                  extra_long_timeout=False,
+                                                  default_netdev='virtio',
+                                                  default_diskbus='virtio',
+                                                  initrdname='initrd.gz')
+version_to_config["8.04.2"] = UbuntuConfiguration(reboots=0,
+                                                  can_customize=False,
+                                                  can_install_from_desktop=True,
+                                                  ancient_isolinux=False,
+                                                  efi_extension=False,
+                                                  old_kbd_chooser=False,
+                                                  extra_long_timeout=False,
+                                                  default_netdev='virtio',
+                                                  default_diskbus='virtio',
+                                                  initrdname='initrd.gz')
+version_to_config["8.04.1"] = UbuntuConfiguration(reboots=0,
+                                                  can_customize=False,
+                                                  can_install_from_desktop=True,
+                                                  ancient_isolinux=False,
+                                                  efi_extension=False,
+                                                  old_kbd_chooser=False,
+                                                  extra_long_timeout=False,
+                                                  default_netdev='virtio',
+                                                  default_diskbus='virtio',
+                                                  initrdname='initrd.gz')
+version_to_config["8.04"] = UbuntuConfiguration(reboots=0,
+                                                can_customize=False,
+                                                can_install_from_desktop=True,
+                                                ancient_isolinux=False,
+                                                efi_extension=False,
+                                                old_kbd_chooser=False,
+                                                extra_long_timeout=False,
+                                                default_netdev='virtio',
+                                                default_diskbus='virtio',
+                                                initrdname='initrd.gz')
+version_to_config["7.10"] = UbuntuConfiguration(reboots=0,
+                                                can_customize=False,
+                                                can_install_from_desktop=True,
+                                                ancient_isolinux=False,
+                                                efi_extension=False,
+                                                old_kbd_chooser=False,
+                                                extra_long_timeout=False,
+                                                default_netdev=None,
+                                                default_diskbus=None,
+                                                initrdname='initrd.gz')
+version_to_config["7.04"] = UbuntuConfiguration(reboots=0,
+                                                can_customize=False,
+                                                can_install_from_desktop=False,
+                                                ancient_isolinux=False,
+                                                efi_extension=False,
+                                                old_kbd_chooser=False,
+                                                extra_long_timeout=True,
+                                                default_netdev=None,
+                                                default_diskbus=None,
+                                                initrdname='initrd.gz')
+version_to_config["6.10"] = UbuntuConfiguration(reboots=0,
+                                                can_customize=False,
+                                                can_install_from_desktop=False,
+                                                ancient_isolinux=False,
+                                                efi_extension=False,
+                                                old_kbd_chooser=False,
+                                                extra_long_timeout=True,
+                                                default_netdev=None,
+                                                default_diskbus=None,
+                                                initrdname='initrd.gz')
+version_to_config["6.06.2"] = UbuntuConfiguration(reboots=0,
+                                                  can_customize=False,
+                                                  can_install_from_desktop=False,
+                                                  ancient_isolinux=False,
+                                                  efi_extension=False,
+                                                  old_kbd_chooser=True,
+                                                  extra_long_timeout=True,
+                                                  default_netdev=None,
+                                                  default_diskbus=None,
+                                                  initrdname='initrd.gz')
+version_to_config["6.06.1"] = UbuntuConfiguration(reboots=0,
+                                                  can_customize=False,
+                                                  can_install_from_desktop=False,
+                                                  ancient_isolinux=False,
+                                                  efi_extension=False,
+                                                  old_kbd_chooser=True,
+                                                  extra_long_timeout=True,
+                                                  default_netdev=None,
+                                                  default_diskbus=None,
+                                                  initrdname='initrd.gz')
+version_to_config["6.06"] = UbuntuConfiguration(reboots=0,
+                                                can_customize=False,
+                                                can_install_from_desktop=False,
+                                                ancient_isolinux=False,
+                                                efi_extension=False,
+                                                old_kbd_chooser=True,
+                                                extra_long_timeout=True,
+                                                default_netdev=None,
+                                                default_diskbus=None,
+                                                initrdname='initrd.gz')
+version_to_config["5.10"] = UbuntuConfiguration(reboots=1,
+                                                can_customize=False,
+                                                can_install_from_desktop=True,
+                                                ancient_isolinux=True,
+                                                efi_extension=False,
+                                                old_kbd_chooser=False,
+                                                extra_long_timeout=True,
+                                                default_netdev=None,
+                                                default_diskbus=None,
+                                                initrdname='initrd.gz')
+version_to_config["5.04"] = UbuntuConfiguration(reboots=1,
+                                                can_customize=False,
+                                                can_install_from_desktop=True,
+                                                ancient_isolinux=True,
+                                                efi_extension=False,
+                                                old_kbd_chooser=False,
+                                                extra_long_timeout=True,
+                                                default_netdev=None,
+                                                default_diskbus=None,
+                                                initrdname='initrd.gz')
+
 class UbuntuGuest(oz.Linux.LinuxCDGuest):
     """
     Class for Ubuntu 5.04, 5.10, 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, 11.04, 11.10, 12.04, 12.10, 13.04, 13.10, 14.04, 14.10, 15.04, 15.10, 16.04, 16.10, and 17.04  installation.
     """
+    # Note that the 'initrd' parameter is completely ignored now; we leave
+    # it in place for backwards API compatibility.
     def __init__(self, tdl, config, auto, output_disk, initrd, nicmodel,
                  diskbus, macaddress):
+        self.config = version_to_config[tdl.update]
+        if nicmodel is None:
+            nicmodel = self.config.default_netdev
+        if diskbus is None:
+            diskbus = self.config.default_diskbus
+
         oz.Linux.LinuxCDGuest.__init__(self, tdl, config, auto, output_disk,
                                        nicmodel, diskbus, True, True,
                                        macaddress)
@@ -56,8 +573,6 @@ X11Forwarding yes
 Subsystem       sftp    /usr/libexec/openssh/sftp-server
 """
 
-        self.casper_initrd = initrd
-
         self.ssh_startuplink = None
         self.cron_startuplink = None
 
@@ -78,35 +593,21 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         if self.tdl.kernel_param:
             self.cmdline += " " + self.tdl.kernel_param
 
-        self.reboots = 0
-        if self.tdl.update in ["5.04", "5.10"]:
-            self.reboots = 1
-
     def _check_iso_tree(self, customize_or_icicle):
         # Anything prior to Ubuntu 11.04 can't have openssh installed, and
         # we thus can't customize
-        if customize_or_icicle and self.tdl.update in ["5.04", "5.10", "6.06",
-                                                       "6.06.1", "6.06.2",
-                                                       "6.10", "7.04", "7.10",
-                                                       "8.04", "8.04.1",
-                                                       "8.04.2", "8.04.3",
-                                                       "8.04.4", "8.10", "9.04",
-                                                       "9.10", "10.04",
-                                                       "10.04.1", "10.04.2",
-                                                       "10.04.3", "10.10"]:
+        if customize_or_icicle and not self.config.can_customize:
             raise oz.OzException.OzException("Customization can only be done on Ubuntu 11.04 or later")
 
         # ISOs that contain casper are desktop install CDs
         if os.path.isdir(os.path.join(self.iso_contents, "casper")):
-            if self.tdl.update in ["6.06", "6.10", "7.04"]:
-                raise oz.OzException.OzException("Ubuntu %s installs can only be done using the alternate or server CDs" % (self.tdl.update))
-            if customize_or_icicle:
-                raise oz.OzException.OzException("Ubuntu customization or ICICLE generation can only be done using the alternate or server CDs")
             # as far as I can tell, the Ubuntu 13.10 Desktop installer always
             # crashes during preseeded installations, so raise an error for
             # a Desktop install
-            if self.tdl.update in ["13.10"]:
-                raise oz.OzException.OzException("Ubuntu 13.10 installs can only be done with the server CD")
+            if not self.config.can_install_from_desktop:
+                raise oz.OzException.OzException("Ubuntu %s installs can only be done using the alternate or server CDs" % (self.tdl.update))
+            if customize_or_icicle:
+                raise oz.OzException.OzException("Ubuntu customization or ICICLE generation can only be done using the alternate or server CDs")
 
     def _copy_preseed(self, outname):
         """
@@ -157,7 +658,7 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
 
         with open(isolinuxcfg, 'w') as f:
 
-            if self.tdl.update in ["5.04", "5.10"]:
+            if self.config.ancient_isolinux:
                 f.write("""\
 DEFAULT /install/vmlinuz
 APPEND initrd=/install/initrd.gz ramdisk_size=16384 root=/dev/rd/0 rw preseed/file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US kbd-chooser/method=us netcfg/choose_interface=auto keyboard-configuration/layoutcode=us debconf/priority=critical --
@@ -173,17 +674,13 @@ PROMPT 0
                 f.write("  menu default\n")
                 if os.path.isdir(os.path.join(self.iso_contents, "casper")):
                     kernelname = "/casper/vmlinuz"
-                    if self.tdl.update in ["12.04.2", "12.04.3", "12.04.4",
-                                           "12.04.5", "13.04", "13.10", "14.04",
-                                           "14.04.1", "14.04.2", "14.04.3", "14.04.4",
-                                           "14.04.5", "14.10", "15.04", "15.10",
-                                           "16.04", "16.04.1", "16.10", "17.04"] and self.tdl.arch == "x86_64":
+                    if self.config.efi_extension and self.tdl.arch == "x86_64":
                         kernelname += ".efi"
                     f.write("  kernel " + kernelname + "\n")
-                    f.write("  append file=/cdrom/preseed/customiso.seed boot=casper automatic-ubiquity noprompt keyboard-configuration/layoutcode=us initrd=/casper/" + self.casper_initrd + "\n")
+                    f.write("  append file=/cdrom/preseed/customiso.seed boot=casper automatic-ubiquity noprompt keyboard-configuration/layoutcode=us initrd=/casper/" + self.config.initrdname + "\n")
                 else:
                     keyboard = "console-setup/layoutcode=us"
-                    if self.tdl.update == "6.06":
+                    if self.config.old_kbd_chooser:
                         keyboard = "kbd-chooser/method=us"
                     f.write("  kernel /install/vmlinuz\n")
                     f.write("  append preseed/file=/cdrom/preseed/customiso.seed debian-installer/locale=en_US " + keyboard + " netcfg/choose_interface=auto keyboard-configuration/layoutcode=us priority=critical initrd=/install/initrd.gz --\n")
@@ -217,10 +714,9 @@ PROMPT 0
         """
         Method to run the operating system installation.
         """
-        if self.tdl.update in ["5.04", "5.10", "6.06", "6.10", "7.04"]:
-            if not timeout:
-                timeout = 3000
-        return self._do_install(timeout, force, self.reboots, self.kernelfname,
+        if self.config.extra_long_timeout and timeout is None:
+            timeout = 3000
+        return self._do_install(timeout, force, self.config.reboots, self.kernelfname,
                                 self.initrdfname, self.cmdline)
 
     def _get_service_runlevel_link(self, g_handle, service):
@@ -696,28 +1192,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for Ubuntu installs.
     """
-    if tdl.update in ["5.04", "5.10", "6.06", "6.06.1", "6.06.2", "6.10",
-                      "7.04", "7.10"]:
-        return UbuntuGuest(tdl, config, auto, output_disk, "initrd.gz",
-                           netdev, diskbus, macaddress)
-    if tdl.update in ["8.04", "8.04.1", "8.04.2", "8.04.3", "8.04.4", "8.10",
-                      "9.04"]:
-        if netdev is None:
-            netdev = 'virtio'
-        if diskbus is None:
-            diskbus = 'virtio'
-        return UbuntuGuest(tdl, config, auto, output_disk, "initrd.gz",
-                           netdev, diskbus, macaddress)
-    if tdl.update in ["9.10", "10.04", "10.04.1", "10.04.2", "10.04.3", "10.10",
-                      "11.04", "11.10", "12.04", "12.04.1", "12.04.2",
-                      "12.04.3", "12.04.4", "12.04.5", "12.10", "13.04",
-                      "13.10", "14.04", "14.04.1", "14.04.2", "14.04.3", "14.04.4",
-                      "14.04.5", "14.10", "15.04", "15.10",
-                      "16.04", "16.04.1", "16.10", "17.04"]:
-        if netdev is None:
-            netdev = 'virtio'
-        if diskbus is None:
-            diskbus = 'virtio'
+    if tdl.update in version_to_config.keys():
         return UbuntuGuest(tdl, config, auto, output_disk, "initrd.lz",
                            netdev, diskbus, macaddress)
 
@@ -725,4 +1200,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Ubuntu: 5.04, 5.10, 6.06[.1,.2], 6.10, 7.04, 7.10, 8.04[.1,.2,.3,.4], 8.10, 9.04, 9.10, 10.04[.1,.2,.3], 10.10, 11.04, 11.10, 12.04[.1,.2,.3,.4,.5], 12.10, 13.04, 13.10, 14.04[.1,.2,.3,.4,.5], 14.10, 15.04, 15.10, 16.04[.1], 16.10, 17.04"
+    return "Ubuntu: " + ", ".join(reversed(version_to_config.keys()))
