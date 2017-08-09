@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2016  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2013-2017  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -31,12 +31,48 @@ import oz.Linux
 import oz.ozutil
 import oz.OzException
 
+class MageiaConfiguration(object):
+    def __init__(self, isolinux_style, default_netdev, default_diskbus):
+        self._isolinux_style = isolinux_style
+        self._default_netdev = default_netdev
+        self._default_diskbus = default_diskbus
+
+    @property
+    def isolinux_style(self):
+        return self._isolinux_style
+
+    @property
+    def default_netdev(self):
+        return self._default_netdev
+
+    @property
+    def default_diskbus(self):
+        return self._default_diskbus
+
+version_to_config = {
+    '5': MageiaConfiguration(isolinux_style="new", default_netdev='virtio',
+                             default_diskbus='virtio'),
+    '4.1': MageiaConfiguration(isolinux_style="new", default_netdev='virtio',
+                               default_diskbus='virtio'),
+    '4': MageiaConfiguration(isolinux_style="new", default_netdev='virtio',
+                             default_diskbus='virtio'),
+    '3': MageiaConfiguration(isolinux_style="old", default_netdev='virtio',
+                             default_diskbus='virtio'),
+    '2': MageiaConfiguration(isolinux_style="old", default_netdev='virtio',
+                             default_diskbus='virtio'),
+}
+
 class MageiaGuest(oz.Linux.LinuxCDGuest):
     """
     Class for Mageia 2, 3, 4, 4.1, and 5 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
+        self.config = version_to_config[tdl.update]
+        if netdev is None:
+            netdev = self.config.default_netdev
+        if diskbus is None:
+            diskbus = self.config.default_diskbus
         oz.Linux.LinuxCDGuest.__init__(self, tdl, config, auto, output_disk,
                                        netdev, diskbus, True, True,
                                        macaddress)
@@ -77,7 +113,7 @@ class MageiaGuest(oz.Linux.LinuxCDGuest):
                                            "::AUTO_INST.CFG"])
 
         self.log.debug("Modifying isolinux.cfg")
-        if self.tdl.update in ["2", "3"]:
+        if self.config.isolinux_style == "old":
             '''
             Mageia 2 dual   - isolinux/32.cfg
                               isolinux/64.cfg
@@ -131,7 +167,7 @@ class MageiaGuest(oz.Linux.LinuxCDGuest):
                 kernel = "alt0/vmlinuz"
                 initrd = "alt0/all.rdz"
             flags = "ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom"
-        elif self.tdl.update in ["4", "4.1", "5"]:
+        else:
             '''
             Mageia 4 dual     - isolinux/i586.cfg
                                 isolinux/x86_64.cfg
@@ -524,11 +560,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for Mageia installs.
     """
-    if tdl.update in ["2", "3", "4", "4.1", "5"]:
-        if netdev is None:
-            netdev = 'virtio'
-        if diskbus is None:
-            diskbus = 'virtio'
+    if tdl.update in version_to_config.keys():
         return MageiaGuest(tdl, config, auto, output_disk, netdev, diskbus,
                            macaddress)
 
@@ -536,4 +568,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Mageia: 2, 3, 4, 4.1, 5"
+    return "Mageia: " + ", ".join(sorted(version_to_config.keys()))
