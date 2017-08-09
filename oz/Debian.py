@@ -29,12 +29,53 @@ import oz.Linux
 import oz.OzException
 import oz.ozutil
 
+class DebianConfiguration(object):
+    def __init__(self, need_auto_direct, need_auto_iso, default_netdev,
+                 default_diskbus):
+        self._need_auto_direct = need_auto_direct
+        self._need_auto_iso = need_auto_iso
+        self._default_netdev = default_netdev
+        self._default_diskbus = default_diskbus
+
+    @property
+    def need_auto_direct(self):
+        return self._need_auto_direct
+
+    @property
+    def need_auto_iso(self):
+        return self._need_auto_iso
+
+    @property
+    def default_netdev(self):
+        return self._default_netdev
+
+    @property
+    def default_diskbus(self):
+        return self._default_diskbus
+
+version_to_config = {
+    '8': DebianConfiguration(need_auto_direct=False, need_auto_iso=True,
+                             default_netdev='virtio', default_diskbus='virtio'),
+    '7': DebianConfiguration(need_auto_direct=True, need_auto_iso=True,
+                             default_netdev='virtio', default_diskbus='virtio'),
+    '6': DebianConfiguration(need_auto_direct=False, need_auto_iso=False,
+                             default_netdev='virtio', default_diskbus='virtio'),
+    '5': DebianConfiguration(need_auto_direct=False, need_auto_iso=False,
+                             default_netdev='virtio', default_diskbus='virtio'),
+}
+
 class DebianGuest(oz.Linux.LinuxCDGuest):
     """
     Class for Debian 5, 6, 7 and 8 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
+        self.config = version_to_config[tdl.update]
+
+        if netdev is None:
+            netdev = self.config.default_netdev
+        if diskbus is None:
+            diskbus = self.config.default_diskbus
         oz.Linux.LinuxCDGuest.__init__(self, tdl, config, auto, output_disk,
                                        netdev, diskbus, True, True, macaddress)
 
@@ -72,11 +113,6 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
                                         self.tdl.distro + self.tdl.update + self.tdl.arch + "-kernel")
         self.initrdcache = os.path.join(self.data_dir, "kernels",
                                         self.tdl.distro + self.tdl.update + self.tdl.arch + "-ramdisk")
-
-        extra = ""
-        if self.tdl.update in ["7"]:
-            extra = "auto=true "
-        self.cmdline = "priority=critical " + extra + "locale=en_US"
 
     def _copy_preseed(self, outname):
         """
@@ -120,7 +156,7 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
         self.log.debug("Modifying isolinux.cfg")
         isolinuxcfg = os.path.join(self.iso_contents, "isolinux", "isolinux.cfg")
         extra = ""
-        if self.tdl.update in ["7", "8"]:
+        if self.config.need_auto_iso:
             extra = "auto=true "
 
         with open(isolinuxcfg, 'w') as f:
@@ -161,8 +197,12 @@ label customiso
         """
         Method to run the operating system installation.
         """
+        extra = ""
+        if self.config.need_auto_direct:
+            extra = "auto=true "
+        cmdline = "priority=critical " + extra + "locale=en_US"
         return self._do_install(timeout, force, 0, self.kernelfname,
-                                self.initrdfname, self.cmdline)
+                                self.initrdfname, cmdline)
 
     def _get_service_runlevel_link(self, g_handle, service):
         """
@@ -614,11 +654,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
     Factory method for Debian installs.
     """
-    if tdl.update in ["5", "6", "7", "8"]:
-        if netdev is None:
-            netdev = 'virtio'
-        if diskbus is None:
-            diskbus = 'virtio'
+    if tdl.update in version_to_config.keys():
         return DebianGuest(tdl, config, auto, output_disk, netdev, diskbus,
                            macaddress)
 
@@ -626,4 +662,4 @@ def get_supported_string():
     """
     Return supported versions as a string.
     """
-    return "Debian: 5, 6, 7, 8"
+    return "Debian: " + ", ".join(sorted(version_to_config.keys()))
