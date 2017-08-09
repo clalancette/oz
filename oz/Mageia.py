@@ -77,7 +77,7 @@ class MageiaGuest(oz.Linux.LinuxCDGuest):
                                            "::AUTO_INST.CFG"])
 
         self.log.debug("Modifying isolinux.cfg")
-        if self.tdl.update == "2":
+        if self.tdl.update in ["2", "3"]:
             '''
             Mageia 2 dual   - isolinux/32.cfg
                               isolinux/64.cfg
@@ -91,30 +91,6 @@ class MageiaGuest(oz.Linux.LinuxCDGuest):
             Mageia 2 i586   - i586/isolinux/isolinux.cfg
                               i586/isolinux/vmlinuz
                               i586/isolinux/all.rdz
-            '''
-            if os.path.exists(os.path.join(self.iso_contents, 'isolinux')):
-                if self.tdl.arch == "i386":
-                    mageia_arch = "32"
-                else:
-                    mageia_arch = "64"
-
-                # This looks like a dual CD, so let's set things up that way.
-                isolinuxcfg = os.path.join(self.iso_contents, 'isolinux', mageia_arch + ".cfg")
-                self.isolinuxbin = os.path.join('isolinux', mageia_arch + ".bin")
-                kernel = "alt0/" + mageia_arch + "/vmlinuz"
-                initrd = "alt0/" + mageia_arch + "/all.rdz"
-            else:
-                # This looks like an i586 or x86_64 ISO, so set things up that way.
-                mageia_arch = self.tdl.arch
-                if self.tdl.arch == "i386":
-                    mageia_arch = "i586"
-                isolinuxcfg = os.path.join(self.iso_contents, mageia_arch, 'isolinux', 'isolinux.cfg')
-                self.isolinuxbin = os.path.join(mageia_arch, 'isolinux', 'isolinux.bin')
-                kernel = "alt0/vmlinuz"
-                initrd = "alt0/all.rdz"
-            flags = "ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom"
-        elif self.tdl.update == "3":
-            '''
             Mageia 3 dual   - syslinux/32.cfg
                               syslinux/64.cfg
                               syslinux/alt0/32/vmlinuz
@@ -128,16 +104,25 @@ class MageiaGuest(oz.Linux.LinuxCDGuest):
                               i586/isolinux/alt0/vmlinuz
                               i586/isolinux/alt0/all.rdz
             '''
-            if os.path.exists(os.path.join(self.iso_contents, 'syslinux')):
+            isolinuxstr = None
+            if os.path.exists(os.path.join(self.iso_contents, 'isolinux')):
+                isolinuxstr = "isolinux"
+            elif os.path.exists(os.path.join(self.iso_contents, 'syslinux')):
+                isolinuxstr = "syslinux"
+
+            if isolinuxstr is not None:
                 if self.tdl.arch == "i386":
                     mageia_arch = "32"
                 else:
                     mageia_arch = "64"
-                isolinuxcfg = os.path.join(self.iso_contents, 'syslinux', mageia_arch + ".cfg")
-                self.isolinuxbin = os.path.join('syslinux', mageia_arch + ".bin")
+
+                # This looks like a dual CD, so let's set things up that way.
+                isolinuxcfg = os.path.join(self.iso_contents, isolinuxstr, mageia_arch + ".cfg")
+                self.isolinuxbin = os.path.join(isolinuxstr, mageia_arch + ".bin")
                 kernel = "alt0/" + mageia_arch + "/vmlinuz"
                 initrd = "alt0/" + mageia_arch + "/all.rdz"
             else:
+                # This looks like an i586 or x86_64 ISO, so set things up that way.
                 mageia_arch = self.tdl.arch
                 if self.tdl.arch == "i386":
                     mageia_arch = "i586"
