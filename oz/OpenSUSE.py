@@ -108,8 +108,8 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
     def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus,
                  macaddress):
         self.config = version_to_config[tdl.update]
-        if netdev is None:
-            netdev = self.config.default_netdev
+        if nicmodel is None:
+            nicmodel = self.config.default_netdev
         if diskbus is None:
             diskbus = self.config.default_diskbus
         oz.Linux.LinuxCDGuest.__init__(self, tdl, config, auto, output_disk,
