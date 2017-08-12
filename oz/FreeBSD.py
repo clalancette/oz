@@ -107,7 +107,10 @@ class FreeBSD(oz.Guest.CDGuest):
 
         loaderconf = os.path.join(self.iso_contents, "boot", "loader.conf")
         with open(loaderconf, 'w') as conf:
+            conf.write('autoboot_delay="0"\n')
             conf.write('vfs.root.mountfrom="cd9660:/dev/cd0"\n')
+            conf.write('console="vidconsole comconsole"\n')
+            conf.write('kern.panic_reboot_wait_time="-1"\n')
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):
