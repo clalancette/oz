@@ -23,6 +23,7 @@ import gzip
 import os
 import re
 import shutil
+import textwrap
 
 import oz.GuestFSManager
 import oz.Linux
@@ -81,20 +82,22 @@ class DebianGuest(oz.Linux.LinuxCDGuest):
 
         self.crond_was_active = False
         self.sshd_was_active = False
-        self.sshd_config = \
-"""SyslogFacility AUTHPRIV
-PasswordAuthentication yes
-ChallengeResponseAuthentication no
-GSSAPIAuthentication yes
-GSSAPICleanupCredentials yes
-UsePAM yes
-AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES
-AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT
-AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE
-AcceptEnv XMODIFIERS
-X11Forwarding yes
-Subsystem       sftp    /usr/libexec/openssh/sftp-server
-"""
+        self.sshd_config = textwrap.dedent(
+            """\
+            SyslogFacility AUTHPRIV
+            PasswordAuthentication yes
+            ChallengeResponseAuthentication no
+            GSSAPIAuthentication yes
+            GSSAPICleanupCredentials yes
+            UsePAM yes
+            AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES
+            AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT
+            AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE
+            AcceptEnv XMODIFIERS
+            X11Forwarding yes
+            Subsystem       sftp    /usr/libexec/openssh/sftp-server
+            """
+        )
 
         self.tunnels = {}
 
@@ -160,16 +163,19 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
             extra = "auto=true "
 
         with open(isolinuxcfg, 'w') as f:
-            f.write("""\
-default customiso
-timeout 1
-prompt 0
-label customiso
-  menu label ^Customiso
-  menu default
-  kernel %s/vmlinuz
-  append file=/cdrom/preseed/customiso.seed %sdebian-installer/locale=en_US console-setup/layoutcode=us netcfg/choose_interface=auto priority=critical initrd=%s/initrd.gz --
-""" % (installdir, extra, installdir))
+            f.write(textwrap.dedent(
+                """\
+                default customiso
+                timeout 1
+                prompt 0
+                label customiso
+                  menu label ^Customiso
+                  menu default
+                  kernel %s/vmlinuz
+                  append file=/cdrom/preseed/customiso.seed %sdebian-installer/\
+locale=en_US console-setup/layoutcode=us netcfg/choose_interface=auto priority=\
+critical initrd=%s/initrd.gz --
+                """ % (installdir, extra, installdir)))
 
     def get_auto_path(self):
         autoname = self.tdl.distro + self.tdl.update + ".auto"
