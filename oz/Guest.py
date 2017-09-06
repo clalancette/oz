@@ -486,7 +486,7 @@ class Guest(object):
         # graphics
         if not self.tdl.arch in ["aarch64", "armv7l"]:
             # qemu for arm/aarch64 does not support a graphical console - amazingly
-            oz.ozutil.lxml_subelement(devices, "graphics", None, {'port':'-1', 'type':'vnc'})
+            oz.ozutil.lxml_subelement(devices, "graphics", None, {'port':'-1', 'type':'vnc', 'listen':'0.0.0.0'})
         # network
         interface = oz.ozutil.lxml_subelement(devices, "interface", None, {'type':'bridge'})
         oz.ozutil.lxml_subelement(interface, "source", None, {'bridge':self.bridge_name})
