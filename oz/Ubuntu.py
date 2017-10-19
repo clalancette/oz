@@ -88,6 +88,16 @@ class UbuntuConfiguration(object):
 
 version_to_config = collections.OrderedDict()
 
+version_to_config["17.10"] = UbuntuConfiguration(reboots=0,
+                                                 can_customize=True,
+                                                 can_install_from_desktop=True,
+                                                 ancient_isolinux=False,
+                                                 efi_extension=True,
+                                                 old_kbd_chooser=False,
+                                                 extra_long_timeout=False,
+                                                 default_netdev='virtio',
+                                                 default_diskbus='virtio',
+                                                 initrdname='initrd.lz')
 version_to_config["17.04"] = UbuntuConfiguration(reboots=0,
                                                  can_customize=True,
                                                  can_install_from_desktop=True,
@@ -108,6 +118,26 @@ version_to_config["16.10"] = UbuntuConfiguration(reboots=0,
                                                  default_netdev='virtio',
                                                  default_diskbus='virtio',
                                                  initrdname='initrd.lz')
+version_to_config["16.04.3"] = UbuntuConfiguration(reboots=0,
+                                                   can_customize=True,
+                                                   can_install_from_desktop=True,
+                                                   ancient_isolinux=False,
+                                                   efi_extension=True,
+                                                   old_kbd_chooser=False,
+                                                   extra_long_timeout=False,
+                                                   default_netdev='virtio',
+                                                   default_diskbus='virtio',
+                                                   initrdname='initrd.lz')
+version_to_config["16.04.2"] = UbuntuConfiguration(reboots=0,
+                                                   can_customize=True,
+                                                   can_install_from_desktop=True,
+                                                   ancient_isolinux=False,
+                                                   efi_extension=True,
+                                                   old_kbd_chooser=False,
+                                                   extra_long_timeout=False,
+                                                   default_netdev='virtio',
+                                                   default_diskbus='virtio',
+                                                   initrdname='initrd.lz')
 version_to_config["16.04.1"] = UbuntuConfiguration(reboots=0,
                                                    can_customize=True,
                                                    can_install_from_desktop=True,
@@ -299,13 +329,13 @@ version_to_config["12.04.1"] = UbuntuConfiguration(reboots=0,
                                                    initrdname='initrd.lz')
 version_to_config["12.04"] = UbuntuConfiguration(reboots=0,
                                                  can_customize=True,
-                                 can_install_from_desktop=True,
+                                                 can_install_from_desktop=True,
                                                  ancient_isolinux=False,
-                                 efi_extension=False,
+                                                 efi_extension=False,
                                                  old_kbd_chooser=False,
-                                 extra_long_timeout=False,
+                                                 extra_long_timeout=False,
                                                  default_netdev='virtio',
-                                 default_diskbus='virtio',
+                                                 default_diskbus='virtio',
                                                  initrdname='initrd.lz')
 version_to_config["11.10"] = UbuntuConfiguration(reboots=0,
                                                  can_customize=True,
@@ -540,7 +570,7 @@ version_to_config["5.04"] = UbuntuConfiguration(reboots=1,
 
 class UbuntuGuest(oz.Linux.LinuxCDGuest):
     """
-    Class for Ubuntu 5.04, 5.10, 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, 11.04, 11.10, 12.04, 12.10, 13.04, 13.10, 14.04, 14.10, 15.04, 15.10, 16.04, 16.10, and 17.04  installation.
+    Class for Ubuntu 5.04, 5.10, 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, 11.04, 11.10, 12.04, 12.10, 13.04, 13.10, 14.04, 14.10, 15.04, 15.10, 16.04, 16.10, 17.04, and 17.10  installation.
     """
     # Note that the 'initrd' parameter is completely ignored now; we leave
     # it in place for backwards API compatibility.
