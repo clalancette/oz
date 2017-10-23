@@ -55,6 +55,8 @@ class DebianConfiguration(object):
         return self._default_diskbus
 
 version_to_config = {
+    '9': DebianConfiguration(need_auto_direct=False, need_auto_iso=True,
+                             default_netdev='virtio', default_diskbus='virtio'),
     '8': DebianConfiguration(need_auto_direct=False, need_auto_iso=True,
                              default_netdev='virtio', default_diskbus='virtio'),
     '7': DebianConfiguration(need_auto_direct=True, need_auto_iso=True,
@@ -67,7 +69,7 @@ version_to_config = {
 
 class DebianGuest(oz.Linux.LinuxCDGuest):
     """
-    Class for Debian 5, 6, 7 and 8 installation.
+    Class for Debian 5, 6, 7, 8, and 9 installation.
     """
     def __init__(self, tdl, config, auto, output_disk, netdev, diskbus,
                  macaddress):
