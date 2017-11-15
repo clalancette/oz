@@ -34,6 +34,7 @@
                 <value>ppc64le</value>
                 <value>aarch64</value>
                 <value>armv7l</value>
+                <value>s390x</value>
               </choice>
             </element>
             <optional>
