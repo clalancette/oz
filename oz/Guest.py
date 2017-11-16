@@ -419,7 +419,11 @@ class Guest(object):
         oz.ozutil.lxml_subelement(serial, "source", None,
                                   {'mode':'bind', 'host':'127.0.0.1', 'service':str(self.listen_port)})
         oz.ozutil.lxml_subelement(serial, "protocol", None, {'type':'raw'})
-        oz.ozutil.lxml_subelement(serial, "target", None, {'port':'1'})
+        target = oz.ozutil.lxml_subelement(serial, "target", None, {'port':'1'})
+        if self.tdl.arch == 's390x':
+            # use a different console, as sclp can be used as most once
+            target.set('type', 'sclp-serial')
+            oz.ozutil.lxml_subelement(target, "model", None, {'name':'sclplmconsole'})
 
     def _generate_virtio_channel(self, devices, name):
         virtio = oz.ozutil.lxml_subelement(devices, "channel", None, {'type': 'tcp'})
