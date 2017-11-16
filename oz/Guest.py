@@ -484,8 +484,8 @@ class Guest(object):
         # devices
         devices = oz.ozutil.lxml_subelement(domain, "devices")
         # graphics
-        if not self.tdl.arch in ["aarch64", "armv7l"]:
-            # qemu for arm/aarch64 does not support a graphical console - amazingly
+        if not self.tdl.arch in ["aarch64", "armv7l", "s390x"]:
+            # qemu for arm/aarch64/s390x does not support a graphical console - amazingly
             oz.ozutil.lxml_subelement(devices, "graphics", None, {'port':'-1', 'type':'vnc'})
         # network
         interface = oz.ozutil.lxml_subelement(devices, "interface", None, {'type':'bridge'})
