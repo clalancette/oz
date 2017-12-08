@@ -335,6 +335,8 @@ label customiso
 
         if self.tdl.arch in ['ppc64', 'ppc64le']:
             announce_device = '/dev/hvc1'
+        elif self.tdl.arch == 's390x':
+            announce_device = '/dev/sclp_line0'
         else:
             announce_device = '/dev/ttyS1'
 
