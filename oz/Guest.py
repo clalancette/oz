@@ -1122,7 +1122,7 @@ class Guest(object):
                 try:
                     # note that we have to build the data up here, since there
                     # is no guarantee that we will get the whole write in one go
-                    self.data += self.sock.recv(100)
+                    self.data += self.sock.recv(8192)
                 except socket.timeout:
                     # the socket times out after 1 second.  We can just fall
                     # through to the below code because it is a noop.
