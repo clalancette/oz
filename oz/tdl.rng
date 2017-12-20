@@ -89,6 +89,16 @@
                 </element>
               </element>
             </optional>
+            <optional>
+              <element name='osinfo'>
+                <text/>
+              </element>
+            </optional>
+            <optional>
+              <element name='variant'>
+                <text/>
+              </element>
+            </optional>
           </interleave>
         </element>
         <optional>
@@ -228,9 +238,11 @@
     <attribute name='type'>
       <value>url</value>
     </attribute>
-    <element name='url'>
-      <text/>
-    </element>
+    <optional>
+      <element name='url'>
+        <text/>
+      </element>
+    </optional>
   </define>
 
   <define name='iso'>
@@ -238,9 +250,11 @@
       <value>iso</value>
     </attribute>
     <interleave>
-      <element name='iso'>
-        <text/>
-      </element>
+      <optional>
+        <element name='iso'>
+          <text/>
+        </element>
+      </optional>
       <optional>
         <choice>
           <element name='md5sum'>
