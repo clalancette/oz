@@ -114,3 +114,13 @@ def get_supported_string():
     Return supported versions as a string.
     """
     return "RHL: 7.0, 7.1, 7.2, 7.3, 8, 9"
+
+def get_osinfo(distro, update):
+    """
+    Return the libosinfo short ID.
+    """
+    if update == "8":
+        return "rhl8.0"
+    if update == "7.0":
+        return "rhl7"
+    return "rhl%s" % update

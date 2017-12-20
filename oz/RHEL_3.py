@@ -111,3 +111,14 @@ def get_supported_string():
     Return supported versions as a string.
     """
     return "RHEL/CentOS 3: " + ", ".join(versions)
+
+def get_osinfo(distro, update):
+    """
+    Return the libosinfo short ID.
+    """
+    if distro == "RHEL-3":
+        if update == 'GOLD':
+            return "rhel3"
+        if update[0] == 'U':
+            return "rhel3.%s" % update[1:]
+    return None

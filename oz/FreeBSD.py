@@ -126,3 +126,9 @@ def get_supported_string():
     Return supported versions as a string.
     """
     return "FreeBSD: " + ", ".join(sorted(version_to_config.keys()))
+
+def get_osinfo(distro, update):
+    """
+    Return the libosinfo short ID.
+    """
+    return "freebsd%s" % update
