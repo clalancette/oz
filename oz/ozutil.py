@@ -818,7 +818,7 @@ def http_get_header(url, redirect=True):
     """
     with requests.Session() as requests_session:
         requests_session.mount('file://', LocalFileAdapter())
-        response = requests_session.post(url, allow_redirects=redirect, stream=True, timeout=10)
+        response = requests_session.head(url, allow_redirects=redirect, stream=True, timeout=10)
         info = response.headers
         info['HTTP-Code'] = response.status_code
         if not redirect:
