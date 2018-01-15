@@ -12,6 +12,8 @@ except:
     from StringIO import StringIO
     BytesIO = StringIO
 import logging
+import signal
+import mock
 import os
 
 # Find oz library
@@ -631,3 +633,37 @@ def test_modify_libvirt_xml_diskimage_too_many_drivers():
             # Replace various smaller items as they are auto generated
             test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
             guest._modify_libvirt_xml_diskimage(test_xml, guest.diskimage, 'qcow2')
+
+def test_cancellable_sigint():
+    # Provide a macaddress so testing is easier
+    guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
+    guest.cancel = mock.MagicMock()
+
+    sigint = mock.MagicMock()
+    old = signal.signal(signal.SIGINT, sigint)
+
+    with guest._cancellable(guest):
+        os.kill(os.getpid(), signal.SIGINT)
+
+    guest.cancel.assert_called_once()
+    sigint.assert_called_once()
+    assert sigint.call_args[0][0] == signal.SIGINT
+
+    signal.signal(signal.SIGINT, old)
+
+def test_cancellable_sigterm():
+    # Provide a macaddress so testing is easier
+    guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
+    guest.cancel = mock.MagicMock()
+
+    sigterm = mock.MagicMock()
+    old = signal.signal(signal.SIGTERM, sigterm)
+
+    with guest._cancellable(guest):
+        os.kill(os.getpid(), signal.SIGTERM)
+
+    guest.cancel.assert_called_once()
+    sigterm.assert_called_once()
+    assert sigterm.call_args[0][0] == signal.SIGTERM
+
+    signal.signal(signal.SIGTERM, old)

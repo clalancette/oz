@@ -29,6 +29,7 @@ import shutil
 import socket
 import stat
 import struct
+import signal
 import subprocess
 import tempfile
 import time
@@ -284,6 +285,9 @@ class Guest(object):
         self.auto = auto
         if self.auto is None:
             self.auto = self.get_auto_path()
+
+        # Reference to a libvirt dom if that is still running
+        self._libvirt_dom = None
 
         self.log.debug("Name: %s, UUID: %s", self.tdl.name, self.uuid)
         self.log.debug("MAC: %s, distro: %s", self.macaddr, self.tdl.distro)
@@ -746,6 +750,65 @@ class Guest(object):
 
         return total_disk_req, total_net_bytes
 
+    def cancel(self):
+        """
+        Method to cancel the install by destroying the VM if running.
+        This will, if an install is running, immediately destroy the libvirt
+        domain. It will leave everything else around.
+        """
+        if self._libvirt_dom:
+            try:
+                self._libvirt_dom.info()
+                self._libvirt_dom.destroy()
+            except libvirt.libvirtError as e:
+                if e.get_error_code() != libvirt.VIR_ERR_NO_DOMAIN:
+                    # If the domain no longer existed, that works for us.
+                    # Anything else, report
+                    raise
+            finally:
+                self._libvirt_dom = None
+
+    class _cancellable(object):
+        """
+        Context manager to manage signal handlers that cancel the build on SIGINT and SIGTERM.
+        This is a context manager so that it gets called on any exception and normal exit.
+        """
+        def __init__(self, upper):
+            self.upper = upper
+            self.sigint_handler = None
+            self.sigterm_handler = None
+
+        def __enter__(self):
+            """
+            Context Manager entry. Sets up signal handlers.
+            """
+            def ourhandler(sig, stack):
+                self.upper.cancel()
+                if sig == signal.SIGINT:
+                    self._sigint_handler(sig, stack)
+                elif sig == signal.SIGTERM:
+                    self._sigterm_handler(sig, stack)
+
+            self._sigint_handler = signal.signal(signal.SIGINT, ourhandler)
+            self._sigterm_handler = signal.signal(signal.SIGTERM, ourhandler)
+
+        def __exit__(self, exc_class, exc, tb):
+            """
+            Context Manager exit. Clears signal handlers.
+            """
+            if self._sigint_handler:
+                signal.signal(signal.SIGINT, self._sigint_handler)
+            else:
+                signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+            if self._sigterm_handler:
+                signal.signal(signal.SIGTERM, self._sigterm_handler)
+            else:
+                signal.signal(signal.SIGTERM, signal.SIG_DFL)
+
+            # We explicitly return nothing. That will mean that whatever exception was thrown
+            # still gets raised.
+
     def _wait_for_install_finish(self, xml, max_time):
         """
         Method to wait for an installation to finish.  This will wait around
@@ -755,6 +818,7 @@ class Guest(object):
         """
 
         libvirt_dom = self.libvirt_conn.createXML(xml, 0)
+        self._libvirt_dom = libvirt_dom
 
         disks, interfaces = self._get_disks_and_interfaces(libvirt_dom.XMLDesc(0))
 
@@ -871,6 +935,7 @@ class Guest(object):
                 if e.get_error_code() == libvirt.VIR_ERR_NO_DOMAIN:
                     # Here, the guest really, truly went away cleanly.  Thus, we know this
                     # loop has successfully completed, and we can return True.
+                    self._libvirt_dom = None
                     return True
 
                 # In all other cases, we got some kind of exception we didn't understand.
@@ -1577,7 +1642,8 @@ class CDGuest(Guest):
                 xml = self._generate_xml("hd", cddev, None, None, None,
                                          virtio_channel_name)
 
-            self._wait_for_install_finish(xml, timeout)
+            with self._cancellable(self):
+                self._wait_for_install_finish(xml, timeout)
 
             reboots_to_go -= 1
 
@@ -1805,7 +1871,8 @@ class FDGuest(Guest):
         if timeout is None:
             timeout = 1200
 
-        self._wait_for_install_finish(self._generate_xml("fd", fddev), timeout)
+        with self._cancellable(self):
+            self._wait_for_install_finish(self._generate_xml("fd", fddev), timeout)
 
         if self.cache_jeos:
             self.log.info("Caching JEOS")
