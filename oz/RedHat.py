@@ -108,6 +108,9 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         Method to modify the isolinux.cfg file on a RedHat style CD.
         """
         self.log.debug("Modifying isolinux.cfg")
+        # append additional kernel params from the TDL to initrdline
+        if self.tdl.kernel_param:
+            initrdline += " " + self.tdl.kernel_param
         isolinuxcfg = os.path.join(self.iso_contents, "isolinux",
                                    "isolinux.cfg")
 
