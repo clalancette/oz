@@ -265,13 +265,12 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
                 initrdline += " repo="
             else:
                 initrdline += " method="
-            initrdline += self.url + "\n"
+            initrdline += self.url
         else:
             # if the installtype is iso, then due to a bug in anaconda we leave
             # out the method completely
             if not self.config.brokenisomethod:
                 initrdline += " method=cdrom:/dev/cdrom"
-            initrdline += "\n"
         self._modify_isolinux(initrdline)
 
     def generate_diskimage(self, size=10, force=False):

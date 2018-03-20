@@ -46,7 +46,7 @@ class RHEL7Guest(oz.RedHat.RedHatLinuxCDYumGuest):
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/dev/cdrom:/ks.cfg"
         if self.tdl.installtype == "url":
-            initrdline += " repo=" + self.url + "\n"
+            initrdline += " repo=" + self.url
         else:
             # RHEL6 dropped this command line directive due to an Anaconda bug
             # that has since been fixed.  Note that this used to be "method="

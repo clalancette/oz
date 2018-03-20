@@ -69,7 +69,7 @@ class RHL9Guest(oz.RedHat.RedHatLinuxCDGuest):
         else:
             shutil.copy(self.auto, outname)
 
-        initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method=" + self.url + "\n"
+        initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method=" + self.url
         self._modify_isolinux(initrdline)
 
     def get_auto_path(self):

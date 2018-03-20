@@ -75,9 +75,9 @@ class FedoraCoreGuest(oz.RedHat.RedHatLinuxCDGuest):
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg method="
         if self.tdl.installtype == "url":
-            initrdline += self.url + "\n"
+            initrdline += self.url
         else:
-            initrdline += "cdrom:/dev/cdrom\n"
+            initrdline += "cdrom:/dev/cdrom"
         self._modify_isolinux(initrdline)
 
     def get_auto_path(self):

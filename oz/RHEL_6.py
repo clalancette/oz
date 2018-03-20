@@ -45,9 +45,7 @@ class RHEL6Guest(oz.RedHat.RedHatLinuxCDYumGuest):
 
         initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
         if self.tdl.installtype == "url":
-            initrdline += " repo=" + self.url + "\n"
-        else:
-            initrdline += "\n"
+            initrdline += " repo=" + self.url
         self._modify_isolinux(initrdline)
 
     def get_auto_path(self):
