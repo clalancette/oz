@@ -845,11 +845,15 @@ def http_download_file(url, fd, show_progress, logger):
             if show_progress:
                 logger.debug("%dkB of %dkB" % (done / 1024, file_size / 1024))
 
-def ftp_download_directory(server, username, password, basepath, destination):
+def ftp_download_directory(server, username, password, basepath, destination, port=None):
     """
     Function to recursively download an entire directory structure over FTP.
     """
-    ftp = ftplib.FTP(server)
+    if not port:
+        port = 21
+
+    ftp = ftplib.FTP()
+    ftp.connect(server, port)
     ftp.login(username, password)
 
     def _recursive_ftp_download(sourcepath):
