@@ -849,9 +849,6 @@ def ftp_download_directory(server, username, password, basepath, destination, po
     """
     Function to recursively download an entire directory structure over FTP.
     """
-    if not port:
-        port = 21
-
     ftp = ftplib.FTP()
     ftp.connect(server, port)
     ftp.login(username, password)
