@@ -120,3 +120,21 @@ def distrolist():
 
     strings.sort()
     print('\n'.join(strings))
+
+def get_osinfo(distro, update):
+    """
+    Function to return the appropriate libosinfo short ID for the specified
+    distribution, if possible (hence None can be returned as well).
+    The arguments are:
+
+    distro - The distribution name.
+    update - The version of the specified distribution.
+    """
+
+    importname = os_dict.get(distro, None)
+    if importname:
+        # we found the matching module; import and call the get_osinfo method
+        module = __import__('oz.' + importname)
+        return getattr(module, importname).get_osinfo(distro, update)
+
+    return None

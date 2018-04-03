@@ -73,3 +73,17 @@ def get_supported_string():
     Return supported versions as a string.
     """
     return "RHEL/OL/CentOS/Scientific Linux{,CERN} 6"
+
+def get_osinfo(distro, update):
+    """
+    Return the libosinfo short ID.
+    """
+    if update.isdigit():
+        verstring = "6.%s" % update
+    else:
+        verstring = "6.0"
+    if distro == "RHEL-6":
+        return "rhel%s" % verstring
+    if distro == "CentOS-6":
+        return "centos%s" % verstring
+    return None

@@ -161,3 +161,9 @@ def get_supported_string():
     Return supported versions as a string.
     """
     return "Mandrake: " + ", ".join(sorted(version_to_config.keys(), key=float))
+
+def get_osinfo(distro, update):
+    """
+    Return the libosinfo short ID.
+    """
+    return "mandrake%s" % update

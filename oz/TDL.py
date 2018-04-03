@@ -31,6 +31,13 @@ try:
     import StringIO
 except ImportError:
     from io import StringIO
+try:
+    import gi
+    gi.require_version('Libosinfo', '1.0')
+    from gi.repository import Libosinfo as libosinfo
+    libosinfo_available = True
+except ImportError:
+    libosinfo_available = False
 
 import lxml.etree
 
@@ -95,6 +102,27 @@ def data_from_type(name, contenttype, content):
     out.seek(0)
 
     return out
+
+def _osinfo_os_from_short_id(short_id):
+    """
+    Function to get the libosinfo OS from the short ID specified as argument.
+    The list of available libosinfo OSes is cached.
+    """
+    if not _osinfo_os_from_short_id.oses:
+        loader = libosinfo.Loader()
+        loader.process_default_path()
+        db = loader.get_db()
+        _osinfo_os_from_short_id.oses = db.get_os_list()
+    f = libosinfo.Filter()
+    f.add_constraint("short-id", short_id)
+    elems = _osinfo_os_from_short_id.oses.new_filtered(f).get_elements()
+    num_elems = len(elems)
+    if num_elems == 0:
+        raise oz.OzException.OzException("osinfo OS for short ID '%s' not found" % (short_id))
+    elif num_elems > 1:
+        raise oz.OzException.OzException("More than 1 osinfo OS for short ID '%s' found (%d found)" % (short_id, num_elems))
+    return elems[0]
+_osinfo_os_from_short_id.oses = None
 
 class Repository(object):
     """
@@ -213,6 +241,14 @@ class TDL(object):
                                   optional=True)
         # key is not required, so it is not fatal if it is None
 
+        self.osinfo_id = _xml_get_value(self.doc, '/template/os/osinfo',
+                                        'osinfo-db short ID', optional=True)
+        self.osinfo_variant = _xml_get_value(self.doc, '/template/os/variant',
+                                             'osinfo-db variant', optional=True)
+        if not self.osinfo_id:
+            self.osinfo_id = oz.GuestFactory.get_osinfo(self.distro, self.update)
+        # osinfo and variant are not required, so it is not fatal if they are None
+
         self.description = _xml_get_value(self.doc, '/template/description',
                                           'description', optional=True)
         # description is not required, so it is not fatal if it is None
@@ -235,10 +271,33 @@ class TDL(object):
 
         if self.installtype == "url":
             self.url = _xml_get_value(self.doc, '/template/os/install/url',
-                                      'OS install URL')
+                                      'OS install URL',
+                                      optional=libosinfo_available)
+            # if self.url is none, it means libosinfo is available
+            if not self.url:
+                if not self.osinfo_id:
+                    raise oz.OzException.OzException("Missing <osinfo>")
+                osos = _osinfo_os_from_short_id(self.osinfo_id)
+                osfilter = libosinfo.Filter()
+                osfilter.add_constraint('architecture', self.arch)
+                if self.osinfo_variant:
+                    osfilter.add_constraint('variant', self.osinfo_variant)
+                tree_list = osos.get_tree_list()
+                trees = tree_list.new_filtered(osfilter).get_elements()
+                num_trees = len(trees)
+                if num_trees == 0:
+                    raise oz.OzException.OzException("osinfo OS '%s' has no install tree" % (self.osinfo_id))
+                elif num_trees > 1:
+                    raise oz.OzException.OzException("More than 1 install tree for osinfo OS '%s' found (%d found)" % (self.osinfo_id, num_trees))
+                tree = trees[0]
+                url = tree.get_url()
+                if not url:
+                    raise oz.OzException.OzException("osinfo OS '%s' has no URL for the install tree" % (self.osinfo_id))
+                self.url = url
         elif self.installtype == "iso":
             self.iso = _xml_get_value(self.doc, '/template/os/install/iso',
-                                      'OS install ISO')
+                                      'OS install ISO',
+                                      optional=libosinfo_available)
             self.iso_md5_url = _xml_get_value(self.doc,
                                               '/template/os/install/md5sum',
                                               'OS install ISO MD5SUM',
@@ -255,6 +314,27 @@ class TDL(object):
             # if multiple are
             if (self.iso_md5_url and self.iso_sha1_url) or (self.iso_md5_url and self.iso_sha256_url) or (self.iso_sha1_url and self.iso_sha256_url):
                 raise oz.OzException.OzException("Only one of <md5sum>, <sha1sum>, and <sha256sum> can be specified")
+            # if self.iso is none, it means libosinfo is available
+            if not self.iso:
+                if not self.osinfo_id:
+                    raise oz.OzException.OzException("Missing <osinfo>")
+                osos = _osinfo_os_from_short_id(self.osinfo_id)
+                osfilter = libosinfo.Filter()
+                osfilter.add_constraint('architecture', self.arch)
+                if self.osinfo_variant:
+                    osfilter.add_constraint('variant', self.osinfo_variant)
+                media_list = osos.get_media_list()
+                media = media_list.new_filtered(osfilter).get_elements()
+                num_media = len(media)
+                if num_media == 0:
+                    raise oz.OzException.OzException("osinfo OS '%s' has no install media" % (self.osinfo_id))
+                elif num_media > 1:
+                    raise oz.OzException.OzException("More than 1 install media for osinfo OS '%s' found (%d found)" % (self.osinfo_id, num_media))
+                medium = media[0]
+                url = medium.get_url()
+                if not url:
+                    raise oz.OzException.OzException("osinfo OS '%s' has no URL for the install media" % (self.osinfo_id))
+                self.iso = url
         else:
             raise oz.OzException.OzException("Unknown install type " + self.installtype + " in TDL")
 

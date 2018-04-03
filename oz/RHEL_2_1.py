@@ -55,3 +55,13 @@ def get_supported_string():
     Return supported versions as a string.
     """
     return "RHEL 2.1: " + ", ".join(versions)
+
+def get_osinfo(distro, update):
+    """
+    Return the libosinfo short ID.
+    """
+    if update == 'GOLD':
+        return "rhel2.1"
+    if update[0] == 'U':
+        return "rhel2.1.%s" % update[1:]
+    return None

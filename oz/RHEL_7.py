@@ -77,3 +77,17 @@ def get_supported_string():
     Return supported versions as a string.
     """
     return "RHEL 7"
+
+def get_osinfo(distro, update):
+    """
+    Return the libosinfo short ID.
+    """
+    if distro == "RHEL-7":
+        if update.isdigit():
+            verstring = "7.%s" % update
+        else:
+            verstring = "7.0"
+        return "rhel%s" % verstring
+    if distro == "CentOS-7":
+        return "centos7.0"
+    return None

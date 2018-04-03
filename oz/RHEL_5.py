@@ -148,3 +148,14 @@ def get_supported_string():
     Return supported versions as a string.
     """
     return "RHEL/OL/CentOS/Scientific Linux{,CERN} 5: " + ", ".join(sorted(version_to_config.keys()))
+
+def get_osinfo(distro, update):
+    """
+    Return the libosinfo short ID.
+    """
+    if distro == "RHEL-5":
+        if update == 'GOLD':
+            return "rhel5.0"
+        if update[0] == 'U':
+            return "rhel5.%s" % update[1:]
+    return None

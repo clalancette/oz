@@ -335,3 +335,21 @@ def get_supported_string():
     Return supported versions as a string.
     """
     return "Windows: 2000, XP, 2003, 7, 2008, 2012, 8, 8.1, 2016, 10"
+
+def get_osinfo(distro, update):
+    """
+    Return the libosinfo short ID.
+    """
+    winids = {
+        "2000": "win2k",
+        "XP": "winxp",
+        "2003": "win2k3",
+        "2008": "win2k8",
+        "7": "win7",
+        "2012": "win2k12",
+        "8": "win8",
+        "8.1": "win8.1",
+        "2016": "win2k16",
+        "10": "win10",
+    }
+    return winids.get(update)
