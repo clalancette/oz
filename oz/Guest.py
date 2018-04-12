@@ -530,6 +530,11 @@ class Guest(object):
             install = oz.ozutil.lxml_subelement(devices, "disk", None, {'type':'file', 'device':installdev.devicetype})
             oz.ozutil.lxml_subelement(install, "source", None, {'file':installdev.path})
             oz.ozutil.lxml_subelement(install, "target", None, {'dev':installdev.bus})
+        # qemu-ga
+        channel = oz.ozutil.lxml_subelement(devices, "channel", None, {'type':'unix'})
+        source_path = "/var/lib/libvirt/qemu/%s.%s.sock" % ("org.qemu.guest_agent.0", self.tdl.name)
+        oz.ozutil.lxml_subelement(channel, "source", None, {'mode':'bind', 'path':source_path})
+        oz.ozutil.lxml_subelement(channel, "target", None, {'type':'virtio', 'name':'org.qemu.guest_agent.0'})
 
         xml = lxml.etree.tostring(domain, pretty_print=True)
         self.log.debug("Generated XML:\n%s", xml)
