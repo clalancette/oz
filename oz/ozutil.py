@@ -395,7 +395,7 @@ def subprocess_check_output(*popenargs, **kwargs):
         start = time.time()
         try:
             ready = poller.poll(1000)
-        except select.error, e:
+        except select.error as e:
             if e.args[0] == errno.EINTR:
                 continue
             raise
@@ -785,7 +785,7 @@ class LocalFileAdapter(requests.adapters.BaseAdapter):
         if response.status_code == 200 and req.method.lower() != 'head':
             try:
                 response.raw = open(path, 'rb')
-            except (OSError, IOError), err:
+            except (OSError, IOError) as err:
                 response.status_code = 500
                 response.reason = str(err)
 
