@@ -355,7 +355,7 @@ fi
             try:
                 g_handle.upload(scriptfile,
                                 '/etc/NetworkManager/dispatcher.d/99-reportip')
-                g_handle.chmod(0755,
+                g_handle.chmod(0o755,
                                '/etc/NetworkManager/dispatcher.d/99-reportip')
             finally:
                 os.unlink(scriptfile)
@@ -375,7 +375,7 @@ echo -n "!$ADDR,%s!" > %s
 
         try:
             g_handle.upload(scriptfile, '/root/reportip')
-            g_handle.chmod(0755, '/root/reportip')
+            g_handle.chmod(0o755, '/root/reportip')
         finally:
             os.unlink(scriptfile)
 

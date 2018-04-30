@@ -390,7 +390,7 @@ fi
             try:
                 g_handle.upload(scriptfile,
                                 '/etc/NetworkManager/dispatcher.d/99-reportip')
-                g_handle.chmod(0755,
+                g_handle.chmod(0o755,
                                '/etc/NetworkManager/dispatcher.d/99-reportip')
             finally:
                 os.unlink(scriptfile)
