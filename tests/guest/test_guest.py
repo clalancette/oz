@@ -39,7 +39,7 @@ except ImportError:
 
 def default_route():
     route_file = "/proc/net/route"
-    d = file(route_file)
+    d = open(route_file)
 
     defn = 0
     for line in d:
