@@ -6,13 +6,9 @@ try:
     import configparser
 except ImportError:
     import ConfigParser as configparser
-try:
-    from io import StringIO, BytesIO
-except:
-    from StringIO import StringIO
-    BytesIO = StringIO
 import logging
 import os
+import six
 
 # Find oz library
 prefix = '.'
@@ -112,7 +108,7 @@ def runtest(args):
 
     print(route)
     config = configparser.SafeConfigParser()
-    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(six.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
     if os.getenv('DEBUG') is not None:
         logging.basicConfig(level=logging.DEBUG, format="%(message)s")

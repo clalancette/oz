@@ -6,13 +6,9 @@ try:
     import configparser
 except ImportError:
     import ConfigParser as configparser
-try:
-    from io import StringIO, BytesIO
-except:
-    from StringIO import StringIO
-    BytesIO = StringIO
 import logging
 import os
+import six
 
 # Find oz library
 prefix = '.'
@@ -65,7 +61,7 @@ def setup_guest(xml, macaddress=None):
     tdl = oz.TDL.TDL(xml)
 
     config = configparser.SafeConfigParser()
-    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(six.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
     guest = oz.GuestFactory.guest_factory(tdl, config, None, macaddress=macaddress)
     return guest
@@ -356,7 +352,7 @@ def test_init_guest_bad_arch():
     tdl = oz.TDL.TDL(tdlxml)
     tdl.arch = 'armhf'  # Done here to make sure the TDL class doesn't error
     config = configparser.SafeConfigParser()
-    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(six.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
     with py.test.raises(Exception):
         oz.GuestFactory.guest_factory(tdl, config, None)
 

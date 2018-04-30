@@ -22,15 +22,12 @@ Template Description Language (TDL)
 import base64
 import os
 import re
+import six
 import tempfile
 try:
     import urllib.parse as urlparse
 except ImportError:
     import urlparse
-try:
-    import StringIO
-except ImportError:
-    from io import StringIO
 
 import lxml.etree
 
@@ -78,7 +75,7 @@ def data_from_type(name, contenttype, content):
     if contenttype == 'raw':
         out.write(content)
     elif contenttype == 'base64':
-        base64.decode(StringIO.StringIO(content), out)
+        base64.decode(six.StringIO(content), out)
     elif contenttype == 'url':
         url = urlparse.urlparse(content)
         if url.scheme == "file":
@@ -175,7 +172,7 @@ class TDL(object):
     """
     def __init__(self, xmlstring, rootpw_required=False):
         # open the XML document
-        tree = lxml.etree.parse(StringIO.StringIO(xmlstring))
+        tree = lxml.etree.parse(six.StringIO(xmlstring))
         tree.xinclude()
         self.doc = tree.getroot()
 
