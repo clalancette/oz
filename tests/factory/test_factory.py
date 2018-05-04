@@ -69,7 +69,7 @@ def default_route():
     for line in d:
         info = line.split()
         if (len(info) != 11): # 11 = typical num of fields in the file
-            logging.warn(_("Invalid line length while parsing %s.") %
+            logging.warn("Invalid line length while parsing %s." %
                          (route_file))
             break
         try:

@@ -9,6 +9,8 @@ except ImportError:
 import logging
 import os
 import six
+import xmlunittest
+from lxml import objectify, etree
 
 # Find oz library
 prefix = '.'
@@ -545,7 +547,8 @@ def test_modify_libvirt_xml_for_serial():
     with open(path, 'r') as handle:
         # Replace various smaller items as they are auto generated
         final_xml = handle.read() % (guest.uuid, route, guest.diskimage, guest.listen_port)
-        assert final_xml == final
+        #assert final_xml == final.decode()
+        test_case.assertXmlEquivalentOutputs(data, expected)
 
 def test_modify_libvirt_xml_for_serial_too_many_targets():
     # Provide a macaddress so testing is easier
@@ -602,7 +605,7 @@ def test_modify_libvirt_xml_diskimage():
     with open(path, 'r') as handle:
         # Replace various smaller items as they are auto generated
         final_xml = handle.read() % (guest.uuid, route, guest.listen_port, image)
-        assert final_xml == final
+        assert final_xml == final.decode()
 
 def test_modify_libvirt_xml_diskimage_missing_disk_source():
     # Provide a macaddress so testing is easier
