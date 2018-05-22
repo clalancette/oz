@@ -19,6 +19,7 @@
 Miscellaneous utility functions.
 """
 
+import codecs
 import collections
 try:
     import configparser
@@ -223,7 +224,7 @@ def sum_split(line, digest_bits):
     Function to split a normal Linux checksum line into a filename and
     checksum.
     """
-    digest_hex_bytes = digest_bits / 4
+    digest_hex_bytes = int(digest_bits // 4)
     min_digest_line_length = digest_hex_bytes + 2 + 1 # length of hex message digest + blank and binary indicator (2 bytes) + minimum file length (1 byte)
 
     min_length = min_digest_line_length
@@ -266,7 +267,11 @@ def sum_split(line, digest_bits):
         # FIXME: a \0 is not allowed in the sum file format, but
         # string_escape allows it.  We'd probably have to implement our
         # own codec to fix this
-        filename = filename.decode('string_escape')
+        try:
+            filename = filename.decode('string_escape')
+        except AttributeError:
+            # py3
+            filename = codecs.unicode_escape_decode(filename)
 
     return hex_digest, filename
 
