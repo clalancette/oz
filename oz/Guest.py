@@ -465,7 +465,7 @@ class Guest(object):
         oz.ozutil.lxml_subelement(features, "pae")
         # CPU
         if self.tdl.arch in ["aarch64", "armv7l"] and self.libvirt_type == "kvm":
-            # Possibly related to BZ 1171501 - need host passthrough for aarch64 and arm with kvm
+            # Possibly related to RHBZ 1171501 - need host passthrough for aarch64 and arm with kvm
             cpu = oz.ozutil.lxml_subelement(domain, "cpu", None, {'mode': 'custom', 'match': 'exact'})
             oz.ozutil.lxml_subelement(cpu, "model", "host", {'fallback': 'allow'})
         # os
@@ -484,7 +484,7 @@ class Guest(object):
             if self.tdl.arch == "armv7l":
                 cmdline += " console=ttyAMA0"
             oz.ozutil.lxml_subelement(osNode, "cmdline", cmdline)
-        if self.tdl.arch == "aarch64":
+        if self.tdl.arch in ["x86_64", "aarch64", "armv7l"]:
             loader, nvram = oz.ozutil.find_uefi_firmware(self.tdl.arch)
             oz.ozutil.lxml_subelement(osNode, "loader", loader, {'readonly': 'yes', 'type': 'pflash'})
             oz.ozutil.lxml_subelement(osNode, "nvram", None, {'template': nvram})
@@ -495,8 +495,8 @@ class Guest(object):
         # devices
         devices = oz.ozutil.lxml_subelement(domain, "devices")
         # graphics
-        if self.tdl.arch not in ["aarch64", "armv7l", "s390x"]:
-            # qemu for arm/aarch64/s390x does not support a graphical console - amazingly
+        if not self.tdl.arch in ["s390x"]:
+            # qemu for s390x does not support a graphical console
             oz.ozutil.lxml_subelement(devices, "graphics", None, {'port': '-1', 'type': 'vnc'})
         # network
         interface = oz.ozutil.lxml_subelement(devices, "interface", None, {'type': 'bridge'})
@@ -510,6 +510,11 @@ class Guest(object):
         elif self.mousetype == "usb":
             mousedict['type'] = 'tablet'
         oz.ozutil.lxml_subelement(devices, "input", None, mousedict)
+        if self.tdl.arch in ["aarch64", "armv7l"] and self.libvirt_type == "kvm":
+            # Other arches add a keyboard by default, for historical reasons ARM doesn't
+            # so we add it here so graphical works and hence we can get debug screenshots RHBZ 1538637
+            oz.ozutil.lxml_subelement(devices, 'controller', None, {'type': 'usb', 'index': '0'})
+            oz.ozutil.lxml_subelement(devices, 'input', None, {'type': 'keyboard', 'bus': 'usb'})
         # serial console pseudo TTY
         console = oz.ozutil.lxml_subelement(devices, "serial", None, {'type': 'pty'})
         oz.ozutil.lxml_subelement(console, "target", None, {'port': '0'})

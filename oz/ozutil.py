@@ -1050,6 +1050,8 @@ def find_uefi_firmware(arch):
     elif arch in ['x86_64']:
         uefi_list = [UEFI('/usr/share/OVMF/OVMF_CODE.fd',
                           '/usr/share/OVMF/OVMF_VARS.fd'),
+                     UEFI('/usr/share/edk2/ovmf/OVMF_CODE.fd',
+                          '/usr/share/edk2/ovmf/OVMF_VARS.fd'),
                      UEFI('/usr/share/edk2.git/ovmf-x64/OVMF_CODE-pure-efi.fd',
                           '/usr/share/edk2.git/ovmf-x64/OVMF_VARS-pure-efi.fd')]
     elif arch in ['aarch64']:
@@ -1059,6 +1061,9 @@ def find_uefi_firmware(arch):
                           '/usr/share/edk2/aarch64/vars-template-pflash.raw'),
                      UEFI('/usr/share/edk2.git/aarch64/QEMU_EFI-pflash.raw',
                           '/usr/share/edk2.git/aarch64/vars-template-pflash.raw')]
+    elif arch in ['armv7l']:
+        uefi_list = [UEFI('/usr/share/edk2/arm/QEMU_EFI-pflash.raw',
+                          '/usr/share/edk2/arm/vars-template-pflash.raw')]
     else:
         raise Exception("Invalid arch for UEFI firmware")
 
