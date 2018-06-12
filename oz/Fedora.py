@@ -76,6 +76,16 @@ class FedoraConfiguration(object):
         return self._haverepo
 
 version_to_config = {
+    '28': FedoraConfiguration(has_virtio_channel=True, use_yum=False,
+                              use_dev_cdrom_device=True, createpart=False,
+                              directkernel="cpio", default_netdev='virtio',
+                              default_diskbus='virtio', brokenisomethod=False,
+                              haverepo=True),
+    '27': FedoraConfiguration(has_virtio_channel=True, use_yum=False,
+                              use_dev_cdrom_device=True, createpart=False,
+                              directkernel="cpio", default_netdev='virtio',
+                              default_diskbus='virtio', brokenisomethod=False,
+                              haverepo=True),
     '26': FedoraConfiguration(has_virtio_channel=True, use_yum=False,
                               use_dev_cdrom_device=True, createpart=False,
                               directkernel="cpio", default_netdev='virtio',
