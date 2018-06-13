@@ -88,6 +88,16 @@ class UbuntuConfiguration(object):
 
 version_to_config = collections.OrderedDict()
 
+version_to_config["18.04"] = UbuntuConfiguration(reboots=0,
+                                                 can_customize=True,
+                                                 can_install_from_desktop=True,
+                                                 ancient_isolinux=False,
+                                                 efi_extension=True,
+                                                 old_kbd_chooser=False,
+                                                 extra_long_timeout=False,
+                                                 default_netdev='virtio',
+                                                 default_diskbus='virtio',
+                                                 initrdname='initrd.lz')
 version_to_config["17.10"] = UbuntuConfiguration(reboots=0,
                                                  can_customize=True,
                                                  can_install_from_desktop=True,
