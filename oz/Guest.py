@@ -942,7 +942,7 @@ class Guest(object):
 
         info = oz.ozutil.http_get_header(url)
 
-        if 'HTTP-Code' not in info or info['HTTP-Code'] >= 400 or 'Content-Length' not in info or info['Content-Length'] < 0:
+        if 'HTTP-Code' not in info or int(info['HTTP-Code']) >= 400 or 'Content-Length' not in info or int(info['Content-Length']) < 0:
             raise oz.OzException.OzException("Could not reach %s to fetch boot media: %r" % (url, info))
 
         content_length = int(info['Content-Length'])
