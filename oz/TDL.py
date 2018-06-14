@@ -380,7 +380,7 @@ class TDL(object):
             for pos, fp in tmp:
                 commands.append(fp)
         else:
-            tmp.sort(cmp=lambda x, y: cmp(x[0], y[0]))
+            tmp.sort(key=lambda x: x[0])
             order = 1
             for pos, fp in tmp:
                 if pos is None:
