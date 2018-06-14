@@ -276,7 +276,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     """
 
     newest = sorted(version_to_config.keys(), key=int)[-1]
-    if tdl.update == 'rawhide' or int(tdl.update) > newest:
+    if tdl.update == 'rawhide' or int(tdl.update) > int(newest):
         return FedoraGuest(tdl, config, auto, netdev, True, diskbus, False,
                            output_disk, macaddress, newest)
 

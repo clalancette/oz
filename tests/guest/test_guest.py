@@ -6,13 +6,11 @@ try:
     import configparser
 except ImportError:
     import ConfigParser as configparser
-try:
-    from io import StringIO, BytesIO
-except:
-    from StringIO import StringIO
-    BytesIO = StringIO
 import logging
 import os
+import six
+import xmlunittest
+from lxml import objectify, etree
 
 # Find oz library
 prefix = '.'
@@ -39,7 +37,7 @@ except ImportError:
 
 def default_route():
     route_file = "/proc/net/route"
-    d = file(route_file)
+    d = open(route_file)
 
     defn = 0
     for line in d:
@@ -65,7 +63,7 @@ def setup_guest(xml, macaddress=None):
     tdl = oz.TDL.TDL(xml)
 
     config = configparser.SafeConfigParser()
-    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(six.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
     guest = oz.GuestFactory.guest_factory(tdl, config, None, macaddress=macaddress)
     return guest
@@ -356,117 +354,138 @@ def test_init_guest_bad_arch():
     tdl = oz.TDL.TDL(tdlxml)
     tdl.arch = 'armhf'  # Done here to make sure the TDL class doesn't error
     config = configparser.SafeConfigParser()
-    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(six.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
     with py.test.raises(Exception):
         oz.GuestFactory.guest_factory(tdl, config, None)
 
-def test_icicle_generation():
-    guest = setup_guest(tdlxml)
-    with open(os.path.dirname(__file__) + '/test.icicle', 'r') as handle:
-        test_icicle = handle.read()
+class TestXML1(xmlunittest.XmlTestCase):
+    def test_icicle_generation(self):
+        guest = setup_guest(tdlxml)
+        with open(os.path.dirname(__file__) + '/test.icicle', 'r') as handle:
+            test_icicle = handle.read()
 
-    packages = [
-        "accountsservice",
-        "adduser",
-        "apparmor",
-        "apt",
-        "apt-transport-https",
-        "apt-utils",
-        "apt-xapian-index",
-        "aptitude",
-        "at",
-        "base-files",
-        "base-passwd",
-        "bash",
-        "bash-completion",
-        "bind9-host",
-        "binutils",
-        "bsdmainutils",
-        "bsdutils",
-        "build-essential",
-        "busybox-initramfs",
-        "busybox-static",
-        "bzip2",
-        "ca-certificates",
-        "chef",
-        "cloud-init",
-        "cloud-initramfs-growroot",
-        "cloud-initramfs-rescuevol",
-        "cloud-utils",
-        "comerr-dev",
-        "console-setup",
-        "coreutils",
-        "cpio",
-        "cpp",
-        "cpp-4.6",
-        "crda",
-        "cron",
-        "curl",
-        "dash",
-        "dbus",
-        "debconf",
-        "debconf-i18n",
-        "debianutils",
-        "denyhosts",
-        "diffutils",
-        "discover",
-        "discover-data",
-        "dkms",
-        "dmidecode",
-        "dmsetup",
-        "dnsutils",
-        "dosfstools",
-        "dpkg",
-        "dpkg-dev",
-        "e2fslibs",
-        "e2fsprogs",
-        "ed",
-        "eject",
-        "euca2ools",
-        "fakeroot",
-        "file",
-        "findutils",
-        "friendly-recovery",
-        "ftp",
-        "fuse",
-        "g++",
-        "g++-4.6"
-    ]
+        packages = [
+            "accountsservice",
+            "adduser",
+            "apparmor",
+            "apt",
+            "apt-transport-https",
+            "apt-utils",
+            "apt-xapian-index",
+            "aptitude",
+            "at",
+            "base-files",
+            "base-passwd",
+            "bash",
+            "bash-completion",
+            "bind9-host",
+            "binutils",
+            "bsdmainutils",
+            "bsdutils",
+            "build-essential",
+            "busybox-initramfs",
+            "busybox-static",
+            "bzip2",
+            "ca-certificates",
+            "chef",
+            "cloud-init",
+            "cloud-initramfs-growroot",
+            "cloud-initramfs-rescuevol",
+            "cloud-utils",
+            "comerr-dev",
+            "console-setup",
+            "coreutils",
+            "cpio",
+            "cpp",
+            "cpp-4.6",
+            "crda",
+            "cron",
+            "curl",
+            "dash",
+            "dbus",
+            "debconf",
+            "debconf-i18n",
+            "debianutils",
+            "denyhosts",
+            "diffutils",
+            "discover",
+            "discover-data",
+            "dkms",
+            "dmidecode",
+            "dmsetup",
+            "dnsutils",
+            "dosfstools",
+            "dpkg",
+            "dpkg-dev",
+            "e2fslibs",
+            "e2fsprogs",
+            "ed",
+            "eject",
+            "euca2ools",
+            "fakeroot",
+            "file",
+            "findutils",
+            "friendly-recovery",
+            "ftp",
+            "fuse",
+            "g++",
+            "g++-4.6"
+        ]
 
-    icicle = guest._output_icicle_xml(packages, 'Icicle Description')
-    assert test_icicle == icicle
+        icicle = guest._output_icicle_xml(packages, 'Icicle Description')
+        self.assertXmlEquivalentOutputs(test_icicle, icicle)
 
-def test_xml_generation_1():
-    # Provide a macaddress so testing is easier
-    guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
+    def test_xml_generation_1(self):
+        # Provide a macaddress so testing is easier
+        guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
 
-    with open(os.path.dirname(__file__) + '/libvirt/test_xml_generation_1.xml', 'r') as handle:
-        test_xml = handle.read()
+        with open(os.path.dirname(__file__) + '/libvirt/test_xml_generation_1.xml', 'r') as handle:
+            test_xml = handle.read()
 
-    # Replace various smaller items as they are auto generated
-    test_xml = test_xml % (guest.uuid, route, guest.listen_port, guest.diskimage)
+        # Replace various smaller items as they are auto generated
+        test_xml = test_xml % (guest.uuid, route, guest.listen_port, guest.diskimage)
 
-    bootdev = 'hd'
-    installdev = None
-    libvirt = guest._generate_xml(bootdev, installdev)
+        bootdev = 'hd'
+        installdev = None
+        libvirt = guest._generate_xml(bootdev, installdev)
 
-    assert test_xml == libvirt
+        self.assertXmlEquivalentOutputs(test_xml, libvirt)
 
-def test_xml_generation_2():
-    # Provide a macaddress so testing is easier
-    guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
+    def test_xml_generation_2(self):
+        # Provide a macaddress so testing is easier
+        guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
 
-    with open(os.path.dirname(__file__) + '/libvirt/test_xml_generation_2.xml', 'r') as handle:
-        test_xml = handle.read()
+        with open(os.path.dirname(__file__) + '/libvirt/test_xml_generation_2.xml', 'r') as handle:
+            test_xml = handle.read()
 
-    # Replace various smaller items as they are auto generated
-    test_xml = test_xml % (guest.uuid, route, guest.listen_port, guest.diskimage)
+        # Replace various smaller items as they are auto generated
+        test_xml = test_xml % (guest.uuid, route, guest.listen_port, guest.diskimage)
 
-    bootdev = 'hd'
-    installdev = guest._InstallDev('blue', '/var/bin/foo', 'muni')
-    libvirt = guest._generate_xml(bootdev, installdev, kernel='kernel option', initrd='initrd option', cmdline='command line')
+        bootdev = 'hd'
+        installdev = guest._InstallDev('blue', '/var/bin/foo', 'muni')
+        libvirt = guest._generate_xml(bootdev, installdev, kernel='kernel option', initrd='initrd option', cmdline='command line')
 
-    assert test_xml == libvirt
+        self.assertXmlEquivalentOutputs(test_xml, libvirt)
+
+    def test_modify_libvirt_xml_diskimage(self):
+        # Provide a macaddress so testing is easier
+        guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
+
+        # Get the comparision xml
+        path = os.path.dirname(__file__) + '/libvirt/test_modify_libvirt_xml_diskimage.xml'
+        with open(path, 'r') as handle:
+            # Replace various smaller items as they are auto generated
+            test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
+
+            name, ext = os.path.splitext(guest.diskimage)
+            image = name + '.qcow2'
+            final = guest._modify_libvirt_xml_diskimage(test_xml, image, 'qcow2')
+
+        path = os.path.dirname(__file__) + '/libvirt/test_modify_libvirt_xml_diskimage_final.xml'
+        with open(path, 'r') as handle:
+            # Replace various smaller items as they are auto generated
+            final_xml = handle.read() % (guest.uuid, route, guest.listen_port, image)
+            self.assertXmlEquivalentOutputs(final_xml, final.decode())
 
 def test_get_disks_and_interfaces():
     # Provide a macaddress so testing is easier
@@ -534,22 +553,23 @@ def test_get_disks_and_interfaces_missing_disk_target_device():
             test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
             guest._get_disks_and_interfaces(test_xml)
 
-def test_modify_libvirt_xml_for_serial():
-    # Provide a macaddress so testing is easier
-    guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
+class TestXML(xmlunittest.XmlTestCase):
+    def test_modify_libvirt_xml_for_serial(self):
+        # Provide a macaddress so testing is easier
+        guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
 
-    # Get the comparision xml
-    path = os.path.dirname(__file__) + '/libvirt/test_modify_libvirt_xml_for_serial.xml'
-    with open(path, 'r') as handle:
-        # Replace various smaller items as they are auto generated
-        test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
-        final = guest._modify_libvirt_xml_for_serial(test_xml)
+        # Get the comparision xml
+        path = os.path.dirname(__file__) + '/libvirt/test_modify_libvirt_xml_for_serial.xml'
+        with open(path, 'r') as handle:
+            # Replace various smaller items as they are auto generated
+            test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
+            final = guest._modify_libvirt_xml_for_serial(test_xml)
 
-    path = os.path.dirname(__file__) + '/libvirt/test_modify_libvirt_xml_for_serial_final.xml'
-    with open(path, 'r') as handle:
-        # Replace various smaller items as they are auto generated
-        final_xml = handle.read() % (guest.uuid, route, guest.diskimage, guest.listen_port)
-        assert final_xml == final
+        path = os.path.dirname(__file__) + '/libvirt/test_modify_libvirt_xml_for_serial_final.xml'
+        with open(path, 'r') as handle:
+            # Replace various smaller items as they are auto generated
+            final_xml = handle.read() % (guest.uuid, route, guest.diskimage, guest.listen_port)
+            self.assertXmlEquivalentOutputs(final_xml, final.decode())
 
 def test_modify_libvirt_xml_for_serial_too_many_targets():
     # Provide a macaddress so testing is easier
@@ -588,25 +608,6 @@ def test_modify_libvirt_xml_for_serial_too_many_devices():
             guest._modify_libvirt_xml_for_serial(test_xml)
 
 
-def test_modify_libvirt_xml_diskimage():
-    # Provide a macaddress so testing is easier
-    guest = setup_guest(tdlxml, macaddress='52:54:00:04:cc:a6')
-
-    # Get the comparision xml
-    path = os.path.dirname(__file__) + '/libvirt/test_modify_libvirt_xml_diskimage.xml'
-    with open(path, 'r') as handle:
-        # Replace various smaller items as they are auto generated
-        test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
-
-        name, ext = os.path.splitext(guest.diskimage)
-        image = name + '.qcow2'
-        final = guest._modify_libvirt_xml_diskimage(test_xml, image, 'qcow2')
-
-    path = os.path.dirname(__file__) + '/libvirt/test_modify_libvirt_xml_diskimage_final.xml'
-    with open(path, 'r') as handle:
-        # Replace various smaller items as they are auto generated
-        final_xml = handle.read() % (guest.uuid, route, guest.listen_port, image)
-        assert final_xml == final
 
 def test_modify_libvirt_xml_diskimage_missing_disk_source():
     # Provide a macaddress so testing is easier

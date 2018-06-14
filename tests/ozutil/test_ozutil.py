@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import six
 import sys
 import os
 
@@ -104,45 +105,45 @@ def test_copy_sparse_small_src(tmpdir):
     oz.ozutil.copyfile_sparse(srcname, dstname)
 
 def test_copy_sparse_one_block_src(tmpdir):
-    infd = open('/dev/urandom', 'r')
+    infd = open('/dev/urandom', 'rb')
     # we read 32*1024 to make sure we use one big buf_size block (see the
     # implementation of copyfile_sparse)
     data = infd.read(32*1024)
-    infd.close
+    infd.close()
 
     srcname = os.path.join(str(tmpdir), 'src')
-    outfd = open(srcname, 'w')
+    outfd = open(srcname, 'wb')
     outfd.write(data)
     outfd.close()
     dstname = os.path.join(str(tmpdir), 'dst')
     oz.ozutil.copyfile_sparse(srcname, dstname)
 
 def test_copy_sparse_many_blocks_src(tmpdir):
-    infd = open('/dev/urandom', 'r')
+    infd = open('/dev/urandom', 'rb')
     # we read 32*1024 to make sure we use one big buf_size block (see the
     # implementation of copyfile_sparse)
     data = infd.read(32*1024*10)
-    infd.close
+    infd.close()
 
     srcname = os.path.join(str(tmpdir), 'src')
-    outfd = open(srcname, 'w')
+    outfd = open(srcname, 'wb')
     outfd.write(data)
     outfd.close()
     dstname = os.path.join(str(tmpdir), 'dst')
     oz.ozutil.copyfile_sparse(srcname, dstname)
 
 def test_copy_sparse_zero_blocks(tmpdir):
-    infd = open('/dev/urandom', 'r')
+    infd = open('/dev/urandom', 'rb')
     # we read 32*1024 to make sure we use one big buf_size block (see the
     # implementation of copyfile_sparse)
     data1 = infd.read(32*1024)
     data2 = infd.read(32*1024)
-    infd.close
+    infd.close()
 
     srcname = os.path.join(str(tmpdir), 'src')
-    outfd = open(srcname, 'w')
+    outfd = open(srcname, 'wb')
     outfd.write(data1)
-    outfd.write('\0'*32*1024)
+    outfd.write(six.b('\0'*32*1024))
     outfd.write(data2)
     outfd.close()
     dstname = os.path.join(str(tmpdir), 'dst')

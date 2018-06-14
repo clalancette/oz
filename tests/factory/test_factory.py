@@ -6,13 +6,9 @@ try:
     import configparser
 except ImportError:
     import ConfigParser as configparser
-try:
-    from io import StringIO, BytesIO
-except:
-    from StringIO import StringIO
-    BytesIO = StringIO
 import logging
 import os
+import six
 
 # Find oz library
 prefix = '.'
@@ -68,12 +64,12 @@ class TestResult(object):
 
 def default_route():
     route_file = "/proc/net/route"
-    d = file(route_file)
+    d = open(route_file)
 
     for line in d:
         info = line.split()
         if (len(info) != 11): # 11 = typical num of fields in the file
-            logging.warn(_("Invalid line length while parsing %s.") %
+            logging.warn("Invalid line length while parsing %s." %
                          (route_file))
             break
         try:
@@ -112,7 +108,7 @@ def runtest(args):
 
     print(route)
     config = configparser.SafeConfigParser()
-    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(six.StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
     if os.getenv('DEBUG') is not None:
         logging.basicConfig(level=logging.DEBUG, format="%(message)s")

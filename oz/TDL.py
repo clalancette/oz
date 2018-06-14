@@ -22,15 +22,12 @@ Template Description Language (TDL)
 import base64
 import os
 import re
+import six
 import tempfile
 try:
     import urllib.parse as urlparse
 except ImportError:
     import urlparse
-try:
-    import StringIO
-except ImportError:
-    from io import StringIO
 
 import lxml.etree
 
@@ -74,16 +71,16 @@ def data_from_type(name, contenttype, content):
     from the function.
     '''
 
-    out = tempfile.NamedTemporaryFile()
+    out = tempfile.NamedTemporaryFile(mode='wb')
     if contenttype == 'raw':
-        out.write(content)
+        out.write(content.encode())
     elif contenttype == 'base64':
-        base64.decode(StringIO.StringIO(content), out)
+        base64.decode(six.StringIO(content), out)
     elif contenttype == 'url':
         url = urlparse.urlparse(content)
         if url.scheme == "file":
             with open(url.netloc + url.path) as f:
-                out.write("".join(f.readlines()))
+                out.write("".join(f.readlines()).encode())
         else:
             oz.ozutil.http_download_file(content, out.fileno(), False, None)
     else:
@@ -175,7 +172,7 @@ class TDL(object):
     """
     def __init__(self, xmlstring, rootpw_required=False):
         # open the XML document
-        tree = lxml.etree.parse(StringIO.StringIO(xmlstring))
+        tree = lxml.etree.parse(six.StringIO(xmlstring))
         tree.xinclude()
         self.doc = tree.getroot()
 
@@ -379,7 +376,7 @@ class TDL(object):
             for pos, fp in tmp:
                 commands.append(fp)
         else:
-            tmp.sort(cmp=lambda x, y: cmp(x[0], y[0]))
+            tmp.sort(key=lambda x: x[0])
             order = 1
             for pos, fp in tmp:
                 if pos is None:
