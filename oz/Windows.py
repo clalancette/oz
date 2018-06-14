@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012-2016  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2018  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -217,9 +217,8 @@ class Windows_v6(Windows):
                 raise oz.OzException.OzException("Invalid autounattend file; expected 1 auto logon password, saw %d" % (len(autologinpw)))
             autologinpw[0].text = self.rootpw
 
-            f = open(outname, 'w')
-            f.write(lxml.etree.tostring(doc, pretty_print=True))
-            f.close()
+            with open(outname, 'w') as f:
+                f.write(lxml.etree.tostring(doc, pretty_print=True, encoding="unicode"))
         else:
             # if the user provided their own unattend file, do not override
             # their choices; the user gets to keep both pieces if something
@@ -300,9 +299,8 @@ class Windows_v10(Windows):
                 raise oz.OzException.OzException("Invalid autounattend file; expected 1 auto logon password, saw %d" % (len(autologinpw)))
             autologinpw[0].text = self.rootpw
 
-            f = open(outname, 'w')
-            f.write(lxml.etree.tostring(doc, pretty_print=True))
-            f.close()
+            with open(outname, 'w') as f:
+                f.write(lxml.etree.tostring(doc, pretty_print=True, encoding="unicode"))
         else:
             # if the user provided their own unattend file, do not override
             # their choices; the user gets to keep both pieces if something

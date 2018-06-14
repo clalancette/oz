@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012-2017  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2018  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -136,9 +136,8 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
                 raise oz.OzException.OzException("Invalid SUSE autoyast file; expected single user_password, saw %d" % (len(pw)))
             pw[0].text = self.rootpw
 
-            f = open(outname, 'w')
-            f.write(lxml.etree.tostring(doc, pretty_print=True))
-            f.close()
+            with open(outname, 'w') as f:
+                f.write(lxml.etree.tostring(doc, pretty_print=True, encoding="unicode"))
         else:
             shutil.copy(self.auto, outname)
 

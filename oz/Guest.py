@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012-2017  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2018  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -531,7 +531,7 @@ class Guest(object):
             oz.ozutil.lxml_subelement(install, "source", None, {'file':installdev.path})
             oz.ozutil.lxml_subelement(install, "target", None, {'dev':installdev.bus})
 
-        xml = lxml.etree.tostring(domain, pretty_print=True)
+        xml = lxml.etree.tostring(domain, pretty_print=True, encoding="unicode")
         self.log.debug("Generated XML:\n%s", xml)
 
         return xml
@@ -566,7 +566,7 @@ class Guest(object):
         oz.ozutil.lxml_subelement(pool, "name", "oztempdir" + str(uuid.uuid4()))
         target = oz.ozutil.lxml_subelement(pool, "target")
         oz.ozutil.lxml_subelement(target, "path", directory)
-        pool_xml = lxml.etree.tostring(pool, pretty_print=True)
+        pool_xml = lxml.etree.tostring(pool, pretty_print=True, encoding="unicode")
 
         # create the volume XML
         vol = lxml.etree.Element("volume", type="file")
@@ -604,7 +604,7 @@ class Guest(object):
                                       {"type":backing_format})
 
         oz.ozutil.lxml_subelement(vol, "capacity", str(capacity), {'unit':'G'})
-        vol_xml = lxml.etree.tostring(vol, pretty_print=True)
+        vol_xml = lxml.etree.tostring(vol, pretty_print=True, encoding="unicode")
 
         # sigh.  Yes, this is racy; if a pool is defined during this loop, we
         # might miss it.  I'm not quite sure how to do it better, and in any
@@ -1063,7 +1063,7 @@ class Guest(object):
 
         self._generate_serial_xml(devices[0])
 
-        xml = lxml.etree.tostring(input_doc, pretty_print=True)
+        xml = lxml.etree.tostring(input_doc, pretty_print=True, encoding="unicode")
         self.log.debug("Generated XML:\n%s", xml)
         return xml
 
@@ -1093,7 +1093,7 @@ class Guest(object):
         else:
             raise oz.OzException.OzException("Found a disk with an unexpected number of driver sections")
 
-        xml = lxml.etree.tostring(input_doc, pretty_print=True)
+        xml = lxml.etree.tostring(input_doc, pretty_print=True, encoding="unicode")
         self.log.debug("Generated XML:\n%s", xml)
         return xml
 
@@ -1192,7 +1192,7 @@ class Guest(object):
             if extra is not None:
                 oz.ozutil.lxml_subelement(package, "extra", extra[index])
 
-        return lxml.etree.tostring(icicle, pretty_print=True)
+        return lxml.etree.tostring(icicle, pretty_print=True, encoding="unicode")
 
     def _check_url(self, iso=True, url=True):
         """
