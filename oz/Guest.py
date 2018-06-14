@@ -813,7 +813,7 @@ class Guest(object):
                     # is no guarantee that we will get the whole write in one go
                     data = self.sock.recv(65536)
                     if data:
-                        self.log.debug(data)
+                        self.log.debug(data.decode('utf-8'))
                 except socket.timeout:
                     # the socket times out after 1 second.  We can just fall
                     # through to the below code because it is a noop.

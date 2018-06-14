@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012-2017  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2018  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -406,6 +406,7 @@ def subprocess_check_output(*popenargs, **kwargs):
                 if not data:
                     poller.unregister(fd)
                 else:
+                    data = data.decode('utf-8')
                     if printfn is not None:
                         printfn(data)
                     if fd == process.stdout.fileno():
@@ -422,6 +423,9 @@ def subprocess_check_output(*popenargs, **kwargs):
         retcode = process.poll()
 
     tmpout, tmperr = process.communicate()
+
+    tmpout = tmpout.decode('utf-8')
+    tmperr = tmperr.decode('utf-8')
 
     stdout += tmpout
     stderr += tmperr
