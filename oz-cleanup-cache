@@ -43,82 +43,86 @@ def usage():
     print("  -h\t\tPrint this help message")
     sys.exit(1)
 
-try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], 'c:d:fh',
-                                   ['config', 'debug', 'force', 'help'])
-except getopt.GetoptError as err:
-    print(str(err))
-    usage()
-
-force = False
-config_file = None
-loglevel = logging.ERROR
-logformat = "%(message)s"
-for o, a in opts:
-    if o in ("-c", "--config"):
-        config_file = a
-    elif o in ("-d", "--debug"):
-        try:
-            d_int = int(a)
-        except ValueError:
-            usage()
-        if d_int == 0:
-            loglevel = logging.ERROR
-        elif d_int == 1:
-            loglevel = logging.WARNING
-        elif d_int == 2:
-            loglevel = logging.INFO
-        elif d_int == 3:
-            loglevel = logging.DEBUG
-        elif d_int >= 4:
-            loglevel = logging.DEBUG
-            logformat = logging.BASIC_FORMAT
-    elif o in ("-f", "--force"):
-        force = True
-    elif o in ("-h", "--help"):
+def main():
+    try:
+        opts, args = getopt.gnu_getopt(sys.argv[1:], 'c:d:fh',
+                                       ['config', 'debug', 'force', 'help'])
+    except getopt.GetoptError as err:
+        print(str(err))
         usage()
-    else:
-        assert False, "unhandled option"
 
-if len(args) != 0:
-    usage()
+    force = False
+    config_file = None
+    loglevel = logging.ERROR
+    logformat = "%(message)s"
+    for o, a in opts:
+        if o in ("-c", "--config"):
+            config_file = a
+        elif o in ("-d", "--debug"):
+            try:
+                d_int = int(a)
+            except ValueError:
+                usage()
+            if d_int == 0:
+                loglevel = logging.ERROR
+            elif d_int == 1:
+                loglevel = logging.WARNING
+            elif d_int == 2:
+                loglevel = logging.INFO
+            elif d_int == 3:
+                loglevel = logging.DEBUG
+            elif d_int >= 4:
+                loglevel = logging.DEBUG
+                logformat = logging.BASIC_FORMAT
+        elif o in ("-f", "--force"):
+            force = True
+        elif o in ("-h", "--help"):
+            usage()
+        else:
+            assert False, "unhandled option"
 
-try:
-    config = oz.ozutil.parse_config(config_file)
+    if len(args) != 0:
+        usage()
 
-    data_dir = oz.ozutil.config_get_path(config, 'paths', 'data_dir',
-                                         oz.ozutil.default_data_dir())
+    try:
+        config = oz.ozutil.parse_config(config_file)
 
-    dirs = ["floppies", "floppycontent", "icicletmp", "isocontent", "isos",
-            "jeos", "kernels", "screenshots"]
-    caches = []
-    for path in dirs:
-        caches.append(os.path.join(data_dir, path))
+        data_dir = oz.ozutil.config_get_path(config, 'paths', 'data_dir',
+                                             oz.ozutil.default_data_dir())
 
-    if not force:
-        while True:
-            response = input("Going to remove all content from %s; continue? (y/N) " % (', '.join(caches)))
-            if len(response) == 0 or response.lower() == 'n':
-                sys.exit(0)
-            elif response.lower() == 'y':
-                break
-            else:
-                print("Please enter 'y' or 'n'")
+        dirs = ["floppies", "floppycontent", "icicletmp", "isocontent", "isos",
+                "jeos", "kernels", "screenshots"]
+        caches = []
+        for path in dirs:
+            caches.append(os.path.join(data_dir, path))
 
-    for cache in caches:
-        print("Removing cached content from %s" % (cache))
-        for root, dirs, files in os.walk(cache):
-            for f in files:
-                os.unlink(os.path.join(root, f))
-            for d in dirs:
-                shutil.rmtree(os.path.join(root, d))
+        if not force:
+            while True:
+                response = input("Going to remove all content from %s; continue? (y/N) " % (', '.join(caches)))
+                if len(response) == 0 or response.lower() == 'n':
+                    sys.exit(0)
+                elif response.lower() == 'y':
+                    break
+                else:
+                    print("Please enter 'y' or 'n'")
 
-except Exception as exc:
-    if loglevel > logging.DEBUG:
-        print("")
-        print("ERROR: %s" % (str(exc)))
-        print("")
-        print("(use -d3 to get the full backtrace)")
-        print("")
-    else:
-        raise
+        for cache in caches:
+            print("Removing cached content from %s" % (cache))
+            for root, dirs, files in os.walk(cache):
+                for f in files:
+                    os.unlink(os.path.join(root, f))
+                for d in dirs:
+                    shutil.rmtree(os.path.join(root, d))
+
+    except Exception as exc:
+        if loglevel > logging.DEBUG:
+            print("")
+            print("ERROR: %s" % (str(exc)))
+            print("")
+            print("(use -d3 to get the full backtrace)")
+            print("")
+        else:
+            raise
+
+if __name__ == "__main__":
+    main()
