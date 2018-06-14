@@ -374,7 +374,7 @@ def subprocess_check_output(*popenargs, **kwargs):
         raise ValueError('stderr argument not allowed, it will be overridden.')
 
     printfn = None
-    if kwargs.has_key('printfn'):
+    if 'printfn' in kwargs:
         printfn = kwargs['printfn']
         del kwargs['printfn']
 

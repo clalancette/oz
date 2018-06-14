@@ -1,5 +1,5 @@
 # Copyright (C) 2010,2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012-2016  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2018  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -27,8 +27,9 @@ try:
     import urllib.parse as urlparse
 except ImportError:
     import urlparse
+
 try:
-    import StringIO
+    from StringIO import StringIO
 except ImportError:
     from io import StringIO
 
@@ -78,7 +79,7 @@ def data_from_type(name, contenttype, content):
     if contenttype == 'raw':
         out.write(content)
     elif contenttype == 'base64':
-        base64.decode(StringIO.StringIO(content), out)
+        out.write(base64.decodestring(content))
     elif contenttype == 'url':
         url = urlparse.urlparse(content)
         if url.scheme == "file":
@@ -175,7 +176,7 @@ class TDL(object):
     """
     def __init__(self, xmlstring, rootpw_required=False):
         # open the XML document
-        tree = lxml.etree.parse(StringIO.StringIO(xmlstring))
+        tree = lxml.etree.parse(StringIO(xmlstring))
         tree.xinclude()
         self.doc = tree.getroot()
 
