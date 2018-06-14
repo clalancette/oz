@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Copyright (C) 2011       Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012-2016  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2018  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,11 @@ import shutil
 import logging
 
 import oz.ozutil
+
+try:
+    input = raw_input
+except NameError:
+    pass
 
 def usage():
     print("Usage: oz-cleanup-cache [OPTIONS]")
@@ -92,7 +97,7 @@ try:
 
     if not force:
         while True:
-            response = raw_input("Going to remove all content from %s; continue? (y/N) " % (', '.join(caches)))
+            response = input("Going to remove all content from %s; continue? (y/N) " % (', '.join(caches)))
             if len(response) == 0 or response.lower() == 'n':
                 sys.exit(0)
             elif response.lower() == 'y':
