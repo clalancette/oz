@@ -41,8 +41,11 @@ import time
 import urllib
 
 import lxml.etree
+
 import monotonic
+
 import requests
+
 
 def generate_full_auto_path(relative):
     """
@@ -55,6 +58,7 @@ def generate_full_auto_path(relative):
 
     pkg_path = os.path.dirname(__file__)
     return os.path.abspath(os.path.join(pkg_path, "auto", relative))
+
 
 def executable_exists(program):
     """
@@ -83,6 +87,7 @@ def executable_exists(program):
 
     raise Exception("Could not find %s" % (program))
 
+
 def write_bytes_to_fd(fd, buf):
     """
     Function to write all bytes in "buf" to "fd".  This handles both EINTR
@@ -106,6 +111,7 @@ def write_bytes_to_fd(fd, buf):
 
     return offset
 
+
 def read_bytes_from_fd(fd, num):
     """
     Function to read and return bytes from fd.  This handles the EINTR situation
@@ -125,6 +131,7 @@ def read_bytes_from_fd(fd, num):
             raise
 
     return ret
+
 
 def copyfile_sparse(src, dest):
     """
@@ -149,13 +156,13 @@ def copyfile_sparse(src, dest):
     src_fd = os.open(src, os.O_RDONLY)
 
     try:
-        dest_fd = os.open(dest, os.O_WRONLY|os.O_CREAT|os.O_TRUNC)
+        dest_fd = os.open(dest, os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
 
         try:
             sb = os.fstat(src_fd)
 
             # See io_blksize() in coreutils for an explanation of why 32*1024
-            buf_size = max(32*1024, sb.st_blksize)
+            buf_size = max(32 * 1024, sb.st_blksize)
 
             size = sb.st_size
             destlen = 0
@@ -165,7 +172,7 @@ def copyfile_sparse(src, dest):
                     break
 
                 buflen = len(buf)
-                if buf == '\0'*buflen:
+                if buf == '\0' * buflen:
                     os.lseek(dest_fd, buflen, os.SEEK_CUR)
                 else:
                     write_bytes_to_fd(dest_fd, buf)
@@ -179,6 +186,7 @@ def copyfile_sparse(src, dest):
             os.close(dest_fd)
     finally:
         os.close(src_fd)
+
 
 def bsd_split(line, digest_type):
     """
@@ -218,13 +226,14 @@ def bsd_split(line, digest_type):
 
     return line, filename
 
+
 def sum_split(line, digest_bits):
     """
     Function to split a normal Linux checksum line into a filename and
     checksum.
     """
     digest_hex_bytes = digest_bits / 4
-    min_digest_line_length = digest_hex_bytes + 2 + 1 # length of hex message digest + blank and binary indicator (2 bytes) + minimum file length (1 byte)
+    min_digest_line_length = digest_hex_bytes + 2 + 1  # length of hex message digest + blank and binary indicator (2 bytes) + minimum file length (1 byte)
 
     min_length = min_digest_line_length
     if line[0] == '\\':
@@ -253,9 +262,6 @@ def sum_split(line, digest_bits):
     if line[current] != ' ' and line[current] != '*':
         return None, None
 
-    if line[current] == '*':
-        binary = True
-
     current += 1
 
     filename = line[current:]
@@ -270,6 +276,7 @@ def sum_split(line, digest_bits):
 
     return hex_digest, filename
 
+
 def get_sum_from_file(sumfile, file_to_find, digest_bits, digest_type):
     """
     Function to get a checksum digest out of a checksum file given a
@@ -277,39 +284,36 @@ def get_sum_from_file(sumfile, file_to_find, digest_bits, digest_type):
     """
     retval = None
 
-    f = open(sumfile, 'r')
-    for line in f:
-        binary = False
+    with open(sumfile, 'r') as f:
+        for line in f:
+            # remove any leading whitespace
+            line = line.lstrip()
 
-        # remove any leading whitespace
-        line = line.lstrip()
+            # ignore blank lines
+            if len(line) == 0:
+                continue
 
-        # ignore blank lines
-        if len(line) == 0:
-            continue
+            # ignore comment lines
+            if line[0] == '#':
+                continue
 
-        # ignore comment lines
-        if line[0] == '#':
-            continue
+            if line.startswith(digest_type):
+                # OK, if it starts with a string of ["MD5", "SHA1", "SHA256"], then
+                # this is a BSD-style sumfile
+                hex_digest, filename = bsd_split(line, digest_type)
+            else:
+                # regular sumfile
+                hex_digest, filename = sum_split(line, digest_bits)
 
-        if line.startswith(digest_type):
-            # OK, if it starts with a string of ["MD5", "SHA1", "SHA256"], then
-            # this is a BSD-style sumfile
-            hex_digest, filename = bsd_split(line, digest_type)
-        else:
-            # regular sumfile
-            hex_digest, filename = sum_split(line, digest_bits)
+            if hex_digest is None or filename is None:
+                continue
 
-        if hex_digest is None or filename is None:
-            continue
-
-        if filename == file_to_find:
-            retval = hex_digest
-            break
-
-    f.close()
+            if filename == file_to_find:
+                retval = hex_digest
+                break
 
     return retval
+
 
 def get_md5sum_from_file(sumfile, file_to_find):
     """
@@ -317,11 +321,13 @@ def get_md5sum_from_file(sumfile, file_to_find):
     """
     return get_sum_from_file(sumfile, file_to_find, 128, "MD5")
 
+
 def get_sha1sum_from_file(sumfile, file_to_find):
     """
     Function to get a SHA1 checksum out of a checksum file given a filename.
     """
     return get_sum_from_file(sumfile, file_to_find, 160, "SHA1")
+
 
 def get_sha256sum_from_file(sumfile, file_to_find):
     """
@@ -329,6 +335,7 @@ def get_sha256sum_from_file(sumfile, file_to_find):
     filename.
     """
     return get_sum_from_file(sumfile, file_to_find, 256, "SHA256")
+
 
 def string_to_bool(instr):
     """
@@ -347,6 +354,7 @@ def string_to_bool(instr):
         return True
     return None
 
+
 def generate_macaddress():
     """
     Function to generate a random MAC address.
@@ -354,6 +362,7 @@ def generate_macaddress():
     mac = [0x52, 0x54, 0x00, random.randint(0x00, 0xff),
            random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
     return ':'.join(["%02x" % x for x in mac])
+
 
 class SubprocessException(Exception):
     """
@@ -363,6 +372,7 @@ class SubprocessException(Exception):
     def __init__(self, msg, retcode):
         Exception.__init__(self, msg)
         self.retcode = retcode
+
 
 def subprocess_check_output(*popenargs, **kwargs):
     """
@@ -435,9 +445,10 @@ def subprocess_check_output(*popenargs, **kwargs):
 
     if retcode:
         cmd = ' '.join(*popenargs)
-        raise SubprocessException("'%s' failed(%d): %s" % (cmd, retcode, stderr+stdout), retcode)
+        raise SubprocessException("'%s' failed(%d): %s" % (cmd, retcode, stderr + stdout), retcode)
 
     return (stdout, stderr, retcode)
+
 
 def mkdir_p(path):
     """
@@ -460,6 +471,7 @@ def mkdir_p(path):
     except OSError as err:
         if err.errno != errno.EEXIST or not os.path.isdir(path):
             raise
+
 
 def copytree_merge(src, dst, symlinks=False, ignore=None):
     """
@@ -506,6 +518,7 @@ def copytree_merge(src, dst, symlinks=False, ignore=None):
     if errors:
         raise shutil.Error(errors)
 
+
 def copy_modify_file(inname, outname, subfunc):
     """
     Function to copy a file from inname to outname, passing each line
@@ -530,6 +543,7 @@ def copy_modify_file(inname, outname, subfunc):
 
     infile.close()
     outfile.close()
+
 
 def write_cpio(inputdict, outputfile):
     """
@@ -588,7 +602,7 @@ def write_cpio(inputdict, outputfile):
             # header (110 bytes) plus the filename, plus the sentinel a
             # multiple of 4 bytes.  Note that we always need at *least* one NUL,
             # so if it is exactly a multiple of 4 we need to write 4 NULs
-            outf.write("\x00"*(4 - ((110+len(stripped)) % 4)))
+            outf.write("\x00" * (4 - ((110 + len(stripped)) % 4)))
 
             # now write the data from the input file
             outf.writelines(inf)
@@ -599,7 +613,7 @@ def write_cpio(inputdict, outputfile):
             # so if it is already aligned on 4 bytes do nothing
             remainder = st[stat.ST_SIZE] % 4
             if remainder != 0:
-                outf.write("\x00"*(4 - remainder))
+                outf.write("\x00" * (4 - remainder))
 
         # now that we have written all of the file entries, write the trailer
         outf.write("070701")
@@ -633,12 +647,13 @@ def write_cpio(inputdict, outputfile):
         outf.write("TRAILER!!!")
 
         # finally, we need to pad to the closest 512 bytes
-        outf.write("\x00"*(512 - (outf.tell() % 512)))
+        outf.write("\x00" * (512 - (outf.tell() % 512)))
     except:
         os.unlink(outputfile)
         raise
 
     outf.close()
+
 
 def config_get_key(config, section, key, default):
     """
@@ -648,6 +663,7 @@ def config_get_key(config, section, key, default):
         return config.get(section, key)
     else:
         return default
+
 
 def config_get_boolean_key(config, section, key, default):
     """
@@ -663,6 +679,7 @@ def config_get_boolean_key(config, section, key, default):
 
     return retval
 
+
 def config_get_path(config, section, key, default):
     """
     Function to get an user-expanded path out of the config file at
@@ -674,6 +691,7 @@ def config_get_path(config, section, key, default):
     if not os.path.isabs(path):
         raise Exception("Config key '%s' must have an absolute path" % (key))
     return path
+
 
 def rmtree_and_sync(directory):
     """
@@ -696,6 +714,7 @@ def rmtree_and_sync(directory):
             pass
         else:
             raise
+
 
 def parse_config(config_file):
     """
@@ -720,6 +739,7 @@ def parse_config(config_file):
 
     return config
 
+
 def default_output_dir():
     """
     Function to get the default path to the output directory.
@@ -728,6 +748,7 @@ def default_output_dir():
         return "/var/lib/libvirt/images"
     else:
         return "~/.oz/images"
+
 
 def default_data_dir():
     """
@@ -738,6 +759,7 @@ def default_data_dir():
     else:
         return "~/.oz"
 
+
 def default_sshprivkey():
     """
     Function to get the default path to the SSH private key.
@@ -747,12 +769,14 @@ def default_sshprivkey():
     else:
         return "~/.oz/id_rsa-icicle-gen"
 
+
 def default_screenshot_dir():
     """
     Function to get the default path to the screenshot directory. The directory
     is generated relative to the default data directory.
     """
     return os.path.join(default_data_dir(), "screenshots")
+
 
 class LocalFileAdapter(requests.adapters.BaseAdapter):
     '''
@@ -809,6 +833,7 @@ class LocalFileAdapter(requests.adapters.BaseAdapter):
     def close(self):
         pass
 
+
 def http_get_header(url, redirect=True):
     """
     Function to get the HTTP headers from a URL.  The available headers will be
@@ -832,6 +857,7 @@ def http_get_header(url, redirect=True):
 
     return info
 
+
 def http_download_file(url, fd, show_progress, logger):
     """
     Function to download a file from url to file descriptor fd.
@@ -841,13 +867,14 @@ def http_download_file(url, fd, show_progress, logger):
         response = requests_session.get(url, stream=True, allow_redirects=True,
                                         headers={'Accept-Encoding': ''})
         file_size = int(response.headers.get('Content-Length'))
-        chunk_size = 10*1024*1024
+        chunk_size = 10 * 1024 * 1024
         done = 0
         for chunk in response.iter_content(chunk_size):
             write_bytes_to_fd(fd, chunk)
             done += len(chunk)
             if show_progress:
                 logger.debug("%dkB of %dkB" % (done / 1024, file_size / 1024))
+
 
 def ftp_download_directory(server, username, password, basepath, destination):
     """
@@ -880,6 +907,7 @@ def ftp_download_directory(server, username, password, basepath, destination):
     _recursive_ftp_download(basepath)
     ftp.close()
 
+
 def _gzip_file(inputfile, outputfile, outputmode):
     """
     Internal function to gzip the input file and place it in the outputfile.
@@ -892,11 +920,13 @@ def _gzip_file(inputfile, outputfile, outputmode):
         gzf.writelines(f)
         gzf.close()
 
+
 def gzip_append(inputfile, outputfile):
     """
     Function to gzip and append the data from inputfile onto output file.
     """
     _gzip_file(inputfile, outputfile, 'ab')
+
 
 def gzip_create(inputfile, outputfile):
     """
@@ -910,6 +940,7 @@ def gzip_create(inputfile, outputfile):
         if os.access(outputfile, os.F_OK):
             os.unlink(outputfile)
         raise
+
 
 def check_qcow_size(filename):
     """
@@ -935,8 +966,8 @@ def check_qcow_size(filename):
     # };
 
     # And in Python struct format string-ese
-    qcow_struct = ">IIQIIQIIQQIIQ" # > means big-endian
-    qcow_magic = 0x514649FB # 'Q' 'F' 'I' 0xFB
+    qcow_struct = ">IIQIIQIIQQIIQ"  # > means big-endian
+    qcow_magic = 0x514649FB  # 'Q' 'F' 'I' 0xFB
 
     f = open(filename, "r")
     pack = f.read(struct.calcsize(qcow_struct))
@@ -948,6 +979,7 @@ def check_qcow_size(filename):
         return unpack[5]
     else:
         return None
+
 
 def recursively_add_write_bit(inputdir):
     """
@@ -965,7 +997,7 @@ def recursively_add_write_bit(inputdir):
         if os.path.islink(dirpath):
             continue
 
-        os.chmod(dirpath, os.stat(dirpath).st_mode|stat.S_IWUSR)
+        os.chmod(dirpath, os.stat(dirpath).st_mode | stat.S_IWUSR)
         for name in filenames:
             fullpath = os.path.join(dirpath, name)
 
@@ -977,10 +1009,11 @@ def recursively_add_write_bit(inputdir):
                 # if there are broken symlinks in the ISO,
                 # then the below might fail.  This probably
                 # isn't fatal, so just allow it and go on
-                os.chmod(fullpath, os.stat(fullpath).st_mode|stat.S_IWUSR)
+                os.chmod(fullpath, os.stat(fullpath).st_mode | stat.S_IWUSR)
             except OSError as err:
                 if err.errno != errno.ENOENT:
                     raise
+
 
 def find_uefi_firmware(arch):
     '''
@@ -1036,6 +1069,7 @@ def find_uefi_firmware(arch):
 
     raise Exception("UEFI firmware is not installed!")
 
+
 def open_locked_file(filename):
     """
     A function to open and lock a file.  Returns a file descriptor referencing
@@ -1044,7 +1078,7 @@ def open_locked_file(filename):
     outdir = os.path.dirname(filename)
     mkdir_p(outdir)
 
-    fd = os.open(filename, os.O_RDWR|os.O_CREAT)
+    fd = os.open(filename, os.O_RDWR | os.O_CREAT)
 
     try:
         fcntl.lockf(fd, fcntl.LOCK_EX)
@@ -1053,6 +1087,7 @@ def open_locked_file(filename):
         raise
 
     return (fd, outdir)
+
 
 def lxml_subelement(root, name, text=None, attributes=None):
     """
@@ -1066,6 +1101,7 @@ def lxml_subelement(root, name, text=None, attributes=None):
         for k, v in attributes.items():
             tmp.set(k, v)
     return tmp
+
 
 def timed_loop(max_time, cb, msg, cb_arg=None):
     '''
@@ -1107,6 +1143,7 @@ def timed_loop(max_time, cb, msg, cb_arg=None):
             time.sleep(sleep_time)
 
     return False
+
 
 def get_free_port():
     """

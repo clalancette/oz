@@ -21,9 +21,10 @@ RHEL-7 installation
 
 import os
 
-import oz.ozutil
-import oz.RedHat
 import oz.OzException
+import oz.RedHat
+import oz.ozutil
+
 
 class RHEL7Guest(oz.RedHat.RedHatLinuxCDYumGuest):
     """
@@ -59,6 +60,7 @@ class RHEL7Guest(oz.RedHat.RedHatLinuxCDYumGuest):
         """
         return oz.ozutil.generate_full_auto_path("RHEL7.auto")
 
+
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):
     """
@@ -71,6 +73,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
             diskbus = 'virtio'
         return RHEL7Guest(tdl, config, auto, output_disk, netdev, diskbus,
                           macaddress)
+
 
 def get_supported_string():
     """

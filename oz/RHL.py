@@ -19,13 +19,14 @@
 RHL installation
 """
 
-import re
 import os
+import re
 import shutil
 
-import oz.ozutil
-import oz.RedHat
 import oz.OzException
+import oz.RedHat
+import oz.ozutil
+
 
 class RHL9Guest(oz.RedHat.RedHatLinuxCDGuest):
     """
@@ -78,6 +79,7 @@ class RHL9Guest(oz.RedHat.RedHatLinuxCDGuest):
         """
         return oz.ozutil.generate_full_auto_path("RedHatLinux" + self.tdl.update + ".auto")
 
+
 class RHL7xand8Guest(oz.RedHat.RedHatFDGuest):
     """
     Class for RHL 7.0, 7.1, 7.2, and 8 installation.
@@ -89,6 +91,7 @@ class RHL7xand8Guest(oz.RedHat.RedHatFDGuest):
 
     def get_auto_path(self):
         return oz.ozutil.generate_full_auto_path("RedHatLinux" + self.tdl.update + ".auto")
+
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):
@@ -108,6 +111,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
             netdev = "ne2k_pci"
         return RHL7xand8Guest(tdl, config, auto, output_disk, netdev, diskbus,
                               macaddress)
+
 
 def get_supported_string():
     """

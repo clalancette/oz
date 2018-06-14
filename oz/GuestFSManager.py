@@ -21,9 +21,11 @@ Helper class for managing a GuestFS connection
 import logging
 
 import guestfs
+
 import lxml.etree
 
 import oz.OzException
+
 
 class GuestFS(object):
     '''
@@ -77,6 +79,7 @@ class GuestFS(object):
             # and the example code that comes from the libguestfs.org python
             # example page.
             mps = self.g_handle.inspect_get_mountpoints(root)
+
             def _compare(a, b):
                 """
                 Method to sort disks by length.
@@ -201,6 +204,7 @@ class GuestFS(object):
         self.g_handle.umount_all()
         self.g_handle.kill_subprocess()
         self.g_handle.close()
+
 
 def GuestFSLibvirtFactory(libvirt_xml, libvirt_conn):
     '''

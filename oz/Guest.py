@@ -38,14 +38,18 @@ except ImportError:
     import urlparse
 import uuid
 
-import guestfs
-import libvirt
-import lxml.etree
 import M2Crypto
 
+import guestfs
+
+import libvirt
+
+import lxml.etree
+
 import oz.GuestFSManager
-import oz.ozutil
 import oz.OzException
+import oz.ozutil
+
 
 class Guest(object):
     """
@@ -131,7 +135,7 @@ class Guest(object):
         # for backwards compatibility
         self.name = self.tdl.name
 
-        if not self.tdl.arch in ["i386", "x86_64", "ppc64", "ppc64le", "aarch64", "armv7l", "s390x"]:
+        if self.tdl.arch not in ["i386", "x86_64", "ppc64", "ppc64le", "aarch64", "armv7l", "s390x"]:
             raise oz.OzException.OzException("Unsupported guest arch " + self.tdl.arch)
 
         if os.uname()[4] in ["i386", "i586", "i686"] and self.tdl.arch == "x86_64":
@@ -415,20 +419,20 @@ class Guest(object):
         """
         Method to generate the serial portion of the libvirt XML.
         """
-        serial = oz.ozutil.lxml_subelement(devices, "serial", None, {'type':'tcp'})
+        serial = oz.ozutil.lxml_subelement(devices, "serial", None, {'type': 'tcp'})
         oz.ozutil.lxml_subelement(serial, "source", None,
-                                  {'mode':'bind', 'host':'127.0.0.1', 'service':str(self.listen_port)})
-        oz.ozutil.lxml_subelement(serial, "protocol", None, {'type':'raw'})
-        target = oz.ozutil.lxml_subelement(serial, "target", None, {'port':'1'})
+                                  {'mode': 'bind', 'host': '127.0.0.1', 'service': str(self.listen_port)})
+        oz.ozutil.lxml_subelement(serial, "protocol", None, {'type': 'raw'})
+        target = oz.ozutil.lxml_subelement(serial, "target", None, {'port': '1'})
         if self.tdl.arch == 's390x':
             # use a different console, as sclp can be used as most once
             target.set('type', 'sclp-serial')
-            oz.ozutil.lxml_subelement(target, "model", None, {'name':'sclplmconsole'})
+            oz.ozutil.lxml_subelement(target, "model", None, {'name': 'sclplmconsole'})
 
     def _generate_virtio_channel(self, devices, name):
         virtio = oz.ozutil.lxml_subelement(devices, "channel", None, {'type': 'tcp'})
         oz.ozutil.lxml_subelement(virtio, "source", None,
-                                  {'mode':'bind', 'host':'127.0.0.1', 'service':str(self.console_listen_port)})
+                                  {'mode': 'bind', 'host': '127.0.0.1', 'service': str(self.console_listen_port)})
         oz.ozutil.lxml_subelement(virtio, "target", None, {"type": "virtio", "name": name})
 
     def _generate_xml(self, bootdev, installdev, kernel=None, initrd=None,
@@ -448,7 +452,7 @@ class Guest(object):
         # uuid
         oz.ozutil.lxml_subelement(domain, "uuid", str(self.uuid))
         # clock offset
-        oz.ozutil.lxml_subelement(domain, "clock", None, {'offset':self.clockoffset})
+        oz.ozutil.lxml_subelement(domain, "clock", None, {'offset': self.clockoffset})
         # vcpu
         oz.ozutil.lxml_subelement(domain, "vcpu", str(self.install_cpus))
         # features
@@ -460,7 +464,7 @@ class Guest(object):
         if self.tdl.arch in ["aarch64", "armv7l"] and self.libvirt_type == "kvm":
             # Possibly related to BZ 1171501 - need host passthrough for aarch64 and arm with kvm
             cpu = oz.ozutil.lxml_subelement(domain, "cpu", None, {'mode': 'custom', 'match': 'exact'})
-            model = oz.ozutil.lxml_subelement(cpu, "model", "host", {'fallback': 'allow'})
+            oz.ozutil.lxml_subelement(cpu, "model", "host", {'fallback': 'allow'})
         # os
         osNode = oz.ozutil.lxml_subelement(domain, "os")
         mods = None
@@ -468,7 +472,7 @@ class Guest(object):
             mods = {'arch': self.tdl.arch, 'machine': 'virt'}
         oz.ozutil.lxml_subelement(osNode, "type", "hvm", mods)
         if bootdev:
-            oz.ozutil.lxml_subelement(osNode, "boot", None, {'dev':bootdev})
+            oz.ozutil.lxml_subelement(osNode, "boot", None, {'dev': bootdev})
         if kernel:
             oz.ozutil.lxml_subelement(osNode, "kernel", kernel)
         if initrd:
@@ -488,24 +492,24 @@ class Guest(object):
         # devices
         devices = oz.ozutil.lxml_subelement(domain, "devices")
         # graphics
-        if not self.tdl.arch in ["aarch64", "armv7l", "s390x"]:
+        if self.tdl.arch not in ["aarch64", "armv7l", "s390x"]:
             # qemu for arm/aarch64/s390x does not support a graphical console - amazingly
-            oz.ozutil.lxml_subelement(devices, "graphics", None, {'port':'-1', 'type':'vnc'})
+            oz.ozutil.lxml_subelement(devices, "graphics", None, {'port': '-1', 'type': 'vnc'})
         # network
-        interface = oz.ozutil.lxml_subelement(devices, "interface", None, {'type':'bridge'})
-        oz.ozutil.lxml_subelement(interface, "source", None, {'bridge':self.bridge_name})
-        oz.ozutil.lxml_subelement(interface, "mac", None, {'address':self.macaddr})
-        oz.ozutil.lxml_subelement(interface, "model", None, {'type':self.nicmodel})
+        interface = oz.ozutil.lxml_subelement(devices, "interface", None, {'type': 'bridge'})
+        oz.ozutil.lxml_subelement(interface, "source", None, {'bridge': self.bridge_name})
+        oz.ozutil.lxml_subelement(interface, "mac", None, {'address': self.macaddr})
+        oz.ozutil.lxml_subelement(interface, "model", None, {'type': self.nicmodel})
         # input
-        mousedict = {'bus':self.mousetype}
+        mousedict = {'bus': self.mousetype}
         if self.mousetype == "ps2":
             mousedict['type'] = 'mouse'
         elif self.mousetype == "usb":
             mousedict['type'] = 'tablet'
         oz.ozutil.lxml_subelement(devices, "input", None, mousedict)
         # serial console pseudo TTY
-        console = oz.ozutil.lxml_subelement(devices, "serial", None, {'type':'pty'})
-        oz.ozutil.lxml_subelement(console, "target", None, {'port':'0'})
+        console = oz.ozutil.lxml_subelement(devices, "serial", None, {'type': 'pty'})
+        oz.ozutil.lxml_subelement(console, "target", None, {'port': '0'})
         # serial
         self._generate_serial_xml(devices)
         # virtio
@@ -515,10 +519,10 @@ class Guest(object):
         else:
             self.has_consolelog = False
         # boot disk
-        bootDisk = oz.ozutil.lxml_subelement(devices, "disk", None, {'device':'disk', 'type':'file'})
-        oz.ozutil.lxml_subelement(bootDisk, "target", None, {'dev':self.disk_dev, 'bus':self.disk_bus})
-        oz.ozutil.lxml_subelement(bootDisk, "source", None, {'file':self.diskimage})
-        oz.ozutil.lxml_subelement(bootDisk, "driver", None, {'name':'qemu', 'type':self.image_type})
+        bootDisk = oz.ozutil.lxml_subelement(devices, "disk", None, {'device': 'disk', 'type': 'file'})
+        oz.ozutil.lxml_subelement(bootDisk, "target", None, {'dev': self.disk_dev, 'bus': self.disk_bus})
+        oz.ozutil.lxml_subelement(bootDisk, "source", None, {'file': self.diskimage})
+        oz.ozutil.lxml_subelement(bootDisk, "driver", None, {'name': 'qemu', 'type': self.image_type})
         # install disk (if any)
         if not installdev:
             installdev_list = []
@@ -527,9 +531,9 @@ class Guest(object):
         else:
             installdev_list = installdev
         for installdev in installdev_list:
-            install = oz.ozutil.lxml_subelement(devices, "disk", None, {'type':'file', 'device':installdev.devicetype})
-            oz.ozutil.lxml_subelement(install, "source", None, {'file':installdev.path})
-            oz.ozutil.lxml_subelement(install, "target", None, {'dev':installdev.bus})
+            install = oz.ozutil.lxml_subelement(devices, "disk", None, {'type': 'file', 'device': installdev.devicetype})
+            oz.ozutil.lxml_subelement(install, "source", None, {'file': installdev.path})
+            oz.ozutil.lxml_subelement(install, "target", None, {'dev': installdev.bus})
 
         xml = lxml.etree.tostring(domain, pretty_print=True, encoding="unicode")
         self.log.debug("Generated XML:\n%s", xml)
@@ -577,7 +581,7 @@ class Guest(object):
         if backing_filename:
             # Only qcow2 supports image creation using a backing file
             imgtype = "qcow2"
-        oz.ozutil.lxml_subelement(target, "format", None, {"type":imgtype})
+        oz.ozutil.lxml_subelement(target, "format", None, {"type": imgtype})
 
         # FIXME: this makes the permissions insecure, but is needed since
         # libvirt launches guests as qemu:qemu
@@ -601,9 +605,9 @@ class Guest(object):
             backing = oz.ozutil.lxml_subelement(vol, "backingStore")
             oz.ozutil.lxml_subelement(backing, "path", backing_filename)
             oz.ozutil.lxml_subelement(backing, "format", None,
-                                      {"type":backing_format})
+                                      {"type": backing_format})
 
-        oz.ozutil.lxml_subelement(vol, "capacity", str(capacity), {'unit':'G'})
+        oz.ozutil.lxml_subelement(vol, "capacity", str(capacity), {'unit': 'G'})
         vol_xml = lxml.etree.tostring(vol, pretty_print=True, encoding="unicode")
 
         # sigh.  Yes, this is racy; if a pool is defined during this loop, we
@@ -961,7 +965,7 @@ class Guest(object):
         # before fetching everything, make sure that we have enough
         # space on the filesystem to store the data we are about to download
         devdata = os.statvfs(outdir)
-        if (devdata.f_bsize*devdata.f_bavail) < content_length:
+        if (devdata.f_bsize * devdata.f_bavail) < content_length:
             raise oz.OzException.OzException("Not enough room on %s for install media" % (outdir))
 
         # at this point we know we are going to download something.  Make
@@ -1019,7 +1023,7 @@ class Guest(object):
                 # opaque is the open file object
                 return oz.ozutil.write_bytes_to_fd(opaque, buf)
 
-            fd = os.open(screenshot, os.O_RDWR|os.O_CREAT)
+            fd = os.open(screenshot, os.O_RDWR | os.O_CREAT)
             try:
                 st.recvAll(sink, fd)
             finally:
@@ -1188,7 +1192,7 @@ class Guest(object):
             if line == "":
                 continue
             package = oz.ozutil.lxml_subelement(packages, "package", None,
-                                                {'name':line})
+                                                {'name': line})
             if extra is not None:
                 oz.ozutil.lxml_subelement(package, "extra", extra[index])
 
@@ -1278,6 +1282,7 @@ class Guest(object):
                 f.write(keystring)
             os.chmod(pubname, 0o644)
 
+
 class CDGuest(Guest):
     """
     Class for guest installation via ISO.
@@ -1348,7 +1353,7 @@ class CDGuest(Guest):
             self.log.debug("Checking if there is enough space on the filesystem")
             isostat = gfs.statvfs("/")
             outputstat = os.statvfs(self.iso_contents)
-            if (outputstat.f_bsize*outputstat.f_bavail) < (isostat['blocks']*isostat['bsize']):
+            if (outputstat.f_bsize * outputstat.f_bavail) < (isostat['blocks'] * isostat['bsize']):
                 raise oz.OzException.OzException("Not enough room on %s to extract install media" % (self.iso_contents))
 
             self.log.debug("Extracting ISO contents")
@@ -1411,7 +1416,7 @@ class CDGuest(Guest):
         Method to extract the primary volume descriptor from a CD.
         """
         # check out the primary volume descriptor to make sure it is sane
-        cdfd.seek(16*2048)
+        cdfd.seek(16 * 2048)
         fmt = "=B5sBB32s32sQLL32sHHHH"
         (desc_type, identifier, version, unused1, system_identifier, volume_identifier, unused2, space_size_le, space_size_be, unused3, set_size_le, set_size_be, seqnum_le, seqnum_be) = struct.unpack(fmt, cdfd.read(struct.calcsize(fmt)))
 
@@ -1444,7 +1449,7 @@ class CDGuest(Guest):
 
         # the 17th sector contains the boot specification and the offset of the
         # boot sector
-        cdfd.seek(17*2048)
+        cdfd.seek(17 * 2048)
 
         # NOTE: With "native" alignment (the default for struct), there is
         # some padding that happens that causes the unpacking to fail.
@@ -1463,7 +1468,7 @@ class CDGuest(Guest):
 
         # OK, this looks like a bootable CD.  Seek to the boot sector, and
         # look for the header, 0x55, and 0xaa in the first 32 bytes
-        cdfd.seek(bootP*2048)
+        cdfd.seek(bootP * 2048)
         fmt = "=BBH24sHBB"
         bootdata = cdfd.read(struct.calcsize(fmt))
         (header, platform, unused, manu, unused2, five, aa) = struct.unpack(fmt,
@@ -1485,7 +1490,7 @@ class CDGuest(Guest):
             """
             s = 0
             for i in range(0, len(data), 2):
-                w = ord(data[i]) + (ord(data[i+1]) << 8)
+                w = ord(data[i]) + (ord(data[i + 1]) << 8)
                 s = (s + w) & 0xffff
             return s
 
@@ -1495,7 +1500,7 @@ class CDGuest(Guest):
 
         # OK, everything so far has checked out.  Read the default/initial
         # boot entry
-        cdfd.seek(bootP*2048+32)
+        cdfd.seek(bootP * 2048 + 32)
         fmt = "=BBHBBHIB"
         (boot, media, loadsegment, systemtype, unused, scount, imgstart, unused2) = struct.unpack(fmt, cdfd.read(struct.calcsize(fmt)))
 
@@ -1508,19 +1513,19 @@ class CDGuest(Guest):
             count = scount
         elif media == 1:
             # 1.2MB floppy in sectors
-            count = 1200*1024/512
+            count = 1200 * 1024 / 512
         elif media == 2:
             # 1.44MB floppy in sectors
-            count = 1440*1024/512
+            count = 1440 * 1024 / 512
         elif media == 3:
             # 2.88MB floppy in sectors
-            count = 2880*1024/512
+            count = 2880 * 1024 / 512
         else:
             raise oz.OzException.OzException("invalid CD media type")
 
         # finally, seek to "imgstart", and read "count" sectors, which
         # contains the boot image
-        cdfd.seek(imgstart*2048)
+        cdfd.seek(imgstart * 2048)
 
         # The eltorito specification section 2.5 says:
         #
@@ -1535,7 +1540,7 @@ class CDGuest(Guest):
         # are 4 virtual sectors found in each sector on a CD.
         #
         # (note that the bytes above are in hex).  So we read count*512
-        eltoritodata = cdfd.read(count*512)
+        eltoritodata = cdfd.read(count * 512)
         cdfd.close()
 
         with open(outfile, "w") as f:
@@ -1629,7 +1634,7 @@ class CDGuest(Guest):
             elif parsedurl.scheme == "ftp":
                 if isoextra.element_type == "file":
                     fd = os.open(targetabspath,
-                                 os.O_CREAT|os.O_TRUNC|os.O_WRONLY)
+                                 os.O_CREAT | os.O_TRUNC | os.O_WRONLY)
                     try:
                         oz.ozutil.http_download_file(isoextra.source, fd, True,
                                                      self.log)
@@ -1646,7 +1651,7 @@ class CDGuest(Guest):
                     raise oz.OzException.OzException("ISO extra directories cannot be fetched over HTTP")
                 else:
                     fd = os.open(targetabspath,
-                                 os.O_CREAT|os.O_TRUNC|os.O_WRONLY)
+                                 os.O_CREAT | os.O_TRUNC | os.O_WRONLY)
                     try:
                         oz.ozutil.http_download_file(isoextra.source, fd, True,
                                                      self.log)
@@ -1753,6 +1758,7 @@ class CDGuest(Guest):
                 os.unlink(self.orig_iso)
             except:
                 pass
+
 
 class FDGuest(Guest):
     """

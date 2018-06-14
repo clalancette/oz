@@ -27,8 +27,9 @@ import shutil
 import lxml.etree
 
 import oz.Guest
-import oz.ozutil
 import oz.OzException
+import oz.ozutil
+
 
 class Windows(oz.Guest.CDGuest):
     """
@@ -42,6 +43,7 @@ class Windows(oz.Guest.CDGuest):
 
         if self.tdl.key is None:
             raise oz.OzException.OzException("A key is required when installing Windows")
+
 
 class Windows_v5(Windows):
     """
@@ -147,6 +149,7 @@ class Windows_v5(Windows):
             internal_timeout = 3600
         return self._do_install(internal_timeout, force, 1)
 
+
 class Windows_v6(Windows):
     """
     Class for Windows versions based on kernel 6.x (2008, 7, 2012, 8, and 8.1).
@@ -196,23 +199,23 @@ class Windows_v6(Windows):
             doc = lxml.etree.parse(self.auto)
 
             for component in doc.xpath('/ms:unattend/ms:settings/ms:component',
-                                       namespaces={'ms':'urn:schemas-microsoft-com:unattend'}):
+                                       namespaces={'ms': 'urn:schemas-microsoft-com:unattend'}):
                 component.set('processorArchitecture', self.winarch)
 
             keys = doc.xpath('/ms:unattend/ms:settings/ms:component/ms:ProductKey',
-                             namespaces={'ms':'urn:schemas-microsoft-com:unattend'})
+                             namespaces={'ms': 'urn:schemas-microsoft-com:unattend'})
             if len(keys) != 1:
                 raise oz.OzException.OzException("Invalid autounattend file; expected 1 key, saw %d" % (len(keys)))
             keys[0].text = self.tdl.key
 
             adminpw = doc.xpath('/ms:unattend/ms:settings/ms:component/ms:UserAccounts/ms:AdministratorPassword/ms:Value',
-                                namespaces={'ms':'urn:schemas-microsoft-com:unattend'})
+                                namespaces={'ms': 'urn:schemas-microsoft-com:unattend'})
             if len(adminpw) != 1:
                 raise oz.OzException.OzException("Invalid autounattend file; expected 1 admin password, saw %d" % (len(adminpw)))
             adminpw[0].text = self.rootpw
 
             autologinpw = doc.xpath('/ms:unattend/ms:settings/ms:component/ms:AutoLogon/ms:Password/ms:Value',
-                                    namespaces={'ms':'urn:schemas-microsoft-com:unattend'})
+                                    namespaces={'ms': 'urn:schemas-microsoft-com:unattend'})
             if len(autologinpw) != 1:
                 raise oz.OzException.OzException("Invalid autounattend file; expected 1 auto logon password, saw %d" % (len(autologinpw)))
             autologinpw[0].text = self.rootpw
@@ -230,6 +233,7 @@ class Windows_v6(Windows):
         if internal_timeout is None:
             internal_timeout = 8500
         return self._do_install(internal_timeout, force, 2)
+
 
 class Windows_v10(Windows):
     """
@@ -278,23 +282,23 @@ class Windows_v10(Windows):
             doc = lxml.etree.parse(self.auto)
 
             for component in doc.xpath('/ms:unattend/ms:settings/ms:component',
-                                       namespaces={'ms':'urn:schemas-microsoft-com:unattend'}):
+                                       namespaces={'ms': 'urn:schemas-microsoft-com:unattend'}):
                 component.set('processorArchitecture', self.winarch)
 
             keys = doc.xpath('/ms:unattend/ms:settings/ms:component/ms:ProductKey',
-                             namespaces={'ms':'urn:schemas-microsoft-com:unattend'})
+                             namespaces={'ms': 'urn:schemas-microsoft-com:unattend'})
             if len(keys) != 1:
                 raise oz.OzException.OzException("Invalid autounattend file; expected 1 key, saw %d" % (len(keys)))
             keys[0].text = self.tdl.key
 
             adminpw = doc.xpath('/ms:unattend/ms:settings/ms:component/ms:UserAccounts/ms:AdministratorPassword/ms:Value',
-                                namespaces={'ms':'urn:schemas-microsoft-com:unattend'})
+                                namespaces={'ms': 'urn:schemas-microsoft-com:unattend'})
             if len(adminpw) != 1:
                 raise oz.OzException.OzException("Invalid autounattend file; expected 1 admin password, saw %d" % (len(adminpw)))
             adminpw[0].text = self.rootpw
 
             autologinpw = doc.xpath('/ms:unattend/ms:settings/ms:component/ms:AutoLogon/ms:Password/ms:Value',
-                                    namespaces={'ms':'urn:schemas-microsoft-com:unattend'})
+                                    namespaces={'ms': 'urn:schemas-microsoft-com:unattend'})
             if len(autologinpw) != 1:
                 raise oz.OzException.OzException("Invalid autounattend file; expected 1 auto logon password, saw %d" % (len(autologinpw)))
             autologinpw[0].text = self.rootpw
@@ -313,6 +317,7 @@ class Windows_v10(Windows):
             internal_timeout = 8500
         return self._do_install(internal_timeout, force, 2)
 
+
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):
     """
@@ -327,6 +332,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     if tdl.update in ["2016", "10"]:
         return Windows_v10(tdl, config, auto, output_disk, netdev, diskbus,
                            macaddress)
+
 
 def get_supported_string():
     """

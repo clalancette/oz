@@ -30,6 +30,7 @@ import oz.Linux
 import oz.OzException
 import oz.ozutil
 
+
 class DebianConfiguration(object):
     def __init__(self, need_auto_direct, need_auto_iso, default_netdev,
                  default_diskbus):
@@ -54,6 +55,7 @@ class DebianConfiguration(object):
     def default_diskbus(self):
         return self._default_diskbus
 
+
 version_to_config = {
     '9': DebianConfiguration(need_auto_direct=False, need_auto_iso=True,
                              default_netdev='virtio', default_diskbus='virtio'),
@@ -66,6 +68,7 @@ version_to_config = {
     '5': DebianConfiguration(need_auto_direct=False, need_auto_iso=False,
                              default_netdev='virtio', default_diskbus='virtio'),
 }
+
 
 class DebianGuest(oz.Linux.LinuxCDGuest):
     """
@@ -670,6 +673,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     if tdl.update in version_to_config.keys():
         return DebianGuest(tdl, config, auto, output_disk, netdev, diskbus,
                            macaddress)
+
 
 def get_supported_string():
     """

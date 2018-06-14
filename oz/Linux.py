@@ -27,6 +27,7 @@ import libvirt
 import oz.Guest
 import oz.OzException
 
+
 class LinuxCDGuest(oz.Guest.CDGuest):
     """
     Class for Linux installation.

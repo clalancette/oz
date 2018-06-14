@@ -22,11 +22,12 @@ RHEL-3 installation
 import os
 import re
 
-import oz.ozutil
-import oz.RedHat
 import oz.OzException
+import oz.RedHat
+import oz.ozutil
 
 versions = ["GOLD", "U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9"]
+
 
 class RHEL3Guest(oz.RedHat.RedHatLinuxCDGuest):
     """
@@ -97,6 +98,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         """
         return oz.ozutil.generate_full_auto_path("RHEL3.auto")
 
+
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):
     """
@@ -105,6 +107,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     if tdl.update in versions:
         return RHEL3Guest(tdl, config, auto, output_disk, netdev, diskbus,
                           macaddress)
+
 
 def get_supported_string():
     """

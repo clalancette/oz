@@ -21,9 +21,10 @@ Fedora installation
 
 import os
 
-import oz.ozutil
-import oz.RedHat
 import oz.OzException
+import oz.RedHat
+import oz.ozutil
+
 
 class FedoraConfiguration(object):
     def __init__(self, has_virtio_channel, use_yum, use_dev_cdrom_device,
@@ -74,6 +75,7 @@ class FedoraConfiguration(object):
     @property
     def haverepo(self):
         return self._haverepo
+
 
 version_to_config = {
     '28': FedoraConfiguration(has_virtio_channel=True, use_yum=False,
@@ -188,6 +190,7 @@ version_to_config = {
                              haverepo=False),
 }
 
+
 class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
     """
     Class for Fedora 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, and 26 installation.
@@ -269,6 +272,7 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
         else:
             return oz.ozutil.generate_full_auto_path(self.tdl.distro + self.tdl.update + ".auto")
 
+
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):
     """
@@ -283,6 +287,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     if tdl.update in version_to_config.keys():
         return FedoraGuest(tdl, config, auto, netdev, True, diskbus, False,
                            output_disk, macaddress, None)
+
 
 def get_supported_string():
     """

@@ -35,8 +35,9 @@ except ImportError:
 
 import lxml.etree
 
-import oz.ozutil
 import oz.OzException
+import oz.ozutil
+
 
 def _xml_get_value(doc, xmlstring, component, optional=False):
     """
@@ -64,6 +65,7 @@ def _xml_get_value(doc, xmlstring, component, optional=False):
             raise oz.OzException.OzException("Failed to find %s in TDL" % (component))
     else:
         raise oz.OzException.OzException("Expected 0 or 1 %s in TDL, saw %d" % (component, len(res)))
+
 
 def data_from_type(name, contenttype, content):
     '''
@@ -97,6 +99,7 @@ def data_from_type(name, contenttype, content):
 
     return out
 
+
 class Repository(object):
     """
     Class that represents a single repository to be used for installing
@@ -115,6 +118,7 @@ class Repository(object):
         self.persisted = persisted
         self.sslverify = sslverify
 
+
 class Package(object):
     """
     Class that represents a single package to be installed.
@@ -131,6 +135,7 @@ class Package(object):
         self.filename = filename
         self.args = args
 
+
 class ISOExtra(object):
     """
     Class that represents an extra element to add to an installation ISO.
@@ -144,6 +149,7 @@ class ISOExtra(object):
         self.element_type = element_type
         self.source = source
         self.destination = destination
+
 
 class TDL(object):
     """
@@ -304,7 +310,6 @@ class TDL(object):
                                            '/template/os/kernelparam',
                                            'custom kernel parameter',
                                            optional=True)
-
 
     def _parse_disksize(self):
         """

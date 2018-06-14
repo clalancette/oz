@@ -22,9 +22,10 @@ RHEL-4 installation
 import os
 import re
 
-import oz.ozutil
-import oz.RedHat
 import oz.OzException
+import oz.RedHat
+import oz.ozutil
+
 
 class RHEL4Configuration(object):
     def __init__(self, default_netdev, default_diskbus):
@@ -39,6 +40,7 @@ class RHEL4Configuration(object):
     def default_diskbus(self):
         return self._default_diskbus
 
+
 version_to_config = {
     "U9": RHEL4Configuration(default_netdev='virtio', default_diskbus='virtio'),
     "U8": RHEL4Configuration(default_netdev='virtio', default_diskbus='virtio'),
@@ -51,6 +53,7 @@ version_to_config = {
     "U1": RHEL4Configuration(default_netdev=None, default_diskbus=None),
     "GOLD": RHEL4Configuration(default_netdev=None, default_diskbus=None),
 }
+
 
 class RHEL4Guest(oz.RedHat.RedHatLinuxCDGuest):
     """
@@ -123,6 +126,7 @@ class RHEL4Guest(oz.RedHat.RedHatLinuxCDGuest):
         """
         return oz.ozutil.generate_full_auto_path("RHEL4.auto")
 
+
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):
     """
@@ -131,6 +135,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     if tdl.update in version_to_config.keys():
         return RHEL4Guest(tdl, config, auto, output_disk, netdev, diskbus,
                           macaddress)
+
 
 def get_supported_string():
     """

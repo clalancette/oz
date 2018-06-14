@@ -24,8 +24,9 @@ import re
 import shutil
 
 import oz.Guest
-import oz.ozutil
 import oz.OzException
+import oz.ozutil
+
 
 class MandrivaConfiguration(object):
     def __init__(self, old_path):
@@ -35,12 +36,14 @@ class MandrivaConfiguration(object):
     def old_path(self):
         return self._old_path
 
+
 version_to_config = {
     "2008.0": MandrivaConfiguration(old_path=False),
     "2007.0": MandrivaConfiguration(old_path=False),
     "2006.0": MandrivaConfiguration(old_path=True),
     "2005": MandrivaConfiguration(old_path=True),
 }
+
 
 class MandrivaGuest(oz.Guest.CDGuest):
     """
@@ -122,6 +125,7 @@ label customiso
                                            self.iso_contents],
                                           printfn=self.log.debug)
 
+
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):
     """
@@ -130,6 +134,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     if tdl.update in version_to_config.keys():
         return MandrivaGuest(tdl, config, auto, output_disk, netdev, diskbus,
                              macaddress)
+
 
 def get_supported_string():
     """

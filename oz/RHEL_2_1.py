@@ -19,10 +19,11 @@
 RHEL-2.1 installation
 """
 
-import oz.RedHat
 import oz.OzException
+import oz.RedHat
 
 versions = ["GOLD", "U2", "U3", "U4", "U5", "U6"]
+
 
 class RHEL21Guest(oz.RedHat.RedHatFDGuest):
     """
@@ -39,6 +40,7 @@ class RHEL21Guest(oz.RedHat.RedHatFDGuest):
         """
         return oz.ozutil.generate_full_auto_path("RHEL2.1.auto")
 
+
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):
     """
@@ -49,6 +51,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
             netdev = 'pcnet'
         return RHEL21Guest(tdl, config, auto, output_disk, netdev, diskbus,
                            macaddress)
+
 
 def get_supported_string():
     """

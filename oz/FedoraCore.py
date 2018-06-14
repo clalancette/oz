@@ -21,9 +21,10 @@ Fedora Core installation
 
 import os
 
-import oz.ozutil
-import oz.RedHat
 import oz.OzException
+import oz.RedHat
+import oz.ozutil
+
 
 class FedoraCoreConfiguration(object):
     def __init__(self, initrdtype):
@@ -33,6 +34,7 @@ class FedoraCoreConfiguration(object):
     def initrdtype(self):
         return self._initrdtype
 
+
 version_to_config = {
     '6': FedoraCoreConfiguration(initrdtype='cpio'),
     '5': FedoraCoreConfiguration(initrdtype='cpio'),
@@ -41,6 +43,7 @@ version_to_config = {
     '2': FedoraCoreConfiguration(initrdtype='ext2'),
     '1': FedoraCoreConfiguration(initrdtype='ext2'),
 }
+
 
 class FedoraCoreGuest(oz.RedHat.RedHatLinuxCDGuest):
     """
@@ -76,6 +79,7 @@ class FedoraCoreGuest(oz.RedHat.RedHatLinuxCDGuest):
         """
         return oz.ozutil.generate_full_auto_path("FedoraCore" + self.tdl.update + ".auto")
 
+
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):
     """
@@ -84,6 +88,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     if tdl.update in version_to_config.keys():
         return FedoraCoreGuest(tdl, config, auto, output_disk, netdev, diskbus,
                                macaddress)
+
 
 def get_supported_string():
     """

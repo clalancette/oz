@@ -24,8 +24,9 @@ import re
 import shutil
 
 import oz.Guest
-import oz.ozutil
 import oz.OzException
+import oz.ozutil
+
 
 class MandrakeConfiguration(object):
     def __init__(self, old_isolinux, need_longer_timeout):
@@ -40,12 +41,14 @@ class MandrakeConfiguration(object):
     def need_longer_timeout(self):
         return self._need_longer_timeout
 
+
 version_to_config = {
     '10.1': MandrakeConfiguration(old_isolinux=False, need_longer_timeout=False),
     '10.0': MandrakeConfiguration(old_isolinux=False, need_longer_timeout=False),
     '9.1': MandrakeConfiguration(old_isolinux=False, need_longer_timeout=True),
     '8.2': MandrakeConfiguration(old_isolinux=True, need_longer_timeout=True),
 }
+
 
 class MandrakeGuest(oz.Guest.CDGuest):
     """
@@ -147,6 +150,7 @@ label customiso
             internal_timeout = 2500
         return self._do_install(internal_timeout, force, 0)
 
+
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):
     """
@@ -155,6 +159,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     if tdl.update in version_to_config.keys():
         return MandrakeGuest(tdl, config, auto, output_disk, netdev, diskbus,
                              macaddress)
+
 
 def get_supported_string():
     """

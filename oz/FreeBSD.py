@@ -22,8 +22,9 @@ FreeBSD installation
 import os
 
 import oz.Guest
-import oz.ozutil
 import oz.OzException
+import oz.ozutil
+
 
 class FreeBSDConfiguration(object):
     def __init__(self, default_netdev, default_diskbus):
@@ -38,6 +39,7 @@ class FreeBSDConfiguration(object):
     def default_diskbus(self):
         return self._default_diskbus
 
+
 version_to_config = {
     "11.0": FreeBSDConfiguration(default_netdev='virtio', default_diskbus='virtio'),
     "10.3": FreeBSDConfiguration(default_netdev='virtio', default_diskbus='virtio'),
@@ -45,6 +47,7 @@ version_to_config = {
     "10.1": FreeBSDConfiguration(default_netdev='virtio', default_diskbus='virtio'),
     "10.0": FreeBSDConfiguration(default_netdev='virtio', default_diskbus='virtio'),
 }
+
 
 class FreeBSD(oz.Guest.CDGuest):
     """
@@ -103,7 +106,7 @@ class FreeBSD(oz.Guest.CDGuest):
         # Make sure the iso can be mounted at boot, otherwise this error shows
         # up after booting the kernel:
         #  mountroot: waiting for device /dev/iso9660/FREEBSD_INSTALL ...
-	#  Mounting from cd9660:/dev/iso9660/FREEBSD_INSTALL failed with error 19.
+        #  Mounting from cd9660:/dev/iso9660/FREEBSD_INSTALL failed with error 19.
 
         loaderconf = os.path.join(self.iso_contents, "boot", "loader.conf")
         with open(loaderconf, 'w') as conf:
@@ -111,6 +114,7 @@ class FreeBSD(oz.Guest.CDGuest):
             conf.write('vfs.root.mountfrom="cd9660:/dev/cd0"\n')
             conf.write('console="vidconsole comconsole"\n')
             conf.write('kern.panic_reboot_wait_time="-1"\n')
+
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):
@@ -120,6 +124,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     if tdl.update in version_to_config.keys():
         return FreeBSD(tdl, config, auto, output_disk, netdev, diskbus,
                        macaddress)
+
 
 def get_supported_string():
     """

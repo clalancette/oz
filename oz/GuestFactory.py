@@ -21,50 +21,52 @@ Factory functions.
 
 import oz.OzException
 
-os_dict = {'Fedora': 'Fedora',
-           'FedoraCore': 'FedoraCore',
-           'FC': 'FedoraCore',
-           'RedHatEnterpriseLinux-2.1': 'RHEL_2_1',
-           'RHEL-2.1': 'RHEL_2_1',
-           'RedHatEnterpriseLinux-3': 'RHEL_3',
-           'RHEL-3': 'RHEL_3',
-           'CentOS-3': 'RHEL_3',
-           'RedHatEnterpriseLinux-4': 'RHEL_4',
-           'RHEL-4': 'RHEL_4',
-           'CentOS-4': 'RHEL_4',
-           'ScientificLinux-4': 'RHEL_4',
-           'SL-4': 'RHEL_4',
-           'RedHatEnterpriseLinux-5': 'RHEL_5',
-           'RHEL-5': 'RHEL_5',
-           'CentOS-5': 'RHEL_5',
-           'OL-5': 'RHEL_5',
-           'ScientificLinux-5': 'RHEL_5',
-           'SL-5': 'RHEL_5',
-           'ScientificLinuxCern-5': 'RHEL_5',
-           'SLC-5': 'RHEL_5',
-           'RedHatEnterpriseLinux-6': 'RHEL_6',
-           'RHEL-6': 'RHEL_6',
-           'CentOS-6': 'RHEL_6',
-           'ScientificLinux-6': 'RHEL_6',
-           'SL-6': 'RHEL_6',
-           'ScientificLinuxCern-6': 'RHEL_6',
-           'SLC-6': 'RHEL_6',
-           'OracleEnterpriseLinux-6': 'RHEL_6',
-           'OEL-6': 'RHEL_6',
-           'OL-6': 'RHEL_6',
-           'RHEL-7': 'RHEL_7',
-           'CentOS-7': 'RHEL_7',
-           'Ubuntu': 'Ubuntu',
-           'Windows': 'Windows',
-           'RedHatLinux': 'RHL',
-           'RHL': 'RHL',
-           'OpenSUSE': 'OpenSUSE',
-           'Debian': 'Debian',
-           'Mandrake': 'Mandrake',
-           'Mandriva': 'Mandriva',
-           'Mageia': 'Mageia',
-           'FreeBSD': 'FreeBSD',
-          }
+os_dict = {
+    'Fedora': 'Fedora',
+    'FedoraCore': 'FedoraCore',
+    'FC': 'FedoraCore',
+    'RedHatEnterpriseLinux-2.1': 'RHEL_2_1',
+    'RHEL-2.1': 'RHEL_2_1',
+    'RedHatEnterpriseLinux-3': 'RHEL_3',
+    'RHEL-3': 'RHEL_3',
+    'CentOS-3': 'RHEL_3',
+    'RedHatEnterpriseLinux-4': 'RHEL_4',
+    'RHEL-4': 'RHEL_4',
+    'CentOS-4': 'RHEL_4',
+    'ScientificLinux-4': 'RHEL_4',
+    'SL-4': 'RHEL_4',
+    'RedHatEnterpriseLinux-5': 'RHEL_5',
+    'RHEL-5': 'RHEL_5',
+    'CentOS-5': 'RHEL_5',
+    'OL-5': 'RHEL_5',
+    'ScientificLinux-5': 'RHEL_5',
+    'SL-5': 'RHEL_5',
+    'ScientificLinuxCern-5': 'RHEL_5',
+    'SLC-5': 'RHEL_5',
+    'RedHatEnterpriseLinux-6': 'RHEL_6',
+    'RHEL-6': 'RHEL_6',
+    'CentOS-6': 'RHEL_6',
+    'ScientificLinux-6': 'RHEL_6',
+    'SL-6': 'RHEL_6',
+    'ScientificLinuxCern-6': 'RHEL_6',
+    'SLC-6': 'RHEL_6',
+    'OracleEnterpriseLinux-6': 'RHEL_6',
+    'OEL-6': 'RHEL_6',
+    'OL-6': 'RHEL_6',
+    'RHEL-7': 'RHEL_7',
+    'CentOS-7': 'RHEL_7',
+    'Ubuntu': 'Ubuntu',
+    'Windows': 'Windows',
+    'RedHatLinux': 'RHL',
+    'RHL': 'RHL',
+    'OpenSUSE': 'OpenSUSE',
+    'Debian': 'Debian',
+    'Mandrake': 'Mandrake',
+    'Mandriva': 'Mandriva',
+    'Mageia': 'Mageia',
+    'FreeBSD': 'FreeBSD',
+}
+
 
 def guest_factory(tdl, config, auto, output_disk=None, netdev=None,
                   diskbus=None, macaddress=None):
@@ -106,6 +108,7 @@ def guest_factory(tdl, config, auto, output_disk=None, netdev=None,
 
     return klass
 
+
 def distrolist():
     """
     Function to print out a list of supported distributions.
@@ -115,7 +118,7 @@ def distrolist():
         module = __import__('oz.' + importname)
         support = getattr(module, importname).get_supported_string()
         tmp = '   ' + support
-        if not tmp in strings:
+        if tmp not in strings:
             strings.append(tmp)
 
     strings.sort()

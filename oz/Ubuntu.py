@@ -27,8 +27,9 @@ import shutil
 
 import oz.GuestFSManager
 import oz.Linux
-import oz.ozutil
 import oz.OzException
+import oz.ozutil
+
 
 class UbuntuConfiguration(object):
     def __init__(self, reboots, can_customize, can_install_from_desktop,
@@ -86,7 +87,9 @@ class UbuntuConfiguration(object):
     def initrdname(self):
         return self._initrdname
 
+
 version_to_config = collections.OrderedDict()
+
 
 version_to_config["18.04"] = UbuntuConfiguration(reboots=0,
                                                  can_customize=True,
@@ -577,6 +580,7 @@ version_to_config["5.04"] = UbuntuConfiguration(reboots=1,
                                                 default_netdev=None,
                                                 default_diskbus=None,
                                                 initrdname='initrd.gz')
+
 
 class UbuntuGuest(oz.Linux.LinuxCDGuest):
     """
@@ -1227,6 +1231,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
                 except:
                     pass
 
+
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):
     """
@@ -1235,6 +1240,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     if tdl.update in version_to_config.keys():
         return UbuntuGuest(tdl, config, auto, output_disk, "initrd.lz",
                            netdev, diskbus, macaddress)
+
 
 def get_supported_string():
     """

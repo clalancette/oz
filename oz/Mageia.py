@@ -28,8 +28,9 @@ except ImportError:
 
 import oz.GuestFSManager
 import oz.Linux
-import oz.ozutil
 import oz.OzException
+import oz.ozutil
+
 
 class MageiaConfiguration(object):
     def __init__(self, isolinux_style, default_netdev, default_diskbus):
@@ -49,6 +50,7 @@ class MageiaConfiguration(object):
     def default_diskbus(self):
         return self._default_diskbus
 
+
 version_to_config = {
     '5': MageiaConfiguration(isolinux_style="new", default_netdev='virtio',
                              default_diskbus='virtio'),
@@ -61,6 +63,7 @@ version_to_config = {
     '2': MageiaConfiguration(isolinux_style="old", default_netdev='virtio',
                              default_diskbus='virtio'),
 }
+
 
 class MageiaGuest(oz.Linux.LinuxCDGuest):
     """
@@ -555,6 +558,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
         return self._do_install(timeout, force, 0, None, None, None,
                                 [fddev])
 
+
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):
     """
@@ -563,6 +567,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     if tdl.update in version_to_config.keys():
         return MageiaGuest(tdl, config, auto, output_disk, netdev, diskbus,
                            macaddress)
+
 
 def get_supported_string():
     """

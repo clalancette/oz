@@ -22,9 +22,10 @@ RHEL-5 installation
 import os
 import re
 
-import oz.ozutil
-import oz.RedHat
 import oz.OzException
+import oz.RedHat
+import oz.ozutil
+
 
 class RHEL5Configuration(object):
     def __init__(self, default_netdev, default_diskbus):
@@ -38,6 +39,7 @@ class RHEL5Configuration(object):
     @property
     def default_diskbus(self):
         return self._default_diskbus
+
 
 version_to_config = {
     "U11": RHEL5Configuration(default_netdev='virtio', default_diskbus='virtio'),
@@ -53,6 +55,7 @@ version_to_config = {
     "U1": RHEL5Configuration(default_netdev=None, default_diskbus=None),
     "GOLD": RHEL5Configuration(default_netdev=None, default_diskbus=None),
 }
+
 
 class RHEL5Guest(oz.RedHat.RedHatLinuxCDYumGuest):
     """
@@ -134,6 +137,7 @@ class RHEL5Guest(oz.RedHat.RedHatLinuxCDYumGuest):
         """
         return oz.ozutil.generate_full_auto_path("RHEL5.auto")
 
+
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):
     """
@@ -142,6 +146,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     if tdl.update in version_to_config.keys():
         return RHEL5Guest(tdl, config, auto, netdev, diskbus, output_disk,
                           macaddress)
+
 
 def get_supported_string():
     """

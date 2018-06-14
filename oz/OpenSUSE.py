@@ -27,8 +27,9 @@ import lxml.etree
 
 import oz.GuestFSManager
 import oz.Linux
-import oz.ozutil
 import oz.OzException
+import oz.ozutil
+
 
 class OpenSUSEConfiguration(object):
     def __init__(self, reboots, use_floppy_autoyast, extended_zypper_list,
@@ -58,6 +59,7 @@ class OpenSUSEConfiguration(object):
     @property
     def default_diskbus(self):
         return self._default_diskbus
+
 
 version_to_config = {
     "42.2": OpenSUSEConfiguration(reboots=1, use_floppy_autoyast=False,
@@ -101,6 +103,7 @@ version_to_config = {
                                   default_diskbus=None),
 }
 
+
 class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
     """
     Class for OpenSUSE installation.
@@ -131,7 +134,7 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
             doc = lxml.etree.parse(self.auto)
 
             pw = doc.xpath('/suse:profile/suse:users/suse:user/suse:user_password',
-                           namespaces={'suse':'http://www.suse.com/1.0/yast2ns'})
+                           namespaces={'suse': 'http://www.suse.com/1.0/yast2ns'})
             if len(pw) != 1:
                 raise oz.OzException.OzException("Invalid SUSE autoyast file; expected single user_password, saw %d" % (len(pw)))
             pw[0].text = self.rootpw
@@ -510,6 +513,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
                 self.guest_execute_command(guestaddr,
                                            "zypper removerepo %s" % (repo.name))
 
+
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
               macaddress=None):
     """
@@ -518,6 +522,7 @@ def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,
     if tdl.update in version_to_config.keys():
         return OpenSUSEGuest(tdl, config, auto, output_disk, netdev, diskbus,
                              macaddress)
+
 
 def get_supported_string():
     """

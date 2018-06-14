@@ -19,6 +19,7 @@
 Exception class for Oz.
 """
 
+
 class OzException(Exception):
     """
     Class for Oz Exceptions.

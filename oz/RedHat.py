@@ -24,15 +24,16 @@ try:
 except ImportError:
     import ConfigParser as configparser
 import gzip
-import re
 import os
+import re
 import shutil
 
 import oz.Guest
 import oz.GuestFSManager
 import oz.Linux
-import oz.ozutil
 import oz.OzException
+import oz.ozutil
+
 
 class RedHatLinuxCDGuest(oz.Linux.LinuxCDGuest):
     """
@@ -704,6 +705,7 @@ echo -n "!$ADDR,%s!" > %s
                                 self.initrdfname, self.cmdline, None,
                                 self.virtio_channel_name)
 
+
 class RedHatLinuxCDYumGuest(RedHatLinuxCDGuest):
     """
     Class for RedHat-based CD guests with yum support.
@@ -825,6 +827,7 @@ class RedHatLinuxCDYumGuest(RedHatLinuxCDGuest):
                                         repo.name.replace(" ", "_") + ".repo")
                 self.guest_execute_command(guestaddr, "rm -f " + filename,
                                            timeout=30)
+
 
 class RedHatFDGuest(oz.Guest.FDGuest):
     """
