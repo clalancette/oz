@@ -1,5 +1,5 @@
 # Copyright (C) 2011  Chris Lalancette <clalance@redhat.com>
-# Copyright (C) 2012-2017  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2012-2018  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -45,7 +45,9 @@ class MandrakeConfiguration(object):
 version_to_config = {
     '10.1': MandrakeConfiguration(old_isolinux=False, need_longer_timeout=False),
     '10.0': MandrakeConfiguration(old_isolinux=False, need_longer_timeout=False),
-    '9.1': MandrakeConfiguration(old_isolinux=False, need_longer_timeout=True),
+    '9.2': MandrakeConfiguration(old_isolinux=False, need_longer_timeout=False),
+    '9.1': MandrakeConfiguration(old_isolinux=False, need_longer_timeout=False),
+    '9.0': MandrakeConfiguration(old_isolinux=False, need_longer_timeout=True),
     '8.2': MandrakeConfiguration(old_isolinux=True, need_longer_timeout=True),
 }
 
