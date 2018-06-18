@@ -34,5 +34,5 @@
       <source file="%s"/>
       <driver name="qemu" type="raw"/>
     </disk>
-  <serial type="tcp"><source host="127.0.0.1" mode="bind" service="%s"/><protocol type="raw"/><target port="1"/></serial></devices>
+  <serial type="tcp"><source mode="bind" host="127.0.0.1" service="%s"/><protocol type="raw"/><target port="1"/></serial></devices>
 </domain>

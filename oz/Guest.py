@@ -1417,7 +1417,7 @@ class CDGuest(Guest):
         """
         # check out the primary volume descriptor to make sure it is sane
         cdfd.seek(16 * 2048)
-        fmt = "=B5sBB32s32sQLL32sHHHH"
+        fmt = b"=B5sBB32s32sQLL32sHHHH"
         (desc_type, identifier, version, unused1, system_identifier, volume_identifier, unused2, space_size_le, space_size_be, unused3, set_size_le, set_size_be, seqnum_le, seqnum_be) = struct.unpack(fmt, cdfd.read(struct.calcsize(fmt)))
 
         if desc_type != 0x1:
@@ -1443,105 +1443,103 @@ class CDGuest(Guest):
         if outfile is None:
             raise oz.OzException.OzException("output file is None")
 
-        cdfd = open(cdfile, "r")
+        with open(cdfile, 'rb') as cdfd:
+            self._get_primary_volume_descriptor(cdfd)
 
-        self._get_primary_volume_descriptor(cdfd)
+            # the 17th sector contains the boot specification and the offset of the
+            # boot sector
+            cdfd.seek(17 * 2048)
 
-        # the 17th sector contains the boot specification and the offset of the
-        # boot sector
-        cdfd.seek(17 * 2048)
+            # NOTE: With "native" alignment (the default for struct), there is
+            # some padding that happens that causes the unpacking to fail.
+            # Instead we force "standard" alignment, which has no padding
+            fmt = "=B5sB23s41sI"
+            (boot, isoIdent, version, toritoSpec, unused, bootP) = struct.unpack(fmt,
+                                                                                 cdfd.read(struct.calcsize(fmt)))
+            if boot != 0x0:
+                raise oz.OzException.OzException("invalid CD boot sector")
+            if isoIdent != "CD001":
+                raise oz.OzException.OzException("invalid CD isoIdentification")
+            if version != 0x1:
+                raise oz.OzException.OzException("invalid CD version")
+            if toritoSpec != "EL TORITO SPECIFICATION":
+                raise oz.OzException.OzException("invalid CD torito specification")
 
-        # NOTE: With "native" alignment (the default for struct), there is
-        # some padding that happens that causes the unpacking to fail.
-        # Instead we force "standard" alignment, which has no padding
-        fmt = "=B5sB23s41sI"
-        (boot, isoIdent, version, toritoSpec, unused, bootP) = struct.unpack(fmt,
-                                                                             cdfd.read(struct.calcsize(fmt)))
-        if boot != 0x0:
-            raise oz.OzException.OzException("invalid CD boot sector")
-        if isoIdent != "CD001":
-            raise oz.OzException.OzException("invalid CD isoIdentification")
-        if version != 0x1:
-            raise oz.OzException.OzException("invalid CD version")
-        if toritoSpec != "EL TORITO SPECIFICATION":
-            raise oz.OzException.OzException("invalid CD torito specification")
+            # OK, this looks like a bootable CD.  Seek to the boot sector, and
+            # look for the header, 0x55, and 0xaa in the first 32 bytes
+            cdfd.seek(bootP * 2048)
+            fmt = "=BBH24sHBB"
+            bootdata = cdfd.read(struct.calcsize(fmt))
+            (header, platform, unused, manu, unused2, five, aa) = struct.unpack(fmt,
+                                                                                bootdata)
+            if header != 0x1:
+                raise oz.OzException.OzException("invalid CD boot sector header")
+            if platform != 0x0 and platform != 0x1 and platform != 0x2:
+                raise oz.OzException.OzException("invalid CD boot sector platform")
+            if unused != 0x0:
+                raise oz.OzException.OzException("invalid CD unused boot sector field")
+            if five != 0x55 or aa != 0xaa:
+                raise oz.OzException.OzException("invalid CD boot sector footer")
 
-        # OK, this looks like a bootable CD.  Seek to the boot sector, and
-        # look for the header, 0x55, and 0xaa in the first 32 bytes
-        cdfd.seek(bootP * 2048)
-        fmt = "=BBH24sHBB"
-        bootdata = cdfd.read(struct.calcsize(fmt))
-        (header, platform, unused, manu, unused2, five, aa) = struct.unpack(fmt,
-                                                                            bootdata)
-        if header != 0x1:
-            raise oz.OzException.OzException("invalid CD boot sector header")
-        if platform != 0x0 and platform != 0x1 and platform != 0x2:
-            raise oz.OzException.OzException("invalid CD boot sector platform")
-        if unused != 0x0:
-            raise oz.OzException.OzException("invalid CD unused boot sector field")
-        if five != 0x55 or aa != 0xaa:
-            raise oz.OzException.OzException("invalid CD boot sector footer")
+            def _checksum(data):
+                """
+                Method to compute the checksum on the ISO.  Note that this is *not*
+                a 1's complement checksum; when an addition overflows, the carry
+                bit is discarded, not added to the end.
+                """
+                s = 0
+                for i in range(0, len(data), 2):
+                    w = ord(data[i]) + (ord(data[i + 1]) << 8)
+                    s = (s + w) & 0xffff
+                return s
 
-        def _checksum(data):
-            """
-            Method to compute the checksum on the ISO.  Note that this is *not*
-            a 1's complement checksum; when an addition overflows, the carry
-            bit is discarded, not added to the end.
-            """
-            s = 0
-            for i in range(0, len(data), 2):
-                w = ord(data[i]) + (ord(data[i + 1]) << 8)
-                s = (s + w) & 0xffff
-            return s
+            csum = _checksum(bootdata)
+            if csum != 0:
+                raise oz.OzException.OzException("invalid CD checksum: expected 0, saw %d" % (csum))
 
-        csum = _checksum(bootdata)
-        if csum != 0:
-            raise oz.OzException.OzException("invalid CD checksum: expected 0, saw %d" % (csum))
+            # OK, everything so far has checked out.  Read the default/initial
+            # boot entry
+            cdfd.seek(bootP * 2048 + 32)
+            fmt = "=BBHBBHIB"
+            (boot, media, loadsegment, systemtype, unused, scount, imgstart, unused2) = struct.unpack(fmt, cdfd.read(struct.calcsize(fmt)))
 
-        # OK, everything so far has checked out.  Read the default/initial
-        # boot entry
-        cdfd.seek(bootP * 2048 + 32)
-        fmt = "=BBHBBHIB"
-        (boot, media, loadsegment, systemtype, unused, scount, imgstart, unused2) = struct.unpack(fmt, cdfd.read(struct.calcsize(fmt)))
+            if boot != 0x88:
+                raise oz.OzException.OzException("invalid CD initial boot indicator")
+            if unused != 0x0 or unused2 != 0x0:
+                raise oz.OzException.OzException("invalid CD initial boot unused field")
 
-        if boot != 0x88:
-            raise oz.OzException.OzException("invalid CD initial boot indicator")
-        if unused != 0x0 or unused2 != 0x0:
-            raise oz.OzException.OzException("invalid CD initial boot unused field")
+            if media == 0 or media == 4:
+                count = scount
+            elif media == 1:
+                # 1.2MB floppy in sectors
+                count = 1200 * 1024 / 512
+            elif media == 2:
+                # 1.44MB floppy in sectors
+                count = 1440 * 1024 / 512
+            elif media == 3:
+                # 2.88MB floppy in sectors
+                count = 2880 * 1024 / 512
+            else:
+                raise oz.OzException.OzException("invalid CD media type")
 
-        if media == 0 or media == 4:
-            count = scount
-        elif media == 1:
-            # 1.2MB floppy in sectors
-            count = 1200 * 1024 / 512
-        elif media == 2:
-            # 1.44MB floppy in sectors
-            count = 1440 * 1024 / 512
-        elif media == 3:
-            # 2.88MB floppy in sectors
-            count = 2880 * 1024 / 512
-        else:
-            raise oz.OzException.OzException("invalid CD media type")
+            # finally, seek to "imgstart", and read "count" sectors, which
+            # contains the boot image
+            cdfd.seek(imgstart * 2048)
 
-        # finally, seek to "imgstart", and read "count" sectors, which
-        # contains the boot image
-        cdfd.seek(imgstart * 2048)
-
-        # The eltorito specification section 2.5 says:
-        #
-        # Sector Count. This is the number of virtual/emulated sectors the
-        # system will store at Load Segment during the initial boot
-        # procedure.
-        #
-        # and then Section 1.5 says:
-        #
-        # Virtual Disk - A series of sectors on the CD which INT 13 presents
-        # to the system as a drive with 200 byte virtual sectors. There
-        # are 4 virtual sectors found in each sector on a CD.
-        #
-        # (note that the bytes above are in hex).  So we read count*512
-        eltoritodata = cdfd.read(count * 512)
-        cdfd.close()
+            # The eltorito specification section 2.5 says:
+            #
+            # Sector Count. This is the number of virtual/emulated sectors the
+            # system will store at Load Segment during the initial boot
+            # procedure.
+            #
+            # and then Section 1.5 says:
+            #
+            # Virtual Disk - A series of sectors on the CD which INT 13 presents
+            # to the system as a drive with 200 byte virtual sectors. There
+            # are 4 virtual sectors found in each sector on a CD.
+            #
+            # (note that the bytes above are in hex).  So we read count*512
+            eltoritodata = cdfd.read(count * 512)
 
         with open(outfile, "w") as f:
             f.write(eltoritodata)

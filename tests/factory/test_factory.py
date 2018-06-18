@@ -39,7 +39,7 @@ except ImportError:
 
 def default_route():
     route_file = "/proc/net/route"
-    d = file(route_file)
+    d = open(route_file)
 
     for line in d:
         info = line.split()
@@ -89,7 +89,7 @@ def runtest(**kwargs):
         tdl = oz.TDL.TDL(tdlxml)
 
         config = configparser.SafeConfigParser()
-        config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+        config.readfp(StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
         if os.getenv('DEBUG') is not None:
             logging.basicConfig(level=logging.DEBUG, format="%(message)s")

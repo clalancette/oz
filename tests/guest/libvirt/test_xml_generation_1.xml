@@ -18,7 +18,7 @@
   <on_reboot>destroy</on_reboot>
   <on_crash>destroy</on_crash>
   <devices>
-    <graphics type="vnc" port="-1"/>
+    <graphics port="-1" type="vnc"/>
     <interface type="bridge">
       <source bridge="%s"/>
       <mac address="52:54:00:04:cc:a6"/>
@@ -29,14 +29,14 @@
       <target port="0"/>
     </serial>
     <serial type="tcp">
-      <source host="127.0.0.1" mode="bind" service="%s"/>
+      <source mode="bind" host="127.0.0.1" service="%s"/>
       <protocol type="raw"/>
       <target port="1"/>
     </serial>
     <disk device="disk" type="file">
-      <target bus="virtio" dev="vda"/>
+      <target dev="vda" bus="virtio"/>
       <source file="%s"/>
-      <driver type="raw" name="qemu"/>
+      <driver name="qemu" type="raw"/>
     </disk>
   </devices>
 </domain>

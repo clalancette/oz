@@ -37,6 +37,7 @@ import socket
 import stat
 import struct
 import subprocess
+import sys
 import time
 import urllib
 
@@ -806,7 +807,10 @@ class LocalFileAdapter(requests.adapters.BaseAdapter):
         @todo: Should I bother filling `response.headers` and processing
                If-Modified-Since and friends using `os.stat`?
         """
-        path = os.path.normcase(os.path.normpath(urllib.url2pathname(req.path_url)))
+        if sys.version_info.major == 2:
+            path = os.path.normcase(os.path.normpath(urllib.url2pathname(req.path_url)))
+        else:
+            path = os.path.normcase(os.path.normpath(urllib.request.url2pathname(req.path_url)))
         response = requests.Response()
 
         response.status_code, response.reason = self._chkpath(req.method, path)

@@ -39,7 +39,7 @@ except ImportError:
 
 def default_route():
     route_file = "/proc/net/route"
-    d = file(route_file)
+    d = open(route_file)
 
     defn = 0
     for line in d:
@@ -65,7 +65,7 @@ def setup_guest(xml, macaddress=None):
     tdl = oz.TDL.TDL(xml)
 
     config = configparser.SafeConfigParser()
-    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
     guest = oz.GuestFactory.guest_factory(tdl, config, None, macaddress=macaddress)
     return guest
@@ -356,7 +356,7 @@ def test_init_guest_bad_arch():
     tdl = oz.TDL.TDL(tdlxml)
     tdl.arch = 'armhf'  # Done here to make sure the TDL class doesn't error
     config = configparser.SafeConfigParser()
-    config.readfp(BytesIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    config.readfp(StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
     with py.test.raises(Exception):
         oz.GuestFactory.guest_factory(tdl, config, None)
 
