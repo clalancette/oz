@@ -58,136 +58,140 @@ def usage():
     oz.GuestFactory.distrolist()
     sys.exit(1)
 
-try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], 'a:b:c:d:fghi:m:n:ps:t:ux:',
-                                   ['auto', 'disk-bus', 'config', 'debug',
-                                    'force-download', 'generate-icicle', 'help',
-                                    'icicle', 'mac-address', 'network-device',
-                                    'cleanup', 'disk', 'timeout', 'customize',
-                                    'xmlfile'])
-except getopt.GetoptError as err:
-    print(str(err))
-    usage()
-
-loglevel = logging.ERROR
-logformat = "%(message)s"
-force_download = False
-config_file = None
-generate_icicle = False
-filename = None
-customize = False
-cleanup = False
-auto = None
-timeout = None
-icicle_file = None
-output_disk = None
-diskbus = None
-netdev = None
-macaddress = None
-for o, a in opts:
-    if o in ("-a", "--auto"):
-        auto = a
-    elif o in ("-b", "--disk-bus"):
-        diskbus = a
-    elif o in ("-c", "--config"):
-        config_file = a
-    elif o in ("-d", "--debug"):
-        try:
-            d_int = int(a)
-        except ValueError:
-            usage()
-        if d_int == 0:
-            loglevel = logging.ERROR
-        elif d_int == 1:
-            loglevel = logging.WARNING
-        elif d_int == 2:
-            loglevel = logging.INFO
-        elif d_int == 3:
-            loglevel = logging.DEBUG
-        elif d_int >= 4:
-            loglevel = logging.DEBUG
-            logformat = logging.BASIC_FORMAT
-    elif o in ("-f", "--force-download"):
-        force_download = True
-    elif o in ("-g", "--generate-icicle"):
-        generate_icicle = True
-    elif o in ("-h", "--help"):
+def main():
+    try:
+        opts, args = getopt.gnu_getopt(sys.argv[1:], 'a:b:c:d:fghi:m:n:ps:t:ux:',
+                                       ['auto', 'disk-bus', 'config', 'debug',
+                                        'force-download', 'generate-icicle', 'help',
+                                        'icicle', 'mac-address', 'network-device',
+                                        'cleanup', 'disk', 'timeout', 'customize',
+                                        'xmlfile'])
+    except getopt.GetoptError as err:
+        print(str(err))
         usage()
-    elif o in ("-i", "--icicle"):
-        icicle_file = a
-    elif o in ("-n", "--network-device"):
-        netdev = a
-    elif o in ("-m", "--mac-address"):
-        macaddress = a
-    elif o in ("-p", "--cleanup"):
-        cleanup = True
-    elif o in ("-s", "--disk"):
-        output_disk = a
-    elif o in ("-t", "--timeout"):
-        timeout = int(a)
-    elif o in ("-u", "--customize"):
-        customize = True
-    elif o in ("-x", "--xmlfile"):
-        filename = a
-    else:
-        assert False, "unhandled option"
 
-if len(args) != 1:
-    usage()
+    loglevel = logging.ERROR
+    logformat = "%(message)s"
+    force_download = False
+    config_file = None
+    generate_icicle = False
+    filename = None
+    customize = False
+    cleanup = False
+    auto = None
+    timeout = None
+    icicle_file = None
+    output_disk = None
+    diskbus = None
+    netdev = None
+    macaddress = None
+    for o, a in opts:
+        if o in ("-a", "--auto"):
+            auto = a
+        elif o in ("-b", "--disk-bus"):
+            diskbus = a
+        elif o in ("-c", "--config"):
+            config_file = a
+        elif o in ("-d", "--debug"):
+            try:
+                d_int = int(a)
+            except ValueError:
+                usage()
+            if d_int == 0:
+                loglevel = logging.ERROR
+            elif d_int == 1:
+                loglevel = logging.WARNING
+            elif d_int == 2:
+                loglevel = logging.INFO
+            elif d_int == 3:
+                loglevel = logging.DEBUG
+            elif d_int >= 4:
+                loglevel = logging.DEBUG
+                logformat = logging.BASIC_FORMAT
+        elif o in ("-f", "--force-download"):
+            force_download = True
+        elif o in ("-g", "--generate-icicle"):
+            generate_icicle = True
+        elif o in ("-h", "--help"):
+            usage()
+        elif o in ("-i", "--icicle"):
+            icicle_file = a
+        elif o in ("-n", "--network-device"):
+            netdev = a
+        elif o in ("-m", "--mac-address"):
+            macaddress = a
+        elif o in ("-p", "--cleanup"):
+            cleanup = True
+        elif o in ("-s", "--disk"):
+            output_disk = a
+        elif o in ("-t", "--timeout"):
+            timeout = int(a)
+        elif o in ("-u", "--customize"):
+            customize = True
+        elif o in ("-x", "--xmlfile"):
+            filename = a
+        else:
+            assert False, "unhandled option"
 
-if not generate_icicle and icicle_file is not None:
-    print("The -i option must be combined with the -g option")
-    sys.exit(3)
+    if len(args) != 1:
+        usage()
 
-try:
-    config = oz.ozutil.parse_config(config_file)
-
-    logging.basicConfig(level=loglevel, format=logformat)
-
-    tdl = oz.TDL.TDL(open(args[0], 'r').read())
-
-    guest = oz.GuestFactory.guest_factory(tdl, config, auto, output_disk,
-                                          netdev, diskbus, macaddress)
-
-    if cleanup:
-        guest.cleanup_old_guest()
-    else:
-        guest.check_for_guest_conflict()
+    if not generate_icicle and icicle_file is not None:
+        print("The -i option must be combined with the -g option")
+        sys.exit(3)
 
     try:
-        guest.generate_install_media(force_download,
-                                     customize or generate_icicle)
-        try:
-            guest.generate_diskimage(size=guest.disksize, force=force_download)
-            libvirt_xml = guest.install(timeout, force_download)
-        except:
+        config = oz.ozutil.parse_config(config_file)
+
+        logging.basicConfig(level=loglevel, format=logformat)
+
+        tdl = oz.TDL.TDL(open(args[0], 'r').read())
+
+        guest = oz.GuestFactory.guest_factory(tdl, config, auto, output_disk,
+                                              netdev, diskbus, macaddress)
+
+        if cleanup:
             guest.cleanup_old_guest()
-            raise
-    finally:
-        guest.cleanup_install()
-
-    if customize and generate_icicle:
-        print(guest.customize_and_generate_icicle(libvirt_xml))
-    elif customize:
-        guest.customize(libvirt_xml)
-    elif generate_icicle:
-        icicle_xml = guest.generate_icicle(libvirt_xml)
-        if icicle_file is None:
-            print(icicle_xml)
         else:
-            open(icicle_file, 'w').write(icicle_xml)
-            print("ICICLE XML was written to " + icicle_file)
+            guest.check_for_guest_conflict()
 
-    if filename is None:
-        filename = guest.name + time.strftime("%b_%d_%Y-%H:%M:%S")
-    open(filename, 'w').write(libvirt_xml)
-    print("Libvirt XML was written to " + filename)
-except Exception as exc:
-    if loglevel > logging.DEBUG:
-        print("")
-        print("ERROR: %s" % (str(exc)))
-        print("")
-        print("(use -d3 to get the full backtrace)")
-        print("")
-    else:
-        raise
+        try:
+            guest.generate_install_media(force_download,
+                                         customize or generate_icicle)
+            try:
+                guest.generate_diskimage(size=guest.disksize, force=force_download)
+                libvirt_xml = guest.install(timeout, force_download)
+            except:
+                guest.cleanup_old_guest()
+                raise
+        finally:
+            guest.cleanup_install()
+
+        if customize and generate_icicle:
+            print(guest.customize_and_generate_icicle(libvirt_xml))
+        elif customize:
+            guest.customize(libvirt_xml)
+        elif generate_icicle:
+            icicle_xml = guest.generate_icicle(libvirt_xml)
+            if icicle_file is None:
+                print(icicle_xml)
+            else:
+                open(icicle_file, 'w').write(icicle_xml)
+                print("ICICLE XML was written to " + icicle_file)
+
+        if filename is None:
+            filename = guest.name + time.strftime("%b_%d_%Y-%H:%M:%S")
+        open(filename, 'w').write(libvirt_xml)
+        print("Libvirt XML was written to " + filename)
+    except Exception as exc:
+        if loglevel > logging.DEBUG:
+            print("")
+            print("ERROR: %s" % (str(exc)))
+            print("")
+            print("(use -d3 to get the full backtrace)")
+            print("")
+        else:
+            raise
+
+if __name__ == "__main__":
+    main()

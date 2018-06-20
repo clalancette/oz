@@ -45,75 +45,79 @@ def usage():
     oz.GuestFactory.distrolist()
     sys.exit(1)
 
-try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], 'c:d:hm:', ['config', 'debug',
-                                                             'mac-address',
-                                                             'help'])
-except getopt.GetoptError as err:
-    print(str(err))
-    usage()
-
-loglevel = logging.ERROR
-logformat = "%(message)s"
-config_file = None
-macaddress = None
-for o, a in opts:
-    if o in ("-c", "--config"):
-        config_file = a
-    elif o in ("-d", "--debug"):
-        try:
-            d_int = int(a)
-        except ValueError:
-            usage()
-        if d_int == 0:
-            loglevel = logging.ERROR
-        elif d_int == 1:
-            loglevel = logging.WARNING
-        elif d_int == 2:
-            loglevel = logging.INFO
-        elif d_int == 3:
-            loglevel = logging.DEBUG
-        elif d_int >= 4:
-            loglevel = logging.DEBUG
-            logformat = logging.BASIC_FORMAT
-    elif o in ("-h", "--help"):
+def main():
+    try:
+        opts, args = getopt.gnu_getopt(sys.argv[1:], 'c:d:hm:', ['config', 'debug',
+                                                                 'mac-address',
+                                                                 'help'])
+    except getopt.GetoptError as err:
+        print(str(err))
         usage()
-    elif o in ("-m", "--mac-address"):
-        macaddress = a
-    else:
-        assert False, "unhandled option"
 
-if len(args) != 2:
-    usage()
+    loglevel = logging.ERROR
+    logformat = "%(message)s"
+    config_file = None
+    macaddress = None
+    for o, a in opts:
+        if o in ("-c", "--config"):
+            config_file = a
+        elif o in ("-d", "--debug"):
+            try:
+                d_int = int(a)
+            except ValueError:
+                usage()
+            if d_int == 0:
+                loglevel = logging.ERROR
+            elif d_int == 1:
+                loglevel = logging.WARNING
+            elif d_int == 2:
+                loglevel = logging.INFO
+            elif d_int == 3:
+                loglevel = logging.DEBUG
+            elif d_int >= 4:
+                loglevel = logging.DEBUG
+                logformat = logging.BASIC_FORMAT
+        elif o in ("-h", "--help"):
+            usage()
+        elif o in ("-m", "--mac-address"):
+            macaddress = a
+        else:
+            assert False, "unhandled option"
 
-try:
-    config = oz.ozutil.parse_config(config_file)
+    if len(args) != 2:
+        usage()
 
-    tdlfile = args[0]
-    libvirt_xml_file = args[1]
+    try:
+        config = oz.ozutil.parse_config(config_file)
 
-    logging.basicConfig(level=loglevel, format=logformat)
+        tdlfile = args[0]
+        libvirt_xml_file = args[1]
 
-    tdl = oz.TDL.TDL(open(tdlfile, 'r').read())
+        logging.basicConfig(level=loglevel, format=logformat)
 
-    guest = oz.GuestFactory.guest_factory(tdl, config, None, macaddress=macaddress)
+        tdl = oz.TDL.TDL(open(tdlfile, 'r').read())
 
-    fp = open(libvirt_xml_file, 'r')
+        guest = oz.GuestFactory.guest_factory(tdl, config, None, macaddress=macaddress)
 
-    # Arbitrarily limit the size of the XML file that we will support to 5MB.
-    # this should be plenty for a normal libvirt XML, and this should prevent
-    # us from causing OOMs on bogus files
-    if os.fstat(fp.fileno())[stat.ST_SIZE] > (5 * 1024 * 1024):
-        raise Exception("libvirt XML file is too big!")
+        fp = open(libvirt_xml_file, 'r')
 
-    guest.customize(fp.read())
-    fp.close()
-except Exception as exc:
-    if loglevel > logging.DEBUG:
-        print("")
-        print("ERROR: %s" % (str(exc)))
-        print("")
-        print("(use -d3 to get the full backtrace)")
-        print("")
-    else:
-        raise
+        # Arbitrarily limit the size of the XML file that we will support to 5MB.
+        # this should be plenty for a normal libvirt XML, and this should prevent
+        # us from causing OOMs on bogus files
+        if os.fstat(fp.fileno())[stat.ST_SIZE] > (5 * 1024 * 1024):
+            raise Exception("libvirt XML file is too big!")
+
+        guest.customize(fp.read())
+        fp.close()
+    except Exception as exc:
+        if loglevel > logging.DEBUG:
+            print("")
+            print("ERROR: %s" % (str(exc)))
+            print("")
+            print("(use -d3 to get the full backtrace)")
+            print("")
+        else:
+            raise
+
+if __name__ == "__main__":
+    main()
