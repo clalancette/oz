@@ -27,11 +27,18 @@ import oz.ozutil
 
 
 class FedoraCoreConfiguration(object):
+    """
+    Configuration class for Fedora Core installation.
+    """
     def __init__(self, initrdtype):
         self._initrdtype = initrdtype
 
     @property
     def initrdtype(self):
+        """
+        Property method for the type of initrd this version of Fedora uses
+        ('cpio' or 'ext2').
+        """
         return self._initrdtype
 
 

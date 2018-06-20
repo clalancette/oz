@@ -131,8 +131,7 @@ class Windows_v5(Windows):
                     return "    ComputerName=" + computername + "\n"
                 elif re.match(" *AdminPassword", line):
                     return "    AdminPassword=" + self.rootpw + "\n"
-                else:
-                    return line
+                return line
 
             oz.ozutil.copy_modify_file(self.auto, outname, _sifsub)
         else:

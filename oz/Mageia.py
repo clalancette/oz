@@ -33,6 +33,9 @@ import oz.ozutil
 
 
 class MageiaConfiguration(object):
+    """
+    Configuration class for Mageia installation.
+    """
     def __init__(self, isolinux_style, default_netdev, default_diskbus):
         self._isolinux_style = isolinux_style
         self._default_netdev = default_netdev
@@ -40,14 +43,23 @@ class MageiaConfiguration(object):
 
     @property
     def isolinux_style(self):
+        """
+        Property method for the 'old' or 'new' isolinux style.
+        """
         return self._isolinux_style
 
     @property
     def default_netdev(self):
+        """
+        Property method for the default netdev for this version of Mageia.
+        """
         return self._default_netdev
 
     @property
     def default_diskbus(self):
+        """
+        Property method for the default diskbus for this version of Mageia.
+        """
         return self._default_diskbus
 
 
@@ -102,8 +114,7 @@ class MageiaGuest(oz.Linux.LinuxCDGuest):
                 """
                 if re.search("'password' =>", line):
                     return "			'password' => '" + self.rootpw + "',\n"
-                else:
-                    return line
+                return line
 
             oz.ozutil.copy_modify_file(self.auto, outname, _cfg_sub)
         else:
@@ -271,7 +282,7 @@ label customiso
             if re.match('# chkconfig:', line):
                 try:
                     startlevel = line.split(':')[1].split()[1]
-                except:
+                except Exception:
                     pass
                 break
 
@@ -519,9 +530,9 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
         XML.
         """
         self.log.debug("Generating ICICLE")
-        stdout, stderr, retcode = self.guest_execute_command(guestaddr,
-                                                             'rpm -qa',
-                                                             timeout=30)
+        stdout, stderr_unused, retcode_unused = self.guest_execute_command(guestaddr,
+                                                                           'rpm -qa',
+                                                                           timeout=30)
 
         package_split = stdout.split("\n")
 

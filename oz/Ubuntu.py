@@ -32,6 +32,9 @@ import oz.ozutil
 
 
 class UbuntuConfiguration(object):
+    """
+    Configuration class for Ubuntu installation.
+    """
     def __init__(self, reboots, can_customize, can_install_from_desktop,
                  ancient_isolinux, efi_extension, old_kbd_chooser,
                  extra_long_timeout, default_netdev, default_diskbus,
@@ -49,42 +52,78 @@ class UbuntuConfiguration(object):
 
     @property
     def reboots(self):
+        """
+        Property method to control how many reboots this version of Ubuntu
+        needs for an installation.
+        """
         return self._reboots
 
     @property
     def can_customize(self):
+        """
+        Property method for whether this version of Ubuntu can be customized.
+        """
         return self._can_customize
 
     @property
     def can_install_from_desktop(self):
+        """
+        Property method for whether this version of Ubuntu can be installed
+        from the 'desktop' ISO.
+        """
         return self._can_install_from_desktop
 
     @property
     def ancient_isolinux(self):
+        """
+        Property method for whether this version of Ubuntu has an ancient
+        version of isolinux.
+        """
         return self._ancient_isolinux
 
     @property
     def efi_extension(self):
+        """
+        Property method for whether this version of Ubuntu uses the EFI
+        extensions.
+        """
         return self._efi_extension
 
     @property
     def old_kbd_chooser(self):
+        """
+        Property method for whether this version of Ubuntu uses the old
+        kbd chooser method.
+        """
         return self._old_kbd_chooser
 
     @property
     def extra_long_timeout(self):
+        """
+        Property method for whether this version of Ubuntu uses an extra
+        long timeout.
+        """
         return self._extra_long_timeout
 
     @property
     def default_netdev(self):
+        """
+        Property method for the netdev for this version of Ubuntu.
+        """
         return self._default_netdev
 
     @property
     def default_diskbus(self):
+        """
+        Property method for the diskbus for this version of Ubuntu.
+        """
         return self._default_diskbus
 
     @property
     def initrdname(self):
+        """
+        Property method for the initrd name for this version of Ubuntu.
+        """
         return self._initrdname
 
 
@@ -584,11 +623,13 @@ version_to_config["5.04"] = UbuntuConfiguration(reboots=1,
 
 class UbuntuGuest(oz.Linux.LinuxCDGuest):
     """
-    Class for Ubuntu 5.04, 5.10, 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10, 10.04, 10.10, 11.04, 11.10, 12.04, 12.10, 13.04, 13.10, 14.04, 14.10, 15.04, 15.10, 16.04, 16.10, 17.04, and 17.10  installation.
+    Class for Ubuntu 5.04, 5.10, 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10,
+    10.04, 10.10, 11.04, 11.10, 12.04, 12.10, 13.04, 13.10, 14.04, 14.10, 15.04,
+    15.10, 16.04, 16.10, 17.04, 17.10, and 18.04 installation.
     """
     # Note that the 'initrd' parameter is completely ignored now; we leave
     # it in place for backwards API compatibility.
-    def __init__(self, tdl, config, auto, output_disk, initrd, nicmodel,
+    def __init__(self, tdl, config, auto, output_disk, initrd, nicmodel,  # pylint: disable=unused-argument
                  diskbus, macaddress):
         self.config = version_to_config[tdl.update]
         if nicmodel is None:
@@ -669,8 +710,7 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
                     return 'd-i passwd/root-password password ' + self.rootpw + '\n'
                 elif re.match('d-i passwd/root-password-again password', line):
                     return 'd-i passwd/root-password-again password ' + self.rootpw + '\n'
-                else:
-                    return line
+                return line
 
             oz.ozutil.copy_modify_file(self.auto, outname, _preseed_sub)
         else:
@@ -776,7 +816,7 @@ PROMPT 0
             if re.match('# chkconfig:', line):
                 try:
                     startlevel = line.split(':')[1].split()[1]
-                except:
+                except IndexError:
                     pass
                 break
 
@@ -1023,9 +1063,9 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
         XML.
         """
         self.log.debug("Generating ICICLE")
-        stdout, stderr, retcode = self.guest_execute_command(guestaddr,
-                                                             'dpkg --get-selections',
-                                                             timeout=30)
+        stdout, stderr_unused, retcode_unused = self.guest_execute_command(guestaddr,
+                                                                           'dpkg --get-selections',
+                                                                           timeout=30)
 
         # the data we get back from dpkg is in the form of:
         #
@@ -1127,7 +1167,7 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
         initrd = None
         try:
             (kernel, initrd) = self._get_kernel_from_txt_cfg(fetchurl)
-        except:
+        except Exception:
             pass
 
         if kernel is None:
@@ -1221,14 +1261,14 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
         for fname in [self.output_iso, self.initrdfname, self.kernelfname]:
             try:
                 os.unlink(fname)
-            except:
+            except Exception:
                 pass
 
         if not self.cache_original_media:
             for fname in [self.orig_iso, self.kernelcache, self.initrdcache]:
                 try:
                     os.unlink(fname)
-                except:
+                except Exception:
                     pass
 
 

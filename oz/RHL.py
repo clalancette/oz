@@ -63,8 +63,7 @@ class RHL9Guest(oz.RedHat.RedHatLinuxCDGuest):
                     return "url --url " + self.url + "\n"
                 elif re.match("^rootpw", line):
                     return "rootpw " + self.rootpw + "\n"
-                else:
-                    return line
+                return line
 
             oz.ozutil.copy_modify_file(self.auto, outname, _kssub)
         else:

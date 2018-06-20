@@ -76,7 +76,7 @@ def executable_exists(program):
     if program is None:
         raise Exception("Invalid program name passed")
 
-    fpath, fname = os.path.split(program)
+    fpath, fname_unused = os.path.split(program)
     if fpath:
         if is_exe(program):
             return program
@@ -169,7 +169,7 @@ def copyfile_sparse(src, dest):
             destlen = 0
             while size != 0:
                 buf = read_bytes_from_fd(src_fd, min(buf_size, size))
-                if len(buf) == 0:
+                if not buf:
                     break
 
                 buflen = len(buf)
@@ -291,7 +291,7 @@ def get_sum_from_file(sumfile, file_to_find, digest_bits, digest_type):
             line = line.lstrip()
 
             # ignore blank lines
-            if len(line) == 0:
+            if not line:
                 continue
 
             # ignore comment lines
@@ -511,9 +511,6 @@ def copytree_merge(src, dst, symlinks=False, ignore=None):
             errors.extend(err.args[0])
     try:
         shutil.copystat(src, dst)
-    except shutil.WindowsError:
-        # can't copy file access times on Windows
-        pass
     except OSError as why:
         errors.extend((src, dst, str(why)))
     if errors:
@@ -662,8 +659,7 @@ def config_get_key(config, section, key, default):
     """
     if config is not None and config.has_section(section) and config.has_option(section, key):
         return config.get(section, key)
-    else:
-        return default
+    return default
 
 
 def config_get_boolean_key(config, section, key, default):
@@ -735,7 +731,7 @@ def parse_config(config_file):
         # /etc/oz/oz.cfg.  If neither of those exist, we don't throw an error
         # but instead let Oz pick sane defaults internally.
         parsed = config.read(os.path.expanduser("~/.oz/oz.cfg"))
-        if len(parsed) == 0 and os.geteuid() == 0:
+        if not parsed and os.geteuid() == 0:
             config.read("/etc/oz/oz.cfg")
 
     return config
@@ -747,8 +743,7 @@ def default_output_dir():
     """
     if os.geteuid() == 0:
         return "/var/lib/libvirt/images"
-    else:
-        return "~/.oz/images"
+    return "~/.oz/images"
 
 
 def default_data_dir():
@@ -757,8 +752,7 @@ def default_data_dir():
     """
     if os.geteuid() == 0:
         return "/var/lib/oz"
-    else:
-        return "~/.oz"
+    return "~/.oz"
 
 
 def default_sshprivkey():
@@ -767,8 +761,7 @@ def default_sshprivkey():
     """
     if os.geteuid() == 0:
         return "/etc/oz/id_rsa-icicle-gen"
-    else:
-        return "~/.oz/id_rsa-icicle-gen"
+    return "~/.oz/id_rsa-icicle-gen"
 
 
 def default_screenshot_dir():
@@ -788,7 +781,7 @@ class LocalFileAdapter(requests.adapters.BaseAdapter):
     def _chkpath(method, path):
         """Return an HTTP status for the given filesystem path."""
         if method.lower() in ('put', 'delete'):
-            return 501, "Not Implemented"  # TODO
+            return 501, "Not Implemented"
         elif method.lower() not in ('get', 'head', 'post'):
             return 405, "Method Not Allowed"
         elif os.path.isdir(path):
@@ -797,10 +790,9 @@ class LocalFileAdapter(requests.adapters.BaseAdapter):
             return 404, "File Not Found"
         elif not os.access(path, os.R_OK):
             return 403, "Access Denied"
-        else:
-            return 200, "OK"
+        return 200, "OK"
 
-    def send(self, req, **kwargs):
+    def send(self, request, stream=False, timeout=None, verify=True, cert=None, proxies=None):
         """Return the file specified by the given request
 
         @type req: C{PreparedRequest}
@@ -808,28 +800,28 @@ class LocalFileAdapter(requests.adapters.BaseAdapter):
                If-Modified-Since and friends using `os.stat`?
         """
         if sys.version_info.major == 2:
-            path = os.path.normcase(os.path.normpath(urllib.url2pathname(req.path_url)))
+            path = os.path.normcase(os.path.normpath(urllib.url2pathname(request.path_url)))  # pylint: disable=no-member
         else:
-            path = os.path.normcase(os.path.normpath(urllib.request.url2pathname(req.path_url)))
+            path = os.path.normcase(os.path.normpath(urllib.request.url2pathname(request.path_url)))
         response = requests.Response()
 
-        response.status_code, response.reason = self._chkpath(req.method, path)
-        if response.status_code == 200 and req.method.lower() != 'head':
+        response.status_code, response.reason = self._chkpath(request.method, path)
+        if response.status_code == 200 and request.method.lower() != 'head':
             try:
                 response.raw = open(path, 'rb')
             except (OSError, IOError) as err:
                 response.status_code = 500
                 response.reason = str(err)
 
-        if isinstance(req.url, bytes):
-            response.url = req.url.decode('utf-8')
+        if isinstance(request.url, bytes):
+            response.url = request.url.decode('utf-8')
         else:
-            response.url = req.url
+            response.url = request.url
 
         response.headers['Content-Length'] = os.path.getsize(path)
         response.headers['Accept-Ranges'] = 'bytes'
-        response.headers['Redirect-URL'] = req.url
-        response.request = req
+        response.headers['Redirect-URL'] = request.url
+        response.request = request
         response.connection = self
 
         return response
@@ -981,8 +973,7 @@ def check_qcow_size(filename):
 
     if unpack[0] == qcow_magic:
         return unpack[5]
-    else:
-        return None
+    return None
 
 
 def recursively_add_write_bit(inputdir):
@@ -992,7 +983,7 @@ def recursively_add_write_bit(inputdir):
     files extracted from an ISO, since those were all read-only to begin
     with.
     """
-    for dirpath, dirnames, filenames in os.walk(inputdir):
+    for dirpath, dirnames_unused, filenames in os.walk(inputdir):
         # If the path is a symlink, and it is an absolute symlink, this would
         # attempt to change the permissions of the *host* file, not the
         # file that is relative to here.  That is no good, and could be a

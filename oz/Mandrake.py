@@ -29,16 +29,25 @@ import oz.ozutil
 
 
 class MandrakeConfiguration(object):
+    """
+    Configuration class for Mandrake installation.
+    """
     def __init__(self, old_isolinux, need_longer_timeout):
         self._old_isolinux = old_isolinux
         self._need_longer_timeout = need_longer_timeout
 
     @property
     def old_isolinux(self):
+        """
+        Property method for whether this version of Mandrake uses an old isolinux.
+        """
         return self._old_isolinux
 
     @property
     def need_longer_timeout(self):
+        """
+        Property method for whether this version of Mandrake needs a longer timeout.
+        """
         return self._need_longer_timeout
 
 
@@ -85,8 +94,7 @@ class MandrakeGuest(oz.Guest.CDGuest):
                 """
                 if re.search("'password' =>", line):
                     return "			'password' => '" + self.rootpw + "',\n"
-                else:
-                    return line
+                return line
 
             oz.ozutil.copy_modify_file(self.auto, outname, _cfg_sub)
         else:

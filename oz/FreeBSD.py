@@ -27,16 +27,25 @@ import oz.ozutil
 
 
 class FreeBSDConfiguration(object):
+    """
+    Configuration class for FreeBSD.
+    """
     def __init__(self, default_netdev, default_diskbus):
         self._default_netdev = default_netdev
         self._default_diskbus = default_diskbus
 
     @property
     def default_netdev(self):
+        """
+        Property method for the default netdev for this FreeBSD version.
+        """
         return self._default_netdev
 
     @property
     def default_diskbus(self):
+        """
+        Property method for the default diskbus for this FreeBSD version.
+        """
         return self._default_diskbus
 
 
@@ -90,8 +99,8 @@ class FreeBSD(oz.Guest.CDGuest):
             keys = {
                 '#ROOTPW#': self.rootpw,
             }
-            for key, val in keys.iteritems():
-                line = line.replace(key, val)
+            for key in keys:
+                line = line.replace(key, keys[key])
             return line
 
         # Copy the installconfig file to /etc/ on the iso image so bsdinstall(8)

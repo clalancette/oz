@@ -28,16 +28,25 @@ import oz.ozutil
 
 
 class RHEL5Configuration(object):
+    """
+    Configuration class for RHEL-5 installation.
+    """
     def __init__(self, default_netdev, default_diskbus):
         self._default_netdev = default_netdev
         self._default_diskbus = default_diskbus
 
     @property
     def default_netdev(self):
+        """
+        Property method for the default netdev for this version of RHEL-5.
+        """
         return self._default_netdev
 
     @property
     def default_diskbus(self):
+        """
+        Property method for the default diskbus for this version of RHEL-5.
+        """
         return self._default_diskbus
 
 

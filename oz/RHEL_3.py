@@ -87,7 +87,10 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
             # information.  We just pass through here, doing nothing
         else:
             if self.tdl.installtype == "iso":
-                if not re.match(r"CentOS-3(\.[0-9])? Disk 1", pvd.volume_identifier) and not re.match(r"CentOS-3(\.[0-9])? server", pvd.volume_identifier) and not re.match(r"CentOS-3(\.[0-9])? " + self.tdl.arch + " DVD", pvd.volume_identifier):
+                centos_disk_1 = re.match(r"CentOS-3(\.[0-9])? Disk 1", pvd.volume_identifier)
+                centos_server = re.match(r"CentOS-3(\.[0-9])? server", pvd.volume_identifier)
+                centos_dvd = re.match(r"CentOS-3(\.[0-9])? " + self.tdl.arch + " DVD", pvd.volume_identifier)
+                if not centos_disk_1 and not centos_server and not centos_dvd:
                     raise oz.OzException.OzException("Only DVDs are supported for CentOS-3 ISO installs")
             # The boot ISOs for CentOS-3 don't have a whole lot of identifying
             # information.  We just pass through here, doing nothing

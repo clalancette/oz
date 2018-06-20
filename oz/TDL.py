@@ -22,6 +22,7 @@ Template Description Language (TDL)
 import base64
 import os
 import re
+import sys
 import tempfile
 try:
     import urllib.parse as urlparse
@@ -58,7 +59,7 @@ def _xml_get_value(doc, xmlstring, component, optional=False):
     res = doc.xpath(xmlstring)
     if len(res) == 1:
         return res[0].text
-    elif len(res) == 0:
+    elif not res:
         if optional:
             return None
         else:
@@ -81,7 +82,10 @@ def data_from_type(name, contenttype, content):
     if contenttype == 'raw':
         out.write(content)
     elif contenttype == 'base64':
-        out.write(base64.decodestring(content))
+        if sys.version_info.major == 2:
+            out.write(base64.decodestring(content))
+        else:
+            out.write(base64.decodebytes(content))
     elif contenttype == 'url':
         url = urlparse.urlparse(content)
         if url.scheme == "file":
@@ -361,7 +365,7 @@ class TDL(object):
             content = ""
             if command.text:
                 content = command.text.strip()
-            if len(content) == 0:
+            if not content:
                 raise oz.OzException.OzException("Empty commands are not allowed")
 
             # since XML doesn't *guarantee* an order, the correct way to
@@ -441,8 +445,8 @@ class TDL(object):
 
             if remove_duplicates:
                 # delete any existing packages with this name
-                for package in [package for package in self.packages if package.name == name]:
-                    self.packages.remove(package)
+                for p in [package for package in self.packages if package.name == name]:
+                    self.packages.remove(p)
 
             # now add in our new package def
             self.packages.append(Package(name, repo, filename, args))

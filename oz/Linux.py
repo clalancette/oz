@@ -161,16 +161,16 @@ class LinuxCDGuest(oz.Guest.CDGuest):
             # kill the guest.
             try:
                 self.guest_execute_command(guestaddr, 'shutdown -h now')
-            except:
+            except Exception:
                 pass
 
             try:
                 if not self._wait_for_guest_shutdown(libvirt_dom):
-                    self.log.warn("Guest did not shutdown in time, going to kill")
+                    self.log.warning("Guest did not shutdown in time, going to kill")
                 else:
                     libvirt_dom = None
-            except:
-                self.log.warn("Failed shutting down guest, forcibly killing")
+            except Exception:
+                self.log.warning("Failed shutting down guest, forcibly killing")
 
         if libvirt_dom is not None:
             try:
@@ -185,33 +185,33 @@ class LinuxCDGuest(oz.Guest.CDGuest):
                     if domid == libvirt_dom.ID():
                         raise
 
-    def _collect_setup(self, libvirt_xml):
+    def _collect_setup(self, libvirt_xml):  # pylint: disable=unused-argument
         """
         Default method to set the guest up for remote access.
         """
         raise oz.OzException.OzException("ICICLE generation and customization is not implemented for guest %s" % (self.tdl.distro))
 
-    def _collect_teardown(self, libvirt_xml):
+    def _collect_teardown(self, libvirt_xml):  # pylint: disable=unused-argument
         """
         Method to reverse the changes done in _collect_setup.
         """
         raise oz.OzException.OzException("ICICLE generation and customization is not implemented for guest %s" % (self.tdl.distro))
 
-    def _install_packages(self, guestaddr, packstr):
+    def _install_packages(self, guestaddr, packstr):  # pylint: disable=unused-argument
         """
         Internal method to install packages; expected to be overriden by
         child classes.
         """
         raise oz.OzException.OzException("Customization is not implemented for guest %s" % (self.tdl.distro))
 
-    def _customize_repos(self, guestaddr):
+    def _customize_repos(self, guestaddr):  # pylint: disable=unused-argument
         """
         Internal method to customize repositories; expected to be overriden by
         child classes.
         """
         raise oz.OzException.OzException("Customization is not implemented for guest %s" % (self.tdl.distro))
 
-    def _remove_repos(self, guestaddr):
+    def _remove_repos(self, guestaddr):  # pylint: disable=unused-argument
         """
         Internal method to remove repositories; expected to be overriden by
         child classes.

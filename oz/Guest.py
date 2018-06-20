@@ -93,13 +93,13 @@ class Guest(object):
 
                 forward = doc.xpath('/network/forward')
                 if len(forward) != 1:
-                    self.log.warn("Libvirt network without a forward element, skipping")
+                    self.log.warning("Libvirt network without a forward element, skipping")
                     continue
 
                 if forward[0].get('mode') == 'nat':
                     ips = doc.xpath('/network/ip')
-                    if len(ips) == 0:
-                        self.log.warn("Libvirt network without an IP, skipping")
+                    if not ips:
+                        self.log.warning("Libvirt network without an IP, skipping")
                         continue
                     for ip in ips:
                         family = ip.get("family")
@@ -430,6 +430,9 @@ class Guest(object):
             oz.ozutil.lxml_subelement(target, "model", None, {'name': 'sclplmconsole'})
 
     def _generate_virtio_channel(self, devices, name):
+        """
+        Method to generate libvirt XML for a virtio channel.
+        """
         virtio = oz.ozutil.lxml_subelement(devices, "channel", None, {'type': 'tcp'})
         oz.ozutil.lxml_subelement(virtio, "source", None,
                                   {'mode': 'bind', 'host': '127.0.0.1', 'service': str(self.console_listen_port)})
@@ -530,10 +533,10 @@ class Guest(object):
             installdev_list = [installdev]
         else:
             installdev_list = installdev
-        for installdev in installdev_list:
-            install = oz.ozutil.lxml_subelement(devices, "disk", None, {'type': 'file', 'device': installdev.devicetype})
-            oz.ozutil.lxml_subelement(install, "source", None, {'file': installdev.path})
-            oz.ozutil.lxml_subelement(install, "target", None, {'dev': installdev.bus})
+        for idev in installdev_list:
+            install = oz.ozutil.lxml_subelement(devices, "disk", None, {'type': 'file', 'device': idev.devicetype})
+            oz.ozutil.lxml_subelement(install, "source", None, {'file': idev.path})
+            oz.ozutil.lxml_subelement(install, "target", None, {'dev': idev.bus})
 
         xml = lxml.etree.tostring(domain, pretty_print=True, encoding="unicode")
         self.log.debug("Generated XML:\n%s", xml)
@@ -995,7 +998,7 @@ class Guest(object):
         domxml = libvirt_dom.XMLDesc(0)
         doc = lxml.etree.fromstring(domxml)
         graphics = doc.xpath("/domain/devices/graphics")
-        if len(graphics) == 0:
+        if not graphics:
             return "No graphics device found, screenshot skipped"
 
         oz.ozutil.mkdir_p(self.screenshot_dir)
@@ -1016,7 +1019,7 @@ class Guest(object):
             screenshot = os.path.realpath(os.path.join(self.screenshot_dir,
                                                        self.tdl.name + "-" + str(time.time()) + ext))
 
-            def sink(stream, buf, opaque):
+            def sink(stream, buf, opaque):  # pylint: disable=unused-argument
                 """
                 Function that is called back from the libvirt stream.
                 """
@@ -1031,7 +1034,7 @@ class Guest(object):
 
             st.finish()
             text = "Check screenshot at %s for more detail" % (screenshot)
-        except:
+        except Exception:
             text = "Failed to take screenshot"
 
         return text
@@ -1250,7 +1253,7 @@ class Guest(object):
         # when we get here, either both the private and public key exist, or
         # neither exist.  If they don't exist, generate them
         if not os.access(privname, os.F_OK) and not os.access(pubname, os.F_OK):
-            def _null_callback(p, n, out):
+            def _null_callback(p, n, out):  # pylint: disable=unused-argument
                 """
                 Method to silence the default M2Crypto.RSA.gen_key output.
                 """
@@ -1418,7 +1421,10 @@ class CDGuest(Guest):
         # check out the primary volume descriptor to make sure it is sane
         cdfd.seek(16 * 2048)
         fmt = b"=B5sBB32s32sQLL32sHHHH"
-        (desc_type, identifier, version, unused1, system_identifier, volume_identifier, unused2, space_size_le, space_size_be, unused3, set_size_le, set_size_be, seqnum_le, seqnum_be) = struct.unpack(fmt, cdfd.read(struct.calcsize(fmt)))
+        (desc_type, identifier, version, unused1, system_identifier,
+         volume_identifier, unused2, space_size_le, space_size_be_unused,
+         unused3, set_size_le, set_size_be, seqnum_le,
+         seqnum_be) = struct.unpack(fmt, cdfd.read(struct.calcsize(fmt)))
 
         if desc_type != 0x1:
             raise oz.OzException.OzException("Invalid primary volume descriptor")
@@ -1470,8 +1476,8 @@ class CDGuest(Guest):
             cdfd.seek(bootP * 2048)
             fmt = "=BBH24sHBB"
             bootdata = cdfd.read(struct.calcsize(fmt))
-            (header, platform, unused, manu, unused2, five, aa) = struct.unpack(fmt,
-                                                                                bootdata)
+            (header, platform, unused, manu_unused, unused2, five, aa) = struct.unpack(fmt,
+                                                                                       bootdata)
             if header != 0x1:
                 raise oz.OzException.OzException("invalid CD boot sector header")
             if platform != 0x0 and platform != 0x1 and platform != 0x2:
@@ -1501,7 +1507,8 @@ class CDGuest(Guest):
             # boot entry
             cdfd.seek(bootP * 2048 + 32)
             fmt = "=BBHBBHIB"
-            (boot, media, loadsegment, systemtype, unused, scount, imgstart, unused2) = struct.unpack(fmt, cdfd.read(struct.calcsize(fmt)))
+            (boot, media, loadsegment_unused, systemtype_unused, unused, scount,
+             imgstart, unused2) = struct.unpack(fmt, cdfd.read(struct.calcsize(fmt)))
 
             if boot != 0x88:
                 raise oz.OzException.OzException("invalid CD initial boot indicator")
@@ -1838,5 +1845,5 @@ class FDGuest(Guest):
         if not self.cache_original_media:
             try:
                 os.unlink(self.orig_floppy)
-            except:
+            except Exception:
                 pass

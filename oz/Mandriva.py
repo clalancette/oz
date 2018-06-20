@@ -29,11 +29,17 @@ import oz.ozutil
 
 
 class MandrivaConfiguration(object):
+    """
+    Configuration class for Mandriva.
+    """
     def __init__(self, old_path):
         self._old_path = old_path
 
     @property
     def old_path(self):
+        """
+        Property method for whether this uses the old style paths.
+        """
         return self._old_path
 
 
@@ -83,8 +89,7 @@ class MandrivaGuest(oz.Guest.CDGuest):
                 """
                 if re.search("'password' =>", line):
                     return "			'password' => '" + self.rootpw + "',\n"
-                else:
-                    return line
+                return line
 
             oz.ozutil.copy_modify_file(self.auto, outname, _cfg_sub)
         else:

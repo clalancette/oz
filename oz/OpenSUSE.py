@@ -32,6 +32,9 @@ import oz.ozutil
 
 
 class OpenSUSEConfiguration(object):
+    """
+    Configuration class for OpenSUSE.
+    """
     def __init__(self, reboots, use_floppy_autoyast, extended_zypper_list,
                  default_netdev, default_diskbus):
         self._reboots = reboots
@@ -42,22 +45,40 @@ class OpenSUSEConfiguration(object):
 
     @property
     def reboots(self):
+        """
+        Property method for the number of reboots for installation of this
+        version of OpenSUSE.
+        """
         return self._reboots
 
     @property
     def use_floppy_autoyast(self):
+        """
+        Property method to determine whether the autoyast should go on a
+        floppy or on the ISO.
+        """
         return self._use_floppy_autoyast
 
     @property
     def extended_zypper_list(self):
+        """
+        Property method for where the URI is stored in the output of
+        'zypper list' in this version of OpenSUSE.
+        """
         return self._extended_zypper_list
 
     @property
     def default_netdev(self):
+        """
+        Property method for the default netdev for this version of OpenSUSE.
+        """
         return self._default_netdev
 
     @property
     def default_diskbus(self):
+        """
+        Property method for the default diskbus for this version of OpenSUSE.
+        """
         return self._default_diskbus
 
 
@@ -301,9 +322,9 @@ class OpenSUSEGuest(oz.Linux.LinuxCDGuest):
         XML.
         """
         self.log.debug("Generating ICICLE")
-        stdout, stderr, retcode = self.guest_execute_command(guestaddr,
-                                                             'rpm -qa',
-                                                             timeout=30)
+        stdout, stderr_unused, retcode_unused = self.guest_execute_command(guestaddr,
+                                                                           'rpm -qa',
+                                                                           timeout=30)
 
         return self._output_icicle_xml(stdout.split("\n"),
                                        self.tdl.description)
@@ -486,8 +507,8 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
     def _install_packages(self, guestaddr, packstr):
         # due to a bug in OpenSUSE 11.1, we want to remove the default
         # CD repo first
-        stdout, stderr, retcode = self.guest_execute_command(guestaddr,
-                                                             'zypper repos -d')
+        stdout, stderr_unused, retcode_unused = self.guest_execute_command(guestaddr,
+                                                                           'zypper repos -d')
         removerepos = []
         for line in stdout.split('\n'):
             if re.match("^[0-9]+", line):

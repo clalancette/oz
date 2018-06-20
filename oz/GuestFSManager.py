@@ -61,7 +61,7 @@ class GuestFS(object):
         self.log.debug("Inspecting guest OS")
         roots = self.g_handle.inspect_os()
 
-        if len(roots) == 0:
+        if not roots:
             raise oz.OzException.OzException("No operating systems found on the disk")
 
         self.log.debug("Getting mountpoints")
@@ -103,7 +103,7 @@ class GuestFS(object):
                 try:
                     self.g_handle.mount_options('', mps[device], device)
                     already_mounted[device] = mps[device]
-                except:
+                except Exception:
                     if device == '/':
                         # If we cannot mount root, we may as well give up
                         raise
@@ -225,7 +225,7 @@ def GuestFSLibvirtFactory(libvirt_xml, libvirt_conn):
         raise oz.OzException.OzException("invalid <disk> entry without a source")
     input_disk = source[0].get('file')
     driver = disks[0].xpath('driver')
-    if len(driver) == 0:
+    if not driver:
         input_disk_type = 'raw'
     elif len(driver) == 1:
         input_disk_type = driver[0].get('type')
@@ -235,7 +235,7 @@ def GuestFSLibvirtFactory(libvirt_xml, libvirt_conn):
     for domid in libvirt_conn.listDomainsID():
         try:
             doc = lxml.etree.fromstring(libvirt_conn.lookupByID(domid).XMLDesc(0))
-        except:
+        except Exception:
             log.debug("Could not get XML for domain ID (%s) - it may have disappeared (continuing)",
                       domid)
             continue

@@ -41,7 +41,7 @@ $(VENV_DIR):
 virtualenv: $(VENV_DIR)
 
 unittests:
-	@[ -f $(VENV_DIR)/bin/activate ] && source $(VENV_DIR)/bin/activate ; python setup.py test
+	@[ -f $(VENV_DIR)/bin/activate ] && source $(VENV_DIR)/bin/activate ; python3 setup.py test
 	@(type deactivate 2>/dev/null | grep -q 'function') && deactivate || true
 
 tests: unittests
@@ -52,7 +52,7 @@ test-coverage:
 	xdg-open htmlcov/index.html
 
 pylint:
-	pylint --rcfile=pylint.conf oz oz-install oz-customize oz-cleanup-cache oz-generate-icicle
+	pylint-3 --rcfile=pylint.conf oz oz-install oz-customize oz-cleanup-cache oz-generate-icicle
 
 flake8:
 	flake8-3 --ignore=E501 oz

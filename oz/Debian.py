@@ -32,6 +32,9 @@ import oz.ozutil
 
 
 class DebianConfiguration(object):
+    """
+    Configuration class for Debian installation.
+    """
     def __init__(self, need_auto_direct, need_auto_iso, default_netdev,
                  default_diskbus):
         self._need_auto_direct = need_auto_direct
@@ -41,18 +44,32 @@ class DebianConfiguration(object):
 
     @property
     def need_auto_direct(self):
+        """
+        Property method for whether this version of Debian needs 'auto' on the
+        command-line for direct installs.
+        """
         return self._need_auto_direct
 
     @property
     def need_auto_iso(self):
+        """
+        Property method for whether this version of Debian needs 'auto' on the
+        command-line for ISO installs.
+        """
         return self._need_auto_iso
 
     @property
     def default_netdev(self):
+        """
+        Property method for the default netdev for this version of Debian.
+        """
         return self._default_netdev
 
     @property
     def default_diskbus(self):
+        """
+        Property method for the default diskbus for this version of Debian.
+        """
         return self._default_diskbus
 
 
@@ -138,8 +155,7 @@ class DebianGuest(oz.Linux.LinuxCDGuest):
                     return 'd-i passwd/root-password password ' + self.rootpw + '\n'
                 elif re.match('d-i passwd/root-password-again password', line):
                     return 'd-i passwd/root-password-again password ' + self.rootpw + '\n'
-                else:
-                    return line
+                return line
 
             oz.ozutil.copy_modify_file(self.auto, outname, _preseed_sub)
         else:
@@ -228,7 +244,7 @@ critical initrd=%s/initrd.gz --
             if re.match('# chkconfig:', line):
                 try:
                     startlevel = line.split(':')[1].split()[1]
-                except:
+                except Exception:
                     pass
                 break
 
@@ -454,9 +470,9 @@ critical initrd=%s/initrd.gz --
         XML.
         """
         self.log.debug("Generating ICICLE")
-        stdout, stderr, retcode = self.guest_execute_command(guestaddr,
-                                                             'dpkg --get-selections',
-                                                             timeout=30)
+        stdout, stderr_unused, retcode_unused = self.guest_execute_command(guestaddr,
+                                                                           'dpkg --get-selections',
+                                                                           timeout=30)
 
         # the data we get back from dpkg is in the form of:
         #
@@ -560,7 +576,7 @@ critical initrd=%s/initrd.gz --
         initrd = None
         try:
             (kernel, initrd) = self._get_kernel_from_txt_cfg(fetchurl)
-        except:
+        except Exception:
             pass
 
         if kernel is None:
@@ -654,14 +670,14 @@ critical initrd=%s/initrd.gz --
         for fname in [self.output_iso, self.initrdfname, self.kernelfname]:
             try:
                 os.unlink(fname)
-            except:
+            except Exception:
                 pass
 
         if not self.cache_original_media:
             for fname in [self.orig_iso, self.kernelcache, self.initrdcache]:
                 try:
                     os.unlink(fname)
-                except:
+                except Exception:
                     pass
 
 

@@ -27,6 +27,9 @@ import oz.ozutil
 
 
 class FedoraConfiguration(object):
+    """
+    The configuration class for Fedora.
+    """
     def __init__(self, has_virtio_channel, use_yum, use_dev_cdrom_device,
                  createpart, directkernel, default_netdev, default_diskbus,
                  brokenisomethod, haverepo):
@@ -42,38 +45,66 @@ class FedoraConfiguration(object):
 
     @property
     def has_virtio_channel(self):
+        """
+        Property method for whether this Fedora version has a virtio channel.
+        """
         return self._has_virtio_channel
 
     @property
     def use_yum(self):
+        """
+        Property method for whether this Fedora version uses yum or dnf.
+        """
         return self._use_yum
 
     @property
     def use_dev_cdrom_device(self):
+        """
+        Property method for whether this Fedora version uses /dev/cdrom on the
+        kickstart command-line.
+        """
         return self._use_dev_cdrom_device
 
     @property
     def createpart(self):
+        """
+        Property method for whether to create partitions before installation.
+        """
         return self._createpart
 
     @property
     def directkernel(self):
+        """
+        Property method for whether this Fedora version supports direct kernel boot.
+        """
         return self._directkernel
 
     @property
     def default_netdev(self):
+        """
+        Property method for the default netdev for this Fedora version.
+        """
         return self._default_netdev
 
     @property
     def default_diskbus(self):
+        """
+        Property method for the default diskbus for this Fedora version.
+        """
         return self._default_diskbus
 
     @property
     def brokenisomethod(self):
+        """
+        Property method for whether to add method to the anaconda install line.
+        """
         return self._brokenisomethod
 
     @property
     def haverepo(self):
+        """
+        Property method for whether to use 'repo=' or 'method=' on the anaconda install line.
+        """
         return self._haverepo
 
 
@@ -197,8 +228,8 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
     """
     # Note that the 'brokenisomethod' and 'haverepo' parameters are completely
     # ignored now; we leave it in place for backwards API compatibility.
-    def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,
-                 brokenisomethod, output_disk=None, macaddress=None,
+    def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,  # pylint: disable=unused-argument
+                 brokenisomethod, output_disk=None, macaddress=None,    # pylint: disable=unused-argument
                  assumed_update=None):
         self.config = version_to_config[tdl.update]
         if nicmodel is None:
@@ -269,8 +300,7 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
         # newest known auto file; otherwise, do the usual thing.
         if self.assumed_update is not None:
             return oz.ozutil.generate_full_auto_path(self.tdl.distro + self.assumed_update + ".auto")
-        else:
-            return oz.ozutil.generate_full_auto_path(self.tdl.distro + self.tdl.update + ".auto")
+        return oz.ozutil.generate_full_auto_path(self.tdl.distro + self.tdl.update + ".auto")
 
 
 def get_class(tdl, config, auto, output_disk=None, netdev=None, diskbus=None,

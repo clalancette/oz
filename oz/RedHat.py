@@ -136,8 +136,7 @@ label customiso
                 """
                 if re.match("^rootpw", line):
                     return "rootpw " + self.rootpw + '\n'
-                else:
-                    return line
+                return line
 
             oz.ozutil.copy_modify_file(self.auto, outname, _kssub)
         else:
@@ -156,7 +155,7 @@ label customiso
             if re.match('# chkconfig:', line):
                 try:
                     startlevel = line.split(':')[1].split()[1]
-                except:
+                except Exception:
                     pass
                 break
 
@@ -475,17 +474,17 @@ echo -n "!$ADDR,%s!" > %s
         XML.
         """
         self.log.debug("Generating ICICLE")
-        stdout, stderr, retcode = self.guest_execute_command(guestaddr,
-                                                             'rpm -qa',
-                                                             timeout=30)
+        stdout, stderr_unused, retcode_unused = self.guest_execute_command(guestaddr,
+                                                                           'rpm -qa',
+                                                                           timeout=30)
 
         package_split = stdout.split("\n")
 
         extrasplit = None
         if self.tdl.icicle_extra_cmd:
-            extrastdout, stderr, retcode = self.guest_execute_command(guestaddr,
-                                                                      self.tdl.icicle_extra_cmd,
-                                                                      timeout=30)
+            extrastdout, stderr_unused, retcode_unused = self.guest_execute_command(guestaddr,
+                                                                                    self.tdl.icicle_extra_cmd,
+                                                                                    timeout=30)
             extrasplit = extrastdout.split("\n")
 
             if len(package_split) != len(extrasplit):
@@ -592,7 +591,7 @@ echo -n "!$ADDR,%s!" > %s
         initrd = None
         try:
             (kernel, initrd) = self._get_kernel_from_treeinfo(fetchurl)
-        except:
+        except Exception:
             pass
 
         if kernel is None:
@@ -687,14 +686,14 @@ echo -n "!$ADDR,%s!" > %s
         for fname in [self.output_iso, self.initrdfname, self.kernelfname]:
             try:
                 os.unlink(fname)
-            except:
+            except Exception:
                 pass
 
         if not self.cache_original_media:
             for fname in [self.orig_iso, self.kernelcache, self.initrdcache]:
                 try:
                     os.unlink(fname)
-                except:
+                except Exception:
                     pass
 
     def install(self, timeout=None, force=False):
@@ -861,8 +860,7 @@ class RedHatFDGuest(oz.Guest.FDGuest):
                     return "url --url " + self.url + "\n"
                 elif re.match("^rootpw", line):
                     return "rootpw " + self.rootpw + "\n"
-                else:
-                    return line
+                return line
 
             oz.ozutil.copy_modify_file(self.auto, output_ks, _kssub)
         else:

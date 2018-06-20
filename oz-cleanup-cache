@@ -26,9 +26,9 @@ import logging
 import oz.ozutil
 
 try:
-    input = raw_input
+    get_input = raw_input
 except NameError:
-    pass
+    get_input = input
 
 def usage():
     print("Usage: oz-cleanup-cache [OPTIONS]")
@@ -54,7 +54,6 @@ def main():
     force = False
     config_file = None
     loglevel = logging.ERROR
-    logformat = "%(message)s"
     for o, a in opts:
         if o in ("-c", "--config"):
             config_file = a
@@ -73,7 +72,6 @@ def main():
                 loglevel = logging.DEBUG
             elif d_int >= 4:
                 loglevel = logging.DEBUG
-                logformat = logging.BASIC_FORMAT
         elif o in ("-f", "--force"):
             force = True
         elif o in ("-h", "--help"):
@@ -81,7 +79,7 @@ def main():
         else:
             assert False, "unhandled option"
 
-    if len(args) != 0:
+    if args:
         usage()
 
     try:
@@ -98,8 +96,8 @@ def main():
 
         if not force:
             while True:
-                response = input("Going to remove all content from %s; continue? (y/N) " % (', '.join(caches)))
-                if len(response) == 0 or response.lower() == 'n':
+                response = get_input("Going to remove all content from %s; continue? (y/N) " % (', '.join(caches)))
+                if not response or response.lower() == 'n':
                     sys.exit(0)
                 elif response.lower() == 'y':
                     break
