@@ -521,6 +521,10 @@ class Guest(object):
             self.has_consolelog = True
         else:
             self.has_consolelog = False
+        # virtio-rng
+        virtioRNG = oz.ozutil.lxml_subelement(devices, "rng", None, {'model':'virtio'})
+        virtioRNGRate = oz.ozutil.lxml_subelement(virtioRNG, "rate", None, {'bytes':'1024', 'period':'1000'})
+        virtioRNCBackend = oz.ozutil.lxml_subelement(virtioRNG, "backend", "/dev/random", {'model':'random'})
         # boot disk
         bootDisk = oz.ozutil.lxml_subelement(devices, "disk", None, {'device': 'disk', 'type': 'file'})
         oz.ozutil.lxml_subelement(bootDisk, "target", None, {'dev': self.disk_dev, 'bus': self.disk_bus})
