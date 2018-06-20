@@ -80,17 +80,18 @@ def data_from_type(name, contenttype, content):
 
     out = tempfile.NamedTemporaryFile()
     if contenttype == 'raw':
-        out.write(content)
+        out.write(content.encode('utf-8'))
     elif contenttype == 'base64':
         if sys.version_info.major == 2:
             out.write(base64.decodestring(content))
         else:
-            out.write(base64.decodebytes(content))
+            out.write(base64.decodebytes(content.encode('utf-8')))
     elif contenttype == 'url':
         url = urlparse.urlparse(content)
         if url.scheme == "file":
             with open(url.netloc + url.path) as f:
-                out.write("".join(f.readlines()))
+                outstr = "".join(f.readlines())
+                out.write(outstr.encode('utf-8'))
         else:
             oz.ozutil.http_download_file(content, out.fileno(), False, None)
     else:

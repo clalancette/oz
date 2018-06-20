@@ -5,10 +5,10 @@
     <version>2003</version>
     <arch>i386</arch>
     <install type='iso'>
-      <iso>http://example.org/Windows2003.iso</iso>
+      <iso>file:///example.org/Windows2003.iso</iso>
     </install>
     <install type='iso'>
-      <iso>http://example2.org/Windows2003.iso</iso>
+      <iso>file:///example2.org/Windows2003.iso</iso>
     </install>
   </os>
 </template>

@@ -5,8 +5,8 @@
     <version>2003</version>
     <arch>i386</arch>
     <install type='iso'>
-      <iso>http://example.org/Windows2003.iso</iso>
-      <sha256sum>http://example.org/SHA256SUM</sha256sum>
+      <iso>file:///example.org/Windows2003.iso</iso>
+      <sha256sum>file:///example.org/SHA256SUM</sha256sum>
     </install>
   </os>
 </template>

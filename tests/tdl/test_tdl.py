@@ -96,62 +96,8 @@ tests = {
     "test-59-command-sorting.tdl": True,
 }
 
-def get_tdl(filename):
-    # locate full path for tdl file
-    tdl_prefix = ''
-    for tdl_prefix in ['tests/tdl/', 'tdl/', '']:
-        if os.path.isfile(tdl_prefix + filename):
-            break
-    if not os.path.isfile(tdl_prefix + filename):
-        raise Exception('Unable to locate TDL: %s' % filename)
-    tdl_file = tdl_prefix + filename
-
-    # Grab TDL object
-    tdl = validate_ozlib(tdl_file)
-    return tdl
-
-# Validate oz handling of tdl file
-def validate_ozlib(tdl_file):
-    xmldata = open(tdl_file, 'r').read()
-    return oz.TDL.TDL(xmldata)
-
-# Validate schema
-def validate_schema(tdl_file):
-
-    # Locate relaxng schema
-    rng_file = None
-    for tryme in ['../../oz/tdl.rng',
-                  '../oz/tdl.rng',
-                  'oz/tdl.rng',
-                  'tdl.rng',]:
-        if os.path.isfile(tryme):
-            rng_file = tryme
-            break
-
-    if rng_file is None:
-        raise Exception('RelaxNG schema file not found: tdl.rng')
-
-    relaxng = lxml.etree.RelaxNG(file=rng_file)
-    xml = open(tdl_file, 'r')
-    doc = lxml.etree.parse(xml)
-    xml.close()
-
-    valid = relaxng.validate(doc)
-    if not valid:
-        errstr = "\n%s XML schema validation failed:\n" % (tdl_file)
-        for error in relaxng.error_log:
-            errstr += "\tline %s: %s\n" % (error.line, error.message)
-        raise Exception(errstr)
-
-# Test generator that iterates over all .tdl files
-def test():
-
-    # Define a helper to expect an exception
-    def handle_exception(func, *args):
-        with py.test.raises(Exception):
-            func(*args)
-
-    # Sanity check to see if any tests are unaccounted for in the config file
+# Test that iterates over all .tdl files
+def test_all():
     for (tdl, expected_pass) in list(tests.items()):
 
         # locate full path for tdl file
@@ -162,18 +108,18 @@ def test():
         tdl_file = tdl_prefix + tdl
         test_name = os.path.splitext(tdl,)[0]
 
-        # Generate a unique unittest test for each validate_* method
-        for tst in (validate_ozlib, validate_schema, ):
-            # We need a unique method name
-            unique_name = test_name + tst.__name__
+        # Test if the TDL class will parse it.
+        print("Testing %s" % (tdl_file))
+        with open(tdl_file, 'r') as infp:
+            try:
+                oz.TDL.TDL(infp.read())
+                if not expected_pass:
+                    assert(False)
+            except Exception:
+                if expected_pass:
+                    raise
 
-            # Are we expecting the test to fail?
-            if expected_pass:
-                yield '%s_%s' % (test_name, tst.__name__), tst, tdl_file
-            else:
-                yield '%s_%s' % (test_name, tst.__name__), handle_exception,\
-                    tst, tdl_file
-
+'''
 def test_persisted(tdl='test-43-persisted-repos.tdl'):
     # locate full path for tdl file
     tdl_prefix = ''
@@ -197,3 +143,4 @@ def test_persisted(tdl='test-43-persisted-repos.tdl'):
             yield '%s_%s' % (test_name, repo.name), assert_persisted_value, repo.persisted, True
         else:
             yield '%s_%s' % (test_name, repo.name), assert_persisted_value, repo.persisted, False
+'''

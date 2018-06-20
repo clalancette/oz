@@ -49,7 +49,7 @@ class pytest(Command):
     def finalize_options(self): pass
     def run(self):
         try:
-            errno = subprocess.call('py.test tests --verbose --tb=short --junitxml=tests/results.xml'.split())
+            errno = subprocess.call('py.test-3 tests --verbose --tb=short --junitxml=tests/results.xml'.split())
         except OSError as e:
             if e.errno == 2:
                 raise OSError(2, "No such file or directory: py.test")
