@@ -233,7 +233,7 @@ def sum_split(line, digest_bits):
     Function to split a normal Linux checksum line into a filename and
     checksum.
     """
-    digest_hex_bytes = digest_bits / 4
+    digest_hex_bytes = digest_bits // 4
     min_digest_line_length = digest_hex_bytes + 2 + 1  # length of hex message digest + blank and binary indicator (2 bytes) + minimum file length (1 byte)
 
     min_length = min_digest_line_length
@@ -273,7 +273,10 @@ def sum_split(line, digest_bits):
         # FIXME: a \0 is not allowed in the sum file format, but
         # string_escape allows it.  We'd probably have to implement our
         # own codec to fix this
-        filename = filename.decode('string_escape')
+        if sys.version_info.major == 2:
+            filename = filename.decode('string_escape')
+        else:
+            filename = filename.encode('utf-8').decode('unicode_escape')
 
     return hex_digest, filename
 
