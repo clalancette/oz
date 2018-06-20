@@ -7,10 +7,9 @@ try:
 except ImportError:
     import ConfigParser as configparser
 try:
-    from io import StringIO, BytesIO
-except:
     from StringIO import StringIO
-    BytesIO = StringIO
+except:
+    from io import StringIO
 import logging
 import os
 
