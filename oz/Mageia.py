@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2017  Chris Lalancette <clalancette@gmail.com>
+# Copyright (C) 2013-2018  Chris Lalancette <clalancette@gmail.com>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -128,32 +128,30 @@ class MageiaGuest(oz.Linux.LinuxCDGuest):
 
         self.log.debug("Modifying isolinux.cfg")
         if self.config.isolinux_style == "old":
-            '''
-            Mageia 2 dual   - isolinux/32.cfg
-                              isolinux/64.cfg
-                              isolinux/alt0/32/vmlinuz
-                              isolinux/alt0/32/all.rdz
-                              isolinux/alt0/64/vmlinuz
-                              isolinux/alt0/64/all.rdz
-            Mageia 2 x86_64 - x86_64/isolinux/isolinux.cfg
-                              x86_64/isolinux/alt0/vmlinuz
-                              x86_64/isolinux/alt0/all.rdz
-            Mageia 2 i586   - i586/isolinux/isolinux.cfg
-                              i586/isolinux/vmlinuz
-                              i586/isolinux/all.rdz
-            Mageia 3 dual   - syslinux/32.cfg
-                              syslinux/64.cfg
-                              syslinux/alt0/32/vmlinuz
-                              syslinux/alt0/32/all.rdz
-                              syslinux/alt0/64/vmlinuz
-                              syslinux/alt0/64/all.rdz
-            Mageia 3 x86_64 - x86_64/isolinux/isolinux.cfg
-                              x86_64/isolinux/alt0/vmlinuz
-                              x86_64/isolinux/alt0/all.rdz
-            Mageia 3 i586   - i586/isolinux/isolinux.cfg
-                              i586/isolinux/alt0/vmlinuz
-                              i586/isolinux/alt0/all.rdz
-            '''
+            # Mageia 2 dual   - isolinux/32.cfg
+            #                   isolinux/64.cfg
+            #                   isolinux/alt0/32/vmlinuz
+            #                   isolinux/alt0/32/all.rdz
+            #                   isolinux/alt0/64/vmlinuz
+            #                   isolinux/alt0/64/all.rdz
+            # Mageia 2 x86_64 - x86_64/isolinux/isolinux.cfg
+            #                   x86_64/isolinux/alt0/vmlinuz
+            #                   x86_64/isolinux/alt0/all.rdz
+            # Mageia 2 i586   - i586/isolinux/isolinux.cfg
+            #                   i586/isolinux/vmlinuz
+            #                   i586/isolinux/all.rdz
+            # Mageia 3 dual   - syslinux/32.cfg
+            #                   syslinux/64.cfg
+            #                   syslinux/alt0/32/vmlinuz
+            #                   syslinux/alt0/32/all.rdz
+            #                   syslinux/alt0/64/vmlinuz
+            #                   syslinux/alt0/64/all.rdz
+            # Mageia 3 x86_64 - x86_64/isolinux/isolinux.cfg
+            #                   x86_64/isolinux/alt0/vmlinuz
+            #                   x86_64/isolinux/alt0/all.rdz
+            # Mageia 3 i586   - i586/isolinux/isolinux.cfg
+            #                   i586/isolinux/alt0/vmlinuz
+            #                   i586/isolinux/alt0/all.rdz
             isolinuxstr = None
             if os.path.exists(os.path.join(self.iso_contents, 'isolinux')):
                 isolinuxstr = "isolinux"
@@ -182,44 +180,43 @@ class MageiaGuest(oz.Linux.LinuxCDGuest):
                 initrd = "alt0/all.rdz"
             flags = "ramdisk_size=128000 root=/dev/ram3 acpi=ht vga=788 automatic=method:cdrom"
         else:
-            '''
-            Mageia 4 dual     - isolinux/i586.cfg
-                                isolinux/x86_64.cfg
-                                isolinux/i586/vmlinuz
-                                isolinux/i586/all.rdz
-                                isolinux/x86_64/vmlinuz
-                                isolinux/x86_64/all.rdz
-            Mageia 4 x86_64   - isolinux/isolinux.cfg
-                                isolinux/x86_64/vmlinuz
-                                isolinux/x86_64/all.rdz
-            Mageia 4 i586     - isolinux/isolinux.cfg
-                                isolinux/i586/vmlinuz
-                                isolinuz/i586/all.rdz
-            Mageia 4.1 dual   - isolinux/i586.cfg
-                                isolinux/x86_64.cfg
-                                isolinux/i586/vmlinuz
-                                isolinux/i586/all.rdz
-                                isolinux/x86_64/vmlinuz
-                                isolinux/x86_64/all.rdz
-            Mageia 4.1 x86_64 - isolinux/isolinux.cfg
-                                isolinux/x86_64/vmlinuz
-                                isolinux/x86_64/all.rdz
-            Mageia 4.1 i586 -   isolinux/isolinux.cfg
-                                isolinux/i586/vmlinuz
-                                isolinux/i586/all.rdz
-            Mageia 5 dual     - isolinux/i586.cfg
-                                isolinux/x86_64.cfg
-                                isolinux/i586/vmlinuz
-                                isolinux/i586/all.rdz
-                                isolinux/x86_64/vmlinuz
-                                isolinux/x86_64/all.rdz
-            Mageia 5 x86_64   - isolinux/isolinux.cfg
-                                isolinux/x86_64/vmlinuz
-                                isolinux/x86_64/all.rdz
-            Mageia 5 i586 -     isolinux/isolinux.cfg
-                                isolinux/i586/vmlinuz
-                                isolinux/i586/all.rdz
-            '''
+            # Mageia 4 dual     - isolinux/i586.cfg
+            #                     isolinux/x86_64.cfg
+            #                     isolinux/i586/vmlinuz
+            #                     isolinux/i586/all.rdz
+            #                     isolinux/x86_64/vmlinuz
+            #                     isolinux/x86_64/all.rdz
+            # Mageia 4 x86_64   - isolinux/isolinux.cfg
+            #                     isolinux/x86_64/vmlinuz
+            #                     isolinux/x86_64/all.rdz
+            # Mageia 4 i586     - isolinux/isolinux.cfg
+            #                     isolinux/i586/vmlinuz
+            #                     isolinuz/i586/all.rdz
+            # Mageia 4.1 dual   - isolinux/i586.cfg
+            #                     isolinux/x86_64.cfg
+            #                     isolinux/i586/vmlinuz
+            #                     isolinux/i586/all.rdz
+            #                     isolinux/x86_64/vmlinuz
+            #                     isolinux/x86_64/all.rdz
+            # Mageia 4.1 x86_64 - isolinux/isolinux.cfg
+            #                     isolinux/x86_64/vmlinuz
+            #                     isolinux/x86_64/all.rdz
+            # Mageia 4.1 i586 -   isolinux/isolinux.cfg
+            #                     isolinux/i586/vmlinuz
+            #                     isolinux/i586/all.rdz
+            # Mageia 5 dual     - isolinux/i586.cfg
+            #                     isolinux/x86_64.cfg
+            #                     isolinux/i586/vmlinuz
+            #                     isolinux/i586/all.rdz
+            #                     isolinux/x86_64/vmlinuz
+            #                     isolinux/x86_64/all.rdz
+            # Mageia 5 x86_64   - isolinux/isolinux.cfg
+            #                     isolinux/x86_64/vmlinuz
+            #                     isolinux/x86_64/all.rdz
+            # Mageia 5 i586 -     isolinux/isolinux.cfg
+            #                     isolinux/i586/vmlinuz
+            #                     isolinux/i586/all.rdz
+
             # Starting with Mageia 4, things are a lot more regular.  The
             # directory always starts with isolinux.  If it is a dual ISO, then
             # there is an i586.cfg and x86_64.cfg describing how to boot each
@@ -538,9 +535,9 @@ echo -n "!$ADDR,%s!" > /dev/ttyS1
 
         extrasplit = None
         if self.tdl.icicle_extra_cmd:
-            extrastdout, stderr, retcode = self.guest_execute_command(guestaddr,
-                                                                      self.tdl.icicle_extra_cmd,
-                                                                      timeout=30)
+            extrastdout, stderr_unused, retcode_unused = self.guest_execute_command(guestaddr,
+                                                                                    self.tdl.icicle_extra_cmd,
+                                                                                    timeout=30)
             extrasplit = extrastdout.split("\n")
 
             if len(package_split) != len(extrasplit):
