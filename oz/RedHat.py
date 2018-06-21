@@ -347,7 +347,7 @@ label customiso
                 f.write("""\
 #!/bin/bash
 
-if [ "$1" = "eth0" -a "$2" = "up" ]; then
+if [ "$1" != "lo" -a "$2" = "up" ]; then
     echo -n "!$DHCP4_IP_ADDRESS,%s!" > %s
 fi
 """ % (self.uuid, announce_device))

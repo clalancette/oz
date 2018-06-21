@@ -18,6 +18,7 @@
 Helper class for managing a GuestFS connection
 """
 
+import functools
 import logging
 
 import guestfs
@@ -80,12 +81,7 @@ class GuestFS(object):
             # example page.
             mps = self.g_handle.inspect_get_mountpoints(root)
 
-            def _compare(a, b):
-                """
-                Method to sort disks by length.
-                """
-                return len(a) - len(b)
-            for device in sorted(mps.keys(), _compare):
+            for device in sorted(mps.keys(), key=len):
                 try:
                     # Here we check to see if the device was already mounted.
                     # If it was, we skip over this mountpoint and go to the

@@ -1124,7 +1124,7 @@ class Guest(object):
             self.sock.connect(('127.0.0.1', self.listen_port))
 
             self.addr = None
-            self.data = ''
+            self.data = b''
 
             def _boot_cb(self):
                 '''
@@ -1144,22 +1144,22 @@ class Guest(object):
                 # followed by a !<ip>,<uuid>!
                 # Exclude ! from the wildcard to avoid errors when receiving two
                 # announce messages in the same string
-                match = re.search("!([^!]*?,[^!]*?)!$", self.data)
+                match = re.search(b"!([^!]*?,[^!]*?)!$", self.data)
                 if match is not None:
                     if len(match.groups()) != 1:
                         raise oz.OzException.OzException("Guest checked in with no data")
-                    split = match.group(1).split(',')
+                    split = match.group(1).split(b',')
                     if len(split) != 2:
                         raise oz.OzException.OzException("Guest checked in with bogus data")
                     self.addr = split[0]
                     uuidstr = split[1]
                     try:
                         # use socket.inet_aton() to validate the IP address
-                        socket.inet_aton(self.addr)
+                        socket.inet_aton(self.addr.decode('utf-8'))
                     except socket.error:
                         raise oz.OzException.OzException("Guest checked in with invalid IP address")
 
-                    if uuidstr != str(self.uuid):
+                    if uuidstr.decode('utf-8') != str(self.uuid):
                         raise oz.OzException.OzException("Guest checked in with unknown UUID")
                     return True
 
@@ -1178,6 +1178,7 @@ class Guest(object):
         if self.addr is None:
             raise oz.OzException.OzException("Timed out waiting for guest to boot")
 
+        self.addr = self.addr.decode('utf-8')
         self.log.debug("IP address of guest is %s", self.addr)
 
         return self.addr
@@ -1276,13 +1277,14 @@ class Guest(object):
             # we can just use them as-is.  We then have to base64 encode the
             # result, add a little header information, and then we have a
             # full public key.
-            pubkey = '\x00\x00\x00\x07' + 'ssh-rsa' + key.e + key.n
+            pubkey = b'\x00\x00\x00\x07' + b'ssh-rsa' + key.e + key.n
 
             username = os.getlogin()
             hostname = os.uname()[1]
-            keystring = 'ssh-rsa %s %s@%s\n' % (base64.b64encode(pubkey),
+            keystring = 'ssh-rsa %s %s@%s\n' % (base64.b64encode(pubkey).decode('utf-8'),
                                                 username, hostname)
 
+            oz.ozutil.mkdir_p(os.path.dirname(privname))
             key.save_key(privname, cipher=None)
             os.chmod(privname, 0o600)
             with open(pubname, 'w') as f:

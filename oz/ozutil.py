@@ -1124,7 +1124,10 @@ def timed_loop(max_time, cb, msg, cb_arg=None):
     while now < end:
         now = monotonic.monotonic()
         if now >= next_print:
-            log.debug("%s, %d/%d", msg, int(end) - int(now), max_time)
+            left = int(end) - int(now)
+            if left < 0:
+                left = 0
+            log.debug("%s, %d/%d", msg, left, max_time)
             next_print = now + 10
 
             if cb(cb_arg):
