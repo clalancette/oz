@@ -1656,7 +1656,8 @@ class CDGuest(Guest):
                                                      parsedurl.username,
                                                      parsedurl.password,
                                                      parsedurl.path,
-                                                     targetabspath)
+                                                     targetabspath,
+                                                     parsedurl.port)
             elif parsedurl.scheme == "http":
                 if isoextra.element_type == "directory":
                     raise oz.OzException.OzException("ISO extra directories cannot be fetched over HTTP")
