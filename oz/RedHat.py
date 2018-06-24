@@ -497,6 +497,19 @@ echo -n "!$ADDR,%s!" > %s
         return self._output_icicle_xml(package_split, self.tdl.description,
                                        extrasplit)
 
+    def _parse_treeinfo(self, fp):
+        """
+        Internal method to parse the treeinfo file and get the kernel and
+        initrd paths out of it.
+        """
+        self.log.debug("Got treeinfo, parsing")
+        config = configparser.SafeConfigParser()
+        config.readfp(fp)
+        section = "images-%s" % (self.tdl.arch)
+        kernel = oz.ozutil.config_get_key(config, section, "kernel", None)
+        initrd = oz.ozutil.config_get_key(config, section, "initrd", None)
+        return (kernel, initrd)
+
     def _get_kernel_from_treeinfo(self, fetchurl):
         """
         Internal method to download and parse the .treeinfo file from a URL.  If
@@ -523,13 +536,8 @@ echo -n "!$ADDR,%s!" > %s
 
             # if we made it here, the .treeinfo existed.  Parse it and
             # find out the location of the vmlinuz and initrd
-            self.log.debug("Got treeinfo, parsing")
-            os.lseek(treeinfofd, 0, os.SEEK_SET)
-            config = configparser.SafeConfigParser()
-            config.readfp(fp)
-            section = "images-%s" % (self.tdl.arch)
-            kernel = oz.ozutil.config_get_key(config, section, "kernel", None)
-            initrd = oz.ozutil.config_get_key(config, section, "initrd", None)
+            fp.seek(0)
+            (kernel, initrd) = self._parse_treeinfo(fp)
         finally:
             fp.close()
 
