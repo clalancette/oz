@@ -348,7 +348,7 @@ def test_init_guest():
 
     assert guest.disksize == 20
     assert guest.image_name() == 'tester'
-    assert guest.output_image_path() == '/home/%s/.oz/images/tester.dsk' % getpass.getuser()
+    assert guest.output_image_path() == '%s/.oz/images/tester.dsk' % os.getenv('HOME')
     assert guest.default_auto_file() == True
 
 def test_init_guest_bad_arch():
