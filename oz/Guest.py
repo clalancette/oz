@@ -188,6 +188,15 @@ class Guest(object):
         self.image_type = oz.ozutil.config_get_key(config, 'libvirt',
                                                    'image_type', 'raw')
 
+        self.rng_model = oz.ozutil.config_get_key(config, 'libvirt',
+                                                  'rng_model', 'random')
+        self.rng_device = oz.ozutil.config_get_key(config, 'libvirt',
+                                                  'rng_device', '/dev/random')
+        self.rng_rate_bytes = int(oz.ozutil.config_get_key(config, 'libvirt',
+                                                           'rng_rate_bytes', 1024))
+        self.rng_rate_period = int(oz.ozutil.config_get_key(config, 'libvirt',
+                                                           'rng_rate_period', 1000))
+
         # configuration from 'cache' section
         self.cache_original_media = oz.ozutil.config_get_boolean_key(config,
                                                                      'cache',
@@ -523,8 +532,8 @@ class Guest(object):
             self.has_consolelog = False
         # virtio-rng
         virtioRNG = oz.ozutil.lxml_subelement(devices, "rng", None, {'model': 'virtio'})
-        oz.ozutil.lxml_subelement(virtioRNG, "rate", None, {'bytes': '1024', 'period': '1000'})
-        oz.ozutil.lxml_subelement(virtioRNG, "backend", "/dev/random", {'model': 'random'})
+        oz.ozutil.lxml_subelement(virtioRNG, "rate", None, {'bytes': str(self.rng_rate_bytes), 'period': str(self.rng_rate_period)})
+        oz.ozutil.lxml_subelement(virtioRNG, "backend", self.rng_device, {'model': self.rng_model})
         # boot disk
         bootDisk = oz.ozutil.lxml_subelement(devices, "disk", None, {'device': 'disk', 'type': 'file'})
         oz.ozutil.lxml_subelement(bootDisk, "target", None, {'dev': self.disk_dev, 'bus': self.disk_bus})
