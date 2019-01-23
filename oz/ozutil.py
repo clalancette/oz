@@ -1061,6 +1061,9 @@ def find_uefi_firmware(arch):
                           '/usr/share/edk2/aarch64/vars-template-pflash.raw'),
                      UEFI('/usr/share/edk2.git/aarch64/QEMU_EFI-pflash.raw',
                           '/usr/share/edk2.git/aarch64/vars-template-pflash.raw')]
+    elif arch in ['armv7l']:
+        uefi_list = [UEFI('/usr/share/edk2/arm/QEMU_EFI-pflash.raw',
+                          '/usr/share/edk2/arm/vars-template-pflash.raw')]
     else:
         raise Exception("Invalid arch for UEFI firmware")
 
