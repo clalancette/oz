@@ -465,7 +465,7 @@ class Guest(object):
         oz.ozutil.lxml_subelement(features, "pae")
         # CPU
         if self.tdl.arch in ["aarch64", "armv7l"] and self.libvirt_type == "kvm":
-            # Possibly related to BZ 1171501 - need host passthrough for aarch64 and arm with kvm
+            # Possibly related to RHBZ 1171501 - need host passthrough for aarch64 and arm with kvm
             cpu = oz.ozutil.lxml_subelement(domain, "cpu", None, {'mode': 'custom', 'match': 'exact'})
             oz.ozutil.lxml_subelement(cpu, "model", "host", {'fallback': 'allow'})
         # os
@@ -597,7 +597,7 @@ class Guest(object):
 
         capacity = size
         if backing_filename:
-            # FIXME: Revisit as BZ 958510 evolves
+            # FIXME: Revisit as RHBZ 958510 evolves
             # At the moment libvirt forces us to specify a size rather than
             # assuming we want to inherit the size of our backing file.
             # It may be possible to avoid this inspection step if libvirt
