@@ -1050,6 +1050,8 @@ def find_uefi_firmware(arch):
     elif arch in ['x86_64']:
         uefi_list = [UEFI('/usr/share/OVMF/OVMF_CODE.fd',
                           '/usr/share/OVMF/OVMF_VARS.fd'),
+                     UEFI('/usr/share/edk2/ovmf/OVMF_CODE.fd',
+                          '/usr/share/edk2/ovmf/OVMF_VARS.fd'),
                      UEFI('/usr/share/edk2.git/ovmf-x64/OVMF_CODE-pure-efi.fd',
                           '/usr/share/edk2.git/ovmf-x64/OVMF_VARS-pure-efi.fd')]
     elif arch in ['aarch64']:
