@@ -460,9 +460,11 @@ class Guest(object):
         oz.ozutil.lxml_subelement(domain, "vcpu", str(self.install_cpus))
         # features
         features = oz.ozutil.lxml_subelement(domain, "features")
-        oz.ozutil.lxml_subelement(features, "acpi")
-        oz.ozutil.lxml_subelement(features, "apic")
-        oz.ozutil.lxml_subelement(features, "pae")
+        if self.tdl.arch in ["aarch64", "x86_64"]:
+            oz.ozutil.lxml_subelement(features, "acpi")
+        if self.tdl.arch in ["x86_64"]:
+            oz.ozutil.lxml_subelement(features, "apic")
+            oz.ozutil.lxml_subelement(features, "pae")
         # CPU
         if self.tdl.arch in ["aarch64", "armv7l"] and self.libvirt_type == "kvm":
             # Possibly related to RHBZ 1171501 - need host passthrough for aarch64 and arm with kvm
