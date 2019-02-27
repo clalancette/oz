@@ -255,7 +255,10 @@ class Guest(object):
             self.clockoffset = "utc"
         self.mousetype = mousetype
         if self.mousetype is None:
-            self.mousetype = "ps2"
+            if self.tdl.arch in ["aarch64", "armv7l"]:
+                self.mousetype = "usb"
+            else:
+                self.mousetype = "ps2"
         if diskbus is None or diskbus == "ide":
             self.disk_bus = "ide"
             self.disk_dev = "hda"
@@ -512,6 +515,11 @@ class Guest(object):
         elif self.mousetype == "usb":
             mousedict['type'] = 'tablet'
         oz.ozutil.lxml_subelement(devices, "input", None, mousedict)
+        if self.tdl.arch in ["aarch64", "armv7l"] and self.libvirt_type == "kvm":
+            # Other arches add a keyboard by default, for historical reasons ARM doesn't
+            # so we add it here so graphical works and hence we can get debug screenshots RHBZ 1538637
+            oz.ozutil.lxml_subelement(devices, 'controller', None, {'type': 'usb', 'index': '0'})
+            oz.ozutil.lxml_subelement(devices, 'input', None, {'type': 'keyboard', 'bus': 'usb'})
         # serial console pseudo TTY
         console = oz.ozutil.lxml_subelement(devices, "serial", None, {'type': 'pty'})
         oz.ozutil.lxml_subelement(console, "target", None, {'port': '0'})
