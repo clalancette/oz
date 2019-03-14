@@ -32,7 +32,7 @@ class FedoraConfiguration(object):
     """
     def __init__(self, has_virtio_channel, use_yum, use_dev_cdrom_device,
                  createpart, directkernel, default_netdev, default_diskbus,
-                 brokenisomethod, haverepo):
+                 brokenisomethod, haverepo, useuefi=False):
         self._has_virtio_channel = has_virtio_channel
         self._use_yum = use_yum
         self._use_dev_cdrom_device = use_dev_cdrom_device
@@ -42,6 +42,7 @@ class FedoraConfiguration(object):
         self._default_diskbus = default_diskbus
         self._brokenisomethod = brokenisomethod
         self._haverepo = haverepo
+        self._useuefi = useuefi
 
     @property
     def has_virtio_channel(self):
@@ -106,6 +107,13 @@ class FedoraConfiguration(object):
         Property method for whether to use 'repo=' or 'method=' on the anaconda install line.
         """
         return self._haverepo
+
+    @property
+    def useuefi(self):
+        """
+        Property method for whether to default to using UEFI as firmware or legacy method.
+        """
+        return self._useuefi
 
 
 version_to_config = {
@@ -230,7 +238,7 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
     # ignored now; we leave it in place for backwards API compatibility.
     def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,  # pylint: disable=unused-argument
                  brokenisomethod, output_disk=None, macaddress=None,    # pylint: disable=unused-argument
-                 assumed_update=None):
+                 assumed_update=None, useuefi=False):
         self.config = version_to_config[tdl.update]
         if nicmodel is None:
             nicmodel = self.config.default_netdev
@@ -242,7 +250,8 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
         oz.RedHat.RedHatLinuxCDYumGuest.__init__(self, tdl, config, auto,
                                                  output_disk, nicmodel, diskbus,
                                                  True, True, self.config.directkernel,
-                                                 macaddress, self.config.use_yum)
+                                                 macaddress, self.config.use_yum,
+                                                 self.config.useuefi)
 
         if self.assumed_update is not None:
             self.log.warning("==== WARN: TDL contains Fedora update %s, which is newer than Oz knows about; pretending this is Fedora %s, but this may fail ====", tdl.update, assumed_update)
