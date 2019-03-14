@@ -117,6 +117,11 @@ class FedoraConfiguration(object):
 
 
 version_to_config = {
+    '29': FedoraConfiguration(has_virtio_channel=True, use_yum=False,
+                              use_dev_cdrom_device=True, createpart=False,
+                              directkernel="cpio", default_netdev='virtio',
+                              default_diskbus='virtio', brokenisomethod=False,
+                              haverepo=True),
     '28': FedoraConfiguration(has_virtio_channel=True, use_yum=False,
                               use_dev_cdrom_device=True, createpart=False,
                               directkernel="cpio", default_netdev='virtio',
