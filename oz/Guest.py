@@ -484,7 +484,7 @@ class Guest(object):
             oz.ozutil.lxml_subelement(osNode, "initrd", initrd)
         if cmdline:
             oz.ozutil.lxml_subelement(osNode, "cmdline", cmdline)
-        if self.tdl.arch == "aarch64":
+        if self.tdl.arch in ["aarch64", "armv7l"]:
             loader, nvram = oz.ozutil.find_uefi_firmware(self.tdl.arch)
             oz.ozutil.lxml_subelement(osNode, "loader", loader, {'readonly': 'yes', 'type': 'pflash'})
             oz.ozutil.lxml_subelement(osNode, "nvram", None, {'template': nvram})
