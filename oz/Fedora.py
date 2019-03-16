@@ -229,7 +229,7 @@ version_to_config = {
 
 class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
     """
-    Class for Fedora 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, and 26 installation.
+    Class for Fedora 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, and 29 installation.
     """
     # Note that the 'brokenisomethod' and 'haverepo' parameters are completely
     # ignored now; we leave it in place for backwards API compatibility.

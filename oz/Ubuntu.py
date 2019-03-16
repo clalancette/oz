@@ -685,7 +685,7 @@ class UbuntuGuest(oz.Linux.LinuxCDGuest):
     """
     Class for Ubuntu 5.04, 5.10, 6.06, 6.10, 7.04, 7.10, 8.04, 8.10, 9.04, 9.10,
     10.04, 10.10, 11.04, 11.10, 12.04, 12.10, 13.04, 13.10, 14.04, 14.10, 15.04,
-    15.10, 16.04, 16.10, 17.04, 17.10, and 18.04 installation.
+    15.10, 16.04, 16.10, 17.04, 17.10, 18.04, and 18.10 installation.
     """
     # Note that the 'initrd' parameter is completely ignored now; we leave
     # it in place for backwards API compatibility.
