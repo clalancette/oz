@@ -4,7 +4,7 @@ import subprocess
 import time
 
 VERSION = '0.17.0'
-RELEASE = '0'
+RELEASE = '1'
 
 datafiles = [('share/man/man1', ['man/oz-install.1', 'man/oz-generate-icicle.1',
                                  'man/oz-customize.1', 'man/oz-examples.1',
