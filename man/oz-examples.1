@@ -26,7 +26,7 @@ from a Fedora 13 DVD ISO located at http://example.org/fedora-13-x86_64.iso
 To do this install we first build a TDL XML file, then feed it to
 oz-install. The TDL file would look like:
 
-.CDS
+.in +4n
  <template>
    <name>fedora13_x86_64</name>
      <os>
@@ -39,7 +39,7 @@ oz-install. The TDL file would look like:
      </os>
    <description>My Fedora 13 x86_64 template</description>
  </template>
-.CDE
+.in
 
 /template/name is a user-defined name.  This can be anything the user
 wants, but must be unique among all TDLs the user wants to build.
@@ -83,7 +83,7 @@ Additionally assume we want to install the postgresql-server package
 on the operating system.  To do this install, we first need to build a
 TDL XML file and then feed that to oz-install.  The TDL file would look like:
 
-.CDS
+.in +4n
  <template>
    <name>fedora14_postgres</name>
    <os>
@@ -99,7 +99,7 @@ TDL XML file and then feed that to oz-install.  The TDL file would look like:
      <package name='postgresql-server'/>
    </packages>
  </template>
-.CDE
+.in
 
 Notice that this is very similar to Example 1, except we specified an
 additional package to be installed in the /packages/package portion of
@@ -137,7 +137,7 @@ operating system after the install is done.  To do this install, we
 first need to build a TDL XML file and then feed that to
 oz-install. The TDL file would look like:
 
-.CDS
+.in +4n
  <template>
    <name>rhel5_x86_64</name>
    <os>
@@ -150,7 +150,7 @@ oz-install. The TDL file would look like:
    </os>
    <description>RHEL-5 x86_64</description>
  </template>
-.CDE
+.in
 
 This is essentially the same as Example 1, except we want to install
 RHEL-5 instead of Fedora-13.
@@ -183,7 +183,7 @@ the EPEL-6 repositories on the operating system.  To do this install,
 we first need to build a TDL XML file and then feed that to
 oz-install.  The TDL file would look like:
 
-.CDS
+.in +4n
  <template>
    <name>rhel6_ccache</name>
    <os>
@@ -205,7 +205,7 @@ oz-install.  The TDL file would look like:
      <package name='ccache'/>
    </packages>
  </template>
-.CDE
+.in
 
 Notice that this is very similar to Example 2, except we have
 specified an additional repository from which to download packages.
@@ -241,7 +241,7 @@ Additionally assume that we want to write some data to the file
 build a TDL XML file and then feed that to oz-install.  The TDL file
 would look like:
 
-.CDS
+.in +4n
  <template>
    <name>rhel6_testout</name>
    <os>
@@ -257,7 +257,7 @@ would look like:
      <file name='/etc/test.out'>THIS=extra_data</file>
    </files>
  </template>
-.CDE
+.in
 
 Multiple files can be specified here, and they will all be installed
 on the operating system in the specified locations.  Files can be
@@ -293,7 +293,7 @@ want to base64 encode it first.  To do this install, we first need to
 build a TDL XML file and then feed that to oz-install.  The TDL file
 would look like:
 
-.CDS
+.in +4n
  <template>
    <name>rhel6_testout</name>
    <os>
@@ -309,7 +309,7 @@ would look like:
      <file name='/etc/test.out' type='base64'>VEhJUz1leHRyYV9kYXRhCg==</file>
    </files>
  </template>
-.CDE
+.in
 
 Multiple files can be specified here, and they will all be installed
 on the operating system in the specified locations.  Files can be
@@ -345,7 +345,7 @@ and upload into the guest.  To do this install, we first need to
 build a TDL XML file and then feed that to oz-install.  The TDL file
 would look like:
 
-.CDS
+.in +4n
  <template>
    <name>rhel6_testout</name>
    <os>
@@ -361,7 +361,7 @@ would look like:
      <file name='/etc/test.out' type='url'>http://example.org/orig.out</file>
    </files>
  </template>
-.CDE
+.in
 
 Multiple files can be specified here, and they will all be installed
 on the operating system in the specified locations.  Files can be
