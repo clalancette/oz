@@ -7,10 +7,10 @@ Group: Development/Libraries
 URL: http://github.com/clalancette/oz
 Source0: http://github.com/clalancette/%{name}/archive/%{name}-%{version}.tar.gz
 BuildArch: noarch
-Requires: python >= 2.5
-Requires: python-libguestfs >= 1.18
-Requires: python-lxml
-Requires: libvirt-python >= 0.9.7
+Requires: python3
+Requires: python3-libguestfs >= 1.18
+Requires: python3-lxml
+Requires: python3-libvirt
 # in theory, oz doesn't really require libvirtd to be local to operate
 # properly.  However, because of the libguestfs manipulations, in practice
 # it really does.  Make it depend on libvirt (so we get libvirtd) for now,
@@ -22,17 +22,17 @@ Requires: libvirt-daemon-config-network
 %else
 Requires: libvirt >= 0.9.7
 %endif
-Requires: python-requests
+Requires: python3-requests
 Requires: genisoimage
 Requires: mtools
 %if 0%{?fedora} < 26
 Requires: python-uuid
 %endif
 Requires: openssh-clients
-Requires: m2crypto
-Requires: python-monotonic
+Requires: python3-m2crypto
+Requires: python3-monotonic
 
-BuildRequires: python
+BuildRequires: python3
 
 %description
 Oz is a set of libraries and utilities for doing automated guest OS
@@ -42,10 +42,10 @@ installations, with minimal input from the user.
 %setup -q
 
 %build
-python setup.py build
+%py3_build
 
 %install
-python setup.py install --root=$RPM_BUILD_ROOT --skip-build
+%py3_install
 
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/oz/isocontent/
@@ -78,16 +78,19 @@ fi
 %dir %attr(0755, root, root) %{_localstatedir}/lib/oz/jeos/
 %dir %attr(0755, root, root) %{_localstatedir}/lib/oz/kernels/
 %dir %attr(0755, root, root) %{_localstatedir}/lib/oz/screenshots/
-%{python_sitelib}/oz
+%{python3_sitelib}/oz
 %{_bindir}/oz-install
 %{_bindir}/oz-generate-icicle
 %{_bindir}/oz-customize
 %{_bindir}/oz-cleanup-cache
-%{python_sitelib}/oz-*.egg-info
+%{python3_sitelib}/%{name}-%{version}-py%{python3_version}.egg-info
 %{_mandir}/man1/*
 
 %changelog
-* Tue Aug 08 2016 Chris Lalancette <clalancette@gmail.com> - 0.16.0-1
+* Sat Mar 16 2019 Chris Lalancette <clalancette@gmail.com> - 0.17.0-1
+- Release 0.17.0
+
+* Mon Aug 08 2016 Chris Lalancette <clalancette@gmail.com> - 0.16.0-1
 - Release 0.16.0
 
 * Sun Feb 28 2016 Chris Lalancette <clalancette@gmail.com> - 0.15.0-1
