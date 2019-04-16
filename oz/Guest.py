@@ -519,7 +519,7 @@ class Guest(object):
         elif self.mousetype == "usb":
             mousedict['type'] = 'tablet'
         oz.ozutil.lxml_subelement(devices, "input", None, mousedict)
-        if self.tdl.arch in ["aarch64", "armv7l"] and self.libvirt_type == "kvm":
+        if self.tdl.arch in ["aarch64", "armv7l"]:
             # Other arches add a keyboard by default, for historical reasons ARM doesn't
             # so we add it here so graphical works and hence we can get debug screenshots RHBZ 1538637
             oz.ozutil.lxml_subelement(devices, 'controller', None, {'type': 'usb', 'index': '0'})
