@@ -479,6 +479,9 @@ class Guest(object):
             # Possibly related to RHBZ 1171501 - need host passthrough for aarch64 and arm with kvm
             cpu = oz.ozutil.lxml_subelement(domain, "cpu", None, {'mode': 'custom', 'match': 'exact'})
             oz.ozutil.lxml_subelement(cpu, "model", "host", {'fallback': 'allow'})
+        elif self.tdl.arch == "aarch64" and self.libvirt_type == "qemu":
+                cpu = oz.ozutil.lxml_subelement(domain, "cpu", None, {'mode': 'custom', 'match': 'exact'})
+                oz.ozutil.lxml_subelement(cpu, "model", "cortex-a57", {'fallback': 'allow'})
         # os
         osNode = oz.ozutil.lxml_subelement(domain, "os")
         mods = None
