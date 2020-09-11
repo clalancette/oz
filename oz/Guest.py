@@ -467,8 +467,14 @@ class Guest(object):
         oz.ozutil.lxml_subelement(domain, "vcpu", str(self.install_cpus))
         # features
         features = oz.ozutil.lxml_subelement(domain, "features")
-        if self.tdl.arch in ["aarch64", "x86_64"]:
+        if self.tdl.arch in ["x86_64"]:
             oz.ozutil.lxml_subelement(features, "acpi")
+        if self.tdl.arch in ["aarch64"]:
+            oz.ozutil.lxml_subelement(features, "acpi")
+            # current edk2+linux on aarch64 puts a SPCR in place when serial is active
+            # this then becomes the default tty unlike on x86 where it will continue to
+            # use the uefi framebuffer/graphics console. Force linux to use both.
+            cmdline = str(cmdline) + " console=ttyAMA0 console=tty0"
         if self.tdl.arch in ["x86_64"]:
             oz.ozutil.lxml_subelement(features, "apic")
             oz.ozutil.lxml_subelement(features, "pae")
