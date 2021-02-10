@@ -78,7 +78,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         self.initrdcache = os.path.join(self.data_dir, "kernels",
                                         self.tdl.distro + self.tdl.update + self.tdl.arch + "-ramdisk")
 
-        self.cmdline = "method=" + self.url + " ks=file:/ks.cfg"
+        self.cmdline = "inst.method=" + self.url + " inst.ks=file:/ks.cfg"
         if self.tdl.kernel_param:
             self.cmdline += " " + self.tdl.kernel_param
 

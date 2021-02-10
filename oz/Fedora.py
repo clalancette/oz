@@ -270,20 +270,20 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
         self._copy_kickstart(os.path.join(self.iso_contents, "ks.cfg"))
 
         if self.config.use_dev_cdrom_device:
-            initrdline = "  append initrd=initrd.img ks=cdrom:/dev/cdrom:/ks.cfg"
+            initrdline = "  append initrd=initrd.img inst.ks=cdrom:/dev/cdrom:/ks.cfg"
         else:
-            initrdline = "  append initrd=initrd.img ks=cdrom:/ks.cfg"
+            initrdline = "  append initrd=initrd.img inst.ks=cdrom:/ks.cfg"
         if self.tdl.installtype == "url":
             if self.config.haverepo:
-                initrdline += " repo="
+                initrdline += " inst.repo="
             else:
-                initrdline += " method="
+                initrdline += " inst.method="
             initrdline += self.url
         else:
             # if the installtype is iso, then due to a bug in anaconda we leave
             # out the method completely
             if not self.config.brokenisomethod:
-                initrdline += " method=cdrom:/dev/cdrom"
+                initrdline += " inst.method=cdrom:/dev/cdrom"
         self._modify_isolinux(initrdline)
 
     def generate_diskimage(self, size=10, force=False):
