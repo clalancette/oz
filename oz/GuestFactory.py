@@ -57,6 +57,8 @@ os_dict = {
     'CentOS-7': 'RHEL_7',
     'RHEL-8': 'RHEL_8',
     'CentOS-8': 'RHEL_8',
+    'RHEL-9': 'RHEL_9',
+    'CentOS-9': 'RHEL_9',
     'Ubuntu': 'Ubuntu',
     'Windows': 'Windows',
     'RedHatLinux': 'RHL',
