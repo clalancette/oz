@@ -628,7 +628,7 @@ class Guest(object):
             oz.ozutil.lxml_subelement(backing, "format", None,
                                       {"type": backing_format})
 
-        oz.ozutil.lxml_subelement(vol, "capacity", str(capacity), {'unit': 'G'})
+        oz.ozutil.lxml_subelement(vol, "capacity", str(int(capacity)), {'unit': 'G'})
         vol_xml = lxml.etree.tostring(vol, pretty_print=True, encoding="unicode")
 
         # sigh.  Yes, this is racy; if a pool is defined during this loop, we
