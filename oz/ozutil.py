@@ -448,8 +448,11 @@ def subprocess_check_output(*popenargs, **kwargs):
         printfn(tmpout)
 
     if retcode:
-        cmd = ' '.join(*popenargs)
-        raise SubprocessException("'%s' failed(%d): %s" % (cmd, retcode, stderr + stdout), retcode)
+        cmd = str(popenargs)
+        output = stderr + stdout
+        if isinstance(output, bytes):
+            output = output.decode()
+        raise SubprocessException("'%s' failed(%d): %s" % (cmd, retcode, output), retcode)
 
     return (stdout, stderr, retcode)
 
@@ -969,7 +972,7 @@ def check_qcow_size(filename):
     qcow_struct = ">IIQIIQIIQQIIQ"  # > means big-endian
     qcow_magic = 0x514649FB  # 'Q' 'F' 'I' 0xFB
 
-    f = open(filename, "r")
+    f = open(filename, "rb")
     pack = f.read(struct.calcsize(qcow_struct))
     f.close()
 
