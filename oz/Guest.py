@@ -191,6 +191,8 @@ class Guest(object):
                                                            'rng_rate_bytes', 1024))
         self.rng_rate_period = int(oz.ozutil.config_get_key(config, 'libvirt',
                                                            'rng_rate_period', 1000))
+        self.boot_mode = oz.ozutil.config_get_key(config, 'libvirt', 'boot_mode',
+                                                    'bios')
 
         # configuration from 'cache' section
         self.cache_original_media = oz.ozutil.config_get_boolean_key(config,
@@ -500,6 +502,10 @@ class Guest(object):
         if cmdline:
             oz.ozutil.lxml_subelement(osNode, "cmdline", cmdline)
         if self.tdl.arch in ["aarch64", "armv7l"]:
+            loader, nvram = oz.ozutil.find_uefi_firmware(self.tdl.arch)
+            oz.ozutil.lxml_subelement(osNode, "loader", loader, {'readonly': 'yes', 'type': 'pflash'})
+            oz.ozutil.lxml_subelement(osNode, "nvram", None, {'template': nvram})
+        if self.tdl.arch in ["x86_64"] and self.boot_mode == "uefi":
             loader, nvram = oz.ozutil.find_uefi_firmware(self.tdl.arch)
             oz.ozutil.lxml_subelement(osNode, "loader", loader, {'readonly': 'yes', 'type': 'pflash'})
             oz.ozutil.lxml_subelement(osNode, "nvram", None, {'template': nvram})
