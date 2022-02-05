@@ -33,10 +33,10 @@ class LinuxCDGuest(oz.Guest.CDGuest):
     Class for Linux installation.
     """
     def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus,
-                 iso_allowed, url_allowed, macaddress):
+                 iso_allowed, url_allowed, macaddress, useuefi):
         oz.Guest.CDGuest.__init__(self, tdl, config, auto, output_disk,
                                   nicmodel, None, None, diskbus, iso_allowed,
-                                  url_allowed, macaddress)
+                                  url_allowed, macaddress, useuefi)
 
     def _test_ssh_connection(self, guestaddr):
         """

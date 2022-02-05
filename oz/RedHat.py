@@ -40,10 +40,10 @@ class RedHatLinuxCDGuest(oz.Linux.LinuxCDGuest):
     Class for RedHat-based CD guests.
     """
     def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus,
-                 iso_allowed, url_allowed, initrdtype, macaddress):
+                 iso_allowed, url_allowed, initrdtype, macaddress, useuefi):
         oz.Linux.LinuxCDGuest.__init__(self, tdl, config, auto, output_disk,
                                        nicmodel, diskbus, iso_allowed,
-                                       url_allowed, macaddress)
+                                       url_allowed, macaddress, useuefi)
         self.crond_was_active = False
         self.sshd_was_active = False
         self.sshd_config = """\
@@ -726,11 +726,11 @@ class RedHatLinuxCDYumGuest(RedHatLinuxCDGuest):
     Class for RedHat-based CD guests with yum support.
     """
     def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus,
-                 iso_allowed, url_allowed, initrdtype, macaddress, use_yum):
+                 iso_allowed, url_allowed, initrdtype, macaddress, use_yum, useuefi):
         oz.RedHat.RedHatLinuxCDGuest.__init__(self, tdl, config, auto,
                                               output_disk, nicmodel, diskbus,
                                               iso_allowed, url_allowed,
-                                              initrdtype, macaddress)
+                                              initrdtype, macaddress, useuefi)
 
         self.use_yum = use_yum
 
@@ -849,9 +849,9 @@ class RedHatFDGuest(oz.Guest.FDGuest):
     Class for RedHat-based floppy guests.
     """
     def __init__(self, tdl, config, auto, output_disk, nicmodel, diskbus,
-                 macaddress):
+                 macaddress, useuefi):
         oz.Guest.FDGuest.__init__(self, tdl, config, auto, output_disk,
-                                  nicmodel, None, None, diskbus, macaddress)
+                                  nicmodel, None, None, diskbus, macaddress, useuefi)
 
         if self.tdl.arch != "i386":
             raise oz.OzException.OzException("Invalid arch " + self.tdl.arch + "for " + self.tdl.distro + " guest")
