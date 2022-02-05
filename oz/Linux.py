@@ -81,7 +81,7 @@ class LinuxCDGuest(oz.Guest.CDGuest):
 
         return runlevel
 
-    def guest_execute_command(self, guestaddr, command, timeout=10):
+    def guest_execute_command(self, guestaddr, command, timeout=30):
         """
         Method to execute a command on the guest and return the output.
         """
