@@ -87,6 +87,9 @@ fi
 %{_mandir}/man1/*
 
 %changelog
+* Sat Feb  5 2022 Peter Robinson <pbrobinson@gmail.com> - 0.18.0-1
+- Release 0.18.0
+
 * Sat Mar 16 2019 Chris Lalancette <clalancette@gmail.com> - 0.17.0-1
 - Release 0.17.0
 

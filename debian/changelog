@@ -1,3 +1,9 @@
+oz (0.18.0-1) unstable; urgency=low
+
+  * Update to Oz 0.18.0
+
+ -- Peter Robinson <ppbrobinson@gmail.com>  Sat,  5 Feb 2022 13:32:00 -0000
+
 oz (0.17.0-1) unstable; urgency=low
 
   * Update to Oz 0.17.0
