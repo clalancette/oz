@@ -3,8 +3,8 @@ from distutils.command.sdist import sdist as _sdist
 import subprocess
 import time
 
-VERSION = '0.18.0'
-RELEASE = '1'
+VERSION = '0.19.0'
+RELEASE = '0'
 
 datafiles = [('share/man/man1', ['man/oz-install.1', 'man/oz-generate-icicle.1',
                                  'man/oz-customize.1', 'man/oz-examples.1',
