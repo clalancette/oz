@@ -241,7 +241,10 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
     def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,  # pylint: disable=unused-argument
                  brokenisomethod, output_disk=None, macaddress=None,    # pylint: disable=unused-argument
                  assumed_update=None):
-        self.config = version_to_config[tdl.update]
+        if int(tdl.update) < 31:
+            self.config = version_to_config[tdl.update]
+        else:
+            self.config = version_to_config["30"]
         if nicmodel is None:
             nicmodel = self.config.default_netdev
         if diskbus is None:
