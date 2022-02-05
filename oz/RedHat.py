@@ -79,6 +79,10 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
                                         self.tdl.distro + self.tdl.update + self.tdl.arch + "-ramdisk")
 
         self.cmdline = "inst.method=" + self.url + " inst.ks=file:/ks.cfg"
+        # don't write the kickstart to the image, or else initial-setup
+        # will think a root password has been set:
+        # https://bugzilla.redhat.com/show_bug.cgi?id=2015490
+        self.cmdline += " inst.nosave=output_ks"
         if self.tdl.kernel_param:
             self.cmdline += " " + self.tdl.kernel_param
 

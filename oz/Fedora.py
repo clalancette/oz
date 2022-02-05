@@ -284,6 +284,10 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
             # out the method completely
             if not self.config.brokenisomethod:
                 initrdline += " inst.method=cdrom:/dev/cdrom"
+        # don't write the kickstart to the image, or else initial-setup
+        # will think a root password has been set:
+        # https://bugzilla.redhat.com/show_bug.cgi?id=2015490
+        initrdline += " inst.nosave=output_ks"
         self._modify_isolinux(initrdline)
 
     def generate_diskimage(self, size=10, force=False):
