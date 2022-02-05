@@ -89,7 +89,7 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
         Method to create a new ISO based on the modified CD/DVD.
         """
         self.log.debug("Generating new ISO")
-        oz.ozutil.subprocess_check_output(["genisoimage", "-r", "-T", "-J",
+        oz.ozutil.subprocess_check_output(["genisoimage", "-r", "-T", "-J", "-joliet-long",
                                            "-V", "Custom", "-no-emul-boot",
                                            "-b", "isolinux/isolinux.bin",
                                            "-c", "isolinux/boot.cat",
