@@ -478,8 +478,6 @@ class Guest(object):
         if self.tdl.arch in ["x86_64"]:
             oz.ozutil.lxml_subelement(features, "apic")
             oz.ozutil.lxml_subelement(features, "pae")
-        if self.tdl.arch in ["armv7l"]:
-            oz.ozutil.lxml_subelement(features, "gic", attributes={'version': '2'})
         # CPU
         if self.libvirt_type == "kvm":
             # If using KVM, we always want the best CPU the host can offer
