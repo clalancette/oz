@@ -23,12 +23,12 @@ class sdist(_sdist):
                                     shell=True,
                                     stdout=subprocess.PIPE).communicate()[0].strip()
         date = time.strftime("%Y%m%d%H%M%S", time.gmtime())
-        git_release = "%sgit%s" % (date, git_head)
+        git_release = "%sgit%s" % (date, git_head.decode())
 
         # Expand macros in oz.spec.in and create oz.spec
         spec_in = open('oz.spec.in', 'r')
         spec = open('oz.spec', 'w')
-        for line in spec_in.xreadlines():
+        for line in spec_in.readlines():
             if "@VERSION@" in line:
                 line = line.replace("@VERSION@", VERSION)
             elif "@RELEASE@" in line:
