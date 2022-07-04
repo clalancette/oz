@@ -2,7 +2,7 @@ VERSION = $(shell egrep "^VERSION" setup.py | awk '{print $$3}')
 VENV_DIR = tests/.venv
 
 sdist: oz.spec.in
-	python setup.py sdist
+	python3 setup.py sdist
 
 oz.spec: sdist
 
