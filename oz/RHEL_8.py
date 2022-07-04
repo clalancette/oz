@@ -31,12 +31,12 @@ class RHEL8Guest(oz.RedHat.RedHatLinuxCDYumGuest):
     Class for RHEL-8 installation
     """
     def __init__(self, tdl, config, auto, output_disk=None, netdev=None,
-                 diskbus=None, macaddress=None):
+                 diskbus=None, macaddress=None, useuefi=True):
         # dnf distro
         oz.RedHat.RedHatLinuxCDYumGuest.__init__(self, tdl, config, auto,
                                                  output_disk, netdev, diskbus,
                                                  True, True, "cpio", macaddress,
-                                                 False)
+                                                 False, useuefi)
         self.virtio_channel_name = 'org.fedoraproject.anaconda.log.0'
 
     def _modify_iso(self):
