@@ -33,6 +33,7 @@ Requires: python3-m2crypto
 Requires: python3-monotonic
 
 BuildRequires: python3
+BuildRequires: python3-devel
 
 %description
 Oz is a set of libraries and utilities for doing automated guest OS
