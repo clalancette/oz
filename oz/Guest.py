@@ -148,6 +148,9 @@ class Guest(object):
         if macaddress is None:
             self.macaddr = oz.ozutil.generate_macaddress()
 
+        # configuration from 'custom' section
+        self.useuefi = oz.ozutil.config_get_boolean_key(config, 'custom', 'useuefi', useuefi)
+
         # configuration from 'paths' section
         self.output_dir = oz.ozutil.config_get_path(config, 'paths',
                                                     'output_dir',
@@ -502,7 +505,7 @@ class Guest(object):
             oz.ozutil.lxml_subelement(osNode, "loader", loader, {'readonly': 'yes', 'type': 'pflash'})
             oz.ozutil.lxml_subelement(osNode, "nvram", None, {'template': nvram})
         # x86_64 has legacy requirements so we check for defaults as well as for edk2
-        if self.tdl.arch in ["x86_64"] and self.config.useuefi == True:
+        if self.tdl.arch in ["x86_64"] and self.useuefi == True:
             loader, nvram = oz.ozutil.find_uefi_firmware(self.tdl.arch)
             oz.ozutil.lxml_subelement(osNode, "loader", loader, {'readonly': 'yes', 'type': 'pflash'})
             oz.ozutil.lxml_subelement(osNode, "nvram", None, {'template': nvram})
