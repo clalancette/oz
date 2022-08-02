@@ -79,6 +79,12 @@ class Guest(object):
 
         self.log.debug("Libvirt type is %s", self.libvirt_type)
 
+        # For backward compatibility: If using KVM, we always want the best CPU the host can offer
+        # as we don't need to worry about live migration portability
+        if self.libvirt_cpu_mode is None and self.libvirt_type == 'kvm':
+            self.log.debug("Set libvirt CPU mode to cpu-passthrough by default for type kvm")
+            self.libvirt_cpu_mode = 'cpu-passthrough'
+
     def _discover_libvirt_bridge(self):
         """
         Internal method to discover a libvirt bridge (if necessary).
@@ -172,6 +178,8 @@ class Guest(object):
                                                     'qemu:///system')
         self.libvirt_type = oz.ozutil.config_get_key(config, 'libvirt', 'type',
                                                      None)
+        self.libvirt_cpu_mode = oz.ozutil.config_get_key(config, 'libvirt', 'cpu_mode',
+                                                         None)
         self.bridge_name = oz.ozutil.config_get_key(config, 'libvirt',
                                                     'bridge_name', None)
         self.install_cpus = oz.ozutil.config_get_key(config, 'libvirt', 'cpus',
@@ -479,10 +487,8 @@ class Guest(object):
             oz.ozutil.lxml_subelement(features, "apic")
             oz.ozutil.lxml_subelement(features, "pae")
         # CPU
-        if self.libvirt_type == "kvm":
-            # If using KVM, we always want the best CPU the host can offer
-            # as we don't need to worry about live migration portability
-            oz.ozutil.lxml_subelement(domain, "cpu", None, {'mode': 'host-passthrough'})
+        if self.libvirt_cpu_mode is not None:
+            oz.ozutil.lxml_subelement(domain, "cpu", None, {'mode': self.libvirt_cpu_mode})
         # os
         osNode = oz.ozutil.lxml_subelement(domain, "os")
         mods = None
