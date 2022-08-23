@@ -553,7 +553,7 @@ class Guest(object):
         bootDisk = oz.ozutil.lxml_subelement(devices, "disk", None, {'device': 'disk', 'type': 'file'})
         oz.ozutil.lxml_subelement(bootDisk, "target", None, {'dev': self.disk_dev, 'bus': self.disk_bus})
         oz.ozutil.lxml_subelement(bootDisk, "source", None, {'file': self.diskimage})
-        oz.ozutil.lxml_subelement(bootDisk, "driver", None, {'name': 'qemu', 'type': self.image_type})
+        oz.ozutil.lxml_subelement(bootDisk, "driver", None, {'name': 'qemu', 'type': self.image_type, 'discard': 'unmap'})
         # install disk (if any)
         if not installdev:
             installdev_list = []
