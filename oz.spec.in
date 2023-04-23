@@ -25,7 +25,7 @@ Requires: libvirt >= 0.9.7
 Requires: python3-requests
 Requires: genisoimage
 Requires: mtools
-%if 0%{?fedora} < 26 or 0%{?rhel} < 8
+%if 0%{?fedora} < 26 || 0%{?rhel} < 8
 Requires: python-uuid
 %endif
 Requires: openssh-clients
@@ -33,6 +33,7 @@ Requires: python3-m2crypto
 Requires: python3-monotonic
 
 BuildRequires: python3
+BuildRequires: python3-devel
 
 %description
 Oz is a set of libraries and utilities for doing automated guest OS
