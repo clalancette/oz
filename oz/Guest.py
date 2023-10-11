@@ -23,6 +23,7 @@ import base64
 import errno
 import hashlib
 import logging
+import monotonic
 import os
 import re
 import shutil
@@ -1149,6 +1150,9 @@ class Guest(object):
 
             self.addr = None
             self.data = b''
+            # three minutes later or at least timeout before the global boot_timeout
+            # potential negative boot_deadline is ok in the check
+            boot_deadline = monotonic.monotonic() + min(3 * 60 , self.boot_timeout - 2)
 
             def _boot_cb(self):
                 '''
@@ -1181,6 +1185,15 @@ class Guest(object):
                         # use socket.inet_aton() to validate the IP address
                         socket.inet_aton(self.addr.decode('utf-8'))
                     except socket.error:
+                        # Getting address can be slower than first report, so it is worth
+                        # to try few more times before giving up. Cron should send announce
+                        # every minute, so three minutes should be enough to confirm.
+                        if monotonic.monotonic() < boot_deadline:
+                            # if the data we got didn't match, we need to continue waiting.
+                            # before going to sleep, make sure that the domain is still
+                            # around
+                            libvirt_dom.info()
+                            return False
                         raise oz.OzException.OzException("Guest checked in with invalid IP address")
 
                     if uuidstr.decode('utf-8') != str(self.uuid):
