@@ -31,9 +31,9 @@ except ImportError as e:
     sys.exit(1)
 
 try:
-    import py.test
+    import pytest
 except ImportError:
-    print('Unable to import py.test.  Is py.test installed?')
+    print('Unable to import pytest.  Is pytest installed?')
     sys.exit(1)
 
 def default_route():
@@ -87,8 +87,14 @@ def runtest(**kwargs):
     try:
         tdl = oz.TDL.TDL(tdlxml)
 
-        config = configparser.SafeConfigParser()
-        config.readfp(StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+        try:
+            config = configparser.SafeConfigParser()
+            config.readfp(StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+        except AttributeError:
+            # SafeConfigParser was deprecated in Python 3.2 and
+            # readfp was renamed to read_file
+            config = configparser.ConfigParser()
+            config.read_file(StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
         if os.getenv('DEBUG') is not None:
             logging.basicConfig(level=logging.DEBUG, format="%(message)s")

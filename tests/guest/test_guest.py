@@ -31,9 +31,9 @@ except ImportError as e:
     sys.exit(1)
 
 try:
-    import py.test
+    import pytest
 except ImportError:
-    print('Unable to import py.test.  Is py.test installed?')
+    print('Unable to import pytest.  Is pytest installed?')
     sys.exit(1)
 
 def default_route():
@@ -63,8 +63,14 @@ route = default_route()
 def setup_guest(xml, macaddress=None):
     tdl = oz.TDL.TDL(xml)
 
-    config = configparser.SafeConfigParser()
-    config.readfp(StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    try:
+        config = configparser.SafeConfigParser()
+        config.readfp(StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    except AttributeError:
+        # SafeConfigParser was deprecated in Python 3.2 and readfp
+        # was renamed to read_file
+        config = configparser.ConfigParser()
+        config.read_file(StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
     guest = oz.GuestFactory.guest_factory(tdl, config, None, macaddress=macaddress)
     return guest
@@ -104,7 +110,7 @@ tdlxml2 = """
 def test_geteltorito_none_src():
     guest = setup_guest(tdlxml)
 
-    with py.test.raises(oz.OzException.OzException):
+    with pytest.raises(oz.OzException.OzException):
         guest._geteltorito(None, None)
 
 def test_geteltorito_none_dst(tmpdir):
@@ -113,7 +119,7 @@ def test_geteltorito_none_dst(tmpdir):
     src = os.path.join(str(tmpdir), 'src')
     open(src, 'w').write('src')
 
-    with py.test.raises(oz.OzException.OzException):
+    with pytest.raises(oz.OzException.OzException):
         guest._geteltorito(src, None)
 
 def test_geteltorito_short_pvd(tmpdir):
@@ -124,7 +130,7 @@ def test_geteltorito_short_pvd(tmpdir):
 
     dst = os.path.join(str(tmpdir), 'dst')
 
-    with py.test.raises(Exception):
+    with pytest.raises(Exception):
         guest._geteltorito(src, dst)
 
 def test_geteltorito_bogus_pvd_desc(tmpdir):
@@ -138,7 +144,7 @@ def test_geteltorito_bogus_pvd_desc(tmpdir):
 
     dst = os.path.join(str(tmpdir), 'dst')
 
-    with py.test.raises(oz.OzException.OzException):
+    with pytest.raises(oz.OzException.OzException):
         guest._geteltorito(src, dst)
 
 def test_geteltorito_bogus_pvd_ident(tmpdir):
@@ -153,7 +159,7 @@ def test_geteltorito_bogus_pvd_ident(tmpdir):
 
     dst = os.path.join(str(tmpdir), 'dst')
 
-    with py.test.raises(oz.OzException.OzException):
+    with pytest.raises(oz.OzException.OzException):
         guest._geteltorito(src, dst)
 
 def test_geteltorito_bogus_pvd_unused(tmpdir):
@@ -170,7 +176,7 @@ def test_geteltorito_bogus_pvd_unused(tmpdir):
 
     dst = os.path.join(str(tmpdir), 'dst')
 
-    with py.test.raises(oz.OzException.OzException):
+    with pytest.raises(oz.OzException.OzException):
         guest._geteltorito(src, dst)
 
 def test_geteltorito_bogus_pvd_unused2(tmpdir):
@@ -191,7 +197,7 @@ def test_geteltorito_bogus_pvd_unused2(tmpdir):
 
     dst = os.path.join(str(tmpdir), 'dst')
 
-    with py.test.raises(oz.OzException.OzException):
+    with pytest.raises(oz.OzException.OzException):
         guest._geteltorito(src, dst)
 
 def test_geteltorito_short_boot_sector(tmpdir):
@@ -212,7 +218,7 @@ def test_geteltorito_short_boot_sector(tmpdir):
 
     dst = os.path.join(str(tmpdir), 'dst')
 
-    with py.test.raises(Exception):
+    with pytest.raises(Exception):
         guest._geteltorito(src, dst)
 
 def test_geteltorito_bogus_boot_sector(tmpdir):
@@ -236,7 +242,7 @@ def test_geteltorito_bogus_boot_sector(tmpdir):
 
     dst = os.path.join(str(tmpdir), 'dst')
 
-    with py.test.raises(oz.OzException.OzException):
+    with pytest.raises(oz.OzException.OzException):
         guest._geteltorito(src, dst)
 
 def test_geteltorito_bogus_boot_isoident(tmpdir):
@@ -261,7 +267,7 @@ def test_geteltorito_bogus_boot_isoident(tmpdir):
 
     dst = os.path.join(str(tmpdir), 'dst')
 
-    with py.test.raises(oz.OzException.OzException):
+    with pytest.raises(oz.OzException.OzException):
         guest._geteltorito(src, dst)
 
 def test_geteltorito_bogus_boot_version(tmpdir):
@@ -286,7 +292,7 @@ def test_geteltorito_bogus_boot_version(tmpdir):
 
     dst = os.path.join(str(tmpdir), 'dst')
 
-    with py.test.raises(oz.OzException.OzException):
+    with pytest.raises(oz.OzException.OzException):
         guest._geteltorito(src, dst)
 
 def test_geteltorito_bogus_boot_torito(tmpdir):
@@ -312,7 +318,7 @@ def test_geteltorito_bogus_boot_torito(tmpdir):
 
     dst = os.path.join(str(tmpdir), 'dst')
 
-    with py.test.raises(oz.OzException.OzException):
+    with pytest.raises(oz.OzException.OzException):
         guest._geteltorito(src, dst)
 
 def test_geteltorito_bogus_bootp(tmpdir):
@@ -340,7 +346,7 @@ def test_geteltorito_bogus_bootp(tmpdir):
 
     dst = os.path.join(str(tmpdir), 'dst')
 
-    with py.test.raises(Exception):
+    with pytest.raises(Exception):
         guest._geteltorito(src, dst)
 
 def test_init_guest():
@@ -354,9 +360,16 @@ def test_init_guest():
 def test_init_guest_bad_arch():
     tdl = oz.TDL.TDL(tdlxml)
     tdl.arch = 'armhf'  # Done here to make sure the TDL class doesn't error
-    config = configparser.SafeConfigParser()
-    config.readfp(StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
-    with py.test.raises(Exception):
+    try:
+        config = configparser.SafeConfigParser()
+        config.readfp(StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+    except AttributeError:
+        # SafeConfigParser was deprecated in Python 3.2 and readfp
+        # was renamed to read_file
+        config = configparser.ConfigParser()
+        config.read_file(StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
+
+    with pytest.raises(Exception):
         oz.GuestFactory.guest_factory(tdl, config, None)
 
 def test_icicle_generation():
@@ -490,7 +503,7 @@ def test_get_disks_and_interfaces_missing_interface_target():
 
     # Get the comparision xml
     with open(path, 'r') as handle:
-        with py.test.raises(Exception):
+        with pytest.raises(Exception):
             # Replace various smaller items as they are auto generated
             test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
             guest._get_disks_and_interfaces(test_xml)
@@ -503,7 +516,7 @@ def test_get_disks_and_interfaces_missing_interface_target_device():
 
     # Get the comparision xml
     with open(path, 'r') as handle:
-        with py.test.raises(Exception):
+        with pytest.raises(Exception):
             # Replace various smaller items as they are auto generated
             test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
             guest._get_disks_and_interfaces(test_xml)
@@ -516,7 +529,7 @@ def test_get_disks_and_interfaces_missing_disk_target():
 
     # Get the comparision xml
     with open(path, 'r') as handle:
-        with py.test.raises(Exception):
+        with pytest.raises(Exception):
             # Replace various smaller items as they are auto generated
             test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
             guest._get_disks_and_interfaces(test_xml)
@@ -528,7 +541,7 @@ def test_get_disks_and_interfaces_missing_disk_target_device():
     # Get the comparision xml
     path = os.path.dirname(__file__) + '/libvirt/test_get_disks_and_interfaces_missing_disk_target_device.xml'
     with open(path, 'r') as handle:
-        with py.test.raises(Exception):
+        with pytest.raises(Exception):
             # Replace various smaller items as they are auto generated
             test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
             guest._get_disks_and_interfaces(test_xml)
@@ -557,7 +570,7 @@ def test_modify_libvirt_xml_for_serial_too_many_targets():
     # Get the comparision xml
     path = os.path.dirname(__file__) + '/libvirt/test_modify_libvirt_xml_for_serial_too_many_targets.xml'
     with open(path, 'r') as handle:
-        with py.test.raises(Exception):
+        with pytest.raises(Exception):
             # Replace various smaller items as they are auto generated
             test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
             guest._modify_libvirt_xml_for_serial(test_xml)
@@ -569,7 +582,7 @@ def test_modify_libvirt_xml_for_serial_missing_devices():
     # Get the comparision xml
     path = os.path.dirname(__file__) + '/libvirt/test_modify_libvirt_xml_for_serial_missing_devices.xml'
     with open(path, 'r') as handle:
-        with py.test.raises(Exception):
+        with pytest.raises(Exception):
             # Replace various smaller items as they are auto generated
             test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
             guest._modify_libvirt_xml_for_serial(test_xml)
@@ -581,7 +594,7 @@ def test_modify_libvirt_xml_for_serial_too_many_devices():
     # Get the comparision xml
     path = os.path.dirname(__file__) + '/libvirt/test_modify_libvirt_xml_for_serial_too_many_devices.xml'
     with open(path, 'r') as handle:
-        with py.test.raises(Exception):
+        with pytest.raises(Exception):
             # Replace various smaller items as they are auto generated
             test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
             guest._modify_libvirt_xml_for_serial(test_xml)
@@ -614,7 +627,7 @@ def test_modify_libvirt_xml_diskimage_missing_disk_source():
     # Get the comparision xml
     path = os.path.dirname(__file__) + '/libvirt/test_modify_libvirt_xml_diskimage_missing_disk_source.xml'
     with open(path, 'r') as handle:
-        with py.test.raises(Exception):
+        with pytest.raises(Exception):
             # Replace various smaller items as they are auto generated
             test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
             guest._modify_libvirt_xml_diskimage(test_xml, guest.diskimage, 'qcow2')
@@ -626,7 +639,7 @@ def test_modify_libvirt_xml_diskimage_too_many_drivers():
     # Get the comparision xml
     path = os.path.dirname(__file__) + '/libvirt/test_modify_libvirt_xml_diskimage_too_many_drivers.xml'
     with open(path, 'r') as handle:
-        with py.test.raises(Exception):
+        with pytest.raises(Exception):
             # Replace various smaller items as they are auto generated
             test_xml = handle.read() % (guest.uuid, route, guest.listen_port, guest.diskimage)
             guest._modify_libvirt_xml_diskimage(test_xml, guest.diskimage, 'qcow2')

@@ -507,8 +507,14 @@ echo -n "!$ADDR,%s!" > %s
         initrd paths out of it.
         """
         self.log.debug("Got treeinfo, parsing")
-        config = configparser.SafeConfigParser()
-        config.readfp(fp)
+        try:
+            config = configparser.SafeConfigParser()
+            config.readfp(fp)
+        except AttributeError:
+            # SafeConfigParser was deprecated in Python 3.2 and readfp
+            # was renamed to read_file
+            config = configparser.ConfigParser()
+            config.read_file(fp)
         section = "images-%s" % (self.tdl.arch)
         kernel = oz.ozutil.config_get_key(config, section, "kernel", None)
         initrd = oz.ozutil.config_get_key(config, section, "initrd", None)

@@ -4,9 +4,9 @@ import sys
 import os
 
 try:
-    import py.test
+    import pytest
 except ImportError:
-    print('Unable to import py.test.  Is py.test installed?')
+    print('Unable to import pytest.  Is pytest installed?')
     sys.exit(1)
 
 # Find oz
@@ -29,7 +29,7 @@ def test_auto():
     assert(oz.ozutil.generate_full_auto_path('fedora-14-jeos.ks') == os.path.realpath(os.path.join(prefix, 'oz', 'auto', 'fedora-14-jeos.ks')))
 
 def test_auto_none():
-    with py.test.raises(Exception):
+    with pytest.raises(Exception):
         oz.ozutil.generate_full_auto_path(None)
 
 # test oz.ozutil.executable_exists
@@ -37,33 +37,33 @@ def test_exe_exists_bin_ls():
     assert(oz.ozutil.executable_exists('/bin/ls'))
 
 def test_exe_exists_foo():
-    with py.test.raises(Exception):
+    with pytest.raises(Exception):
         oz.ozutil.executable_exists('foo')
 
 def test_exe_exists_full_foo():
-    with py.test.raises(Exception):
+    with pytest.raises(Exception):
         oz.ozutil.executable_exists('/bin/foo')
 
 def test_exe_exists_not_x():
-    with py.test.raises(Exception):
+    with pytest.raises(Exception):
         oz.ozutil.executable_exists('/etc/hosts')
 
 def test_exe_exists_relative_false():
     assert(oz.ozutil.executable_exists('false'))
 
 def test_exe_exists_none():
-    with py.test.raises(Exception):
+    with pytest.raises(Exception):
         oz.ozutil.executable_exists(None)
 
 # test oz.ozutil.copyfile_sparse
 def test_copy_sparse_none_src():
-    with py.test.raises(Exception):
+    with pytest.raises(Exception):
         oz.ozutil.copyfile_sparse(None, None)
 
 def test_copy_sparse_none_dst(tmpdir):
     fullname = os.path.join(str(tmpdir), 'src')
     open(fullname, 'w').write('src')
-    with py.test.raises(Exception):
+    with pytest.raises(Exception):
         oz.ozutil.copyfile_sparse(fullname, None)
 
 def test_copy_sparse_bad_src_mode(tmpdir):
@@ -75,7 +75,7 @@ def test_copy_sparse_bad_src_mode(tmpdir):
     os.chmod(fullname, 0000)
     # because copyfile_sparse uses os.open() instead of open(), it throws an
     # OSError
-    with py.test.raises(OSError):
+    with pytest.raises(OSError):
         oz.ozutil.copyfile_sparse(fullname, 'output')
 
 def test_copy_sparse_bad_dst_mode(tmpdir):
@@ -87,7 +87,7 @@ def test_copy_sparse_bad_dst_mode(tmpdir):
     dstname = os.path.join(str(tmpdir), 'dst')
     open(dstname, 'w').write('dst')
     os.chmod(dstname, 0o444)
-    with py.test.raises(OSError):
+    with pytest.raises(OSError):
         oz.ozutil.copyfile_sparse(srcname, dstname)
 
 def test_copy_sparse_zero_size_src(tmpdir):
@@ -151,7 +151,7 @@ def test_copy_sparse_src_not_exists(tmpdir):
     srcname = os.path.join(str(tmpdir), 'src')
     dstname = os.path.join(str(tmpdir), 'dst')
     open(dstname, 'w').write('dst')
-    with py.test.raises(Exception):
+    with pytest.raises(Exception):
         oz.ozutil.copyfile_sparse(srcname, dstname)
 
 def test_copy_sparse_dest_not_exists(tmpdir):
@@ -164,13 +164,13 @@ def test_copy_sparse_dest_not_exists(tmpdir):
 def test_copy_sparse_src_is_dir(tmpdir):
     dstname = os.path.join(str(tmpdir), 'dst')
     open(dstname, 'w').write('dst')
-    with py.test.raises(Exception):
+    with pytest.raises(Exception):
         oz.ozutil.copyfile_sparse(tmpdir, dstname)
 
 def test_copy_sparse_dst_is_dir(tmpdir):
     srcname = os.path.join(str(tmpdir), 'src')
     open(srcname, 'w').write('src')
-    with py.test.raises(Exception):
+    with pytest.raises(Exception):
         oz.ozutil.copyfile_sparse(srcname, tmpdir)
 
 # test oz.ozutil.string_to_bool
@@ -205,7 +205,7 @@ def test_stb_true():
                     assert(oz.ozutil.string_to_bool(curr) == True)
 
 def test_stb_none():
-    with py.test.raises(Exception):
+    with pytest.raises(Exception):
         oz.ozutil.string_to_bool(None)
 
 
@@ -231,11 +231,11 @@ def test_mkdir_p_twice(tmpdir):
 def test_mkdir_p_file_exists(tmpdir):
     fullname = os.path.join(str(tmpdir), 'file_exists')
     open(fullname, 'w').write('file_exists')
-    with py.test.raises(OSError):
+    with pytest.raises(OSError):
         oz.ozutil.mkdir_p(fullname)
 
 def test_mkdir_p_none():
-    with py.test.raises(Exception):
+    with pytest.raises(Exception):
         oz.ozutil.mkdir_p(None)
 
 def test_mkdir_p_empty_string():
@@ -243,20 +243,20 @@ def test_mkdir_p_empty_string():
 
 # test oz.ozutil.copy_modify_file
 def test_copy_modify_none_src():
-    with py.test.raises(Exception):
+    with pytest.raises(Exception):
         oz.ozutil.copy_modify_file(None, None, None)
 
 def test_copy_modify_none_dst(tmpdir):
     fullname = os.path.join(str(tmpdir), 'src')
     open(fullname, 'w').write('src')
-    with py.test.raises(Exception):
+    with pytest.raises(Exception):
         oz.ozutil.copy_modify_file(fullname, None, None)
 
 def test_copy_modify_none_subfunc(tmpdir):
     src = os.path.join(str(tmpdir), 'src')
     open(src, 'w').write('src')
     dst = os.path.join(str(tmpdir), 'dst')
-    with py.test.raises(Exception):
+    with pytest.raises(Exception):
         oz.ozutil.copy_modify_file(src, dst, None)
 
 def test_copy_modify_bad_src_mode(tmpdir):
@@ -269,7 +269,7 @@ def test_copy_modify_bad_src_mode(tmpdir):
     open(fullname, 'w').write('writeonly')
     os.chmod(fullname, 0000)
     dst = os.path.join(str(tmpdir), 'dst')
-    with py.test.raises(IOError):
+    with pytest.raises(IOError):
         oz.ozutil.copy_modify_file(fullname, dst, sub)
 
 def test_copy_modify_empty_file(tmpdir):
@@ -295,11 +295,11 @@ def test_copy_modify_file(tmpdir):
 
 # test oz.ozutil.write_cpio
 def test_write_cpio_none_input():
-    with py.test.raises(Exception):
+    with pytest.raises(Exception):
         oz.ozutil.write_cpio(None, None)
 
 def test_write_cpio_none_output():
-    with py.test.raises(Exception):
+    with pytest.raises(Exception):
         oz.ozutil.write_cpio({}, None)
 
 def test_write_cpio_empty_dict(tmpdir):
@@ -313,7 +313,7 @@ def test_write_cpio_existing_file(tmpdir):
     dst = os.path.join(str(tmpdir), 'dst')
     open(dst, 'w').write('hello')
     os.chmod(dst, 0000)
-    with py.test.raises(IOError):
+    with pytest.raises(IOError):
         oz.ozutil.write_cpio({}, dst)
 
 def test_write_cpio_single_file(tmpdir):
@@ -344,7 +344,7 @@ def test_write_cpio_exception(tmpdir):
     open(src, 'w').write('src')
     os.chmod(src, 0000)
     dst = os.path.join(str(tmpdir), 'dst')
-    with py.test.raises(IOError):
+    with pytest.raises(IOError):
         oz.ozutil.write_cpio({src: 'src'}, dst)
 
 def test_md5sum_regular(tmpdir):

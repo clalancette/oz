@@ -724,12 +724,20 @@ def parse_config(config_file):
     Function to parse the configuration file.  If the passed in config_file is
     None, then the default configuration file is used.
     """
-    config = configparser.SafeConfigParser()
+    try:
+        config = configparser.SafeConfigParser()
+    except AttributeError:
+        # SafeConfigParser was deprecated in Python 3.2
+        config = configparser.ConfigParser()
     if config_file is not None:
         # If the config_file passed in is not None, then we want to try to read
         # that config file (after expanding it).  If that config file doesn't
         # exist, we want to throw an error (which is why we use readfp here).
-        config.readfp(open(os.path.expanduser(config_file)))
+        try:
+            config.readfp(open(os.path.expanduser(config_file)))
+        except AttributeError:
+            # readfp was renamed to read_file in Python 3.2
+            config.read_file(open(os.path.expanduser(config_file)))
     else:
         # The config file was not passed in, so we want to use one of the
         # defaults.  First we check to see if a ~/.oz/oz.cfg exists; if it does,
