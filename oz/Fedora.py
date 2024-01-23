@@ -248,7 +248,7 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
     # ignored now; we leave it in place for backwards API compatibility.
     def __init__(self, tdl, config, auto, nicmodel, haverepo, diskbus,  # pylint: disable=unused-argument
                  brokenisomethod, output_disk=None, macaddress=None,    # pylint: disable=unused-argument
-                 assumed_update=None, useuefi=False):
+                 assumed_update=None):
         if int(tdl.update) < 31:
             self.config = version_to_config[tdl.update]
         else:
@@ -263,8 +263,7 @@ class FedoraGuest(oz.RedHat.RedHatLinuxCDYumGuest):
         oz.RedHat.RedHatLinuxCDYumGuest.__init__(self, tdl, config, auto,
                                                  output_disk, nicmodel, diskbus,
                                                  True, True, self.config.directkernel,
-                                                 macaddress, self.config.use_yum,
-                                                 self.config.useuefi)
+                                                 macaddress, self.config.use_yum)
 
         if self.assumed_update is not None:
             self.log.warning("==== WARN: TDL contains Fedora update %s, which is newer than Oz knows about; pretending this is Fedora %s, but this may fail ====", tdl.update, assumed_update)
