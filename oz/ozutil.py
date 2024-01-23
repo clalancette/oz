@@ -19,7 +19,10 @@
 Miscellaneous utility functions.
 """
 
-import collections
+try:
+    from collections.abc import Callable
+except ImportError:
+    from collections import Callable
 try:
     import configparser
 except ImportError:
@@ -536,7 +539,7 @@ def copy_modify_file(inname, outname, subfunc):
         raise Exception("output filename is None")
     if subfunc is None:
         raise Exception("subfunction is None")
-    if not isinstance(subfunc, collections.Callable):
+    if not isinstance(subfunc, Callable):
         raise Exception("subfunction is not callable")
 
     infile = open(inname, 'r')
