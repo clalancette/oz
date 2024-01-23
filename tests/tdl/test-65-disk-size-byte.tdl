@@ -1,0 +1,15 @@
+<template>
+  <name>help</name>
+  <os>
+    <name>Fedora</name>
+    <version>12</version>
+    <arch>i386</arch>
+    <install type='url'>
+      <url>http://download.fedoraproject.org/pub/fedora/linux/releases/12/Fedora/x86_64/os/</url>
+    </install>
+  </os>
+  <description>My Fedora 12 JEOS image</description>
+  <disk>
+    <size>10000000 B</size>
+  </disk>
+</template>
