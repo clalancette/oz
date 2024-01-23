@@ -1,7 +1,7 @@
 <domain type="kvm">
   <name>tester</name>
-  <memory>1048576</memory>
-  <currentMemory>1048576</currentMemory>
+  <memory>2097152</memory>
+  <currentMemory>2097152</currentMemory>
   <uuid>%s</uuid>
   <clock offset="utc"/>
   <vcpu>1</vcpu>
@@ -10,6 +10,7 @@
     <apic/>
     <pae/>
   </features>
+  <cpu mode="host-passthrough"/>
   <os>
     <type>hvm</type>
     <boot dev="hd"/>
@@ -36,10 +37,14 @@
       <protocol type="raw"/>
       <target port="1"/>
     </serial>
+    <rng model="virtio">
+      <rate bytes="1024" period="1000"/>
+      <backend model="random">/dev/random</backend>
+    </rng>
     <disk device="disk" type="file">
       <target dev="vda" bus="virtio"/>
       <source file="%s"/>
-      <driver name="qemu" type="raw"/>
+      <driver name="qemu" type="raw" discard="unmap"/>
     </disk>
     <disk type="file" device="blue">
       <source file="/var/bin/foo"/>
