@@ -456,7 +456,10 @@ def test_xml_generation_1():
         test_xml = handle.read()
 
     # Replace various smaller items as they are auto generated
-    test_xml = test_xml % (guest.uuid, route, guest.listen_port, guest.diskimage)
+    test_xml = test_xml % (guest.libvirt_type, guest.uuid, route, guest.listen_port, guest.diskimage)
+    # drop host-passthrough line if libvirt_type is not kvm
+    if guest.libvirt_type != "kvm":
+        test_xml = "\n".join((line for line in test_xml.splitlines() if "host-passthrough" not in line)) + "\n"
 
     bootdev = 'hd'
     installdev = None
@@ -472,7 +475,10 @@ def test_xml_generation_2():
         test_xml = handle.read()
 
     # Replace various smaller items as they are auto generated
-    test_xml = test_xml % (guest.uuid, route, guest.listen_port, guest.diskimage)
+    test_xml = test_xml % (guest.libvirt_type, guest.uuid, route, guest.listen_port, guest.diskimage)
+    # drop host-passthrough line if libvirt_type is not kvm
+    if guest.libvirt_type != "kvm":
+        test_xml = "\n".join((line for line in test_xml.splitlines() if "host-passthrough" not in line)) + "\n"
 
     bootdev = 'hd'
     installdev = guest._InstallDev('blue', '/var/bin/foo', 'muni')

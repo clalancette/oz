@@ -1,4 +1,4 @@
-<domain type="kvm">
+<domain type="%s">
   <name>tester</name>
   <memory>2097152</memory>
   <currentMemory>2097152</currentMemory>
