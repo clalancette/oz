@@ -354,7 +354,12 @@ def test_init_guest():
 
     assert guest.disksize == 20
     assert guest.image_name() == 'tester'
-    assert guest.output_image_path() == '%s/.oz/images/tester.dsk' % os.getenv('HOME')
+    assert guest.output_image_path() in (
+        # user's image storage
+        '%s/.oz/images/tester.dsk' % os.getenv('HOME'),
+        # system image storage (when testing as root, I think)
+        '/var/lib/libvirt/images/tester.dsk'
+    )
     assert guest.default_auto_file() == True
 
 def test_init_guest_bad_arch():
