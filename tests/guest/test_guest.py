@@ -12,6 +12,10 @@ except:
     from io import StringIO
 import logging
 import os
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 # Find oz library
 prefix = '.'
@@ -72,7 +76,10 @@ def setup_guest(xml, macaddress=None):
         config = configparser.ConfigParser()
         config.read_file(StringIO("[libvirt]\nuri=qemu:///session\nbridge_name=%s" % route))
 
-    guest = oz.GuestFactory.guest_factory(tdl, config, None, macaddress=macaddress)
+    # mock this - it's used in RedHatLinuxCDYumGuest._check_url() -
+    # so the tests can run without a network connection
+    with mock.patch("oz.ozutil.http_get_header", return_value={}):
+        guest = oz.GuestFactory.guest_factory(tdl, config, None, macaddress=macaddress)
     return guest
 
 tdlxml = """
