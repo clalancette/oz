@@ -1,0 +1,14 @@
+# this container definition is intended *only* for running the oz test suite, it is not
+# a general-purpose oz container definition!
+
+FROM quay.io/fedora/fedora:latest
+RUN set -exo pipefail \
+    && dnf install -y --setopt install_weak_deps=false --nodocs \
+    python3-requests python3-m2crypto python3-setuptools python3-libvirt python3-lxml python3-libguestfs python3-pytest python3-monotonic \
+    libvirt-daemon libvirt-daemon-kvm libvirt-daemon-qemu libvirt-daemon-config-network systemd \
+    && dnf clean all \
+    && rm -rf /var/cache/* /var/log/dnf*
+
+COPY ./ /oz
+RUN printf "#!/bin/sh\n/usr/sbin/libvirtd -d\ncd /oz\npy.test -vv tests/" > /usr/local/bin/runtests.sh && chmod ugo+x /usr/local/bin/runtests.sh
+CMD /usr/local/bin/runtests.sh

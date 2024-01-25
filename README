@@ -10,9 +10,19 @@ Once you have the RPM installed, you will need to build up TDL files to feed
 as input into the building process.  Please see the examples directory to get
 an idea of what a TDL file looks like.
 
-Running the tests is also most easily done from a Fedora host. oz uses the
+You can run the oz unit tests in containers by installing make and docker
+(or podman-docker), then running:
+
+make container-unittests
+
+You can clean up the containers and images by running:
+
+make container-clean
+
+Otherwise, you can try running the tests directly on your host, but oz uses the
 guestfs Python module, which is not available from pypi, and needs a running
-libvirtd for most of the tests to run. Install all the test requirements:
+libvirtd for most of the tests to run. To install all the test requirements on
+Fedora:
 
 dnf install python3-requests python3-m2crypto python3-libvirt python3-lxml python3-libguestfs python3-pytest python3-monotonic
 
@@ -23,3 +33,11 @@ yum install python-requests m2crypto libvirt-python python-lxml python-libguestf
 then run the tests:
 
 py.test tests/
+
+You can try `make virtualenv` then `make unittests` to run the tests in a
+virtualenv if you like, but this still requires at least the libguestfs library
+installed on the host, and a running libvirtd. You may also want to install
+m2crypto and libvirt libraries on the host, as otherwise pip will have to
+compile them, and you'll need their build dependencies.
+
+You can use `make pylint` and `make flake8` to run lint checks.
