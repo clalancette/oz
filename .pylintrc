@@ -1,0 +1,25 @@
+[MESSAGES CONTROL]
+disable=C0325,C0103
+
+[REPORTS]
+reports=yes
+
+[TYPECHECK]
+
+[FORMAT]
+max-line-length=200
+max-module-lines=2000
+
+[VARIABLES]
+dummy-variables-rgx=.*_unused$
+
+[BASIC]
+module-rgx=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9_]+))$
+
+[DESIGN]
+max-args=20
+max-locals=30
+max-branches=30
+max-statements=100
+max-attributes=30
+min-public-methods=0

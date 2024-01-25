@@ -50,6 +50,7 @@ container-unittests-fedora:
 	docker rm -f oz-tests-fedora
 	docker build -f Containerfile.tests.fedora -t oz-tests-fedora-image .
 	docker run --name oz-tests-fedora oz-tests-fedora-image
+	docker cp oz-tests-fedora:/oz/coverage.xml .
 
 container-unittests-el7:
 	docker rm -f oz-tests-el7
@@ -64,10 +65,10 @@ test-coverage:
 	xdg-open htmlcov/index.html
 
 pylint:
-	pylint --rcfile=pylint.conf oz oz-install oz-customize oz-cleanup-cache oz-generate-icicle
+	pylint oz oz-install oz-customize oz-cleanup-cache oz-generate-icicle
 
 flake8:
-	flake8 --ignore=E501 oz
+	flake8 oz oz-install oz-customize oz-cleanup-cache oz-generate-icicle
 
 container-clean:
 	docker rm -f oz-tests-fedora

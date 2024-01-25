@@ -12,5 +12,5 @@ COPY ./ /oz
 # the XML generation tests are inherently unreliable before Python 3.8,
 # as there was no consistent ordering of XML element attributes. See
 # https://docs.python.org/3/library/xml.etree.elementtree.html#xml.etree.ElementTree.tostring
-RUN printf "#!/bin/sh\n/usr/sbin/libvirtd -d\ncd /oz\npy.test -vv -k 'not test_xml_generation and not modify_libvirt_xml_for_serial' tests/" > /usr/local/bin/runtests.sh && chmod ugo+x /usr/local/bin/runtests.sh
+RUN printf "#!/bin/sh\n/usr/sbin/libvirtd -d\ncd /oz\npython -m pytest -vv -k 'not test_xml_generation and not modify_libvirt_xml_for_serial' tests/" > /usr/local/bin/runtests.sh && chmod ugo+x /usr/local/bin/runtests.sh
 CMD /usr/local/bin/runtests.sh

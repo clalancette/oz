@@ -4,11 +4,11 @@
 FROM quay.io/fedora/fedora:latest
 RUN set -exo pipefail \
     && dnf install -y --setopt install_weak_deps=false --nodocs \
-    python3-requests python3-cryptography python3-setuptools python3-libvirt python3-lxml python3-libguestfs python3-pytest python3-monotonic \
+    python3-requests python3-cryptography python3-setuptools python3-libvirt python3-lxml python3-libguestfs python3-pytest python3-coverage python3-monotonic \
     libvirt-daemon libvirt-daemon-kvm libvirt-daemon-qemu libvirt-daemon-config-network systemd \
     && dnf clean all \
     && rm -rf /var/cache/* /var/log/dnf*
 
 COPY ./ /oz
-RUN printf "#!/bin/sh\n/usr/sbin/libvirtd -d\ncd /oz\npy.test -vv tests/" > /usr/local/bin/runtests.sh && chmod ugo+x /usr/local/bin/runtests.sh
+RUN printf "#!/bin/sh\n/usr/sbin/libvirtd -d\ncd /oz\npython3 -m coverage run -m pytest -vv tests/\ncoverage xml\ncoverage report" > /usr/local/bin/runtests.sh && chmod ugo+x /usr/local/bin/runtests.sh
 CMD /usr/local/bin/runtests.sh
