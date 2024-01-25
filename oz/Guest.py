@@ -129,7 +129,7 @@ class Guest(object):
         self._discover_libvirt_type()
 
     def __init__(self, tdl, config, auto, output_disk, nicmodel, clockoffset,
-                 mousetype, diskbus, iso_allowed, url_allowed, macaddress, useuefi):
+                 mousetype, diskbus, iso_allowed, url_allowed, macaddress):
         self.tdl = tdl
 
         # for backwards compatibility
@@ -502,7 +502,7 @@ class Guest(object):
             oz.ozutil.lxml_subelement(osNode, "loader", loader, {'readonly': 'yes', 'type': 'pflash'})
             oz.ozutil.lxml_subelement(osNode, "nvram", None, {'template': nvram})
         # x86_64 has legacy requirements so we check for defaults as well as for edk2
-        if self.tdl.arch in ["x86_64"] and self.config.useuefi == True:
+        if self.tdl.arch == "x86_64" and hasattr(self.config, "useuefi") and self.config.useuefi is True:
             loader, nvram = oz.ozutil.find_uefi_firmware(self.tdl.arch)
             oz.ozutil.lxml_subelement(osNode, "loader", loader, {'readonly': 'yes', 'type': 'pflash'})
             oz.ozutil.lxml_subelement(osNode, "nvram", None, {'template': nvram})
@@ -1333,10 +1333,10 @@ class CDGuest(Guest):
             self.seqnum = seqnum
 
     def __init__(self, tdl, config, auto, output_disk, nicmodel, clockoffset,
-                 mousetype, diskbus, iso_allowed, url_allowed, macaddress, useuefi):
+                 mousetype, diskbus, iso_allowed, url_allowed, macaddress):
         Guest.__init__(self, tdl, config, auto, output_disk, nicmodel,
                        clockoffset, mousetype, diskbus, iso_allowed,
-                       url_allowed, macaddress, useuefi)
+                       url_allowed, macaddress)
 
         self.orig_iso = os.path.join(self.data_dir, "isos",
                                      self.tdl.distro + self.tdl.update + self.tdl.arch + "-" + self.tdl.installtype + ".iso")
@@ -1801,9 +1801,9 @@ class FDGuest(Guest):
     Class for guest installation via floppy disk.
     """
     def __init__(self, tdl, config, auto, output_disk, nicmodel, clockoffset,
-                 mousetype, diskbus, macaddress, useuefi):
+                 mousetype, diskbus, macaddress):
         Guest.__init__(self, tdl, config, auto, output_disk, nicmodel,
-                       clockoffset, mousetype, diskbus, False, True, macaddress, useuefi)
+                       clockoffset, mousetype, diskbus, False, True, macaddress)
         self.orig_floppy = os.path.join(self.data_dir, "floppies",
                                         self.tdl.distro + self.tdl.update + self.tdl.arch + ".img")
         self.modified_floppy_cache = os.path.join(self.data_dir, "floppies",

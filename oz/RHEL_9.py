@@ -31,11 +31,11 @@ class RHEL9Guest(oz.RHEL_8.RHEL8Guest):
     Class for RHEL-9 installation
     """
     def __init__(self, tdl, config, auto, output_disk=None, netdev=None,
-                 diskbus=None, macaddress=None, useuefi=True):
+                 diskbus=None, macaddress=None):
         # dnf distro
         oz.RHEL_8.RHEL8Guest.__init__(self, tdl, config, auto,
                                       output_disk, netdev, diskbus,
-                                       macaddress, useuefi)
+                                       macaddress)
 
         # method and ks options were dropped
         self.cmdline = "inst.repo=" + self.url + " inst.ks=file:/ks.cfg"

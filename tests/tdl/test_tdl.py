@@ -10,9 +10,9 @@ except ImportError:
     sys.exit(1)
 
 try:
-    import py.test
+    import pytest
 except ImportError:
-    print('Unable to import py.test.  Is py.test installed?')
+    print('Unable to import pytest.  Is pytest installed?')
     sys.exit(1)
 
 # Find oz
