@@ -1,0 +1,41 @@
+---
+name: Run CI checks
+
+on: [pull_request]
+
+jobs:
+  unittests-fedora:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install make and docker
+        run: apt-get install make docker docker.io
+      - name: Run the tests
+        run: make container-unittests-fedora
+  unittests-el7:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install make and docker
+        run: apt-get install make docker
+      - name: Run the tests
+        run: make container-unittests-el7
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install make, pylint and flake8
+        run: apt-get install make pylint flake8
+      - name: Run pylint
+        run: make pylint
+      - name: Run flake8
+        run: make flake8
