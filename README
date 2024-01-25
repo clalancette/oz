@@ -28,7 +28,7 @@ dnf install python3-requests python3-cryptography python3-libvirt python3-lxml p
 
 If you wish to test on EL 7, make that:
 
-yum install python-requests python-cryptography libvirt-python python-lxml python-libguestfs pytest python-monotonic
+yum install python-requests python-cryptography libvirt-python python-lxml python-libguestfs pytest python-monotonic python-mock
 
 then run the tests:
 
