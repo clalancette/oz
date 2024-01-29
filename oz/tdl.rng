@@ -325,7 +325,7 @@
 
   <define name='disk_size'>
     <data type="string">
-      <param name="pattern">([0-9]*) *([GT]?)</param>
+      <param name="pattern">([0-9]*) *([kKmMgGtTpPeEzZyY]?[iI]?[bB]?)</param>
     </data>
   </define>
 

@@ -78,12 +78,12 @@ class Windows_v5(Windows):
                                            self.iso_contents],
                                           printfn=self.log.debug)
 
-    def generate_diskimage(self, size=10, force=False):
+    def generate_diskimage(self, size=10*1024*1024*1024, force=False):
         """
         Method to generate a diskimage.  By default, a blank diskimage of
-        10GB will be created; the caller can override this with the size
-        parameter, specified in GB.  If force is False (the default), then
-        a diskimage will not be created if a cached JEOS is found.  If
+        10 GiB will be created; the caller can override this with the size
+        parameter, specified in bytes.  If force is False (the default),
+        then a diskimage will not be created if a cached JEOS is found.  If
         force is True, a diskimage will be created regardless of whether a
         cached JEOS exists.  See the oz-install man page for more
         information about JEOS caching.

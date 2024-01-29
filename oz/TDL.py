@@ -327,20 +327,39 @@ class TDL(object):
             # a sensible default
             return None
 
-        match = re.match(r'([0-9]*) *([GT]?)$', size)
-        if not match or len(match.groups()) != 2:
-            raise oz.OzException.OzException("Invalid disk size; it must be specified as a size in gigabytes, optionally suffixed with 'G' or 'T'")
+        # drop spaces and downcase
+        size = size.replace(" ", "").lower()
+        # isolate digits
+        number = ""
+        suffix = ""
+        for (idx, char) in enumerate(size):
+            if char.isdigit():
+                number += char
+            else:
+                suffix = size[idx:]
+                break
 
-        number = match.group(1)
-        suffix = match.group(2)
+        if not suffix:
+            # for backwards compatibility, we assume GiB when there is no suffix
+            suffix = "gib"
 
-        if not suffix or suffix == 'G':
-            # for backwards compatibility, we assume G when there is no suffix
-            size = number
-        elif suffix == 'T':
-            size = str(int(number) * 1024)
+        # also for backwards compatibility with an earlier attempt to support
+        # suffixes, treat "T" and "G" as "TiB" and "GiB"
+        units = {"b": 1, "g": 2**30, "t": 2**40}
+        tenscale = 3
+        twoscale = 10
+        for (i, pref) in enumerate(("k", "m", "g", "t", "p", "e", "z", "y"), start=1):
+            # this is giving us {"gib": 2 ** 30, "gb": 10 ** 9}, etc
+            units[pref + "b"] = (10 ** (i*tenscale))
+            units[pref + "ib"] = (2 ** (i*twoscale))
 
-        return size
+        factor = units.get(suffix)
+        if not number or not factor:
+            raise oz.OzException.OzException(
+                "Invalid disk size; it must be specified as an integer size with an optional SI or IEC unit suffix, e.g. '10TB' or '16GiB'"
+            )
+
+        return str(int(number) * factor)
 
     def _parse_commands(self, xpath):
         """

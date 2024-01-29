@@ -92,8 +92,11 @@ tests = {
     "test-55-files-http-url.tdl": True,
     "test-56-invalid-disk-size.tdl": False,
     "test-57-invalid-disk-size.tdl": False,
-    "test-58-disk-size-terabyte.tdl": True,
+    "test-58-disk-size-tebibyte-compat.tdl": True,
     "test-59-command-sorting.tdl": True,
+    "test-63-disk-size-exbibyte.tdl": True,
+    "test-64-disk-size-zettabyte.tdl": True,
+    "test-65-disk-size-byte.tdl": True,
 }
 
 # Test that iterates over all .tdl files
