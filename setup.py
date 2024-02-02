@@ -7,8 +7,9 @@ VERSION = '0.19.0'
 RELEASE = '0'
 
 datafiles = [('share/man/man1', ['man/oz-install.1', 'man/oz-generate-icicle.1',
-                                 'man/oz-customize.1', 'man/oz-examples.1',
-                                 'man/oz-cleanup-cache.1'])
+                                 'man/oz-customize.1',
+                                 'man/oz-cleanup-cache.1']),
+             ('share/man/man5', ['man/oz-examples.5'])
              ]
 
 class sdist(_sdist):
