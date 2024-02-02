@@ -69,6 +69,7 @@ os_dict = {
     'Mandriva': 'Mandriva',
     'Mageia': 'Mageia',
     'FreeBSD': 'FreeBSD',
+    'ProLinux': 'ProLinux',
 }
 
 
