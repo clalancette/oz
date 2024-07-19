@@ -24,11 +24,11 @@ guestfs Python module, which is not available from pypi, and needs a running
 libvirtd for most of the tests to run. To install all the test requirements on
 Fedora:
 
-dnf install python3-requests python3-m2crypto python3-libvirt python3-lxml python3-libguestfs python3-pytest python3-monotonic
+dnf install python3-requests python3-cryptography python3-libvirt python3-lxml python3-libguestfs python3-pytest python3-monotonic
 
 If you wish to test on EL 7, make that:
 
-yum install python-requests m2crypto libvirt-python python-lxml python-libguestfs pytest python-monotonic
+yum install python-requests python-cryptography libvirt-python python-lxml python-libguestfs pytest python-monotonic
 
 then run the tests:
 
@@ -37,7 +37,7 @@ py.test tests/
 You can try `make virtualenv` then `make unittests` to run the tests in a
 virtualenv if you like, but this still requires at least the libguestfs library
 installed on the host, and a running libvirtd. You may also want to install
-m2crypto and libvirt libraries on the host, as otherwise pip will have to
+cryptography and libvirt libraries on the host, as otherwise pip will have to
 compile them, and you'll need their build dependencies.
 
 You can use `make pylint` and `make flake8` to run lint checks.
