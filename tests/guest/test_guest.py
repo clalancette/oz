@@ -352,7 +352,8 @@ def test_geteltorito_bogus_bootp(tmpdir):
 def test_init_guest():
     guest = setup_guest(tdlxml2)
 
-    assert guest.disksize == 20
+    # size without units is taken to be GiB
+    assert guest.disksize == 20*(2**30)
     assert guest.image_name() == 'tester'
     assert guest.output_image_path() in (
         # user's image storage

@@ -572,7 +572,7 @@ class Guest(object):
 
         return xml
 
-    def _internal_generate_diskimage(self, size=10, force=False,
+    def _internal_generate_diskimage(self, size=10*1024*1024*1024, force=False,
                                      create_partition=False,
                                      image_filename=None,
                                      backing_filename=None):
@@ -588,7 +588,7 @@ class Guest(object):
             # we'll copy the JEOS itself later on
             return
 
-        self.log.info("Generating %dGB diskimage for %s", size, self.tdl.name)
+        self.log.info("Generating %s diskimage for %s", oz.ozutil.sizeof_fmt(int(size)), self.tdl.name)
 
         diskimage = self.diskimage
         if image_filename:
@@ -629,17 +629,17 @@ class Guest(object):
             # allows creation without an explicit capacity element.
             qcow_size = oz.ozutil.check_qcow_size(backing_filename)
             if qcow_size:
-                capacity = qcow_size / 1024 / 1024 / 1024
+                capacity = qcow_size
                 backing_format = 'qcow2'
             else:
-                capacity = os.path.getsize(backing_filename) / 1024 / 1024 / 1024
+                capacity = os.path.getsize(backing_filename)
                 backing_format = 'raw'
             backing = oz.ozutil.lxml_subelement(vol, "backingStore")
             oz.ozutil.lxml_subelement(backing, "path", backing_filename)
             oz.ozutil.lxml_subelement(backing, "format", None,
                                       {"type": backing_format})
 
-        oz.ozutil.lxml_subelement(vol, "capacity", str(int(capacity)), {'unit': 'G'})
+        oz.ozutil.lxml_subelement(vol, "capacity", str(int(capacity)), {'unit': 'B'})
         vol_xml = lxml.etree.tostring(vol, pretty_print=True, encoding="unicode")
 
         # sigh.  Yes, this is racy; if a pool is defined during this loop, we
@@ -719,11 +719,11 @@ class Guest(object):
                 g_handle.create_msdos_partition_table()
                 g_handle.cleanup()
 
-    def generate_diskimage(self, size=10, force=False):
+    def generate_diskimage(self, size=10*1024*1024*1024, force=False):
         """
         Method to generate a diskimage.  By default, a blank diskimage of
-        10GB will be created; the caller can override this with the size
-        parameter, specified in GB.  If force is False (the default), then
+        10 GiB will be created; the caller can override this with the size
+        parameter, specified in bytes.  If force is False (the default), then
         a diskimage will not be created if a cached JEOS is found.  If
         force is True, a diskimage will be created regardless of whether a
         cached JEOS exists.  See the oz-install man page for more

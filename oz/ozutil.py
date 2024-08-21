@@ -1178,3 +1178,20 @@ def get_free_port():
     sock.close()
 
     return listen_port
+
+
+def sizeof_fmt(num, suffix="B"):
+    """
+    Give a convenient human-readable representation of a large size in
+    bytes. Initially by Fred Cirera:
+    https://web.archive.org/web/20111010015624/http://blogmag.net/blog/read/38/Print_human_readable_file_size
+    edited by multiple contributors at:
+    https://stackoverflow.com/questions/1094841
+    Per Richard Fontana this is too trivial to be copyrightable, so
+    there are no licensing concerns
+    """
+    for unit in ("", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"):
+        if abs(num) < 1024.0:
+            return "%3.1f%s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f%s%s" % (num, 'Yi', suffix)
