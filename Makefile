@@ -52,12 +52,12 @@ container-unittests-fedora:
 	docker run --name oz-tests-fedora oz-tests-fedora-image
 	docker cp oz-tests-fedora:/oz/coverage.xml .
 
-container-unittests-el7:
-	docker rm -f oz-tests-el7
-	docker build -f Containerfile.tests.el7 -t oz-tests-el7-image .
-	docker run --name oz-tests-el7 oz-tests-el7-image
+container-unittests-el8:
+	docker rm -f oz-tests-el8
+	docker build -f Containerfile.tests.el8 -t oz-tests-el8-image .
+	docker run --name oz-tests-el8 oz-tests-el8-image
 
-container-unittests: container-unittests-fedora container-unittests-el7
+container-unittests: container-unittests-fedora container-unittests-el8
 
 test-coverage:
 	python-coverage run --source oz /usr/bin/py.test --verbose tests
@@ -72,10 +72,10 @@ flake8:
 
 container-clean:
 	docker rm -f oz-tests-fedora
-	docker rm -f oz-tests-el7
-	docker image rm -f -i oz-tests-fedora-image oz-tests-el7-image
+	docker rm -f oz-tests-el8
+	docker image rm -f -i oz-tests-fedora-image oz-tests-el8-image
 
 clean:
 	rm -rf MANIFEST build dist usr *~ oz.spec *.pyc oz/*~ oz/*.pyc examples/*~ oz/auto/*~ man/*~ docs/*~ man/*.html $(VENV_DIR) tests/tdl/*~ tests/factory/*~ tests/results.xml htmlcov
 
-.PHONY: sdist oz.spec signed-tarball signed-rpm rpm srpm deb release man2html virtualenv unittests container-unittests-fedora container-unittests-el7 container-unittests tests test-coverage pylint clean container-clean
+.PHONY: sdist oz.spec signed-tarball signed-rpm rpm srpm deb release man2html virtualenv unittests container-unittests-fedora container-unittests-el8 container-unittests tests test-coverage pylint clean container-clean

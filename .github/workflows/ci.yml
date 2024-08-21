@@ -28,7 +28,7 @@ jobs:
         # we want to run this regardless of whether previous lint steps failed
         if: success() || failure()
         run: diff-quality --compare-branch=origin/$GITHUB_BASE_REF --violations=flake8 --fail-under=90
-  unittests-el7:
+  unittests-el8:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo
@@ -38,4 +38,4 @@ jobs:
       - name: Install make
         run: sudo apt-get install make
       - name: Run the tests
-        run: sudo make container-unittests-el7
+        run: sudo make container-unittests-el8
