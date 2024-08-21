@@ -4,7 +4,7 @@
 FROM quay.io/centos/centos:7
 RUN set -exo pipefail \
     && yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
-    && yum install -y python-requests m2crypto libvirt-python python-lxml python-libguestfs pytest python-monotonic libvirt \
+    && yum install -y python-requests python-cryptography libvirt-python python-lxml python-libguestfs pytest python-monotonic libvirt \
     && yum clean all \
     && rm -rf /var/cache/* /var/log/yum*
 

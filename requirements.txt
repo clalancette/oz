@@ -1,5 +1,5 @@
 requests
-m2crypto
+cryptography
 libvirt-python
 lxml
 monotonic

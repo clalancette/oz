@@ -4,7 +4,7 @@
 FROM quay.io/fedora/fedora:latest
 RUN set -exo pipefail \
     && dnf install -y --setopt install_weak_deps=false --nodocs \
-    python3-requests python3-m2crypto python3-setuptools python3-libvirt python3-lxml python3-libguestfs python3-pytest python3-monotonic \
+    python3-requests python3-cryptography python3-setuptools python3-libvirt python3-lxml python3-libguestfs python3-pytest python3-monotonic \
     libvirt-daemon libvirt-daemon-kvm libvirt-daemon-qemu libvirt-daemon-config-network systemd \
     && dnf clean all \
     && rm -rf /var/cache/* /var/log/dnf*

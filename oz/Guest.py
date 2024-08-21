@@ -38,7 +38,8 @@ except ImportError:
     import urlparse
 import uuid
 
-import M2Crypto
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 import guestfs
 
@@ -1282,34 +1283,28 @@ class Guest(object):
         # when we get here, either both the private and public key exist, or
         # neither exist.  If they don't exist, generate them
         if not os.access(privname, os.F_OK) and not os.access(pubname, os.F_OK):
-            def _null_callback(p, n, out):  # pylint: disable=unused-argument
-                """
-                Method to silence the default M2Crypto.RSA.gen_key output.
-                """
-                pass
 
             pubname = privname + '.pub'
 
-            key = M2Crypto.RSA.gen_key(2048, 65537, _null_callback)
+            key = rsa.generate_private_key(65537, 2048)
 
-            # this is the binary public key, in ssh "BN" (BigNumber) MPI format.
-            # The ssh BN MPI format consists of 4 bytes that describe the length
-            # of the following data, followed by the data itself in big-endian
-            # format.  The start of the string is 0x0007, which represent the 7
-            # bytes following that make up 'ssh-rsa'.  The key exponent and
-            # modulus as fetched out of M2Crypto are already in MPI format, so
-            # we can just use them as-is.  We then have to base64 encode the
-            # result, add a little header information, and then we have a
-            # full public key.
-            pubkey = b'\x00\x00\x00\x07' + b'ssh-rsa' + key.e + key.n
+            pubkey = key.public_key().public_bytes(
+                serialization.Encoding.OpenSSH,
+                serialization.PublicFormat.OpenSSH
+            )
 
             username = os.getlogin()
             hostname = os.uname()[1]
-            keystring = 'ssh-rsa %s %s@%s\n' % (base64.b64encode(pubkey).decode('utf-8'),
-                                                username, hostname)
+            keystring = '%s %s@%s\n' % (pubkey.decode('utf-8'), username, hostname)
 
             oz.ozutil.mkdir_p(os.path.dirname(privname))
-            key.save_key(privname, cipher=None)
+            privkeystring = key.private_bytes(
+                serialization.Encoding.PEM,
+                serialization.PrivateFormat.TraditionalOpenSSL,
+                serialization.NoEncryption()
+            )
+            with open(privname, 'wb') as f:
+                f.write(privkeystring)
             os.chmod(privname, 0o600)
             with open(pubname, 'w') as f:
                 f.write(keystring)

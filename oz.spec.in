@@ -16,7 +16,7 @@ Requires: python3
 Requires: python3-lxml
 Requires: python3-libguestfs >= 1.18
 Requires: python3-libvirt
-Requires: python3-m2crypto
+Requires: python3-cryptography
 Requires: python3-monotonic
 Requires: python3-requests
 # in theory, oz doesn't really require libvirtd to be local to operate
