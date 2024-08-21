@@ -26,7 +26,7 @@ release: signed-rpm signed-tarball deb
 man2html:
 	@for file in oz-install oz-customize oz-generate-icicle oz-cleanup-cache oz-examples; do \
 		echo "Generating $$file HTML page from man" ; \
-		groff -mandoc -mwww man/$$file.1 -T html > man/$$file.html ; \
+		groff -mandoc -mwww man/$$file.? -T html > man/$$file.html ; \
 	done
 
 $(VENV_DIR):
