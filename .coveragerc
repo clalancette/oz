@@ -1,0 +1,10 @@
+[run]
+branch = true
+source_pkgs =
+    oz
+
+[paths]
+# this mapping is for the containers; the source tree is in /oz in the containers
+source =
+    oz/
+    /oz/oz
