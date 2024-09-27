@@ -177,11 +177,11 @@ class Guest(object):
         self.bridge_name = oz.ozutil.config_get_key(config, 'libvirt',
                                                     'bridge_name', None)
         self.install_cpus = oz.ozutil.config_get_key(config, 'libvirt', 'cpus',
-                                                     1)
+                                                     4)
         # the memory in the configuration file is specified in megabytes, but
         # libvirt expects kilobytes, so multiply by 1024
         self.install_memory = int(oz.ozutil.config_get_key(config, 'libvirt',
-                                                               'memory', 2048)) * 1024
+                                                               'memory', 4096)) * 1024
         self.image_type = oz.ozutil.config_get_key(config, 'libvirt',
                                                    'image_type', 'raw')
 
