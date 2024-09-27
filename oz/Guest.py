@@ -261,7 +261,7 @@ class Guest(object):
             self.clockoffset = "utc"
         self.mousetype = mousetype
         if self.mousetype is None:
-            if self.tdl.arch in ["aarch64", "armv7l"]:
+            if self.tdl.arch in ["aarch64", "armv7l", "ppc64le"]:
                 self.mousetype = "usb"
             else:
                 self.mousetype = "ps2"
