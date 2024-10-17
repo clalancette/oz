@@ -2,6 +2,10 @@
 
 import sys
 import os
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 try:
     import lxml.etree
@@ -100,7 +104,8 @@ tests = {
 }
 
 # Test that iterates over all .tdl files
-def test_all():
+@mock.patch("oz.ozutil.http_download_file")
+def test_all(fakedl):
     for (tdl, expected_pass) in list(tests.items()):
 
         # locate full path for tdl file
